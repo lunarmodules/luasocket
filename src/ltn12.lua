@@ -31,38 +31,38 @@ function filter.cycle(low, ctx, extra)
     end
 end
 
--- chains a bunch of filters together 
--- by Wim Couwenberg
-function filter.chain(...)
-    local current = 1
-    local bottom = 1
-    local top = table.getn(arg)
-    local retry = "" 
+local function chain2(f1, f2)
+    local ff1, ff2 = "", ""
     return function(chunk)
-        if chunk ~= retry then
-            current = bottom
-            retry = chunk and retry
+        local rf1 = chunk and ""
+        local rf2 = ff1 and ""
+        -- if f2 still has pending data, get it and return it
+        if ff2 ~= rf2 then
+            ff2 = f2(rf2)
+            if ff2 ~= "" then return ff2 end
         end
-        repeat
-            if current == bottom then
-                chunk = arg[current](chunk)
-                if chunk == "" or bottom == top then return chunk
-                elseif chunk then current = current + 1
-                else 
-                    bottom = bottom + 1 
-                    current = bottom
-                end
-            else
-                chunk = arg[current](chunk or "")
-                if chunk == "" then
-                    chunk = retry
-                    current = current - 1
-                elseif current == top then return chunk
-                else current = current + 1
-                end
-            end
-        until false
+        -- here we know f2 needs more data
+        -- we try to get it from f1
+        ff1 = f1(chunk)
+        while 1 do
+            -- if f1 can't produce data, we need more data from the user
+            if ff1 == "" then return "" end
+            -- otherwise we pass new data to f2 until it produces something
+            -- or f1 runs out of data too
+            ff2 = f2(ff1) 
+            if ff2 ~= "" then return ff2 end
+            ff1 = f1(rf1)
+        end
     end
+end
+
+-- chains a bunch of filters together 
+function filter.chain(...)
+     local f = arg[1]
+     for i = 2, table.getn(arg) do
+         f = chain2(f, arg[i])
+     end
+     return f
 end
 
 -----------------------------------------------------------------------------

@@ -125,8 +125,10 @@ function metat.__index:send(sendt)
     if string.find(code, "1..") then self.try(self.tp:check("2..")) end
     -- done with data connection
     self.data:close()
+    -- find out how many bytes were sent
+    local sent = socket.skip(1, self.data:getstats())
     self.data = nil
-    return 1
+    return sent
 end
 
 function metat.__index:receive(recvt)
@@ -186,9 +188,10 @@ local function tput(putt)
     f:login(putt.user, putt.password)
     if putt.type then f:type(putt.type) end
     f:pasv()
-    f:send(putt)
+    local sent = f:send(putt)
     f:quit()
-    return f:close()
+    f:close()
+    return sent
 end
 
 local default = {

@@ -8,13 +8,10 @@ local qptest = "qptest.bin"
 local eqptest = "qptest.bin2"
 local dqptest = "qptest.bin3"
 
-local b64test = "lsocket.2.0.dylib"
-local eb64test = "b64test.bin"
-local db64test = "b64test.bin2"
+local b64test = "b64test.bin"
+local eb64test = "b64test.bin2"
+local db64test = "b64test.bin3"
 
--- make sure test file exists
-local f = assert(io.open(b64test, "r"))
-f:close()
 
 -- from Machado de Assis, "A Mão e a Rosa"
 local mao = [[
@@ -86,6 +83,7 @@ local function named(f, name)
     end
 end
 ]]
+
 local function named(f)
     return f
 end
@@ -188,6 +186,19 @@ local function cleanup_qptest()
     os.remove(dqptest)
 end
 
+-- create test file 
+function create_b64test()
+    local f = assert(io.open(b64test, "wb"))
+    local t = {}
+    for j = 1, 100 do
+        for i = 1, 100 do
+            t[i] = math.random(0, 255)
+        end
+        f:write(string.char(unpack(t)))
+    end
+    f:close()
+end
+
 local function encode_b64test()
     local e1 = mime.encode("base64")
     local e2 = mime.encode("base64")
@@ -212,6 +223,7 @@ local function decode_b64test()
 end
 
 local function cleanup_b64test()
+    os.remove(b64test)
     os.remove(eb64test)
     os.remove(db64test)
 end
@@ -221,12 +233,12 @@ local function compare_b64test()
 end
 
 local function identity_test()
-    local chain = ltn12.filter.chain(
-        mime.encode("quoted-printable"),
-        mime.encode("base64"),
-        mime.decode("base64"),
-        mime.decode("quoted-printable")
-    )
+    local chain = named(ltn12.filter.chain(
+        named(mime.encode("quoted-printable"), "1 eq"),
+        named(mime.encode("base64"), "2 eb"),
+        named(mime.decode("base64"), "3 db"),
+        named(mime.decode("quoted-printable"), "4 dq")
+    ), "chain")
     transform(b64test, eb64test, chain)
     compare(b64test, eb64test)
     os.remove(eb64test)
@@ -271,6 +283,7 @@ end
 local t = socket.gettime()
 
 identity_test()
+create_b64test()
 encode_b64test()
 decode_b64test()
 compare_b64test()
