@@ -70,7 +70,20 @@ function Public.build_url(parsed)
     local url = parsed.path or ""
     if parsed.params then url = url .. ";" .. parsed.params end
     if parsed.query then url = url .. "?" .. parsed.query end
-    if parsed.authority then url = "//" .. parsed.authority .. url end
+	local authority = parsed.authority
+	if parsed.host then
+		authority = parsed.host
+		if parsed.port then authority = authority .. ":" .. parsed.port end
+		local userinfo = parsed.userinfo
+		if parsed.user then
+			userinfo = parsed.user
+			if parsed.password then 
+				userinfo = userinfo .. ":" .. parsed.password 
+			end
+		end
+		if userinfo then authority = userinfo .. "@" .. authority end
+	end
+    if authority then url = "//" .. authority .. url end
     if parsed.scheme then url = parsed.scheme .. ":" .. url end
     if parsed.fragment then url = url .. "#" .. parsed.fragment end
     return gsub(url, "%s", "")
@@ -119,6 +132,7 @@ end
 -----------------------------------------------------------------------------
 function Public.parse_path(path)
 	local parsed = {}
+	path = path or ""
 	path = gsub(path, "%s", "")
 	gsub(path, "([^/]+)", function (s) tinsert(%parsed, s) end)
 	for i = 1, getn(parsed) do
@@ -133,19 +147,31 @@ end
 -- Builds a path component from its segments, escaping protected characters.
 -- Input
 --   parsed: path segments
+--   unsafe: if true, segments are not protected before path is built
 -- Returns
 --   path: correspondin path string
 -----------------------------------------------------------------------------
-function Public.build_path(parsed)
+function Public.build_path(parsed, unsafe)
 	local path = ""
 	local n = getn(parsed)
-	for i = 1, n-1 do
-		path = path .. %Private.protect_segment(parsed[i])
-		path = path .. "/"
-	end
-	if n > 0 then
-		path = path .. %Private.protect_segment(parsed[n])
-		if parsed.is_directory then path = path .. "/" end
+	if unsafe then
+		for i = 1, n-1 do
+			path = path .. parsed[i]
+			path = path .. "/"
+		end
+		if n > 0 then
+			path = path .. parsed[n]
+			if parsed.is_directory then path = path .. "/" end
+		end
+	else
+		for i = 1, n-1 do
+			path = path .. %Private.protect_segment(parsed[i])
+			path = path .. "/"
+		end
+		if n > 0 then
+			path = path .. %Private.protect_segment(parsed[n])
+			if parsed.is_directory then path = path .. "/" end
+		end
 	end
 	if parsed.is_absolute then path = "/" .. path end
 	return path
