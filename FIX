@@ -7,3 +7,4 @@ new timming functions. higher resolution, no wrap around
 bug fixes in the manual
 getfd missing cast
 added unix domain support example
+fixed local domain socket kludge of name size
