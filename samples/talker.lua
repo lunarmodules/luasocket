@@ -4,7 +4,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-socket = require("socket")
+local socket = require("socket")
 host = host or "localhost"
 port = port or 8080
 if arg then

@@ -1,5 +1,5 @@
-socket = require("socket")
-http = require("http")
+local socket = require("socket")
+local http = require("http")
 
 if not arg or not arg[1] or not arg[2] then
     print("luasocket cddb.lua <category> <disc-id> [<server>]")

@@ -3,7 +3,9 @@
 <html>
 
 <head>
-<title>LuaSocket: Network support for the Lua language</title>
+<meta name="description" content="LuaSocket: The core namespace">
+<meta name="keywords" content="Lua, Library, socket, Network, Support"> 
+<title>LuaSocket: The socket namespace</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
 
@@ -16,7 +18,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 height=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -55,6 +57,16 @@ socket.<b>bind(</b>address, port [, backlog]<b>)</b>
 </p>
 
 <p class=description>
+This function is a shortcut that creates and returns a TCP server object
+bound to a local <tt>address</tt> and <tt>port</tt>, ready to 
+accept client connections. Optionally,
+user can also specify the <tt>backlog</tt> argument to the 
+<a href=tcp.html#listen><tt>listen</tt></a> method (defaults to 32). 
+</p>
+
+<p class=note>
+Note: The server object returned will have the option "<tt>reuseaddr</tt>" 
+set to <tt><b>true</b></tt>.
 </p>
 
 <!-- connect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -64,9 +76,9 @@ socket.<b>connect(</b>address, port [, locaddr, locport]<b>)</b>
 </p>
 
 <p class=description>
-This function is a shortcut that creates and returns a TCP socket object
+This function is a shortcut that creates and returns a TCP client object
 connected to a remote <tt>host</tt> at a given <tt>port</tt>. Optionally,
-the use can also specify the local address and port to bind
+the user can also specify the local address and port to bind
 (<tt>locaddr</tt> and </tt>locport</tt>).
 </p>
 

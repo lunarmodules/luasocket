@@ -81,7 +81,6 @@ const char *sock_create(p_sock ps, int domain, int type, int protocol)
     t_sock sock = socket(domain, type, protocol);
     if (sock == SOCK_INVALID) return sock_createstrerror(errno);
     *ps = sock;
-    sock_setnonblocking(ps);
     return NULL;
 }
 
@@ -178,10 +177,7 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
         do *pa = accept(sock, addr, addr_len);
         while (*pa < 0 && errno == EINTR);
         /* if result is valid, we are done */
-        if (*pa != SOCK_INVALID) {
-            sock_setnonblocking(pa);
-            return NULL;
-        }
+        if (*pa != SOCK_INVALID) return NULL;
         /* find out if we failed for a fatal reason */
         if (errno != EWOULDBLOCK && errno != ECONNABORTED)
             return sock_acceptstrerror(errno);

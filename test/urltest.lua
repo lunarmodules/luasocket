@@ -1,4 +1,4 @@
-socket = require("socket")
+local socket = require("socket")
 socket.url = require("url")
 dofile("testsupport.lua")
 

@@ -208,7 +208,7 @@ static int meth_receivefrom(lua_State *L)
 static int meth_getfd(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
-    lua_pushnumber(L, udp->sock);
+    lua_pushnumber(L, (int) udp->sock);
     return 1;
 }
 
@@ -328,10 +328,10 @@ static int global_create(lua_State *L)
     if (!err) { 
         /* allocate tcp object */
         p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
-        udp->sock = sock;
-        /* set its type as master object */
         aux_setclass(L, "udp{unconnected}", -1);
         /* initialize remaining structure fields */
+        sock_setnonblocking(&sock);
+        udp->sock = sock;
         tm_init(&udp->tm, -1, -1);
         return 1;
     } else {

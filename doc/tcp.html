@@ -3,7 +3,9 @@
 <html>
 
 <head>
-<title>LuaSocket: Network support for the Lua language</title>
+<meta name="description" content="LuaSocket: The TCP/IP support">
+<meta name="keywords" content="Lua, Library, socket, TCP, Network, Support"> 
+<title>LuaSocket: TCP/IP support</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
 
@@ -16,7 +18,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 height=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -74,7 +76,7 @@ reported by <b><tt>nil</tt></b> followed by a message describing the error.
 </p>
 
 <p class=note>
-Note: calling <a href=sockett.html#select><tt>socket.select</tt></a>
+Note: calling <a href=socket.html#select><tt>socket.select</tt></a>
 with   a  server   object   in
 the <tt>receive</tt>  parameter  before  a   call  to  <tt>accept</tt> does
 <em>not</em> guarantee  <tt>accept</tt> will  return immediately.  Use the <a
@@ -107,7 +109,7 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 </p>
 
 <p class=note>
-Note: The function <a href=#socket.bind><tt>socket.bind</tt></a> 
+Note: The function <a href=socket.html#bind><tt>socket.bind</tt></a> 
 is available and is a shortcut for the creation server sockets.
 </p>
 
@@ -163,15 +165,15 @@ describing the error. In case of success, the method returns 1.
 </p>
 
 <p class=note>
-Note: The function <a href=#socket.connect><tt>socket.connect</tt></a> 
+Note: The function <a href=socket.html#connect><tt>socket.connect</tt></a> 
 is available and is a shortcut for the creation of client sockets.
 </p>
 
 <p class=note>
 Note: Starting with LuaSocket 2.0, 
 the <a href=#settimeout><tt>settimeout</tt></a>
-function affects the behavior of connect, causing it to return in case of
-a timeout error.
+method affects the behavior of connect, causing it to return in case of
+a timeout.
 </p>
 
 <!-- getpeername ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -197,6 +199,7 @@ Note: It makes no sense to call this method on server objects.
 <!-- getpeername ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=getsockname>
+master:<b>getsockname()</b><br>
 client:<b>getsockname()</b><br>
 server:<b>getsockname()</b>
 </p>

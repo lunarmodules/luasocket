@@ -1,4 +1,4 @@
-socket = require"socket"
+local socket = require"socket"
 
 host = host or "localhost"
 port = port or "8080"
@@ -418,7 +418,7 @@ function connect_errors()
     assert(not c and e == "connection refused", e)
     print("ok")
     io.stderr:write("host not found: ")
-    local c, e = socket.connect("not.exist.com", 1);
+    local c, e = socket.connect("host.is.invalid", 1);
     assert(not c and e == "host not found", e)
     print("ok")
 end

@@ -3,7 +3,9 @@
 <html>
 
 <head>
-<title>LuaSocket: Network support for the Lua language</title>
+<meta name="description" content="LuaSocket: URL manipulation">
+<meta name="keywords" content="Lua, Library, URL, link, Network, Support"> 
+<title>LuaSocket: URL support</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
 
@@ -16,7 +18,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 height=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -135,7 +137,7 @@ Rebuilds an URL from its parts.
 <tt>Parsed_url</tt> is a table with same components returned by
 <a href="#parse"><tt>parse</tt></a>.
 Lower level components, if specified,
-take  precedence over  hight level  components of  the URL grammar. 
+take  precedence over  high level  components of  the URL grammar. 
 </p>
 
 <p class=return>
@@ -279,8 +281,8 @@ Breaks a <tt>&lt;path&gt;</tt> URL component into all its
 <p class=return>
 Since  some characters   are   reserved   in   URLs,  they must be escaped
 whenever present in a <tt>&lt;path&gt;</tt> component. Therefore, before
-returning a list with all the parsed segments, the function unescapes all
-of them. 
+returning a list with all the parsed segments, the function removes
+escaping from all of them. 
 </p>
 
 <!-- unescape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

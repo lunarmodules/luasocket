@@ -3,7 +3,9 @@
 <html>
 
 <head>
-<title>LuaSocket: Network support for the Lua language</title>
+<meta name="description" content="LuaSocket: SMTP support">
+<meta name="keywords" content="Lua, Library, SMTP, e-mail, MIME, Multipart, Support"> 
+<title>LuaSocket: SMTP support</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
 
@@ -16,7 +18,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 height=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -48,7 +50,7 @@ control (if you bother to read the code).
 Another RFC of interest is <a
 href="http://www.cs.princeton.edu/~diego/rfc/rfc2822.txt">RFC 2822</a>,
 which governs the Internet Message Format.
-Multipart messages (those that contain attatchments) are part
+Multipart messages (those that contain attachments) are part
 of the MIME standard, but described mainly
 in <a href="http://www.cs.princeton.edu/~diego/rfc/rfc2046.txt">RFC
 2046</a>
@@ -98,7 +100,7 @@ in representing them in a Lua table.
 </p>
 
 <p>
-The following constants can be set to control the default behaviour of
+The following constants can be set to control the default behavior of
 the SMTP module: 
 </p>
 
@@ -256,7 +258,7 @@ mesgt = {
     to = "Fulano da Silva &lt;fulano@example.com&gt;",
     cc = '"Beltrano F. Nunes" &lt;beltrano@example.com&gt;',
     subject = "My first message"
-  }
+  },
   body = "I hope this works. If it does, I can send you another 1000 copies."
 }
 

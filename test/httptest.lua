@@ -4,11 +4,11 @@
 -- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
 
-socket = require("socket")
-http = require("http")
-mime = require("mime")
-url = require("url")
-ltn12 = require("ltn12")
+local socket = require("socket")
+local http = require("http")
+local mime = require("mime")
+local url = require("url")
+local ltn12 = require("ltn12")
 
 dofile("testsupport.lua")
 

@@ -130,7 +130,7 @@ static int meth_setoption(lua_State *L)
 static int meth_getfd(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
-    lua_pushnumber(L, tcp->sock);
+    lua_pushnumber(L, (int) tcp->sock);
     return 1;
 }
 
@@ -164,6 +164,7 @@ static int meth_accept(lua_State *L)
         p_tcp clnt = lua_newuserdata(L, sizeof(t_tcp));
         aux_setclass(L, "tcp{client}", -1);
         /* initialize structure fields */
+        sock_setnonblocking(&sock);
         clnt->sock = sock;
         io_init(&clnt->io, (p_send)sock_send, (p_recv)sock_recv, &clnt->sock);
         tm_init(&clnt->tm, -1, -1);
@@ -310,10 +311,11 @@ static int global_create(lua_State *L)
     if (!err) { 
         /* allocate tcp object */
         p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
-        tcp->sock = sock;
         /* set its type as master object */
         aux_setclass(L, "tcp{master}", -1);
         /* initialize remaining structure fields */
+        sock_setnonblocking(&sock);
+        tcp->sock = sock;
         io_init(&tcp->io, (p_send) sock_send, (p_recv) sock_recv, &tcp->sock);
         tm_init(&tcp->tm, -1, -1);
         buf_init(&tcp->buf, &tcp->io, &tcp->tm);

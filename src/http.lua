@@ -22,8 +22,6 @@ TIMEOUT = 60
 PORT = 80
 -- user agent field sent in request
 USERAGENT = socket.VERSION
--- block size used in transfers
-BLOCKSIZE = 2048
 
 -----------------------------------------------------------------------------
 -- Low level HTTP API

@@ -12,9 +12,9 @@ local mime = requirelib("mime", "luaopen_mime", getfenv(1))
 local ltn12 = require("ltn12")
 
 -- encode, decode and wrap algorithm tables
-encodet = {}
-decodet = {}
-wrapt = {}
+mime.encodet = {}
+mime.decodet = {}
+mime.wrapt = {}
 
 -- creates a function that chooses a filter by name from a given table 
 local function choose(table)
@@ -29,47 +29,47 @@ local function choose(table)
 end
 
 -- define the encoding filters
-encodet['base64'] = function()
+mime.encodet['base64'] = function()
     return ltn12.filter.cycle(b64, "")
 end
 
-encodet['quoted-printable'] = function(mode)
+mime.encodet['quoted-printable'] = function(mode)
     return ltn12.filter.cycle(qp, "", 
         (mode == "binary") and "=0D=0A" or "\r\n")
 end
 
 -- define the decoding filters
-decodet['base64'] = function()
+mime.decodet['base64'] = function()
     return ltn12.filter.cycle(unb64, "")
 end
 
-decodet['quoted-printable'] = function()
+mime.decodet['quoted-printable'] = function()
     return ltn12.filter.cycle(unqp, "")
 end
 
 -- define the line-wrap filters
-wrapt['text'] = function(length)
+mime.wrapt['text'] = function(length)
     length = length or 76
     return ltn12.filter.cycle(wrp, length, length) 
 end
-wrapt['base64'] = wrapt['text']
-wrapt['default'] = wrapt['text']
+mime.wrapt['base64'] = wrapt['text']
+mime.wrapt['default'] = wrapt['text']
 
-wrapt['quoted-printable'] = function()
+mime.wrapt['quoted-printable'] = function()
     return ltn12.filter.cycle(qpwrp, 76, 76) 
 end
 
 -- function that choose the encoding, decoding or wrap algorithm
-encode = choose(encodet) 
-decode = choose(decodet)
-wrap = choose(wrapt)
+mime.encode = choose(encodet) 
+mime.decode = choose(decodet)
+mime.wrap = choose(wrapt)
 
 -- define the end-of-line normalization filter
-function normalize(marker)
+function mime.normalize(marker)
     return ltn12.filter.cycle(eol, 0, marker)
 end
 
 -- high level stuffing filter
-function stuff()
+function mime.stuff()
     return ltn12.filter.cycle(dot, 2)
 end

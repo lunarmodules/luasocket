@@ -3,7 +3,9 @@
 <html>
 
 <head>
-<title>LuaSocket: Network support for the Lua language</title>
+<meta name="description" content="LuaSocket: Introduction to the core">
+<meta name="keywords" content="Lua, Library, TCP, UDP, Network, Support"> 
+<title>LuaSocket: Introduction to the core</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
 
@@ -16,7 +18,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 height=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -209,7 +211,7 @@ print("Please telnet to localhost on port " .. port)
 print("After connecting, you have 10s to enter a line to be echoed")
 -- loop forever waiting for clients
 while 1 do
-  -- wait for a conection from any client
+  -- wait for a connection from any client
   local client = server:accept()
   -- make sure we don't block waiting for this client's line
   client:settimeout(10)
