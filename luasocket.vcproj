@@ -146,6 +146,9 @@
 				RelativePath=".\select.c">
 			</File>
 			<File
+				RelativePath=".\smtp.c">
+			</File>
+			<File
 				RelativePath=".\tcp.c">
 			</File>
 			<File
