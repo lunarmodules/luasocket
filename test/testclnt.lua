@@ -1,30 +1,9 @@
 -----------------------------------------------------------------------------
 -- LuaSocket automated test module
--- client.lua
+-- testclnt.lua
 -- This is the client module. It connects with the server module and executes
 -- all tests.
 -----------------------------------------------------------------------------
-
------------------------------------------------------------------------------
--- Prints a header to separate the test phases
--- Input
---   test: test phase name
------------------------------------------------------------------------------
-function new_test(test)
-	write("----------------------------------------------\n",
-		test, "\n",
-		"----------------------------------------------\n")
-end
-
------------------------------------------------------------------------------
--- Get host and port from command line
------------------------------------------------------------------------------
-HOST = "127.0.0.1"
-PORT = 2020
-if arg then
-    HOST = arg[1] or HOST
-    PORT = arg[2] or PORT
-end
 
 -----------------------------------------------------------------------------
 -- Read command definitions
@@ -111,6 +90,27 @@ function test_asciiline(len)
 	if err then fail(err) end
 	if back == str then pass("lines match")
 	else fail("lines don't match") end
+end
+
+-----------------------------------------------------------------------------
+-- Tests multiple pattern transmission
+-- Input
+--   len: length of line to be tested
+-----------------------------------------------------------------------------
+function test_multiple()
+	local p1 = "unix line\n"
+	local p2 = "dos line\r\n"
+	local p3 = "raw bytes"
+	local bp1, bp2, bp3
+	reconnect()
+	send_command(ECHO_BLOCK, strlen(p1)+strlen(p2)+strlen(p3))
+	err = data:send(p1, p2, p3)
+	if err then fail(err) end
+	bp1, bp2, bp3, err = data:receive("*lu", "*l", strlen(p3))
+	if err then fail(err) end
+	if bp1.."\n" == p1 and bp2.."\r\n" == p2 and bp3 == p3 then 
+		pass("patterns match")
+	else fail("patterns don't match") end
 end
 
 -----------------------------------------------------------------------------
@@ -295,9 +295,27 @@ function test_returntimeout(len, t, s)
 	else fail("blocks don't match") end
 end
 
+
+
+
 -----------------------------------------------------------------------------
--- Tests return-timeout conformance
+-- Tests read patterns
 -----------------------------------------------------------------------------
+function test_word()
+    local b1 = "  \t one two    three  \n this_is_a_very"
+    local b2 = "_big_word "
+    send_command(ECHO_BLOCK, strlen(b1)+strlen(b2))
+    err = data:send(b1, b2)
+    local a1, a2, a3, a4
+    a1, a2, a3, a4, err = data:receive("*w", "*w", "*w", "*w")
+	if err then fail(err) end
+    _, err = data:receive(1) -- get last space
+	if err then fail(err) end
+    if a1 ~= "one" or a2 ~= "two" or a3 ~= "three" or
+       a4 ~= "this_is_a_very_big_word" then fail("'*w' failed") end
+    pass("'*w' is ok")
+end
+
 function test_patterns()
 	local dos_line1 = "this the first dos line"
 	local dos_line2 = "this is another dos line"
@@ -333,6 +351,7 @@ function test_patterns()
 	back = data:receive(strlen(block))
 	if back ~= block then fail("number failed") end
 	pass("number is ok")
+	test_word()
 	send_command(ECHO_BLOCK, strlen(block))
 	send_command(SLEEP, 1)
 	send_command(CLOSE)
@@ -356,11 +375,15 @@ test_command(ECHO_BLOCK, 12234)
 test_command(SLEEP, 1111)
 test_command(ECHO_LINE)
 
+--a = [[
 new_test("connection close test")
 test_closed()
 
 new_test("read pattern test")
 test_patterns()
+
+new_test("multiple pattern test")
+test_multiple()
 
 new_test("character string test")
 test_asciiline(1)
@@ -414,6 +437,7 @@ test_returntimeout(8000, 1, 2)
 test_returntimeout(80000, 2, 1)
 test_returntimeout(800000, 0.1, 0)
 test_returntimeout(800000, 2, 1)
+--]]
 
 -----------------------------------------------------------------------------
 -- Close connection and exit server. We are done.

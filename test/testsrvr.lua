@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- LuaSocket automated test module
--- server.lua
+-- testsrvr.lua
 -- This is the server module. It's completely controled by the client module
 -- by the use of a control connection.
 -----------------------------------------------------------------------------
@@ -10,16 +10,6 @@
 -----------------------------------------------------------------------------
 assert(dofile("testcmd.lua"))
 test_debug_mode()
-
------------------------------------------------------------------------------
--- Get host and port from command line
------------------------------------------------------------------------------
-HOST = "localhost"
-PORT = 2020
-if arg then
-    HOST = arg[1] or HOST
-    PORT = arg[2] or PORT
-end
 
 -----------------------------------------------------------------------------
 -- Start control connection
