@@ -26,7 +26,7 @@
 <p class=bar>
 <a href="home.html">home</a> &middot;
 <a href="home.html#download">download</a> &middot;
-<a href="instalation.html">instalation</a> &middot;
+<a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a> 
 </p>
@@ -129,7 +129,7 @@ foo = socket.protect(function()
     -- create a try function that closes 'c' on error
     local try = socket.newtry(function() c:close() end)
     -- do everything reassured c will be closed 
-    try(c:send("helo there?\r\n"))
+    try(c:send("hello there?\r\n"))
     local answer = try(c:receive())
     ...
     try(c:send("good bye\r\n"))
@@ -383,7 +383,7 @@ This constant has a string describing the current LuaSocket version.
 <p class=bar>
 <a href="home.html">home</a> &middot;
 <a href="home.html#down">download</a> &middot;
-<a href="instalation.html">instalation</a> &middot;
+<a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a>
 </p>
