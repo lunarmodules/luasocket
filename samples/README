@@ -5,8 +5,11 @@ is not supported.
     talker.lua              -- stdin to socket
 
 listener.lua and talker.lua are about  the simplest applications you can
-write  using  LuaSocket.  Run   'luasocket  listen.lua'  and  'luasocket
-talk.lua' on different terminals. Whatever  you type on talk.lua will be
+write  using  LuaSocket.  Run   
+
+	'luasocket listen.lua'  and  'luasocket talk.lua'
+
+on different terminals. Whatever  you type on talk.lua will be
 printed by listen.lua.
 
     dict.lua                -- dict client
@@ -44,11 +47,25 @@ to ports 8080 and 8081.
 
     get.lua                 -- file retriever
 
-This module is a  client that uses the FTP and HTTP  code to implement a
-command line file  graber. Just run 'luasocket  -f get.lua <remote-file>
-<local-file>' to  download a remote  file (either ftp:// or  http://) to
-the  specified  local  file.  The   program  also  prints  the  download
-throughput during download.
+This little  program is  a client  that uses  the FTP  and HTTP  code to
+implement a  command line  file graber. Just  run 
+
+	luasocket -f get.lua <remote-file> [<local-file>]
+
+to download  a remote file (either  ftp:// or http://) to  the specified
+local file.  The program  also prints  the download  throughput, elapsed
+time, bytes already downloaded etc during download.
+
+	check-links.lua			-- HTML link checker program
+
+This little program scans a HTML file and checks for broken links. It is
+similar to check-links.pl by Jamie  Zawinski, but uses all facilities of
+the LuaSocket library and the Lua language. It has not been thoroughly
+tested, but it should work. Just run
+
+	luasocket -f check-links.lua {<url>} > output
+
+and open the result to see a list of broken links. 
 
 Good luck,
 Diego.
