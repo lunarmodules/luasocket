@@ -365,14 +365,16 @@ end
 ------------------------------------------------------------------------
 function connect_timeout()
     io.write("connect with timeout (if it hangs, it failed): ")
-    local t = socket.time()
     local c, e = socket.tcp()
     assert(c, e)
     c:settimeout(0.1)
-    local r, e = c:connect("ibere.tecgraf.puc-rio.br", 80)
+    ip = socket.dns.toip("ibere.tecgraf.puc-rio.br")
+    if not ip then return end
+    local t = socket.time()
+    local r, e = c:connect(ip, 80)
     assert(not r, "should not connect")
     assert(e == "timeout", e)
-    assert(socket.time() - t < 2, "took to long to give up")
+    assert(socket.time() - t < 2, "took too long to give up.") 
     c:close()
 end
 
