@@ -283,7 +283,7 @@ static int meth_getpeername(lua_State *L)
 
 static int meth_getsockname(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     return inet_meth_getsockname(L, &tcp->sock);
 }
 

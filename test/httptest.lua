@@ -17,7 +17,7 @@ local ignore, expect, index, prefix, cgiprefix, index_crlf
 
 http.TIMEOUT = 10
 
-local t = socket.time()
+local t = socket.gettime()
 
 host = host or "diego.student.princeton.edu"
 proxy = proxy or "http://localhost:3128"
@@ -416,4 +416,4 @@ print("ok")
 print("passed all tests")
 os.remove("err")
 
-print(string.format("done in %.2fs", socket.time() - t))
+print(string.format("done in %.2fs", socket.gettime() - t))

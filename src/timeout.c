@@ -18,12 +18,6 @@
 #else
 #include <time.h>
 #include <sys/time.h>
-#include <sys/times.h>
-#include <unistd.h>
-#ifndef CLK_TCK
-/* CLI_TCK is now obsolete in Linux */
-#define CLK_TCK (sysconf(_SC_CLK_TCK));
-#endif
 #endif
 
 /* min and max macros */
@@ -37,11 +31,11 @@
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-static int tm_lua_time(lua_State *L);
+static int tm_lua_gettime(lua_State *L);
 static int tm_lua_sleep(lua_State *L);
 
 static luaL_reg func[] = {
-    { "time", tm_lua_time },
+    { "gettime", tm_lua_gettime },
     { "sleep", tm_lua_sleep },
     { NULL, NULL }
 };
@@ -141,8 +135,10 @@ int tm_gettime(void)
 #else
 int tm_gettime(void) 
 {
-    struct tms t;
-    return (times(&t)*1000)/CLK_TCK;
+    struct timeval v;
+    struct timezone z = {0, 0};
+    gettimeofday(&v, &z);
+    return v.tv_sec * 1000 + v.tv_usec/1000;
 }
 #endif
 
@@ -186,7 +182,7 @@ int tm_meth_settimeout(lua_State *L, p_tm tm)
 /*-------------------------------------------------------------------------*\
 * Returns the time the system has been up, in secconds.
 \*-------------------------------------------------------------------------*/
-static int tm_lua_time(lua_State *L)
+static int tm_lua_gettime(lua_State *L)
 {
     lua_pushnumber(L, tm_gettime()/1000.0);
     return 1;
@@ -199,9 +195,13 @@ int tm_lua_sleep(lua_State *L)
 {
     double n = luaL_checknumber(L, 1);
 #ifdef _WIN32
-    Sleep((int)n*1000);
+    Sleep((int)(n*1000));
 #else
-    sleep((int)n);
+    struct timespec t, r;
+    t.tv_sec = (int) n;
+    n -= t.tv_sec;
+    t.tv_nsec = (int) (n * 1000000000) % 1000000000;
+    nanosleep(&t, &r);
 #endif
     return 0;
 }

@@ -95,7 +95,8 @@ const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm)
     /* don't call on closed socket */
     if (sock == SOCK_INVALID) return io_strerror(IO_CLOSED);
     /* ask system to connect */
-    err = connect(sock, addr, addr_len);
+    do err = connect(sock, addr, addr_len);
+    while (err < 0 && errno == EINTR);
     /* if no error, we're done */
     if (err == 0) return NULL; 
     /* make sure the system is trying to connect */
@@ -174,9 +175,13 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
         int err;
         fd_set fds;
         /* try to accept */
-        *pa = accept(sock, addr, addr_len);
+        do *pa = accept(sock, addr, addr_len);
+        while (*pa < 0 && errno == EINTR);
         /* if result is valid, we are done */
-        if (*pa != SOCK_INVALID) return NULL;
+        if (*pa != SOCK_INVALID) {
+            sock_setnonblocking(pa);
+            return NULL;
+        }
         /* find out if we failed for a fatal reason */
         if (errno != EWOULDBLOCK && errno != ECONNABORTED)
             return sock_acceptstrerror(errno);

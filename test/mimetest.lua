@@ -267,7 +267,7 @@ local function padding_b64test()
     print("ok")
 end
 
-local t = socket.time()
+local t = socket.gettime()
 
 identity_test()
 encode_b64test()
@@ -285,4 +285,4 @@ decode_qptest()
 compare_qptest()
 cleanup_qptest()
 
-print(string.format("done in %.2fs", socket.time() - t))
+print(string.format("done in %.2fs", socket.gettime() - t))

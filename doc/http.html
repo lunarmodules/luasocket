@@ -16,7 +16,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -209,9 +209,9 @@ http = require("http")
 -- file from "/luasocket/http.html"
 b = http.request("http://www.tecgraf.puc-rio.br/luasocket/http.html")
 
--- connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
--- "~diego/auth/index.html". Fails because authentication is needed.
-b, c, h = http.request("http://www.tecgraf.puc-rio.br/~diego/auth/index.html")
+-- connect to server "www.example.com" and tries to retrieve
+-- "/private/index.html". Fails because authentication is needed.
+b, c, h = http.request("http://www.example.com/private/index.html")
 -- b returns some useless page telling about the denied access, 
 -- h returns authentication information
 -- and c returns with value 401 (Authentication Required)
@@ -276,16 +276,16 @@ authentication is required.
 http = require("http")
 mime = require("mime")
 
--- Connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
--- "~diego/auth/index.html", using the provided name and password to
+-- Connect to server "www.example.com" and tries to retrieve
+-- "/private/index.html", using the provided name and password to
 -- authenticate the request
-b, c, h = http.request("http://diego:password@www.tecgraf.puc-rio.br/~diego/auth/index.html")
+b, c, h = http.request("http://fulano:silva@www.example.com/private/index.html")
 
 -- Alternatively, one could fill the appropriate header and authenticate
 -- the request directly.
 r, c = http.request {
-  url = "http://www.tecgraf.puc-rio.br/~diego/auth/index.html",
-  headers = { authentication = "Basic " .. (mime.b64("diego:password")) }
+  url = "http://www.example.com/private/index.html",
+  headers = { authentication = "Basic " .. (mime.b64("fulano:silva")) }
 }
 </pre>
 

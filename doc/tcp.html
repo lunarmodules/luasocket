@@ -16,7 +16,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -74,7 +74,7 @@ reported by <b><tt>nil</tt></b> followed by a message describing the error.
 </p>
 
 <p class=note>
-Note: calling <a href=misc.html#socket.select><tt>socket.select</tt></a>
+Note: calling <a href=sockett.html#select><tt>socket.select</tt></a>
 with   a  server   object   in
 the <tt>receive</tt>  parameter  before  a   call  to  <tt>accept</tt> does
 <em>not</em> guarantee  <tt>accept</tt> will  return immediately.  Use the <a
@@ -94,7 +94,7 @@ local host.
 
 <p class=parameters>
 <tt>Address</tt> can be an IP address or a host name. 
-<tt>Port</tt> must be an integer number in the range [0..64K]. 
+<tt>Port</tt> must be an integer number in the range [0..64K). 
 If <tt>address</tt>
 is '<tt>*</tt>', the system binds to all local interfaces
 using the <tt>INADDR_ANY</tt> constant. If <tt>port</tt> is 0, the system automatically
@@ -154,7 +154,7 @@ and <a href=#close><tt>close</tt></a>.
 
 <p class=parameters>
 <tt>Address</tt> can be an IP address or a host name. 
-<tt>Port</tt> must be an integer number in the range [1..64K]. 
+<tt>Port</tt> must be an integer number in the range [1..64K). 
 </p>
 
 <p class=return>

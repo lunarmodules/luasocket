@@ -1,7 +1,7 @@
 body { 
     margin-left: 1em; 
     margin-right: 1em; 
-    font-family: "Verdana"; 
+    font-family: "Verdana", sans-serif; 
 }
 
 tt {

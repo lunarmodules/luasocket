@@ -16,7 +16,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -48,6 +48,27 @@ To obtain the <tt>socket</tt> namespace, run:
 local socket = require("socket")
 </pre>
 
+<!-- bind ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=bind> 
+socket.<b>bind(</b>address, port [, backlog]<b>)</b>
+</p>
+
+<p class=description>
+</p>
+
+<!-- connect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=connect> 
+socket.<b>connect(</b>address, port [, locaddr, locport]<b>)</b>
+</p>
+
+<p class=description>
+This function is a shortcut that creates and returns a TCP socket object
+connected to a remote <tt>host</tt> at a given <tt>port</tt>. Optionally,
+the use can also specify the local address and port to bind
+(<tt>locaddr</tt> and </tt>locport</tt>).
+</p>
 
 <!-- debug ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -289,8 +310,8 @@ The function returns a source with the appropriate behavior.
 
 <!-- time ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=time> 
-socket.<b>time()</b>
+<p class=name id=gettime> 
+socket.<b>gettime()</b>
 </p>
 
 <p class=description>
@@ -304,9 +325,9 @@ The function returns the time as a number.
 </p>
 
 <pre class=example>
-t = socket.time()
+t = socket.gettime()
 -- do stuff
-print(socket.time() - t .. " seconds elapsed")
+print(socket.gettime() - t .. " seconds elapsed")
 </pre>
 
 <!-- try ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

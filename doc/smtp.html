@@ -16,7 +16,7 @@
 <center>
 <table summary="LuaSocket logo">
 <tr><td align=center><a href="http://www.lua.org">
-<img border=0 alt="LuaSocket" src="luasocket.png">
+<img width=128 border=0 alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
 <tr><td align=center valign=top>Network support for the Lua language
 </td></tr>
@@ -165,7 +165,7 @@ If  successful, the function returns 1. Otherwise, the function returns
 <p class=note>
 Note: SMTP servers are can be very picky with the format of e-mail
 addresses. To be safe, use only addresses of the form
-"<tt>&lt;fulano@tecgraf.puc-rio.br&gt;</tt>" in the <tt>from</tt> and
+"<tt>&lt;fulano@example.com&gt;</tt>" in the <tt>from</tt> and
 <tt>rcpt</tt> arguments to the <tt>send</tt> function. In headers, e-mail
 addresses can take whatever form you like.  </p>
 
@@ -238,23 +238,23 @@ and
 local smtp = require("smtp")
 
 -- Connects to server "localhost" and sends a message to users
--- "fulano@tecgraf.puc-rio.br",  "beltrano@tecgraf.puc-rio.br", 
--- and "sicrano@tecgraf.puc-rio.br".
+-- "fulano@example.com",  "beltrano@example.com", 
+-- and "sicrano@example.com".
 -- Note that "fulano" is the primary recipient, "beltrano" receives a
 -- carbon copy and neither of them knows that "sicrano" received a blind
 -- carbon copy of the message.
-from = "&lt;luasocket@tecgraf.puc-rio.br&gt;"
+from = "&lt;luasocket@example.com&gt;"
 
 rcpt = {
-  "&lt;fulano@tecgraf.puc-rio.br&gt;",
-  "&lt;beltrano@tecgraf.puc-rio.br&gt;",
-  "&lt;sicrano@tecgraf.puc-rio.br&gt;"
+  "&lt;fulano@example.com&gt;",
+  "&lt;beltrano@example.com&gt;",
+  "&lt;sicrano@example.com&gt;"
 }
 
 mesgt = {
   headers = {
-    to = "Fulano da Silva &lt;fulano@tecgraf.puc-rio.br&gt;",
-    cc = '"Beltrano F. Nunes" &lt;beltrano@tecgraf.puc-rio.br&gt;',
+    to = "Fulano da Silva &lt;fulano@example.com&gt;",
+    cc = '"Beltrano F. Nunes" &lt;beltrano@example.com&gt;',
     subject = "My first message"
   }
   body = "I hope this works. If it does, I can send you another 1000 copies."
@@ -334,8 +334,8 @@ local ltn12 = require("ltn12")
 source = smtp.message{
   headers = {
      -- Remember that headers are *ignored* by smtp.send. 
-     from = "Sicrano de Oliveira &lt;sicrano@tecgraf.puc-rio.br&gt;",
-     to = "Fulano da Silva &lt;fulano@tecgraf.puc-rio.br&gt;",
+     from = "Sicrano de Oliveira &lt;sicrano@example.com&gt;",
+     to = "Fulano da Silva &lt;fulano@example.com&gt;",
      subject = "Here is a message with attachments"
   },
   body = {
@@ -378,8 +378,8 @@ source = smtp.message{
 
 -- finally send it
 r, e = smtp.send{
-    from = "&lt;sicrano@tecgraf.puc-rio.br&gt;",
-    rcpt = "&lt;fulano@tecgraf.puc-rio.br&gt;",
+    from = "&lt;sicrano@example.com&gt;",
+    rcpt = "&lt;fulano@example.com&gt;",
     source = source,
 }
 </pre>

@@ -177,7 +177,10 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
         /* try to get client socket */
         *pa = accept(sock, addr, addr_len);
         /* if return is valid, we are done */
-        if (*pa != SOCK_INVALID) return NULL;
+        if (*pa != SOCK_INVALID) {
+            sock_setnonblocking(pa);
+            return NULL;
+        }
         /* optimization */
         if (timeout == 0) return io_strerror(IO_TIMEOUT);
         /* otherwise find out why we failed */

@@ -32,7 +32,7 @@ local metat = { __index = {} }
 
 function open(server, port)
     local tp = socket.try(tp.connect(server, port or PORT, TIMEOUT))
-    local f = setmetat({ tp = tp }, metat)
+    local f = setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)
     return f 

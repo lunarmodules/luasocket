@@ -4,11 +4,11 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-socket = require("socket")
-http = require("http")
-ftp = require("ftp")
-url = require("url")
-ltn12 = require("ltn12")
+local socket = require("socket")
+local http = require("http")
+local ftp = require("ftp")
+local url = require("url")
+local ltn12 = require("ltn12")
 
 -- formats a number of seconds into human readable form
 function nicetime(s)
@@ -64,11 +64,11 @@ end
 -- creates a new instance of a receive_cb that saves to disk
 -- kind of copied from luasocket's manual callback examples
 function stats(size)
-    local start = socket.time()
+    local start = socket.gettime()
     local got = 0
     return function(chunk)
         -- elapsed time since start
-        local delta = socket.time() - start 
+        local delta = socket.gettime() - start 
         if chunk then 
             -- total bytes received
             got = got + string.len(chunk)    
