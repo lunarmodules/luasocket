@@ -438,6 +438,25 @@ function rebind_test()
 end
 
 ------------------------------------------------------------------------
+function getstats_test()
+    reconnect()
+    local t = 0
+    for i = 1, 25 do
+        local c = math.random(1, 100)
+        remote (string.format ([[
+            str = data:receive(%d)
+            data:send(str)
+        ]], c))
+        c:send(string.rep("a", c))
+        c:receive(c)
+        local r, s, a = c:getstats()
+        assert(r == t, "received count failed")
+        assert(s == t, "sent count failed")
+    end
+    print("ok")
+end
+
+------------------------------------------------------------------------
 test("method registration")
 test_methods(socket.tcp(), {
     "accept",
@@ -498,6 +517,9 @@ test_closed()
 test("accept function: ")
 accept_timeout()
 accept_errors()
+
+test("getstats test")
+getstats_test()
 
 test("character line")
 test_asciiline(1)

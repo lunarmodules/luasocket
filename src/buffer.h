@@ -28,7 +28,7 @@
 /* buffer control structure */
 typedef struct t_buf_ {
     double birthday;        /* throttle support info: creation time, */
-    int sent, received;     /* bytes sent, and bytes received */
+    size_t sent, received;  /* bytes sent, and bytes received */
     p_io io;                /* IO driver used for this buffer */
     p_tm tm;                /* timeout management for this buffer */
 	size_t first, last;     /* index of first and last bytes of stored data */

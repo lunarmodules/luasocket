@@ -1,3 +1,6 @@
+new sample unix domain support
+new sample LPD support
+comprehensive error messages in the default case.
 added getstats to help throttle.
 setup error messages in the default case.
 listen defaults to 32 backlog
@@ -7,5 +10,4 @@ accepted sockets are nonblocking
 new timming functions. higher resolution, no wrap around
 bug fixes in the manual
 getfd missing cast
-added unix domain support example
 fixed local domain socket kludge of name size

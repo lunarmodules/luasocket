@@ -2,20 +2,13 @@
 * Socket compatibilization module for Unix
 * LuaSocket toolkit
 *
-* We are now treating EINTRs, but if an interrupt happens in the middle of 
-* a select function call, we don't guarantee values timeouts anymore.
-* It's not a big deal, since we are not real-time anyways.
-*
-* We also exchanged the order of the calls to send/recv and select.
-* The idea is that the outer loop (whoever is calling sock_send/recv)
-* will call the function again if we didn't time out, so we can
-* call write and then select only if it fails. This moves the penalty
-* to when data is not available, maximizing the bandwidth if data is 
-* always available. 
+* The code is now interrupt-safe.
+* The penalty of calling select to avoid busy-wait is only paid when
+* the I/O call fail in the first place. 
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <string.h>
+#include <string.h> 
 #include <signal.h>
 
 #include "socket.h"
@@ -177,9 +170,9 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
         FD_SET(sock, &fds);
         err = sock_select(sock+1, &fds, NULL, NULL, tm);
         if (err == 0) return io_strerror(IO_TIMEOUT);
-        else if (err < 0) return sock_strerror();
+        else if (err < 0) break; 
     } 
-    return io_strerror(IO_TIMEOUT); /* can't get here */
+    return sock_strerror();
 }
 
 /*-------------------------------------------------------------------------*\
@@ -217,9 +210,10 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
         FD_SET(sock, &fds);
         ret = sock_select(sock+1, NULL, &fds, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        if (ret < 0) return IO_USER;
+        else if (ret < 0) break; 
         /* otherwise, try sending again */
     } 
+    return IO_USER;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -250,8 +244,9 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         FD_SET(sock, &fds);
         ret = sock_select(sock+1, NULL, &fds, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        if (ret < 0) return IO_USER;
+        else if (ret < 0) break;
     } 
+    return IO_USER;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -278,8 +273,9 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
         FD_SET(sock, &fds);
         ret = sock_select(sock+1, &fds, NULL, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        if (ret < 0) return IO_USER;
+        else if (ret < 0) break; 
     } 
+    return IO_USER;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -307,8 +303,9 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         FD_SET(sock, &fds);
         ret = sock_select(sock+1, &fds, NULL, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        if (ret < 0) return IO_USER;
+        else if (ret < 0) break;
     } 
+    return IO_USER;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -333,7 +330,12 @@ void sock_setnonblocking(p_sock ps) {
 * Error translation functions
 \*-------------------------------------------------------------------------*/
 const char *sock_hoststrerror(void) {
-    return hstrerror(h_errno);
+    switch (h_errno) {
+        case HOST_NOT_FOUND:
+            return "host not found";
+        default:
+            return hstrerror(h_errno);
+    }
 }
 
 /* make sure important error messages are standard */
