@@ -91,8 +91,6 @@ int tcp_open(lua_State *L)
     aux_add2group(L, "tcp{master}", "tcp{any}");
     aux_add2group(L, "tcp{client}", "tcp{any}");
     aux_add2group(L, "tcp{server}", "tcp{any}");
-    aux_add2group(L, "tcp{client}", "tcp{client,server}");
-    aux_add2group(L, "tcp{server}", "tcp{client,server}");
     /* define library functions */
     luaL_openlib(L, NULL, func, 0); 
     return 0;
@@ -261,7 +259,7 @@ static int meth_listen(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_shutdown(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client}", 1);
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
     const char *how = luaL_optstring(L, 2, "both");
     switch (how[0]) {
         case 'b':
