@@ -19,6 +19,11 @@
 * Separar as classes em arquivos
 * Retorno de sendto em datagram sockets pode ser refused
 
+colocar um userdata com gc metamethod pra chamar sock_close (WSAClose);
+sources ans sinks are always simple in http and ftp and smtp
+unify backbone of smtp and ftp
+expose encode/decode tables to provide extensibility for mime module
+use coroutines instead of fancy filters
 unify filter and send/receive callback. new sink/source/pump idea.
 get rid of aux_optlstring
 wrap sink and sources with a function that performs the replacement

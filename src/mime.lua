@@ -1,4 +1,4 @@
-if not ltn12 then error('This module requires LTN12') end
+if not ltn12 then error('Requires LTN12 module') end
 -- create mime namespace
 mime = mime or {}
 -- make all module globals fall into mime namespace

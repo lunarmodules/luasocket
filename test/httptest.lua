@@ -12,7 +12,7 @@ socket.http.TIMEOUT = 5
 
 local t = socket.time()
 
-host = host or "diego-interface2.student.dyn.CS.Princeton.EDU"
+host = host or "diego.student.princeton.edu"
 proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
@@ -71,8 +71,8 @@ local check_request = function(request, expect, ignore)
     check_result(response, expect, ignore)
 end
 
-local check_request_cb = function(request, response, expect, ignore)
-	local response = socket.http.request_cb(request, response)
+local check_request_cb = function(request, expect, ignore)
+	local response = socket.http.request_cb(request)
     check_result(response, expect, ignore)
 end
 
@@ -83,7 +83,7 @@ local back, h, c, e = socket.http.get("http://" .. host .. forth)
 if not back then fail(e) end
 back = socket.url.parse(back)
 if similar(back.query, "this+is+the+query+string") then print("ok")
-else fail() end
+else fail(back.query) end
 
 ------------------------------------------------------------------------
 io.write("testing query string correctness: ")
@@ -168,31 +168,28 @@ back = socket.http.post("http://" .. host .. cgiprefix .. "/cat", index)
 check(back == index)
 
 ------------------------------------------------------------------------
-io.write("testing send.file and receive.file callbacks: ")
+io.write("testing ltn12.(sink|source).file: ")
 request = {
 	url = "http://" .. host .. cgiprefix .. "/cat",
 	method = "POST",
-	body_cb = socket.callback.send.file(io.open(index_file, "r")),
+	source = ltn12.source.file(io.open(index_file, "r")),
+    sink = ltn12.sink.file(io.open(index_file .. "-back", "w")),
     headers = { ["content-length"] = string.len(index) }
-}
-response = {
-    body_cb = socket.callback.receive.file(io.open(index_file .. "-back", "w"))
 }
 expect = {
 	code = 200
 }
 ignore = {
-    body_cb = 1,
 	status = 1,
 	headers = 1
 }
-check_request_cb(request, response, expect, ignore)
+check_request_cb(request, expect, ignore)
 back = readfile(index_file .. "-back")
 check(back == index)
 os.remove(index_file .. "-back")
 
 ------------------------------------------------------------------------
-io.write("testing send.chain and receive.chain callbacks: ")
+io.write("testing ltn12.(sink|source).chain and mime.(encode|decode): ")
 
 local function b64length(len)
     local a = math.ceil(len/3)*4 
@@ -200,26 +197,26 @@ local function b64length(len)
     return a + l*2
 end
 
-local req_cb = socket.callback.send.chain(
-    socket.callback.send.file(io.open(index_file, "r")),
-    socket.mime.chain(
-        socket.mime.encode("base64"),
-        socket.mime.wrap("base64")
+local source = ltn12.source.chain(
+    ltn12.source.file(io.open(index_file, "r")),
+    ltn12.filter.chain(
+        mime.encode("base64"),
+        mime.wrap("base64")
     )
 )
 
-local resp_cb = socket.callback.receive.chain(
-    socket.mime.decode("base64"),
-    socket.callback.receive.file(io.open(index_file .. "-back", "w"))
+local sink = ltn12.sink.chain(
+    mime.decode("base64"),
+    ltn12.sink.file(io.open(index_file .. "-back", "w"))
 )
 
 request = {
 	url = "http://" .. host .. cgiprefix .. "/cat",
 	method = "POST",
-	body_cb = req_cb,
+	source = source,
+    sink = sink,
     headers = { ["content-length"] = b64length(string.len(index)) }
 }
-response = { body_cb = resp_cb }
 expect = {
 	code = 200
 }
@@ -228,7 +225,7 @@ ignore = {
 	status = 1,
 	headers = 1
 }
-check_request_cb(request, response, expect, ignore)
+check_request_cb(request, expect, ignore)
 back = readfile(index_file .. "-back")
 check(back == index)
 os.remove(index_file .. "-back")
@@ -362,7 +359,7 @@ io.write("testing manual basic auth: ")
 request = {
 	url = "http://" .. host .. prefix .. "/auth/index.html",
 	headers = {
-		authorization = "Basic " .. (socket.mime.b64("luasocket:password"))
+		authorization = "Basic " .. (mime.b64("luasocket:password"))
 	}
 }
 expect = {

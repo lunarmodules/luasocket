@@ -10,12 +10,11 @@ if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME] 
 if not socket then error('module requires LuaSocket') end
--- create smtp namespace inside LuaSocket namespace
-local http = socket.http or {}
-socket.http = http
--- make all module globals fall into smtp namespace
-setmetatable(http, { __index = _G })
-setfenv(1, http)
+-- create namespace inside LuaSocket namespace
+socket.http  = socket.http or {}
+-- make all module globals fall into namespace
+setmetatable(socket.http, { __index = _G })
+setfenv(1, socket.http)
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -27,7 +26,18 @@ PORT = 80
 -- user agent field sent in request
 USERAGENT = socket.version
 -- block size used in transfers
-BLOCKSIZE = 8192
+BLOCKSIZE = 2048
+
+-----------------------------------------------------------------------------
+-- Function return value selectors
+-----------------------------------------------------------------------------
+local function second(a, b)
+    return b
+end
+
+local function third(a, b, c)
+    return c
+end
 
 -----------------------------------------------------------------------------
 -- Tries to get a pattern from the server and closes socket on error
@@ -47,7 +57,7 @@ end
 -----------------------------------------------------------------------------
 -- Tries to send data to the server and closes socket on error
 --   sock: socket connected to the server
---   data: data to send
+--   ...: data to send
 -- Returns
 --   err: error message if any, nil if successfull
 -----------------------------------------------------------------------------
@@ -68,11 +78,9 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 local function receive_status(sock)
-    local line, err
-    line, err = try_receiving(sock)
+    local line, err = try_receiving(sock)
     if not err then 
-        local code, _
-        _, _, code = string.find(line, "HTTP/%d*%.%d* (%d%d%d)")
+        local code = third(string.find(line, "HTTP/%d*%.%d* (%d%d%d)"))
         return tonumber(code), line
     else return nil, nil, err end
 end
@@ -121,7 +129,7 @@ local function receive_headers(sock, headers)
 end
 
 -----------------------------------------------------------------------------
--- Aborts a receive callback
+-- Aborts a sink with an error message
 -- Input
 --   cb: callback function
 --   err: error message to pass to callback
@@ -129,8 +137,8 @@ end
 --   callback return or if nil err
 -----------------------------------------------------------------------------
 local function abort(cb, err) 
-    local go, err_or_f = cb(nil, err)
-    return err_or_f or err
+    local go, cb_err = cb(nil, err)
+    return cb_err or err
 end
 
 -----------------------------------------------------------------------------
@@ -138,41 +146,36 @@ end
 -- Input
 --   sock: socket connected to the server
 --   headers: header set in which to include trailer headers
---   receive_cb: function to receive chunks
+--   sink: response message body sink
 -- Returns
 --   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local function receive_body_bychunks(sock, headers, receive_cb)
-    local chunk, size, line, err, go, err_or_f, _
+local function receive_body_bychunks(sock, headers, sink)
+    local chunk, size, line, err, go
     while 1 do
         -- get chunk size, skip extention
         line, err = try_receiving(sock)
-        if err then return abort(receive_cb, err) end
+        if err then return abort(sink, err) end
         size = tonumber(string.gsub(line, ";.*", ""), 16)
-        if not size then return abort(receive_cb, "invalid chunk size") end
+        if not size then return abort(sink, "invalid chunk size") end
         -- was it the last chunk?
         if size <= 0 then break end
         -- get chunk
         chunk, err = try_receiving(sock, size) 
-        if err then return abort(receive_cb, err) end
+        if err then return abort(sink, err) end
         -- pass chunk to callback
-        go, err_or_f = receive_cb(chunk) 
-        -- see if callback needs to be replaced
-        receive_cb = err_or_f or receive_cb
+        go, err = sink(chunk) 
         -- see if callback aborted
-        if not go then return err_or_f or "aborted by callback" end
+        if not go then return err or "aborted by callback" end
         -- skip CRLF on end of chunk
-        _, err = try_receiving(sock)
-        if err then return abort(receive_cb, err) end
+        err = second(try_receiving(sock))
+        if err then return abort(sink, err) end
     end
-    -- the server should not send trailer  headers because we didn't send a
-    -- header informing  it we know  how to deal with  them. we do not risk
-    -- being caught unprepaired.
-    _, err = receive_headers(sock, headers)
-    if err then return abort(receive_cb, err) end
+    -- servers shouldn't send trailer headers, but who trusts them?
+    err = second(receive_headers(sock, headers))
+    if err then return abort(sink, err) end
     -- let callback know we are done
-    _, err_or_f = receive_cb("")
-    return err_or_f
+    return second(sink(nil))
 end
 
 -----------------------------------------------------------------------------
@@ -180,94 +183,84 @@ end
 -- Input
 --   sock: socket connected to the server
 --   length: message body length
---   receive_cb: function to receive chunks
+--   sink: response message body sink
 -- Returns
 --   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local function receive_body_bylength(sock, length, receive_cb)
+local function receive_body_bylength(sock, length, sink)
     while length > 0 do
         local size = math.min(BLOCKSIZE, length)
         local chunk, err = sock:receive(size)
-        local go, err_or_f = receive_cb(chunk)
+        local go, cb_err = sink(chunk)
         length = length - string.len(chunk)
         -- see if callback aborted
-        if not go then return err_or_f or "aborted by callback" end
-        -- see if callback needs to be replaced
-        receive_cb = err_or_f or receive_cb
+        if not go then return cb_err or "aborted by callback" end
         -- see if there was an error 
-        if err and length > 0 then return abort(receive_cb, err) end
+        if err and length > 0 then return abort(sink, err) end
     end
-    local _, err_or_f = receive_cb("")
-    return err_or_f
+    return second(sink(nil))
 end
 
 -----------------------------------------------------------------------------
--- Receives a message body by content-length
+-- Receives a message body until the conection is closed
 -- Input
 --   sock: socket connected to the server
---   receive_cb: function to receive chunks
+--   sink: response message body sink
 -- Returns
 --   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local function receive_body_untilclosed(sock, receive_cb)
+local function receive_body_untilclosed(sock, sink)
     while 1 do
         local chunk, err = sock:receive(BLOCKSIZE)
-        local go, err_or_f = receive_cb(chunk)
+        local go, cb_err = sink(chunk)
         -- see if callback aborted
-        if not go then return err_or_f or "aborted by callback" end
-        -- see if callback needs to be replaced
-        receive_cb = err_or_f or receive_cb
+        if not go then return cb_err or "aborted by callback" end
         -- see if we are done
-        if err == "closed" then
-            if chunk ~= "" then
-                go, err_or_f = receive_cb("")
-                return err_or_f
-            end
-        end
+        if err == "closed" then return chunk and second(sink(nil)) end
         -- see if there was an error
-        if err then return abort(receive_cb, err) end
+        if err then return abort(sink, err) end
     end
 end
 
 -----------------------------------------------------------------------------
--- Receives HTTP response body
+-- Receives the HTTP response body
 -- Input
 --   sock: socket connected to the server
 --   headers: response header fields
---   receive_cb: function to receive chunks
+--   sink: response message body sink
 -- Returns
 --    nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local function receive_body(sock, headers, receive_cb)
+local function receive_body(sock, headers, sink)
+    -- make sure sink is not fancy
+    sink = ltn12.sink.simplify(sink)
     local te = headers["transfer-encoding"]
     if te and te ~= "identity" then 
         -- get by chunked transfer-coding of message body
-        return receive_body_bychunks(sock, headers, receive_cb)
+        return receive_body_bychunks(sock, headers, sink)
     elseif tonumber(headers["content-length"]) then
         -- get by content-length
         local length = tonumber(headers["content-length"])
-        return receive_body_bylength(sock, length, receive_cb)
+        return receive_body_bylength(sock, length, sink)
     else 
         -- get it all until connection closes
-        return receive_body_untilclosed(sock, receive_cb) 
+        return receive_body_untilclosed(sock, sink) 
     end
 end
 
 -----------------------------------------------------------------------------
--- Sends data comming from a callback
+-- Sends the HTTP request message body in chunks
 -- Input
 --   data: data connection
---   send_cb: callback to produce file contents
+--   source: request message body source
 -- Returns
 --   nil if successfull, or an error message in case of error
 -----------------------------------------------------------------------------
-local function send_body_bychunks(data, send_cb)
+local function send_body_bychunks(data, source)
     while 1 do
-        local chunk, err_or_f = send_cb()
+        local chunk, cb_err = source()
         -- check if callback aborted
-        if not chunk then return err_or_f or "aborted by callback" end
-        -- check if callback should be replaced
-        send_cb = err_or_f or send_cb
+        if not chunk then return cb_err or "aborted by callback" end
         -- if we are done, send last-chunk
         if chunk == "" then return try_sending(data, "0\r\n\r\n") end
         -- else send middle chunk
@@ -281,22 +274,18 @@ local function send_body_bychunks(data, send_cb)
 end
 
 -----------------------------------------------------------------------------
--- Sends data comming from a callback
+-- Sends the HTTP request message body
 -- Input
 --   data: data connection
---   send_cb: callback to produce body contents
+--   source: request message body source
 -- Returns
 --   nil if successfull, or an error message in case of error
 -----------------------------------------------------------------------------
-local function send_body_bylength(data, send_cb)
+local function send_body(data, source)
     while 1 do
-        local chunk, err_or_f = send_cb()
-        -- check if callback aborted
-        if not chunk then return err_or_f or "aborted by callback" end
-        -- check if callback should be replaced
-        send_cb = err_or_f or send_cb
+        local chunk, cb_err = source()
         -- check if callback is done
-        if chunk == "" then return end
+        if not chunk then return cb_err end
         -- send data
         local err = try_sending(data, chunk)
         if err then return err end
@@ -304,10 +293,10 @@ local function send_body_bylength(data, send_cb)
 end
 
 -----------------------------------------------------------------------------
--- Sends mime headers
+-- Sends request headers
 -- Input
 --   sock: server socket
---   headers: table with mime headers to be sent
+--   headers: table with headers to be sent
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
@@ -330,27 +319,29 @@ end
 --   method: request method to  be used
 --   uri: request uri
 --   headers: request headers to be sent
---   body_cb: callback to send request message body
+--   source: request message body source
 -- Returns
 --   err: nil in case of success, error message otherwise
 -----------------------------------------------------------------------------
-local function send_request(sock, method, uri, headers, body_cb)
+local function send_request(sock, method, uri, headers, source)
     local chunk, size, done, err
     -- send request line
     err = try_sending(sock, method .. " " .. uri .. " HTTP/1.1\r\n")
     if err then return err end
-    if body_cb and not headers["content-length"] then
+    if source and not headers["content-length"] then
         headers["transfer-encoding"] = "chunked"   
     end
     -- send request headers 
     err = send_headers(sock, headers)
     if err then return err end
     -- send request message body, if any
-    if body_cb then 
-        if not headers["content-length"] then
-            return send_body_bychunks(sock, body_cb) 
+    if source then 
+        -- make sure source is not fancy
+        source = ltn12.source.simplify(source)
+        if headers["content-length"] then
+            return send_body(sock, source) 
         else
-            return send_body_bylength(sock, body_cb) 
+            return send_body_bychunks(sock, source) 
         end
     end
 end
@@ -415,23 +406,23 @@ end
 -- Input
 --   reqt: a table with the original request information
 --   parsed: parsed request URL
---   respt: a table with the server response information
 -- Returns
 --   respt: result of target authorization
 -----------------------------------------------------------------------------
-local function authorize(reqt, parsed, respt)
+local function authorize(reqt, parsed)
     reqt.headers["authorization"] = "Basic " .. 
-        (socket.mime.b64(parsed.user .. ":" .. parsed.password))
+        (mime.b64(parsed.user .. ":" .. parsed.password))
     local autht = {
         nredirects = reqt.nredirects,
         method = reqt.method,
         url = reqt.url,
-        body_cb = reqt.body_cb,
+        source = reqt.source,
+        sink = reqt.sink,
         headers = reqt.headers,
         timeout = reqt.timeout,
         proxy = reqt.proxy,
     }
-    return request_cb(autht, respt)
+    return request_cb(autht)
 end
 
 -----------------------------------------------------------------------------
@@ -443,8 +434,8 @@ end
 --   1 if we should redirect, nil otherwise
 -----------------------------------------------------------------------------
 local function should_redirect(reqt, respt)
-    return (reqt.redirect ~= false) and 
-           (respt.code == 301 or respt.code == 302) and 
+    return (reqt.redirect ~= false) and
+           (respt.code == 301 or respt.code == 302) and
            (reqt.method == "GET" or reqt.method == "HEAD") and
             not (reqt.nredirects and reqt.nredirects >= 5)
 end
@@ -453,8 +444,7 @@ end
 -- Returns the result of a request following a server redirect message.
 -- Input
 --   reqt: a table with the original request information
---   respt: a table with the following fields:
---     body_cb: response method body receive-callback
+--   respt: response table of previous attempt
 -- Returns
 --   respt: result of target redirection
 -----------------------------------------------------------------------------
@@ -467,12 +457,13 @@ local function redirect(reqt, respt)
         -- the RFC says the redirect URL has to be absolute, but some
         -- servers do not respect that 
         url = socket.url.absolute(reqt.url, respt.headers["location"]),
-        body_cb = reqt.body_cb,
+        source = reqt.source,
+        sink = reqt.sink,
         headers = reqt.headers,
         timeout = reqt.timeout,
         proxy = reqt.proxy
     }
-    respt = request_cb(redirt, respt)
+    respt = request_cb(redirt)
     -- we pass the location header as a clue we tried to redirect
     if respt.headers then respt.headers.location = redirt.url end
     return respt
@@ -562,10 +553,9 @@ end
 --     url: target uniform resource locator
 --     user, password: authentication information
 --     headers: request headers to send, or nil if none
---     body_cb: request message body send-callback, or nil if none
+--     source: request message body source, or nil if none
+--     sink: response message body sink
 --     redirect: should we refrain from following a server redirect message?
---   respt: a table with the following fields:
---     body_cb: response method body receive-callback
 -- Returns
 --   respt: a table with the following fields: 
 --     headers: response header fields received, or nil if failed
@@ -573,7 +563,7 @@ end
 --     code: server status code, or nil if failed
 --     error: error message, or nil if successfull
 -----------------------------------------------------------------------------
-function request_cb(reqt, respt)
+function request_cb(reqt)
     local sock, ret
     local parsed = socket.url.parse(reqt.url, {
         host = "",
@@ -581,6 +571,7 @@ function request_cb(reqt, respt)
         path ="/",
 		scheme = "http"
     })
+    local respt = {}
 	if parsed.scheme ~= "http" then
 		respt.error = string.format("unknown scheme '%s'", parsed.scheme)
 		return respt
@@ -597,7 +588,7 @@ function request_cb(reqt, respt)
     if not sock then return respt end
     -- send request message
     respt.error = send_request(sock, reqt.method, 
-        request_uri(reqt, parsed), reqt.headers, reqt.body_cb)
+        request_uri(reqt, parsed), reqt.headers, reqt.source)
     if respt.error then 
         sock:close()
         return respt 
@@ -619,18 +610,18 @@ function request_cb(reqt, respt)
     -- decide what to do based on request and response parameters
     if should_redirect(reqt, respt) then
         -- drop the body
-        receive_body(sock, respt.headers, function (c, e) return 1 end)
+        receive_body(sock, respt.headers, ltn12.sink.null())
         -- we are done with this connection
         sock:close()
         return redirect(reqt, respt)
     elseif should_authorize(reqt, parsed, respt) then
         -- drop the body
-        receive_body(sock, respt.headers, function (c, e) return 1 end)
+        receive_body(sock, respt.headers, ltn12.sink.null())
         -- we are done with this connection
         sock:close()
         return authorize(reqt, parsed, respt)
     elseif should_receive_body(reqt, respt) then
-        respt.error = receive_body(sock, respt.headers, respt.body_cb)
+        respt.error = receive_body(sock, respt.headers, reqt.sink)
         if respt.error then return respt end
         sock:close()
         return respt
@@ -658,13 +649,11 @@ end
 --     error: error message if any
 -----------------------------------------------------------------------------
 function request(reqt)
-    local respt = {}
-    reqt.body_cb = socket.callback.send.string(reqt.body) 
-    local concat = socket.concat.create()
-    respt.body_cb = socket.callback.receive.concat(concat)
-    respt = request_cb(reqt, respt)
-    respt.body = concat:getresult()
-    respt.body_cb = nil
+    reqt.source = reqt.body and ltn12.source.string(reqt.body) 
+    local t = {}
+    reqt.sink = ltn12.sink.table(t)
+    local respt = request_cb(reqt)
+    if table.getn(t) > 0 then respt.body = table.concat(t) end
     return respt
 end
 
@@ -713,4 +702,4 @@ function post(url_or_request, body)
     return respt.body, respt.headers, respt.code, respt.error
 end
 
-return http
+return socket.http

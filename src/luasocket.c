@@ -74,22 +74,16 @@ static int mod_open(lua_State *L, const luaL_reg *mod)
 #ifdef LUASOCKET_COMPILED
 #include "ltn12.lch"
 #include "auxiliar.lch"
-#include "concat.lch"
 #include "url.lch"
-#include "callback.lch"
 #include "mime.lch"
 #include "smtp.lch"
-#include "ftp.lch"
 #include "http.lch"
 #else
     lua_dofile(L, "ltn12.lua");
     lua_dofile(L, "auxiliar.lua");
-    lua_dofile(L, "concat.lua");
     lua_dofile(L, "url.lua");
-    lua_dofile(L, "callback.lua");
     lua_dofile(L, "mime.lua");
     lua_dofile(L, "smtp.lua");
-    lua_dofile(L, "ftp.lua");
     lua_dofile(L, "http.lua");
 #endif
     return 0;

@@ -269,7 +269,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
         fd_set fds;
         int ret;
         *got = 0;
-        if (taken == 0) return IO_CLOSED;
+        if (taken == 0 || WSAGetLastError() != WSAEWOULDBLOCK) return IO_CLOSED;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(0, &fds, NULL, NULL, timeout);
@@ -295,7 +295,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         fd_set fds;
         int ret;
         *got = 0;
-        if (taken == 0) return IO_CLOSED;
+        if (taken == 0 || WSAGetLastError() != WSAEWOULDBLOCK) return IO_CLOSED;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(0, &fds, NULL, NULL, timeout);

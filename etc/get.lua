@@ -80,39 +80,31 @@ function stats(size)
     end
 end
 
--- downloads a file using the ftp protocol
-function getbyftp(url, file)
-    local save = socket.callback.receive.file(file or io.stdout)
-    if file then 
-        save = socket.callback.receive.chain(stats(gethttpsize(url)), save)
-    end
-    local err = socket.ftp.get_cb {
-        url = url,
-        content_cb = save,
-        type = "i"
-    }
-	if err then print(err) end
+-- determines the size of a http file
+function gethttpsize(url)
+	local respt = socket.http.request {method = "HEAD", url = url}
+	if respt.code == 200 then
+		return tonumber(respt.headers["content-length"])
+	end
 end
 
 -- downloads a file using the http protocol
 function getbyhttp(url, file)
-    local save = socket.callback.receive.file(file or io.stdout)
-    if file then 
-        save = socket.callback.receive.chain(stats(gethttpsize(url)), save)
-    end
-    local response = socket.http.request_cb({url = url}, {body_cb = save})
-	if response.code ~= 200 then print(response.status or response.error) end
+    local save = ltn12.sink.file(file or io.stdout)
+    -- only print feedback if output is not stdout
+    if file then save = ltn12.sink.chain(stats(gethttpsize(url)), save) end
+    local respt = socket.http.request_cb({url = url, sink = save})
+	if respt.code ~= 200 then print(respt.status or respt.error) end
 end
 
--- determines the size of a http file
-function gethttpsize(url)
-	local response = socket.http.request {
-		method = "HEAD",
- 		url = url
-	}
-	if response.code == 200 then
-		return tonumber(response.headers["content-length"])
-	end
+-- downloads a file using the ftp protocol
+function getbyftp(url, file)
+    local save = ltn12.sink.file(file or io.stdout)
+    -- only print feedback if output is not stdout
+    -- and we don't know how big the file is
+    if file then save = ltn12.sink.chain(stats(), save) end
+    local ret, err = socket.ftp.get_cb {url = url, sink = save, type = "i"}
+	if err then print(err) end
 end
 
 -- determines the scheme 
@@ -130,7 +122,6 @@ function get(url, name)
 	if scheme == "ftp" then getbyftp(url, fout)
 	elseif scheme == "http" then getbyhttp(url, fout)
 	else print("unknown scheme" .. scheme) end
-    if name then fout:close() end
 end
 
 -- main program

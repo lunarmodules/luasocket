@@ -19,7 +19,7 @@ DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 SERVER = "localhost"
 
 function stuff()
-    return socket.cicle(dot, 2)
+    return ltn12.filter.cycle(dot, 2)
 end
 
 -- tries to get a pattern from the server and closes socket on error

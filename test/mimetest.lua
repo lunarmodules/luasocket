@@ -31,18 +31,27 @@ local mao = [[
     assim, nem tudo o que dava exprimia grande confiança.
 ]]
 
+local function random(handle, io_err)
+    if handle then
+        return function()
+            local chunk = handle:read(math.random(0, 1024))
+            if not chunk then handle:close() end
+            return chunk
+        end
+    else source.empty(io_err or "unable to open file") end
+end
+
+local what = nil
 local function transform(input, output, filter)
-    local fi, err = io.open(input, "rb")
-    if not fi then fail(err) end
-    local fo, err = io.open(output, "wb")
-    if not fo then fail(err) end
-    while 1 do 
-        local chunk = fi:read(math.random(0, 1024))
-        fo:write(filter(chunk))
-        if not chunk then break end
-    end 
-    fi:close()
-    fo:close()
+    local source = random(io.open(input, "rb"))
+    local sink = ltn12.sink.file(io.open(output, "wb"))
+    if what then 
+        sink = ltn12.sink.chain(filter, sink)
+    else
+        source = ltn12.source.chain(source, filter)
+    end
+    --what = not what
+    ltn12.pump(source, sink)
 end
 
 local function encode_qptest(mode)

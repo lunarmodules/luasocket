@@ -1,6 +1,6 @@
--- create code namespace inside LuaSocket namespace
+-- create module namespace 
 ltn12 = ltn12 or {}
--- make all module globals fall into mime namespace
+-- make all globals fall into ltn12 namespace
 setmetatable(ltn12, { __index = _G })
 setfenv(1, ltn12)
 
@@ -11,6 +11,14 @@ sink = {}
 
 -- 2048 seems to be better in windows...
 BLOCKSIZE = 2048
+
+local function second(a, b)
+    return b
+end
+
+local function skip(a, b, c)
+    return b, c
+end
 
 -- returns a high level filter that cycles a cycles a low-level filter
 function filter.cycle(low, ctx, extra)
@@ -24,9 +32,7 @@ end
 -- chains two filters together
 local function chain2(f1, f2)
     return function(chunk)
-        local ret = f2(f1(chunk))
-        if chunk then return ret
-        else return ret .. f2() end
+        return f2(f1(chunk))
     end
 end
 
@@ -83,7 +89,6 @@ end
 -- creates rewindable source
 function source.rewind(src)
     local t = {}
-    src = source.simplify(src)
     return function(chunk)
         if not chunk then
             chunk = table.remove(t)
@@ -97,13 +102,38 @@ end
 
 -- chains a source with a filter
 function source.chain(src, f)
-    src = source.simplify(src)
-    local chain = function()
-        local chunk, err = src()
-        if not chunk then return f(nil), source.empty(err)
-        else return f(chunk) end
+    local co = coroutine.create(function()
+        while true do 
+            local chunk, err = src()
+            local filtered = f(chunk)
+            local done = chunk and ""
+            while true do
+                coroutine.yield(filtered)
+                if filtered == done then break end
+                filtered = f(done)
+            end
+            if not chunk then return nil, err end
+        end
+    end)
+    return function()
+        return skip(coroutine.resume(co))
     end
-    return source.simplify(chain)
+end
+
+-- creates a source that produces contents of several files one after the
+-- other, as if they were concatenated
+function source.cat(...)
+    local co = coroutine.create(function()
+        local i = 1
+        while i <= table.getn(arg) do 
+            local chunk = arg[i]:read(2048)
+            if chunk then coroutine.yield(chunk)
+            else i = i + 1 end
+        end
+    end)
+    return source.simplify(function()
+        return second(coroutine.resume(co))
+    end)
 end
 
 -- creates a sink that stores into a table
@@ -150,22 +180,25 @@ end
 
 -- chains a sink with a filter 
 function sink.chain(f, snk)
-    snk = sink.simplify(snk)
     return function(chunk, err)
-        local r, e = snk(f(chunk))
-        if not r then return nil, e end
-        if not chunk then return snk(nil, err) end
-        return 1
+        local filtered = f(chunk)
+        local done = chunk and ""
+        while true do
+            local ret, snkerr = snk(filtered, err)
+            if not ret then return nil, snkerr end
+            if filtered == done then return 1 end
+            filtered = f(done)
+        end
     end
 end
 
 -- pumps all data from a source to a sink
 function pump(src, snk)
-    snk = sink.simplify(snk)
-    for chunk, src_err in source.simplify(src) do
+    while true do
+        local chunk, src_err = src()
         local ret, snk_err = snk(chunk, src_err)
-        if not chunk or not ret then 
-            return not src_err and not snk_err, src_err or snk_err 
+        if not chunk or not ret then
+            return not src_err and not snk_err, src_err or snk_err
         end
     end
 end
