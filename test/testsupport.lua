@@ -1,5 +1,5 @@
 function readfile(name)
-	local f = io.open(name, "r")
+	local f = io.open(name, "rb")
 	if not f then return nil end
 	local s = f:read("*a")
 	f:close()
