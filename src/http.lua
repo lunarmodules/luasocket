@@ -156,8 +156,8 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
             go, uerr = receive_cb(nil, err)
             return uerr or err
         end
-		-- was it the last chunk?
-		if size <= 0 then break end
+        -- was it the last chunk?
+        if size <= 0 then break end
         -- get chunk
         chunk, err = %Private.try_receive(sock, size) 
         if err then 
@@ -177,14 +177,14 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
             return uerr or err
         end
     end
-	-- the server should not send trailer  headers because we didn't send a
-	-- header informing  it we know  how to deal with  them. we do not risk
-	-- being caught unprepaired.
-	headers, err = %Private.receive_headers(sock, headers)
-	if err then
+    -- the server should not send trailer  headers because we didn't send a
+    -- header informing  it we know  how to deal with  them. we do not risk
+    -- being caught unprepaired.
+    headers, err = %Private.receive_headers(sock, headers)
+    if err then
         go, uerr = receive_cb(nil, err)
         return uerr or err
-	end
+    end
     -- let callback know we are done
     go, uerr = receive_cb("")
     return uerr
@@ -257,7 +257,7 @@ end
 --    nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
 function Private.receive_body(sock, headers, receive_cb)
-	local te = headers["transfer-encoding"]
+    local te = headers["transfer-encoding"]
     if te and te ~= "identity" then 
         -- get by chunked transfer-coding of message body
         return %Private.receivebody_bychunks(sock, headers, receive_cb)
@@ -436,7 +436,7 @@ function Private.authorize(request, parsed, response)
     request.headers["authorization"] = "Basic " .. 
         Code.base64(parsed.user .. ":" .. parsed.password)
     local authorize = {
-		redirects = request.redirects,
+        redirects = request.redirects,
         method = request.method,
         url = request.url,
         body_cb = request.body_cb,
@@ -540,10 +540,10 @@ end
 -----------------------------------------------------------------------------
 function Public.request_cb(request, response)
     local parsed = URL.parse_url(request.url, {
-		host = "",
-		port = %Public.PORT, 
-		path ="/"
-	})
+        host = "",
+        port = %Public.PORT, 
+        path ="/"
+    })
     -- explicit authentication info overrides that given by the URL
     parsed.user = request.user or parsed.user
     parsed.password = request.password or parsed.password
@@ -585,6 +585,7 @@ function Public.request_cb(request, response)
         return response
     end
     sock:close()
+    return response
 end
 
 -----------------------------------------------------------------------------
@@ -637,8 +638,8 @@ end
 --   error: error message if any
 -----------------------------------------------------------------------------
 function Public.get(url_or_request)
-	local request = %Private.build_request(url_or_request)
-	request.method = "GET"
+    local request = %Private.build_request(url_or_request)
+    request.method = "GET"
     local response = %Public.request(request)
     return response.body, response.headers, 
         response.code, response.error
@@ -660,9 +661,9 @@ end
 --   error: error message, or nil if successfull
 -----------------------------------------------------------------------------
 function Public.post(url_or_request, body)
-	local request = %Private.build_request(url_or_request)
-	request.method = "POST"
-	request.body = request.body or body
+    local request = %Private.build_request(url_or_request)
+    request.method = "POST"
+    request.body = request.body or body
     local response = %Public.request(request)
     return response.body, response.headers, 
         response.code, response.error
