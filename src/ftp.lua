@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------
--- Simple FTP support for the Lua language using the LuaSocket 1.2 toolkit.
+-- Simple FTP support for the Lua language using the LuaSocket 1.3b toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
 -- Conforming to: RFC 959
