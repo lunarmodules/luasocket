@@ -1,3 +1,4 @@
+require"url"
 dofile("testsupport.lua")
 
 local check_build_url = function(parsed)

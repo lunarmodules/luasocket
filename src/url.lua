@@ -5,13 +5,11 @@
 -- Conforming to: RFC 2396, LTN7
 -- RCS ID: $Id$
 ----------------------------------------------------------------------------
-
 -- make sure LuaSocket is loaded
-if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
+require"luasocket"
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME]
-if not socket then error('module requires LuaSocket') end
--- create smtp namespace inside LuaSocket namespace
+-- create url namespace inside LuaSocket namespace
 local url = socket.url or {}
 socket.url = url
 -- make all module globals fall into smtp namespace

@@ -6,10 +6,9 @@
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 -- make sure LuaSocket is loaded
-if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
+require("luasocket")
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME] 
-if not socket then error('module requires LuaSocket') end
 
 -- require other modules
 require("ltn12")

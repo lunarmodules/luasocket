@@ -35,6 +35,9 @@
 * Create a passive mode option for the FTP (good for firewall).
 * Modules should return their namespace table in the end of the chunk.
 
+
+get.lua precisa de ftp.get com url e sink
+make sure filter.chain fails gracefully.
 ajeitar o manual sobre select, mais liberal agora
 conjunto associativo
 

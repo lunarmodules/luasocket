@@ -6,10 +6,11 @@
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 -- make sure LuaSocket is loaded
-if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
+require"luasocket"
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME] 
-if not socket then error('module requires LuaSocket') end
+
+require"ltn12"
 
 -- create smtp namespace inside LuaSocket namespace
 local smtp = socket.smtp or {}
@@ -17,6 +18,7 @@ socket.smtp = smtp
 -- make all module globals fall into smtp namespace
 setmetatable(smtp, { __index = _G })
 setfenv(1, smtp)
+
 
 -- default server used to send e-mails
 SERVER = "localhost"

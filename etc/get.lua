@@ -4,6 +4,10 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
+require"http"
+require"ftp"
+require"url"
+
 -- formats a number of seconds into human readable form
 function nicetime(s)
 	local l = "s"

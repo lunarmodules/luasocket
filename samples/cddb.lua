@@ -1,4 +1,3 @@
-require"luasocket"
 require"http"
 
 if not arg or not arg[1] or not arg[2] then
