@@ -20,6 +20,7 @@ DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default time zone (means we don't know)
 ZONE = "-0000"
 
+
 local function shift(a, b, c)
     return b, c
 end
@@ -29,31 +30,66 @@ function stuff()
     return ltn12.filter.cycle(dot, 2)
 end
 
--- send message or throw an exception
-local function send_p(control, mailt) 
-    socket.try(control:check("2.."))
-    socket.try(control:command("EHLO", mailt.domain or DOMAIN))
-    socket.try(control:check("2.."))
-    socket.try(control:command("MAIL", "FROM:" .. mailt.from))
-    socket.try(control:check("2.."))
-    if type(mailt.rcpt) == "table" then
-        for i,v in ipairs(mailt.rcpt) do
-            socket.try(control:command("RCPT", "TO:" .. v))
-            socket.try(control:check("2.."))
-        end
-    else
-        socket.try(control:command("RCPT", "TO:" .. mailt.rcpt))
-        socket.try(control:check("2.."))
-    end
-    socket.try(control:command("DATA"))
-    socket.try(control:check("3.."))
-    socket.try(control:source(ltn12.source.chain(mailt.source, stuff())))
-    socket.try(control:send("\r\n.\r\n"))
-    socket.try(control:check("2.."))
-    socket.try(control:command("QUIT"))
-    socket.try(control:check("2.."))
+---------------------------------------------------------------------------
+-- Low level SMTP API
+-----------------------------------------------------------------------------
+local metat = { __index = {} }
+
+function metat.__index:greet(domain)
+    socket.try(self.tp:check("2.."))
+    socket.try(self.tp:command("EHLO", domain or DOMAIN))
+    return socket.try(self.tp:check("2.."))
+end 
+
+function metat.__index:mail(from)
+    socket.try(self.tp:command("MAIL", "FROM:" .. from))
+    return socket.try(self.tp:check("2.."))
+end 
+
+function metat.__index:rcpt(to)
+    socket.try(self.tp:command("RCPT", "TO:" .. to))
+    return socket.try(self.tp:check("2.."))
 end
 
+function metat.__index:data(src)
+    socket.try(self.tp:command("DATA"))
+    socket.try(self.tp:check("3.."))
+    socket.try(self.tp:source(src))
+    socket.try(self.tp:send("\r\n.\r\n"))
+    return socket.try(self.tp:check("2.."))
+end
+
+function metat.__index:quit()
+    socket.try(self.tp:command("QUIT"))
+    return socket.try(self.tp:check("2.."))
+end
+
+function metat.__index:close()
+    return socket.try(self.tp:close())
+end
+
+-- send message or throw an exception
+function metat.__index:send(mailt) 
+    self:mail(mailt.from)
+    if type(mailt.rcpt) == "table" then
+        for i,v in ipairs(mailt.rcpt) do
+            self:rcpt(v)
+        end
+    else
+        self:rcpt(mailt.rcpt)
+    end
+    self:data(ltn12.source.chain(mailt.source, stuff()))
+end
+
+function open(server, port)
+    local tp, error = socket.tp.connect(server or SERVER, port or PORT)
+    if not tp then return nil, error end
+    return setmetatable({tp = tp}, metat)
+end
+
+---------------------------------------------------------------------------
+-- Multipart message source
+-----------------------------------------------------------------------------
 -- returns a hopefully unique mime boundary
 local seqno = 0
 local function newboundary()
@@ -147,13 +183,17 @@ function message(mesgt)
     return function() return shift(coroutine.resume(co)) end
 end
 
-function send(mailt)
-    local c, e = socket.tp.connect(mailt.server or SERVER, mailt.port or PORT)
-    if not c then return nil, e end
-    local s, e = pcall(send_p, c, mailt)
-    c:close()
-    if s then return true
-    else return nil, e end
-end
+---------------------------------------------------------------------------
+-- High level SMTP API
+-----------------------------------------------------------------------------
+send = socket.protect(function(mailt)
+    local server = mailt.server or SERVER
+    local port = mailt.port or PORT
+    local smtp = socket.try(open(server, port))
+    smtp:greet(mailt.domain or DOMAIN)
+    smtp:send(mailt)
+    smtp:quit()
+    return smtp:close()
+end)
 
 return smtp

@@ -25,6 +25,7 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
+#include "base.h"
 #include "auxiliar.h"
 #include "timeout.h"
 #include "buffer.h"
@@ -39,34 +40,8 @@
 /*=========================================================================*\
 * Declarations
 \*=========================================================================*/
-static int base_open(lua_State *L);
 static int mod_open(lua_State *L, const luaL_reg *mod);
 
-/*-------------------------------------------------------------------------*\
-* Setup basic stuff.
-\*-------------------------------------------------------------------------*/
-static int base_open(lua_State *L)
-{
-    /* create namespace table */
-    lua_pushstring(L, LUASOCKET_LIBNAME);
-    lua_newtable(L);
-#ifdef LUASOCKET_DEBUG
-    lua_pushstring(L, "debug");
-    lua_pushnumber(L, 1);
-    lua_rawset(L, -3);
-#endif
-    /* make version string available so scripts */
-    lua_pushstring(L, "version");
-    lua_pushstring(L, LUASOCKET_VERSION);
-    lua_rawset(L, -3);
-    /* store namespace as global */
-    lua_settable(L, LUA_GLOBALSINDEX);
-    /* make sure modules know what is our namespace */
-    lua_pushstring(L, "LUASOCKET_LIBNAME");
-    lua_pushstring(L, LUASOCKET_LIBNAME);
-    lua_settable(L, LUA_GLOBALSINDEX);
-    return 0;
-}
 
 static int mod_open(lua_State *L, const luaL_reg *mod)
 {
@@ -79,6 +54,7 @@ static int mod_open(lua_State *L, const luaL_reg *mod)
 #include "tp.lch"
 #include "smtp.lch"
 #include "http.lch"
+#include "ftp.lch"
 #else
     lua_dofile(L, "ltn12.lua");
     lua_dofile(L, "auxiliar.lua");
@@ -87,6 +63,7 @@ static int mod_open(lua_State *L, const luaL_reg *mod)
     lua_dofile(L, "tp.lua");
     lua_dofile(L, "smtp.lua");
     lua_dofile(L, "http.lua");
+    lua_dofile(L, "ftp.lua");
 #endif
     return 0;
 }

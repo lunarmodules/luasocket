@@ -14,14 +14,9 @@
 /*=========================================================================*\
 * Don't want to trust escape character constants
 \*=========================================================================*/
-#define CR 0x0D
-#define LF 0x0A
-#define HT 0x09
-#define SP 0x20
-
 typedef unsigned char UC;
-static const char CRLF[] = {CR, LF, 0};
-static const char EQCRLF[] = {'=', CR, LF, 0};
+static const char CRLF[] = "\r\n";
+static const char EQCRLF[] = "=\r\n";
 
 /*=========================================================================*\
 * Internal function prototypes.
@@ -121,9 +116,9 @@ static int mime_global_wrp(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last) {
         switch (*input) {
-            case CR:
+            case '\r':
                 break;
-            case LF:
+            case '\n':
                 luaL_addstring(&buffer, CRLF);
                 left = length;
                 break;
@@ -327,11 +322,10 @@ static int mime_global_unb64(lua_State *L)
 * all (except CRLF in text) can be =XX
 * CLRL in not text must be =XX=XX
 * 33 through 60 inclusive can be plain
-* 62 through 120 inclusive can be plain
+* 62 through 126 inclusive can be plain
 * 9 and 32 can be plain, unless in the end of a line, where must be =XX
 * encoded lines must be no longer than 76 not counting CRLF
 * soft line-break are =CRLF
-* !"#$@[\]^`{|}~ should be =XX for EBCDIC compatibility
 * To encode one byte, we need to see the next two. 
 * Worst case is when we see a space, and wonder if a CRLF is comming
 \*-------------------------------------------------------------------------*/
@@ -344,16 +338,10 @@ static void qpsetup(UC *qpclass, UC *qpunbase)
     int i;
     for (i = 0; i < 256; i++) qpclass[i] = QP_QUOTED;
     for (i = 33; i <= 60; i++) qpclass[i] = QP_PLAIN;
-    for (i = 62; i <= 120; i++) qpclass[i] = QP_PLAIN;
-    qpclass[HT] = QP_IF_LAST; qpclass[SP] = QP_IF_LAST;
-    qpclass['!'] = QP_QUOTED; qpclass['"'] = QP_QUOTED; 
-    qpclass['#'] = QP_QUOTED; qpclass['$'] = QP_QUOTED; 
-    qpclass['@'] = QP_QUOTED; qpclass['['] = QP_QUOTED;
-    qpclass['\\'] = QP_QUOTED; qpclass[']'] = QP_QUOTED; 
-    qpclass['^'] = QP_QUOTED; qpclass['`'] = QP_QUOTED; 
-    qpclass['{'] = QP_QUOTED; qpclass['|'] = QP_QUOTED;
-    qpclass['}'] = QP_QUOTED; qpclass['~'] = QP_QUOTED; 
-    qpclass['}'] = QP_QUOTED; qpclass[CR] = QP_CR;
+    for (i = 62; i <= 126; i++) qpclass[i] = QP_PLAIN;
+    qpclass['\t'] = QP_IF_LAST; 
+    qpclass[' '] = QP_IF_LAST;
+    qpclass['\r'] = QP_CR;
     for (i = 0; i < 256; i++) qpunbase[i] = 255;
     qpunbase['0'] = 0; qpunbase['1'] = 1; qpunbase['2'] = 2;
     qpunbase['3'] = 3; qpunbase['4'] = 4; qpunbase['5'] = 5;
@@ -377,7 +365,7 @@ static void qpquote(UC c, luaL_Buffer *buffer)
 
 /*-------------------------------------------------------------------------*\
 * Accumulate characters until we are sure about how to deal with them.
-* Once we are sure, output the to the buffer, in the correct form. 
+* Once we are sure, output to the buffer, in the correct form. 
 \*-------------------------------------------------------------------------*/
 static size_t qpencode(UC c, UC *input, size_t size, 
         const char *marker, luaL_Buffer *buffer)
@@ -389,7 +377,7 @@ static size_t qpencode(UC c, UC *input, size_t size,
             /* might be the CR of a CRLF sequence */
             case QP_CR:
                 if (size < 2) return size;
-                if (input[1] == LF) {
+                if (input[1] == '\n') {
                     luaL_addstring(buffer, marker);
                     return 0;
                 } else qpquote(input[0], buffer);
@@ -398,7 +386,7 @@ static size_t qpencode(UC c, UC *input, size_t size,
             case QP_IF_LAST:
                 if (size < 3) return size;
                 /* if it is the last, quote it and we are done */
-                if (input[1] == CR && input[2] == LF) {
+                if (input[1] == '\r' && input[2] == '\n') {
                     qpquote(input[0], buffer);
                     luaL_addstring(buffer, marker);
                     return 0;
@@ -492,19 +480,19 @@ static size_t qpdecode(UC c, UC *input, size_t size,
             case '=': 
                 if (size < 3) return size; 
                 /* eliminate soft line break */
-                if (input[1] == CR && input[2] == LF) return 0;
+                if (input[1] == '\r' && input[2] == '\n') return 0;
                 /* decode quoted representation */
                 c = qpunbase[input[1]]; d = qpunbase[input[2]];
                 /* if it is an invalid, do not decode */
                 if (c > 15 || d > 15) luaL_addlstring(buffer, (char *)input, 3);
                 else luaL_putchar(buffer, (c << 4) + d);
                 return 0;
-            case CR:
+            case '\r':
                 if (size < 2) return size; 
-                if (input[1] == LF) luaL_addlstring(buffer, (char *)input, 2);
+                if (input[1] == '\n') luaL_addlstring(buffer, (char *)input, 2);
                 return 0;
             default:
-                if (input[0] == HT || (input[0] > 31 && input[0] < 127))
+                if (input[0] == '\t' || (input[0] > 31 && input[0] < 127))
                     luaL_putchar(buffer, input[0]);
                 return 0;
         }
@@ -582,9 +570,9 @@ static int mime_global_qpwrp(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last) {
         switch (*input) {
-            case CR:
+            case '\r':
                 break;
-            case LF:
+            case '\n':
                 left = length;
                 luaL_addstring(&buffer, CRLF);
                 break;
@@ -623,7 +611,7 @@ static int mime_global_qpwrp(lua_State *L)
 * c is the current character being processed
 * last is the previous character
 \*-------------------------------------------------------------------------*/
-#define eolcandidate(c) (c == CR || c == LF)
+#define eolcandidate(c) (c == '\r' || c == '\n')
 static int eolprocess(int c, int last, const char *marker, 
         luaL_Buffer *buffer)
 {

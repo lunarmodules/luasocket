@@ -18,13 +18,17 @@
 * Padronizar os retornos de funccao
 * Separar as classes em arquivos
 * Retorno de sendto em datagram sockets pode ser refused
+* select sets are now associative
+
+colocar pump.all, pump.step e pump.simplify.
+mudar ltn12.html e usar o exemplo source.cat que está muito melhor.
 
 break smtp.send into c = smtp.open, c:send() c:close()
 
 falar sobre encodet/wrapt/decodet no manual sobre mime
 
 
-RECEIVE MUDOU!!! COLOCAR NO MANUAL.
+RECEIVE MUDOU!!! (partial stuff) COLOCAR NO MANUAL.
 HTTP.lua mudou bastante também.
 
 fazer com que a socket.source e socket.sink sejam "selectable".

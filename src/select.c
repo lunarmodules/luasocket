@@ -21,7 +21,6 @@ static int meth_set(lua_State *L);
 static int meth_isset(lua_State *L);
 static int c_select(lua_State *L);
 static int global_select(lua_State *L);
-static void check_obj_tab(lua_State *L, int tabidx);
 
 /* fd_set object methods */
 static luaL_reg set[] = {
@@ -68,9 +67,6 @@ static int global_select(lua_State *L)
     fd_set *read_fd_set, *write_fd_set;
     /* make sure we have enough arguments (nil is the default) */
     lua_settop(L, 3);
-    /* check object tables */
-    check_obj_tab(L, 1);
-    check_obj_tab(L, 2); 
     /* check timeout */
     if (!lua_isnil(L, 3) && !lua_isnumber(L, 3))
         luaL_argerror(L, 3, "number or nil expected");
@@ -126,25 +122,4 @@ static int c_select(lua_State *L)
     lua_pushnumber(L, select(max_fd, read_fd_set, write_fd_set, NULL, 
                 timeout < 0 ? NULL : &tv));
     return 1;
-}
-
-static void check_obj_tab(lua_State *L, int tabidx)
-{
-    if (tabidx < 0) tabidx = lua_gettop(L) + tabidx + 1;
-    if (lua_istable(L, tabidx)) {
-        lua_pushnil(L);
-        while (lua_next(L, tabidx) != 0) {
-            if (aux_getgroupudata(L, "select{able}", -1) == NULL) {
-                char msg[45];
-                if (lua_isnumber(L, -2))
-                    sprintf(msg, "table entry #%g is invalid", 
-                            lua_tonumber(L, -2));
-                else
-                    sprintf(msg, "invalid entry found in table");
-                luaL_argerror(L, tabidx, msg);
-            }
-            lua_pop(L, 1);
-        }
-    } else if (!lua_isnil(L, tabidx))
-        luaL_argerror(L, tabidx, "table or nil expected");
 }

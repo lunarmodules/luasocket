@@ -8,6 +8,7 @@ setfenv(1, ltn12)
 filter = {}
 source = {}
 sink = {}
+pump = {}
 
 -- 2048 seems to be better in windows...
 BLOCKSIZE = 2048
@@ -22,7 +23,6 @@ end
 
 -- returns a high level filter that cycles a cycles a low-level filter
 function filter.cycle(low, ctx, extra)
-    if type(low) ~= 'function' then error('invalid low-level filter', 2) end 
     return function(chunk)
         local ret
         ret, ctx = low(ctx, chunk, extra)
@@ -32,8 +32,6 @@ end
 
 -- chains two filters together
 local function chain2(f1, f2)
-    if type(f1) ~= 'function' then error('invalid filter', 2) end 
-    if type(f2) ~= 'function' then error('invalid filter', 2) end 
     local co = coroutine.create(function(chunk)
         while true do
             local filtered1 = f1(chunk)
@@ -58,7 +56,6 @@ end
 function filter.chain(...)
     local f = arg[1]
     for i = 2, table.getn(arg) do
-        if type(arg[i]) ~= 'function' then error('invalid filter', 2) end 
         f = chain2(f, arg[i])
     end
     return f
@@ -93,7 +90,6 @@ end
 
 -- turns a fancy source into a simple source
 function source.simplify(src)
-    if type(src) ~= 'function' then error('invalid source', 2) end 
     return function()
         local chunk, err_or_new = src()
         src = err_or_new or src
@@ -117,7 +113,6 @@ end
 
 -- creates rewindable source
 function source.rewind(src)
-    if type(src) ~= 'function' then error('invalid source', 2) end 
     local t = {}
     return function(chunk)
         if not chunk then
@@ -132,8 +127,6 @@ end
 
 -- chains a source with a filter
 function source.chain(src, f)
-    if type(src) ~= 'function' then error('invalid source', 2) end
-    if type(f) ~= 'function' then error('invalid filter', 2) end
     local co = coroutine.create(function()
         while true do 
             local chunk, err = src()
@@ -152,20 +145,21 @@ function source.chain(src, f)
     end
 end
 
--- creates a source that produces contents of several files one after the
+-- creates a source that produces contents of several sources, one after the
 -- other, as if they were concatenated
 function source.cat(...)
     local co = coroutine.create(function()
         local i = 1
-        while i <= table.getn(arg) do 
-            local chunk = arg[i]:read(2048)
+        while i <= table.getn(arg) do
+            local chunk, err = arg[i]()
             if chunk then coroutine.yield(chunk)
-            else i = i + 1 end
+            elseif err then return nil, err 
+            else i = i + 1 end 
         end
     end)
-    return source.simplify(function()
+    return function()
         return shift(coroutine.resume(co))
-    end)
+    end
 end
 
 -- creates a sink that stores into a table
@@ -180,7 +174,6 @@ end
 
 -- turns a fancy sink into a simple sink
 function sink.simplify(snk)
-    if type(snk) ~= 'function' then error('invalid sink', 2) end
     return function(chunk, err)
         local ret, err_or_new = snk(chunk, err)
         if not ret then return nil, err_or_new end
@@ -219,8 +212,6 @@ end
 
 -- chains a sink with a filter 
 function sink.chain(f, snk)
-    if type(snk) ~= 'function' then error('invalid sink', 2) end
-    if type(f) ~= 'function' then error('invalid filter', 2) end
     return function(chunk, err)
         local filtered = f(chunk)
         local done = chunk and ""
@@ -233,15 +224,18 @@ function sink.chain(f, snk)
     end
 end
 
--- pumps all data from a source to a sink
-function pump(src, snk)
-    if type(src) ~= 'function' then error('invalid source', 2) end
-    if type(snk) ~= 'function' then error('invalid sink', 2) end
+-- pumps one chunk from the source to the sink
+function pump.step(src, snk)
+    local chunk, src_err = src()
+    local ret, snk_err = snk(chunk, src_err)
+    return chunk and ret and not src_err and not snk_err, src_err or snk_err
+end
+
+-- pumps all data from a source to a sink, using a step function
+function pump.all(src, snk, step)
+    step = step or pump.step
     while true do
-        local chunk, src_err = src()
-        local ret, snk_err = snk(chunk, src_err)
-        if not chunk or not ret then
-            return not src_err and not snk_err, src_err or snk_err
-        end
+        local ret, err = step(src, snk)
+        if not ret then return not err, err end
     end
 end

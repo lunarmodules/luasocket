@@ -15,6 +15,7 @@
 #include "socket.h"
 #include "inet.h"
 #include "options.h"
+#include "base.h"
 #include "udp.h"
 
 /*=========================================================================*\
@@ -50,6 +51,7 @@ static luaL_reg udp[] = {
     {"close",       meth_close},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
+    {"__tostring",  base_meth_tostring},
     {"getfd",       meth_getfd},
     {"setfd",       meth_setfd},
     {"dirty",       meth_dirty},

@@ -68,7 +68,7 @@ end
 
 local function receive_body(reqt, respt, tmp)
     local sink = reqt.sink or ltn12.sink.null()
-    local pump = reqt.pump or ltn12.pump
+    local step = reqt.step or ltn12.pump.step
     local source
     local te = respt.headers["transfer-encoding"]
     if te and te ~= "identity" then 
@@ -80,9 +80,9 @@ local function receive_body(reqt, respt, tmp)
         source = socket.source("by-length", tmp.sock, length)
     else 
         -- get it all until connection closes
-        source = socket.source("until-closed", tmp.sock)
+        source = socket.source(tmp.sock)
     end
-    socket.try(pump(source, sink))
+    socket.try(ltn12.pump.all(source, sink, step))
 end
 
 local function send_headers(sock, headers)
@@ -125,7 +125,7 @@ end
 local function send_request(reqt, respt, tmp)
     local uri = request_uri(reqt, respt, tmp)
     local headers = tmp.headers
-    local pump = reqt.pump or ltn12.pump
+    local step = reqt.step or ltn12.pump.step
     -- send request line
     socket.try(tmp.sock:send((reqt.method or "GET") 
         .. " " .. uri .. " HTTP/1.1\r\n"))
@@ -136,9 +136,11 @@ local function send_request(reqt, respt, tmp)
     -- send request message body, if any
     if not reqt.source then return end
     if headers["content-length"] then 
-        socket.try(pump(reqt.source, socket.sink(tmp.sock)))
+        socket.try(ltn12.pump.all(reqt.source, 
+            socket.sink(tmp.sock), step))
     else 
-        socket.try(pump(reqt.source, socket.sink("http-chunked", tmp.sock)))
+        socket.try(ltn12.pump.all(reqt.source, 
+            socket.sink("http-chunked", tmp.sock), step))
     end
 end
 
