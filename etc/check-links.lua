@@ -84,7 +84,7 @@ function checklinks(url)
     for i = 1, getn(links) do
 		write(_STDERR, "\t", links[i], "\n")
 		local err = getstatus(links[i])
-		if err then write(links[i], ": ", err, "\n") end
+		if err then write('\t', links[i], ": ", err, "\n") end
     end
 end
 
