@@ -1,6 +1,6 @@
 take a look at DB's smtp patch
 
-optmize aux_getgroupudata
+optmize aux_getgroupudata (Mike idea)
     make aux_newclass receive upvalues
     use one upvalue per string name of class/group
     make aux_checkgroup by upvalue (faster)

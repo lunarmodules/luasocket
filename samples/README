@@ -19,11 +19,12 @@ printed by listen.lua.
 These are tiny programs that perform Base64, Quoted-Printable and
 end-of-line marker conversions.
 
-    lp.lua                  -- lp client
+    lpr.lua                 -- lpr client
 
 This is a cool program written by David Burgess to print files using the
-Line Printer Daemon protocol, widely used in Unix machines.  
-Just run 'lua lp.lua <filename> queue=<printername>' and the file will print!
+Line Printer Daemon protocol, widely used in Unix machines.  It uses the
+lp.lua implementation, in the etc directory.  Just run 
+'lua lpr.lua <filename> queue=<printername>' and the file will print!
 
     cddb.lua                -- CDDB client
 

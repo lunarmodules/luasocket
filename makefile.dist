@@ -29,7 +29,7 @@ EXAMPLES = \
 	eol.lua \
 	listener.lua \
 	qp.lua \
-	lp.lua \
+	lpr.lua \
 	talker.lua \
 	tinyirc.lua
 
@@ -38,6 +38,9 @@ ETC = \
 	dict.lua \
 	get.lua \
 	lua.lua \
+	unix.c \
+	unix.h \
+	lp.lua \
 	tftp.lua
 
 CORE = \
@@ -74,8 +77,6 @@ CORE = \
 MAKE = \
 	makefile.Darwin \
 	makefile.Linux \
-	luasocket.export \
-	mime.export \
 	luasocket.sln \
 	luasocket.vcproj \
 	mime.vcproj
@@ -103,6 +104,8 @@ dist:
 	mkdir -p $(DIST)/etc
 	mkdir -p $(DIST)/lua
 	mkdir -p $(DIST)/manual
+	cp -vf FIX $(DIST)
+	cp -vf TODO $(DIST)
 	cp -vf $(CORE) $(DIST)
 	cp -vf README $(DIST)
 	cp -vf NEW $(DIST)

@@ -20,6 +20,13 @@ converted into a library, similar to the HTTP  and FTP libraries, that can
 be used from within  any luasocket application. Take  a look on the  source
 code and you will be able to figure out how to use it.
 
+    lp.lua                  -- LPD client
+
+The lp.lua module implements the client part of the Line Printer Daemon
+protocol, used to print files on Unix machines. It is courtesy of David
+Burgess and I heard he would be the one supporting it, even after I messed
+with it.  See the source code and the lpr.lua in the examples directory.
+
     get.lua                 -- file retriever
 
 This little  program is  a client  that uses  the FTP  and HTTP  code to
