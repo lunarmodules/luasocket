@@ -4,7 +4,7 @@ local qptest = "qptest.bin"
 local eqptest = "qptest.bin2"
 local dqptest = "qptest.bin3"
 
-local b64test = "luasocket.exe"
+local b64test = "luasocket"
 local eb64test = "b64test.bin"
 local db64test = "b64test.bin2"
 
@@ -155,10 +155,10 @@ local function encode_b64test()
     local e2 = socket.mime.encode("base64")
     local e3 = socket.mime.encode("base64")
     local e4 = socket.mime.encode("base64")
-    local sp4 = socket.mime.wrap("character")
-    local sp3 = socket.mime.wrap("character", 59)
-    local sp2 = socket.mime.wrap("character", 30)
-    local sp1 = socket.mime.wrap("character", 27)
+    local sp4 = socket.mime.wrap()
+    local sp3 = socket.mime.wrap(59)
+    local sp2 = socket.mime.wrap("base64", 30)
+    local sp1 = socket.mime.wrap(27)
     local chain = socket.mime.chain(e1, sp1, e2, sp2, e3, sp3, e4, sp4)
     transform(b64test, eb64test, chain)
 end

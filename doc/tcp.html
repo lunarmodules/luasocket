@@ -51,7 +51,7 @@ method.</p>
 
 <p class=return>
 In case of success, a new master object is returned. In case of error,
-<tt>nil</tt> is returned, followed by an error message.
+<b><tt>nil</tt></b> is returned, followed by an error message.
 </p>
 
 <!-- accept +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -67,7 +67,7 @@ object and returns a client object representing that connection.
 
 <p class=return>
 If a connection is successfully initiated, a client object is returned.  
-If a  timeout condition  is  met,  the method  returns <tt>nil</tt> followed
+If a  timeout condition  is  met,  the method  returns <b><tt>nil</tt></b> followed
 by the error string '<tt>timeout</tt>'. 
 </p>
 
@@ -111,7 +111,7 @@ attempts connection,  the connection is  refused.
 
 <p class=return>
 In case of  success, the  method returns  1. In case of error, the
-method returns <tt>nil</tt> followed by an error message.
+method returns <b><tt>nil</tt></b> followed by an error message.
 </p>
 
 <p class=note>
@@ -165,7 +165,7 @@ and <a href=#close><tt>close</tt></a>.
 </p>
 
 <p class=return>
-In case of error, the method returns <tt>nil</tt> followed by a string
+In case of error, the method returns <b><tt>nil</tt></b> followed by a string
 describing the error. In case of success, the method returns 1.
 </p>
 
@@ -187,7 +187,7 @@ Returns information about the remote side of a connected client object.
 <p class=return>
 Returns a string with the IP address of the peer, followed by the 
 port number that peer is using for the connection. 
-In case of error, the method returns <tt>nil</tt>. 
+In case of error, the method returns <b><tt>nil</tt></b>. 
 </p>
 
 <p class=note>
@@ -207,7 +207,7 @@ Returns the local address information associated to the object.
 
 <p class=return>
 The method returns a string with local IP address and a number with 
-the port. In case of error, the method returns <tt>nil</tt>.
+the port. In case of error, the method returns <b><tt>nil</tt></b>.
 </p>
 
 <p class=note>
@@ -248,7 +248,7 @@ bytes from the socket.
 
 <p class=return>
 The method  returns one value for  each pattern, followed by  a single
-error  code that  can be  <tt>nil</tt> in  case of  success, the  string
+error  code that  can be  <b><tt>nil</tt></b> in  case of  success, the  string
 '<tt>closed</tt>'  in   case  the  connection  was   closed  before  the
 transmission  was completed  or  the string  '<tt>timeout</tt>' in  case
 there was a timeout during  the operation. 
@@ -278,7 +278,7 @@ result to LuaSocket instead of passing several independent strings.
 
 <p class=return>
 The method returns the number of bytes accepted by the transport layer,
-followed by an error code. The error code is <tt>nil</tt> if the operation
+followed by an error code. The error code is <b><tt>nil</tt></b> if the operation
 completed with no errors, the string '<tt>closed</tt>' in case
 the connection was  closed before the transmission was  completed or the
 string  '<tt>timeout</tt>'  in  case  there was  a  timeout  during  the
@@ -288,7 +288,7 @@ operation.
 <p class=note>
 Note: The return values for the <tt>send</tt> method have been changed in
 LuaSocket 2.0! In previous versions, the method returned only the
-error message. Since returning <tt>nil</tt> in case of success goes 
+error message. Since returning <b><tt>nil</tt></b> in case of success goes 
 against all other LuaSocket methods and functions, the 
 <tt>send</tt> method been changed for the sake of uniformity. 
 </p>
@@ -330,7 +330,7 @@ considered broken and processes using the socket are notified.
 </ul>
 
 <p class=return>
-The method returns 1 in case of success, or <tt>nil</tt> otherwise.
+The method returns 1 in case of success, or <b><tt>nil</tt></b> otherwise.
 </p>
 
 <p class=note>
@@ -374,7 +374,7 @@ a call.</li>
 </ul>
 
 <p class=parameters>
-The  <tt>nil</tt>  timeout  <tt>value</tt> allows  operations  to  block
+The  <b><tt>nil</tt></b>  timeout  <tt>value</tt> allows  operations  to  block
 indefinitely. Negative timeout values have the same effect.
 </p>
 

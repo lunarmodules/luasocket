@@ -69,15 +69,15 @@ callback receives  successive chunks  of downloaded  data.
 <tt>Chunk</tt> contains the current chunk of data.
 When the transmission  is over, the function  is called with an  
 empty string (i.e.&nbsp;<tt>""</tt>) as  the <tt>chunk</tt>. 
-If an  error occurs, the function  receives <tt>nil</tt> 
+If an  error occurs, the function  receives <b><tt>nil</tt></b> 
 as <tt>chunk</tt> and  an error  message in <tt>err</tt>. 
 </p>
 
 <p class=return>
-The callback  can abort transmission by returning <tt>nil</tt> as its first
+The callback  can abort transmission by returning <b><tt>nil</tt></b> as its first
 return value, and an optional error  message as the
 second return value. If the application wants to continue receiving
-data, the function should return non-<tt>nil</tt> as it's first return
+data, the function should return non-<b><tt>nil</tt></b> as it's first return
 value. In this case, the function can optionally return a 
 new callback function, to replace itself, as the second return value.  
 </p>
@@ -121,7 +121,7 @@ library needs more data to be sent.
 Each time the callback is called, it should return the next chunk of data.  It
 can optionally return, as it's second return value, a new callback to replace
 itself.  The callback can abort the  process  at any  time  by  returning
-<tt>nil</tt> followed  by  an optional error message. 
+<b><tt>nil</tt></b> followed  by  an optional error message. 
 </p>
 
 <p class=note>

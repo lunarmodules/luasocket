@@ -1,4 +1,5 @@
 manual
+    check all occurences of it's
     add shutdown
     add gethostname
     the need of a content-length header in the post method...
@@ -22,6 +23,11 @@ tests
     checar garbage collection
     check for interrupts
 
+close has to block...
+fmt is not a good name
+change wrap() to accept a number and default to "character"
+move gethostname to dns table
+get rid of _cb in name of functions? 
 trust character constants in mime.c? noooooo.
 smtp.lua needs stuff filter
 

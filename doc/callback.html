@@ -45,113 +45,72 @@ callback mechanism outlined below.
 </p>
 
 <p>
-Instead of  returning the entire contents of an entity 
-as strings to the Lua  application, the library allows  the user to
+Instead of  returning the received contents 
+as a big to the Lua  application, the library allows  the user to
 provide a  <em>receive callback</em> that  will be called  with successive
 chunks of data, as the data becomes available. Conversely, the <em>send
-callbacks</em> can be used when the application wants to incrementally 
-provide LuaSocket with the data to be sent. 
+callback</em> mechanism can be used when the application wants to incrementally provide LuaSocket with the data to be sent. 
 </p>
 
 <!-- tohostname +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=receive_cb> 
-ret, err_or_f = <b>receive_cb(</b>chunk, err<b>)</b>
+<p class=name id=receive> 
+<b>receive_cb(</b>chunk, err<b>)</b>
 </p>
 
 <p class=description>
-The  callback provided  by the  user will  be repeatedly  called by  the
-library whenever  new data  is available.  Each time  it is  called, the
-callback receives  successive chunks  of downloaded  data. 
+A receive callback will  be repeatedly  called by
+LuaSocket wheneve  new data  is available.  Each time  it is  called, the
+callback receives successive chunks of downloaded data. 
 </p>
 
 <p class=parameters>
-<tt>Chunk</tt> contains the current chunk of data.
-When the transmission  is over, the function  is called with an  
-empty string (i.e.&nbsp;<tt>""</tt>) as  the <tt>chunk</tt>. 
-If an  error occurs, the function  receives <tt>nil</tt> 
-as <tt>chunk</tt> and  an error  message in <tt>err</tt>. 
+<tt>Chunk</tt> contains the latest downloaded chunk of data.
+When the transmission is over, the function  is called with an  
+empty string (i.e.&nbsp;<tt>""</tt>) in <tt>chunk</tt>. 
+If an  error occurs, the function  receives a <b><tt>nil</tt></b> 
+<tt>chunk</tt> and  an error message in <tt>err</tt>. 
 </p>
 
 <p class=return>
-The callback  can abort transmission by returning <tt>nil</tt> as its first
-return value, and an optional error  message as the
-second return value. If the application wants to continue receiving
-data, the function should return non-<tt>nil</tt> as it's first return
-value. In this case, the function can optionally return a 
-new callback function, to replace itself, as the second return value.  
-</p>
-
-<p class=note>
-Note: The <tt>callback</tt> module provides several standard receive callbacks, including the following:
-</p>
-
-<pre class=example>
-function receive.concat(concat)
-    concat = concat or socket.concat.create()
-    local callback = function(chunk, err)
-        -- if not finished, add chunk
-        if chunk and chunk ~= "" then
-            concat:addstring(chunk)
-            return 1
-        end
-    end
-    return callback, concat
-end
-</pre>
-
-<p class=note>
-This function creates a new receive callback that concatenates all
-received chunks into a the same concat object, which can later be 
-queried for its contents.
+The callback  can abort transmission by returning <b><tt>nil</tt></b> as its first
+return value, and an optional error message as the
+second return value. To continue receiving
+data, the function should return non-<b><tt>nil</tt></b> as its first return
+value. Optionally,  in this case, it may return a 
+second return value, with a new callback function to take its place.
 </p>
 
 <!-- send_cb ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name>
-chunk, err_or_r = <b>send_cb()</b>
+<p class=name id=send>
+<b>send_cb()</b>
 </p>
 
 <p class=description>
-The callback provided by the user will be repeatedly called whenever the
-library needs more data to be sent. 
+A send callback will be called whenever LuaSocket 
+needs more data to be sent. 
 </p>
 
 <p class=return> 
 Each time the callback is called, it should return the next chunk of data.  It
 can optionally return, as it's second return value, a new callback to replace
 itself.  The callback can abort the  process  at any  time  by  returning
-<tt>nil</tt> followed  by  an optional error message. 
+<b><tt>nil</tt></b> followed  by  an optional error message. 
 </p>
-
-<p class=note>
-Note: Below is the implementation of the <tt>callback.send.file</tt> 
-function. Given an open file handle, it returns a send callback that will send the contents of that file, chunk by chunk.
-</p>
-
-<pre class=example>
-function send.file(file, io_err)
-    -- if successful, return the callback that reads from the file
-    if file then
-        return function()
-            -- send next block of data
-            return (file:read(BLOCKSIZE)) or ""
-        end
-    -- else, return a callback that just aborts the transfer
-    else return fail(io_err or "unable to open file") end
-end
-</pre>
 
 <!-- predefined +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <h2 id=predefined>Predefined Callbacks</h2> 
 
 <p>
-The module <tt>callback.lua</tt> provides several predefined callbacks to
+The Callback module provides several predefined callbacks to
 perform the most common input/output operations. Callbacks are provided
 that send and receive contents of files and strings. Furthermore,
 composition functions are provided to chain callbacks with filters, such as
-the filters defined in the <tt>mime.lua</tt> module.
+the filters defined in the <a href=mime.html>MIME</a> module.
+Together, these two modules provide a powerful interface to send and
+receive information.
 </p>
 
 <!-- send.file ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -161,15 +120,16 @@ the filters defined in the <tt>mime.lua</tt> module.
 </p>
 
 <p class=description>
-This function creates a send callback that will return the contents
-of a the file, until the file has been entirely sent. When done, the
-callback closes the file. 
+This function creates a send callback that returns the contents
+of a file, chunk by chunk, until the file has been entirely sent. 
+When done, the callback closes the file. 
 </p>
 
 <p class=parameters>
-<tt>File</tt> is a file open for reading. If <tt>file</tt> is 
-<tt>nil</tt>, <tt>io_err</tt> can contain an error message and the 
-returned callback just aborts transmission with the error message.
+<tt>File</tt> is a file opened for reading. If <tt>file</tt> is 
+<b><tt>nil</tt></b>, <tt>io_err</tt> can contain an error message. In this
+case, the function returns a callback that just aborts 
+transmission with the error message.
 </p>
 
 <p class=return>
@@ -177,14 +137,14 @@ Returns a send callback for the file.
 </p>
 
 <p class=note>
-Note: The function is designed so that it directly accepts the return 
+Note: This function is designed so that it directly accepts the return 
 values of the <tt>io.open</tt> function.
 </p>
 
 <!-- send.string ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=send.string> 
-<b>send.string(</b>str<b>)</b>
+<b>send.string(</b>str, err<b>)</b>
 </p>
 
 <p class=description>
@@ -193,29 +153,33 @@ the contents of a string.
 </p>
 
 <p class=parameters>
-<tt>Str</tt> is the string to be sent.
+<tt>Str</tt> is the string to be sent. 
+<!--
+If <tt>str</tt> is
+<b><tt>nil</tt></b>, <tt>err</tt> can optionally contain an error message.
+-->
 </p>
 
 <p class=return>
-Returns a send callback for the string, or <tt>nil</tt> if the string is
-<tt>nil</tt>.
+Returns a send callback for the string, or <b><tt>nil</tt></b> if the string is
+<b><tt>nil</tt></b>.
 </p>
 
 <p class=note>
-Note: If any function in the LuaSocket API receives a <tt>nil</tt> 
-send callback, it assumes there is nothing to be sent. 
+Note: A <tt>nil</tt></b> 
+send callback is equivalent to a callback that returns the empty string. 
 </p>
 
 <!-- send.chain ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=send.string> 
+<p class=name id=send.chain> 
 <b>send.chain(</b>send_cb, filter<b>)</b>
 </p>
 
 <p class=description>
-This function creates a send callback that will send
-all data that it gets from another callback, 
-after passing the data through a filter. 
+This function creates a send callback that will filter 
+all the data it receives from another send callback, before
+sending it through. 
 </p>
 
 <p class=parameters>
@@ -226,7 +190,29 @@ after passing the data through a filter.
 Returns a callback chained with the filter. 
 </p>
 
-(write a note!)
+<p class=note>
+Note: Several filters are defined in the <a href=mime.html>MIME</a> 
+module. Below is an example that creates a send callback that sends
+a file's contents encoded in the Base64 transfer content encoding.
+</p>
+
+<pre class=example>
+send_cb = socket.callback.send.chain(
+   socket.callback.send.file(io.open("input.bin"))
+   socket.mime.chain(
+       socket.mime.encode("base64"),
+       socket.mime.wrap("base64")
+   )
+)
+</pre>
+
+<p class=note>
+The call to <a href=mime.html#chain><tt>socket.mime.chain</tt></a> 
+creates a chained filter that encodes it's input and then breaks it
+into lines. The call to <tt>socket.callback.chain</tt> creates a chained
+send callback that reads the file from disk and passes it through the
+filter before sending it.
+</p>
 
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 

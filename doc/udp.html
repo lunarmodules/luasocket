@@ -52,7 +52,7 @@ is used to connect the object.
 
 <p class="return">
 In case of success, a new unconnected UDP object
-returned. In case of error, <tt>nil</tt> is returned, followed by
+returned. In case of error, <b><tt>nil</tt></b> is returned, followed by
 an error message.
 </p>
 
@@ -112,7 +112,7 @@ Returns the local address information associated to the object.
 <p class="return">
 The method returns a string with local IP
 address and a number with the port. In case of error, the method
-returns <tt>nil</tt>.
+returns <b><tt>nil</tt></b>.
 </p>
 
 <p class="note">
@@ -150,7 +150,7 @@ maximum datagram size is used.
 <p class="return">
 In case of success, the method return the
 received datagram. In case of timeout, the method returns
-<tt>nil</tt> followed by the string '<tt>timeout</tt>'.
+<b><tt>nil</tt></b> followed by the string '<tt>timeout</tt>'.
 </p>
 
 <!-- receivefrom +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -183,7 +183,7 @@ Beware that the maximum datagram size for UDP is 576 bytes.
 
 <p class="return">
 If successful, the method returns 1. In case of
-error, the method returns <tt>nil</tt> followed by the
+error, the method returns <b><tt>nil</tt></b> followed by the
 '<tt>refused</tt>' message.
 </p>
 
@@ -214,7 +214,7 @@ names are <em>not</em> allowed for performance reasons.
 
 <p class="return">
 If successful, the method returns 1. In case of
-error, the method returns <tt>nil</tt> followed by the
+error, the method returns <b><tt>nil</tt></b> followed by the
 '<tt>refused</tt>' message.
 </p>
 
@@ -258,7 +258,7 @@ case, the <tt>port</tt> argument is ignored.
 
 <p class="return">
 In case of error the method returns
-<tt>nil</tt> followed by an error message. In case of success, the
+<b><tt>nil</tt></b> followed by an error message. In case of success, the
 method returns 1.
 </p>
 
@@ -288,7 +288,7 @@ all local interfaces using the constant <tt>INADDR_ANY</tt>. If
 
 <p class="return">
 If successful, the method returns 1. In case of
-error, the method returns <tt>nil</tt> followed by an error
+error, the method returns <b><tt>nil</tt></b> followed by an error
 message.
 </p>
 
@@ -328,7 +328,7 @@ socket.</li>
 
 <p class="return">
 The method returns 1 in case of success, or
-<tt>nil</tt> followed by an error message otherwise.
+<b><tt>nil</tt></b> followed by an error message otherwise.
 </p>
 
 <p class="note">
@@ -356,7 +356,7 @@ give up and fail with an error code.
 
 <p class="parameters">
 The amount of time to wait is specified as
-the <tt>value</tt> parameter, in seconds. The <tt>nil</tt> timeout
+the <tt>value</tt> parameter, in seconds. The <b><tt>nil</tt></b> timeout
 <tt>value</tt> allows operations to block indefinitely. Negative
 timeout values have the same effect.
 </p>

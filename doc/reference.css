@@ -1,11 +1,19 @@
-body { margin-left: 1em; margin-right: 1em; }
+body { 
+    margin-left: 1em; 
+    margin-right: 1em; 
+    font-family: "Verdana"; 
+}
+
+tt {
+    font-family: "Andale Mono", monospace; 
+}
 
 h1, h2, h3, h4 { margin-left: 0em; }
 
 p { margin-left: 1em; }
 
 p.name { 
-    font-family: monospace; 
+    font-family: "Andale Mono", monospace; 
     padding-top: 1em;
     margin-left: 0em; 
 }
@@ -18,6 +26,8 @@ pre.example {
     background: #ccc;
     padding: 1em;
     margin-left: 1em;
+    font-family: "Andale Mono", monospace; 
+    font-size: small;
 }
 
 hr { 

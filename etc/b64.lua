@@ -1,6 +1,11 @@
-local base64 = socket.mime.base64.encode()
-local split = socket.mime.split()
-local convert = socket.mime.chain(base64, split)
+local convert
+if arg and arg[1] == '-d' then
+    convert = socket.mime.decode("base64")
+else
+    local base64 = socket.mime.encode("base64")
+    local wrap = socket.mime.wrap()
+    convert = socket.mime.chain(base64, wrap)
+end
 while 1 do
     local chunk = io.read(4096)
     io.write(convert(chunk))

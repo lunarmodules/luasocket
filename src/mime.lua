@@ -19,7 +19,7 @@ local wt = {}
 local function choose(table)
     return function(method, ...)
         local f = table[method or "nil"]
-        if not f then return nil, "unknown method (" .. tostring(method) .. ")"
+        if not f then error("unknown method (" .. tostring(method) .. ")", 3)
         else return f(unpack(arg)) end
     end
 end
@@ -37,7 +37,15 @@ end
 -- function that choose the encoding, decoding or wrap algorithm
 encode = choose(et) 
 decode = choose(dt)
-wrap = choose(wt)
+
+-- the wrap filter has default parameters
+local cwt = choose(wt)
+function wrap(...)
+    if not arg[1] or type(arg[1]) ~= "string" then 
+        table.insert(arg, 1, "base64")
+    end
+    return cwt(unpack(arg))
+end
 
 -- define the encoding algorithms
 et['base64'] = function()
@@ -58,15 +66,14 @@ dt['quoted-printable'] = function()
 end
 
 -- define the wrap algorithms
-wt['character'] = function(length)
+wt['base64'] = function(length, marker)
     length = length or 76
-    return cicle(fmt, length, length) 
+    return cicle(wrp, length, length, marker) 
 end
-wt['base64'] = wt['character']
 
 wt['quoted-printable'] = function(length)
     length = length or 76
-    return cicle(qpfmt, length, length) 
+    return cicle(qpwrp, length, length) 
 end
 
 -- define the end-of-line translation function

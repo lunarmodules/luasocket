@@ -27,12 +27,12 @@ static const char EQCRLF[3] = {'=', CR, LF};
 /*=========================================================================*\
 * Internal function prototypes.
 \*=========================================================================*/
-static int mime_global_fmt(lua_State *L);
+static int mime_global_wrp(lua_State *L);
 static int mime_global_b64(lua_State *L);
 static int mime_global_unb64(lua_State *L);
 static int mime_global_qp(lua_State *L);
 static int mime_global_unqp(lua_State *L);
-static int mime_global_qpfmt(lua_State *L);
+static int mime_global_qpwrp(lua_State *L);
 static int mime_global_eol(lua_State *L);
 
 static void b64setup(UC *b64unbase);
@@ -54,10 +54,10 @@ static luaL_reg func[] = {
     { "eol", mime_global_eol },
     { "qp", mime_global_qp },
     { "unqp", mime_global_unqp },
-    { "qpfmt", mime_global_qpfmt },
+    { "qpwrp", mime_global_qpwrp },
     { "b64", mime_global_b64 },
     { "unb64", mime_global_unb64 },
-    { "fmt", mime_global_fmt },
+    { "wrp", mime_global_wrp },
     { NULL, NULL }
 };
 
@@ -127,13 +127,13 @@ static const char *optlstring(lua_State *L, int n, const char *v, size_t *l)
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Incrementaly breaks a string into lines
-* A, n = fmt(l, B, length, marker)
+* A, n = wrp(l, B, length, marker)
 * A is a copy of B, broken into lines of at most 'length' bytes. 
 * 'l' is how many bytes are left for the first line of B. 
 * 'n' is the number of bytes left in the last line of A. 
 * Marker is the end-of-line marker.
 \*-------------------------------------------------------------------------*/
-static int mime_global_fmt(lua_State *L)
+static int mime_global_wrp(lua_State *L)
 {
     size_t size = 0;
     int left = (int) luaL_checknumber(L, 1);
@@ -526,14 +526,14 @@ static int mime_global_unqp(lua_State *L)
 
 /*-------------------------------------------------------------------------*\
 * Incrementally breaks a quoted-printed string into lines
-* A, n = qpfmt(l, B, length)
+* A, n = qpwrp(l, B, length)
 * A is a copy of B, broken into lines of at most 'length' bytes. 
 * 'l' is how many bytes are left for the first line of B. 
 * 'n' is the number of bytes left in the last line of A. 
 * There are two complications: lines can't be broken in the middle
 * of an encoded =XX, and there might be line breaks already
 \*-------------------------------------------------------------------------*/
-static int mime_global_qpfmt(lua_State *L)
+static int mime_global_qpwrp(lua_State *L)
 {
     size_t size = 0;
     int left = (int) luaL_checknumber(L, 1);

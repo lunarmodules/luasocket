@@ -19,11 +19,13 @@
 static int inet_global_toip(lua_State *L);
 static int inet_global_tohostname(lua_State *L);
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
+static int inet_global_gethostname(lua_State *L);
 
 /* DNS functions */
 static luaL_reg func[] = {
     { "toip", inet_global_toip },
     { "tohostname", inet_global_tohostname },
+    { "gethostname", inet_global_gethostname},
     { NULL, NULL}
 };
 
@@ -100,6 +102,25 @@ static int inet_global_tohostname(lua_State *L)
     inet_pushresolved(L, hp);
     return 2;
 }
+
+/*-------------------------------------------------------------------------*\
+* Gets the host name
+\*-------------------------------------------------------------------------*/
+static int inet_global_gethostname(lua_State *L)
+{
+    char name[257];
+    name[256] = '\0';
+    if (gethostname(name, 256) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "gethostname failed");
+        return 2;
+    } else {
+        lua_pushstring(L, name);
+        return 1;
+    }
+}
+
+
 
 /*=========================================================================*\
 * Lua methods

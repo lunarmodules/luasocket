@@ -38,14 +38,7 @@
 /*=========================================================================*\
 * Declarations
 \*=========================================================================*/
-static int global_gethostname(lua_State *L);
 static int base_open(lua_State *L);
-
-/* functions in library namespace */
-static luaL_reg func[] = {
-    {"gethostname", global_gethostname},
-    {NULL, NULL}
-};
 
 /*-------------------------------------------------------------------------*\
 * Setup basic stuff.
@@ -70,27 +63,7 @@ static int base_open(lua_State *L)
     lua_pushstring(L, "LUASOCKET_LIBNAME");
     lua_pushstring(L, LUASOCKET_LIBNAME);
     lua_settable(L, LUA_GLOBALSINDEX);
-    /* define library functions */
-    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0); 
-    lua_pop(L, 1);
     return 0;
-}
-
-/*-------------------------------------------------------------------------*\
-* Gets the host name
-\*-------------------------------------------------------------------------*/
-static int global_gethostname(lua_State *L)
-{
-    char name[257];
-    name[256] = '\0';
-    if (gethostname(name, 256) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "gethostname failed");
-        return 2;
-    } else {
-        lua_pushstring(L, name);
-        return 1;
-    }
 }
 
 /*-------------------------------------------------------------------------*\

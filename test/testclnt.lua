@@ -378,7 +378,7 @@ end
 
 ------------------------------------------------------------------------
 function accept_errors()
-    io.write("not listenning: ")
+    io.write("not listening: ")
     local d, e = socket.bind("*", 0)
     assert(d, e);
     local c, e = socket.tcp();
@@ -392,7 +392,7 @@ function accept_errors()
     assert(c, e);
     d:setfd(c:getfd())
     local r, e = d:accept()
-    assert(not r and e == "not supported", e)
+    assert(not r and e == "not supported" or e == "not listening", e)
     print("ok")
 end
 
