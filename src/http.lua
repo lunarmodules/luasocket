@@ -16,7 +16,7 @@ local PORT = 80
 -- user agent field sent in request
 local USERAGENT = "LuaSocket 1.3b HTTP 1.1"
 -- block size used in transfers
-local BLOCKSIZE = 4096
+local BLOCKSIZE = 8192
 
 -----------------------------------------------------------------------------
 -- Tries to get a pattern from the server and closes socket on error
