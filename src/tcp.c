@@ -257,7 +257,10 @@ static int meth_connect(lua_State *L)
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    const char *err = inet_tryconnect(&tcp->sock, address, port);
+    p_tm tm = &tcp->tm;
+    const char *err;
+    tm_markstart(tm);
+    err = inet_tryconnect(&tcp->sock, address, port, tm_getfailure(tm));
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -326,7 +329,7 @@ static int meth_getsockname(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_settimeout(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     return tm_meth_settimeout(L, &tcp->tm);
 }
 

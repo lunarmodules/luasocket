@@ -181,7 +181,7 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
 const char *inet_tryconnect(p_sock ps, const char *address, 
-        unsigned short port)
+        unsigned short port, int timeout)
 {
     struct sockaddr_in remote;
     const char *err;
@@ -197,14 +197,12 @@ const char *inet_tryconnect(p_sock ps, const char *address,
             memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
         }
     } else remote.sin_family = AF_UNSPEC;
-    sock_setblocking(ps);
-    err = sock_connect(ps, (SA *) &remote, sizeof(remote));
+    err = sock_connect(ps, (SA *) &remote, sizeof(remote), timeout);
     if (err) {
         sock_destroy(ps);
         *ps = SOCK_INVALID;
         return err;
     } else {
-        sock_setnonblocking(ps);
         return NULL;
     }
 }

@@ -2,6 +2,13 @@
 * Socket compatibilization module for Win32
 * LuaSocket toolkit
 *
+* We also exchanged the order of the calls to send/recv and select.
+* The idea is that the outer loop (whoever is calling sock_send/recv)
+* will call the function again if we didn't time out, so we can
+* call write and then select only if it fails. This moves the penalty
+* to when data is not available, maximizing the bandwidth if data is 
+* always available. 
+*
 * RCS ID: $Id$
 \*=========================================================================*/
 #include <string.h>

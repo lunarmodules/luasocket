@@ -2,6 +2,17 @@
 * Socket compatibilization module for Unix
 * LuaSocket toolkit
 *
+* We are now treating EINTRs, but if an interrupt happens in the middle of 
+* a select function call, we don't guarantee values timeouts anymore.
+* It's not a big deal, since we are not real-time anyways.
+*
+* We also exchanged the order of the calls to send/recv and select.
+* The idea is that the outer loop (whoever is calling sock_send/recv)
+* will call the function again if we didn't time out, so we can
+* call write and then select only if it fails. This moves the penalty
+* to when data is not available, maximizing the bandwidth if data is 
+* always available. 
+*
 * RCS ID: $Id$
 \*=========================================================================*/
 #include <string.h>
@@ -49,10 +60,27 @@ const char *sock_create(p_sock ps, int domain, int type, int protocol)
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len)
+const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, int timeout)
 {
-    if (connect(*ps, addr, addr_len) < 0) return sock_connectstrerror();
-    else return NULL;
+    t_sock sock = *ps;
+    if (sock == SOCK_INVALID) return "closed";
+    if (connect(sock, addr, addr_len) < 0) {
+        struct timeval tv;
+        fd_set wfds, efds;
+        int err;
+        tv.tv_sec = timeout / 1000;
+        tv.tv_usec = (timeout % 1000) * 1000;
+        FD_ZERO(&wfds); FD_ZERO(&efds);
+        FD_SET(sock, &wfds); FD_SET(sock, &efds);
+        do err = select(sock+1, NULL, &wfds, &efds, timeout >= 0 ? &tv : NULL);
+        while (err < 0 && errno == EINTR);
+        if (err <= 0) return "timeout";
+        if (FD_ISSET(sock, &efds)) {
+            char dummy;
+            recv(sock, &dummy, 0, 0);
+            return sock_connectstrerror();
+        } else return NULL;
+    } else return NULL;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -91,14 +119,16 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len,
     SA dummy_addr;
     socklen_t dummy_len;
     fd_set fds;
+    int err;
     if (sock == SOCK_INVALID) return IO_CLOSED;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
     FD_SET(sock, &fds);
     *pa = SOCK_INVALID;
-    if (select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL) <= 0)
-        return IO_TIMEOUT;
+    do err = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+    while (err < 0 && errno == EINTR);
+    if (err <= 0) return IO_TIMEOUT;
     if (!addr) addr = &dummy_addr;
     if (!addr_len) addr_len = &dummy_len;
     *pa = accept(sock, addr, addr_len);
@@ -108,12 +138,6 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len,
 
 /*-------------------------------------------------------------------------*\
 * Send with timeout
-* Here we exchanged the order of the calls to write and select
-* The idea is that the outer loop (whoever is calling sock_send)
-* will call the function again if we didn't time out, so we can
-* call write and then select only if it fails.
-* Should speed things up!
-* We are also treating EINTR and EPIPE errors.
 \*-------------------------------------------------------------------------*/
 int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, 
         int timeout)
@@ -138,7 +162,8 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
             tv.tv_usec = (timeout % 1000) * 1000;
             FD_ZERO(&fds);
             FD_SET(sock, &fds);
-            ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
+            do ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ?&tv : NULL);
+            while (ret < 0 && errno == EINTR);
             /* tell the caller to call us again because there is more data */
             if (ret > 0) return IO_DONE;
             /* tell the caller there was no data before timeout */
@@ -178,7 +203,8 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
             tv.tv_usec = (timeout % 1000) * 1000;
             FD_ZERO(&fds);
             FD_SET(sock, &fds);
-            ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
+            do ret = select(sock+1, NULL, &fds, NULL, timeout >= 0? &tv: NULL);
+            while (ret < 0 && errno == EINTR);
             /* tell the caller to call us again because there is more data */
             if (ret > 0) return IO_DONE;
             /* tell the caller there was no data before timeout */
@@ -199,7 +225,6 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
 * will call the function again if we didn't time out, so we can
 * call write and then select only if it fails.
 * Should speed things up!
-* We are also treating EINTR errors.
 \*-------------------------------------------------------------------------*/
 int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
 {
@@ -218,7 +243,8 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
         tv.tv_usec = (timeout % 1000) * 1000;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+        do ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+        while (ret < 0 && errno == EINTR);
         if (ret > 0) return IO_DONE;
         else return IO_TIMEOUT;
     } else {
@@ -248,7 +274,8 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         tv.tv_usec = (timeout % 1000) * 1000;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+        do ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+        while (ret < 0 && errno == EINTR);
         if (ret > 0) return IO_DONE;
         else return IO_TIMEOUT;
     } else {

@@ -24,6 +24,7 @@ enum {
     IO_CLOSED,          /* the connection has been closed */
     IO_ERROR,           /* something wrong... */
     IO_REFUSED,         /* transfer has been refused */
+    IO_RETRY,           /* please try again */
     IO_LIMITED          /* maximum number of bytes reached */
 };
 

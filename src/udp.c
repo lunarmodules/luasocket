@@ -335,12 +335,14 @@ static int meth_settimeout(lua_State *L)
 static int meth_setpeername(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
+    p_tm tm = &udp->tm;
     const char *address =  luaL_checkstring(L, 2);
     int connecting = strcmp(address, "*");
     unsigned short port = connecting ? 
         (unsigned short) luaL_checknumber(L, 3) : 
         (unsigned short) luaL_optnumber(L, 3, 0);
-    const char *err = inet_tryconnect(&udp->sock, address, port);
+    const char *err;
+    err = inet_tryconnect(&udp->sock, address, port, tm_getfailure(tm));
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
