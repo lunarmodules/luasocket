@@ -194,28 +194,34 @@ end
 --   corresponding absolute url
 -----------------------------------------------------------------------------
 function absolute(base_url, relative_url)
-    local base = base.type(base_url) == "table" and base_url or parse(base_url)
-    local relative = parse(relative_url)
-    if not base then return relative_url
-    elseif not relative then return base_url
-    elseif relative.scheme then return relative_url
+    if base.type(base_url) == "table" then
+        base_parsed = base_url
+        base_url = build(base_parsed)
     else
-        relative.scheme = base.scheme
-        if not relative.authority then
-            relative.authority = base.authority
-            if not relative.path then
-                relative.path = base.path
-                if not relative.params then
-                    relative.params = base.params
-                    if not relative.query then
-                        relative.query = base.query
+        base_parsed = parse(base_url)
+    end
+    local relative_parsed = parse(relative_url)
+    if not base_parsed then return relative_url
+    elseif not relative_parsed then return base_url
+    elseif relative_parsed.scheme then return relative_url
+    else
+        relative_parsed.scheme = base_parsed.scheme
+        if not relative_parsed.authority then
+            relative_parsed.authority = base_parsed.authority
+            if not relative_parsed.path then
+                relative_parsed.path = base_parsed.path
+                if not relative_parsed.params then
+                    relative_parsed.params = base_parsed.params
+                    if not relative_parsed.query then
+                        relative_parsed.query = base_parsed.query
                     end
                 end
             else     
-                relative.path = absolute_path(base.path or "", relative.path)
+                relative_parsed.path = absolute_path(base_parsed.path or "", 
+                    relative_parsed.path)
             end
         end
-        return build(relative)
+        return build(relative_parsed)
     end
 end
 

@@ -228,9 +228,8 @@ static int meth_connect(lua_State *L)
 
 static int meth_connected(lua_State *L)
 {
-    static t_tm tm = {-1, -1};
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
-    int err = sock_connected(&tcp->sock, &tm);
+    int err = sock_connected(&tcp->sock, &tcp->tm);
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, sock_strerror(err));

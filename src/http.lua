@@ -173,8 +173,10 @@ local function adjustrequest(reqt)
     return nreqt
 end
 
-local function shouldredirect(reqt, code)
-    return (reqt.redirect ~= false) and
+local function shouldredirect(reqt, code, headers)
+    return headers.location and
+           string.gsub(headers.location, "%s", "") ~= "" and
+           (reqt.redirect ~= false) and
            (code == 301 or code == 302) and
            (not reqt.method or reqt.method == "GET" or reqt.method == "HEAD")
            and (not reqt.nredirects or reqt.nredirects < 5)
@@ -226,7 +228,7 @@ function trequest(reqt)
     local code, headers, status
     code, status = h:receivestatusline()
     headers = h:receiveheaders()
-    if shouldredirect(reqt, code) then 
+    if shouldredirect(reqt, code, headers) then 
         h:close()
         return tredirect(reqt, headers)
     elseif shouldauthorize(reqt, code) then 
