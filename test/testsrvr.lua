@@ -8,19 +8,29 @@
 -----------------------------------------------------------------------------
 -- Read command definitions
 -----------------------------------------------------------------------------
-dofile("command.lua")
+assert(dofile("testcmd.lua"))
 test_debug_mode()
 
 -----------------------------------------------------------------------------
--- Bind to address and wait for control connection
+-- Get host and port from command line
+-----------------------------------------------------------------------------
+HOST = "localhost"
+PORT = 2020
+if arg then
+    HOST = arg[1] or HOST
+    PORT = arg[2] or PORT
+end
+
+-----------------------------------------------------------------------------
+-- Start control connection
 -----------------------------------------------------------------------------
 server, err = bind(HOST, PORT)
 if not server then
-	print(err)
+	fail(err)
 	exit(1)
 end
 print("server: waiting for control connection...")
-control = server:accept()
+control = accept(server)
 print("server: control connection stablished!")
 
 -----------------------------------------------------------------------------
@@ -32,7 +42,7 @@ print("server: control connection stablished!")
 function execute_command(cmd, par)
 	if cmd == CONNECT then
 		print("server: waiting for data connection...")
-		data = server:accept()
+		data = accept(server)
 		if not data then
 			fail("server: unable to start data connection!")
 		else
@@ -41,27 +51,31 @@ function execute_command(cmd, par)
 	elseif cmd == CLOSE then
 		print("server: closing connection with client...")
 		if data then 
-			data:close()
+			close(data)
 			data = nil
 		end
 	elseif cmd == ECHO_LINE then
-		str, err = data:receive()
+		str, err = receive(data)
 		if err then fail("server: " .. err) end
-		err = data:send(str, "\n")
+		err = send(data, str, "\n")
 		if err then fail("server: " .. err) end
 	elseif cmd == ECHO_BLOCK then
-		str, err = data:receive(par)
+		str, err = receive(data, par)
+		print(format("server: received %d bytes", strlen(str)))
 		if err then fail("server: " .. err) end
-		err = data:send(str)
+		print(format("server: sending %d bytes", strlen(str)))
+		err = send(data, str)
 		if err then fail("server: " .. err) end
 	elseif cmd == RECEIVE_BLOCK then
-		str, err = data:receive(par)
+		str, err = receive(data, par)
+		print(format("server: received %d bytes", strlen(str)))
 	elseif cmd == SEND_BLOCK then
-		err = data:send(str)
+		print(format("server: sending %d bytes", strlen(str)))
+		err = send(data, str)
 	elseif cmd == ECHO_TIMEOUT then
-		str, err = data:receive(par)
+		str, err = receive(data, par)
 		if err then fail("server: " .. err) end
-		err = data:send(str)
+		err = send(data, str)
 		if err then fail("server: " .. err) end
 	elseif cmd == COMMAND then
 		cmd, par = get_command()
