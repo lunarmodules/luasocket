@@ -1660,7 +1660,7 @@ static int receive_word(lua_State *L, p_sock sock)
 * Initializes the library interface with Lua and the socket library.
 * Defines the symbols exported to Lua.
 \*-------------------------------------------------------------------------*/
-void lua_socketlibopen(lua_State *L)
+LUASOCKET_API void lua_socketlibopen(lua_State *L)
 {
     struct luaL_reg funcs[] = {
         {"bind", global_tcpbind},
