@@ -63,6 +63,13 @@ LUASOCKET_API int lua_socketlibopen(lua_State *L)
     lua_dofile(L, "http.lua");
     lua_dofile(L, "smtp.lua");
     lua_dofile(L, "ftp.lua");
+#else
+#include "concat.loh"
+#include "code.loh"
+#include "url.loh"
+#include "http.loh"
+#include "smtp.loh"
+#include "ftp.loh"
 #endif
     return 0;
 }

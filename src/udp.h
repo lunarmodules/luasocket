@@ -1,3 +1,9 @@
+/*=========================================================================*\
+* UDP class: inherits from Socked and Internet domain classes and provides
+* all the functionality for UDP objects.
+*
+* RCS ID: $Id$
+\*=========================================================================*/
 #ifndef UDP_H_ 
 #define UDP_H_
 

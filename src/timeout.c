@@ -1,5 +1,10 @@
 /*=========================================================================*\
 * Timeout management functions
+* Global Lua functions:
+*   _sleep: (debug mode only)
+*   _time: (debug mode only)
+*
+* RCS ID: $Id$
 \*=========================================================================*/
 #include <lua.h>
 #include <lauxlib.h>
@@ -20,10 +25,8 @@
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-#ifdef LUASOCKET_DEBUG
 static int tm_lua_time(lua_State *L);
 static int tm_lua_sleep(lua_State *L);
-#endif
 
 /*=========================================================================*\
 * Exported functions.
@@ -123,12 +126,10 @@ int tm_gettime(void)
 void tm_open(lua_State *L)
 {
     (void) L;
-#ifdef LUASOCKET_DEBUG
     lua_pushcfunction(L, tm_lua_time);
     priv_newglobal(L, "_time");
     lua_pushcfunction(L, tm_lua_sleep);
     priv_newglobal(L, "_sleep");
-#endif
 }
 
 /*=========================================================================*\
@@ -137,7 +138,6 @@ void tm_open(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Returns the time the system has been up, in secconds.
 \*-------------------------------------------------------------------------*/
-#ifdef LUASOCKET_DEBUG
 static int tm_lua_time(lua_State *L)
 {
     lua_pushnumber(L, tm_gettime()/1000.0);
@@ -157,4 +157,3 @@ int tm_lua_sleep(lua_State *L)
 #endif
     return 0;
 }
-#endif

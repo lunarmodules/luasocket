@@ -3,6 +3,8 @@
 * Lua methods:
 *   send: unbuffered send using C base_send
 *   receive: buffered read using C base_receive
+*
+* RCS ID: $Id$
 \*=========================================================================*/
 #include <lua.h>
 #include <lauxlib.h>

@@ -1,7 +1,7 @@
-HOST = HOST or "localhost"
-PORT = PORT or "8080"
+host = host or "localhost"
+port = port or "8080"
 
-server, error = socket.bind(HOST, PORT)
+server, error = socket.bind(host, port)
 if not server then print("server: " .. tostring(error)) os.exit() end
 while 1 do
     print("server: waiting for client connection...");

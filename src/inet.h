@@ -1,5 +1,7 @@
 /*=========================================================================*\
-* Internet domain class
+* Internet domain class: inherits from the Socket class, and implement
+* a few methods shared by all internet related objects
+*
 * RCS ID: $Id$
 \*=========================================================================*/
 #ifndef INET_H_

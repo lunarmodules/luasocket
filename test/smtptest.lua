@@ -60,7 +60,7 @@ local empty = function()
 end
 
 local get = function()
-    s = ""
+    local s = ""
     for i,v in ipairs(files) do
 	    s = s .. "\n" .. readfile(v)
     end

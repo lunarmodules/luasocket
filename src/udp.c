@@ -1,5 +1,17 @@
 /*=========================================================================*\
-* UDP socket object implementation (inherits from sock and inet)
+* UDP class: inherits from Socked and Internet domain classes and provides
+* all the functionality for UDP objects.
+* Lua methods: 
+*   send: using compat module
+*   sendto: using compat module
+*   receive: using compat module
+*   receivefrom: using compat module
+*   setpeername: using internet module
+*   setsockname: using internet module
+* Global Lua functions:
+*   udp: creates the udp object
+*
+* RCS ID: $Id$
 \*=========================================================================*/
 #include <string.h>
 
@@ -21,7 +33,7 @@ static int udp_lua_receivefrom(lua_State *L);
 static int udp_lua_setpeername(lua_State *L);
 static int udp_lua_setsockname(lua_State *L);
 
-static int udp_global_udpsocket(lua_State *L);
+static int udp_global_udp(lua_State *L);
 
 static struct luaL_reg funcs[] = {
     {"send", udp_lua_send},
@@ -44,7 +56,7 @@ void udp_open(lua_State *L)
     priv_newclass(L, UDP_CLASS);
     udp_inherit(L, UDP_CLASS);
     /* declare global functions */
-    lua_pushcfunction(L, udp_global_udpsocket);
+    lua_pushcfunction(L, udp_global_udp);
     priv_newglobal(L, "udp");
     for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) 
         priv_newglobalmethod(L, funcs[i].name);
@@ -99,7 +111,7 @@ p_udp udp_push(lua_State *L)
 *   On success: udp socket
 *   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
-static int udp_global_udpsocket(lua_State *L)
+static int udp_global_udp(lua_State *L)
 {
     int oldtop = lua_gettop(L);
     p_udp udp = udp_push(L);
@@ -134,7 +146,7 @@ static int udp_global_udpsocket(lua_State *L)
 static int udp_lua_receive(lua_State *L)
 {
     p_udp udp = (p_udp) lua_touserdata(L, 1);
-    unsigned char buffer[UDP_DATAGRAMSIZE];
+    char buffer[UDP_DATAGRAMSIZE];
     size_t got, wanted = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
     int err;
     p_tm tm = &udp->base_tm;
@@ -162,8 +174,8 @@ static int udp_lua_receivefrom(lua_State *L)
     p_udp udp = (p_udp) lua_touserdata(L, 1);
     p_tm tm = &udp->base_tm;
     struct sockaddr_in peer;
-    int peer_len = sizeof(peer);
-    unsigned char buffer[UDP_DATAGRAMSIZE];
+    size_t peer_len = sizeof(peer);
+    char buffer[UDP_DATAGRAMSIZE];
     size_t wanted = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
     size_t got;
     int err;

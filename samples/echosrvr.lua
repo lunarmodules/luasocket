@@ -5,10 +5,10 @@ if arg then
     port = arg[2] or port
 end
 print("Binding to host '" ..host.. "' and port " ..port.. "...")
-udp, err = udpsocket()
-if not udp then print(err) exit() end
+udp, err = socket.udp()
+if not udp then print(err) os.exit() end
 err = udp:setsockname(host, port)
-if err then print(err) exit() end
+if err then print(err) os.exit() end
 udp:timeout(5)
 ip, port = udp:getsockname()
 print("Waiting packets on " .. ip .. ":" .. port .. "...")

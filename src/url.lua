@@ -2,7 +2,6 @@
 -- URI parsing, composition and relative URL resolution
 -- LuaSocket 1.5 toolkit.
 -- Author: Diego Nehab
--- Date: 20/7/2001
 -- Conforming to: RFC 2396, LTN7
 -- RCS ID: $Id$
 ----------------------------------------------------------------------------

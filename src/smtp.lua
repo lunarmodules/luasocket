@@ -2,7 +2,6 @@
 -- SMTP support for the Lua language.
 -- LuaSocket 1.5 toolkit
 -- Author: Diego Nehab
--- Date: 26/12/2000
 -- Conforming to: RFC 821, LTN7
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------

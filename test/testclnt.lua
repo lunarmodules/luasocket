@@ -1,5 +1,5 @@
-HOST = HOST or "localhost"
-PORT = PORT or "8080"
+host = host or "localhost"
+port = port or "8080"
 
 function pass(...)
     local s = string.format(unpack(arg))
@@ -83,14 +83,14 @@ function tcpreconnect()
         if data then data:close() data = nil end
         data = server:accept()
     ]]
-    data, err = socket.connect(HOST, PORT)
+    data, err = socket.connect(host, port)
     if not data then fail(err) 
     else pass("connected!") end
 end
 reconnect = tcpreconnect
 
 pass("attempting control connection...")
-control, err = socket.connect(HOST, PORT)
+control, err = socket.connect(host, port)
 if err then fail(err)
 else pass("connected!") end
 
@@ -104,10 +104,10 @@ function empty_connect()
         if data then data:close() data = nil end
         data = server:accept()
     ]]
-    data, err = socket.connect("", PORT)
+    data, err = socket.connect("", port)
     if not data then 
         pass("ok")
-        data = socket.connect(HOST, PORT)
+        data = socket.connect(host, port)
     else fail("should not have connected!") end
 end
 

@@ -1,5 +1,4 @@
-
-
+dofile("noglobals.lua")
 
 local check_build_url = function(parsed)
 	local built = socket.url.build(parsed)

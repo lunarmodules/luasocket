@@ -1,8 +1,11 @@
 /*=========================================================================*\
-* Network compatibilization module
+* Network compatibilization module: Unix version
+*
+* RCS ID: $Id$
 \*=========================================================================*/
 #include <lua.h>
 #include <lauxlib.h>
+#include <string.h>
 
 #include "lscompat.h"
 
@@ -26,7 +29,7 @@ int compat_open(lua_State *L)
 }
 
 COMPAT_FD compat_accept(COMPAT_FD s, struct  sockaddr  *addr,  
-        int *len, int deadline)
+        size_t *len, int deadline)
 {
     struct timeval tv;
     fd_set fds;
@@ -72,7 +75,7 @@ int compat_send(COMPAT_FD c, cchar *data, size_t count, size_t *sent,
 }
 
 int compat_sendto(COMPAT_FD c, cchar *data, size_t count, size_t *sent, 
-        int deadline, SA *addr, int len)
+        int deadline, SA *addr, size_t len)
 {
     struct timeval tv;
     fd_set fds;
@@ -104,7 +107,7 @@ int compat_sendto(COMPAT_FD c, cchar *data, size_t count, size_t *sent,
     }
 }
 
-int compat_recv(COMPAT_FD c, uchar *data, size_t count, size_t *got, 
+int compat_recv(COMPAT_FD c, char *data, size_t count, size_t *got, 
         int deadline)
 {
     struct timeval tv;
@@ -131,8 +134,8 @@ int compat_recv(COMPAT_FD c, uchar *data, size_t count, size_t *got,
     }
 }
 
-int compat_recvfrom(COMPAT_FD c, uchar *data, size_t count, size_t *got, 
-        int deadline, SA *addr, int *len)
+int compat_recvfrom(COMPAT_FD c, char *data, size_t count, size_t *got, 
+        int deadline, SA *addr, size_t *len)
 {
     struct timeval tv;
     fd_set fds;

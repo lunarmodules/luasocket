@@ -1,5 +1,6 @@
 /*=========================================================================*\
 * Buffered input/output routines
+*
 * RCS ID: $Id$
 \*=========================================================================*/
 #ifndef BUF_H_
@@ -16,7 +17,7 @@
 \*-------------------------------------------------------------------------*/
 typedef struct t_buf_tag {
 	size_t buf_first, buf_last;
-	uchar buf_data[BUF_SIZE];
+	char buf_data[BUF_SIZE];
     p_base buf_base;
 } t_buf;
 typedef t_buf *p_buf;

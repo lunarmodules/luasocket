@@ -1,6 +1,13 @@
+/*=========================================================================*\
+* Select implementation
+* Global Lua fuctions:
+*   select: waits until socket ready
+* RCS ID: $Id$
+\*=========================================================================*/
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "luasocket.h"
 #include "lspriv.h"
 #include "lsselect.h"
 #include "lsfd.h"
@@ -33,10 +40,17 @@ void select_open(lua_State *L)
 {
     /* push select auxiliar lua function and register
     * select_lua_select with it as an upvalue */
-    luaL_loadfile(L, "lsselect.lua");
-    lua_call(L, 0, 1);
+#ifdef LUASOCKET_DEBUG
+    lua_dofile(L, "lsselect.lua");
+#else
+#include "lsselect.loh"
+#endif
+    lua_getglobal(L, LUASOCKET_LIBNAME);
+    lua_pushstring(L, "_select");
+    lua_gettable(L, -2);
     lua_pushcclosure(L, select_lua_select, 1);
     priv_newglobal(L, "select");
+    lua_pop(L, 1);
     /* create luasocket(select) table */
     lua_pushstring(L, "luasocket(select)");
     lua_newtable(L);

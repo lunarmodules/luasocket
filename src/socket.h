@@ -1,3 +1,9 @@
+/*=========================================================================*\
+* Socket class: inherits from the File Descriptor class and is here just
+* for extensibility in the future
+*
+* RCS ID: $id$
+\*=========================================================================*/
 #ifndef SOCK_H_
 #define SOCK_H_ 
 

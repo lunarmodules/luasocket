@@ -1,3 +1,7 @@
+-----------------------------------------------------------------------------
+-- Little program that checks links in HTML files
+-- LuaSocket 1.5 sample files.
+-----------------------------------------------------------------------------
 socket.http.TIMEOUT = 10
 
 cache = {}
@@ -14,7 +18,7 @@ end
 
 function getstatus(url)
 	local parsed = socket.url.parse(url, { scheme = "file" })
-	if cache[url] then return cache[url].res end
+	if cache[url] then return cache[url] end
 	local res
     if parsed.scheme == "http" then
         local request = { url = url }
@@ -34,7 +38,7 @@ function getstatus(url)
              res = nil
         else res = error end
     else res = string.format("unhandled scheme '%s'", parsed.scheme) end
-    cache[url] = { res = res }
+    cache[url] = res
 	return res
 end
 

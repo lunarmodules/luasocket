@@ -1,3 +1,7 @@
+-----------------------------------------------------------------------------
+-- Little program to download files from URLs
+-- LuaSocket 1.5 sample files
+-----------------------------------------------------------------------------
 -- formats a number of seconds into human readable form
 function nicetime(s)
 	local l = "s"
@@ -63,15 +67,15 @@ function receive2disk(file, size)
 		size = size
     }
     local receive_cb = function(chunk, err)
-        local dt = socket._time() - %aux.start          -- elapsed time since start
+        local dt = socket._time() - aux.start  -- elapsed time since start
         if not chunk or chunk == "" then
 			io.write("\n")
             aux.file:close()
             return
         end
         aux.file:write(chunk)
-        aux.got = aux.got + string.len(chunk)      -- total bytes received
-        if dt < 0.1 then return 1 end            -- not enough time for estimate
+        aux.got = aux.got + string.len(chunk)  -- total bytes received
+        if dt < 0.1 then return 1 end          -- not enough time for estimate
 		io.write("\r", gauge(aux.got, dt, aux.size))
         return 1
     end
@@ -122,7 +126,7 @@ function getschemeandname(url, name)
 	return parsed.scheme, name
 end
 
--- gets a file either by http or url, saving as name
+-- gets a file either by http or ftp, saving as <name>
 function get(url, name)
 	local scheme
     scheme, name = getschemeandname(url, name)

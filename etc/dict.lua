@@ -1,12 +1,16 @@
+-----------------------------------------------------------------------------
+-- Little program to download DICT word definitions
+-- LuaSocket 1.5 sample files
+-----------------------------------------------------------------------------
 function get_status(sock, valid)
 	local line, err = sock:receive()
 	local code, par
 	if not line then sock:close() return err end
-	_, _, code = strfind(line, "^(%d%d%d)")
+	_, _, code = string.find(line, "^(%d%d%d)")
 	code = tonumber(code)
 	if code ~= valid then return code end
 	if code == 150 then
-		_,_,_, par = strfind(line, "^(%d%d%d) (%d*)")
+		_,_,_, par = string.find(line, "^(%d%d%d) (%d*)")
 		par = tonumber(par)
 	end
 	return nil, par
@@ -24,7 +28,7 @@ function get_def(sock)
 end
 
 function dict_open()
-	local sock, err = connect("dict.org", 2628)
+	local sock, err = socket.connect("dict.org", 2628)
 	if not sock then return nil, err end
 	sock:timeout(10)
   	local code, par = get_status(sock, 220)
@@ -48,7 +52,7 @@ function dict_define(sock, word, dict)
 	end
   	code, par = get_status(sock, 250)
 	if code then return nil, code end
-	return gsub(defs, "%s%s$", "")
+	return string.gsub(defs, "%s%s$", "")
 end
 
 function dict_close(sock)
@@ -64,4 +68,11 @@ function dict_get(word, dict)
 	local defs, err = dict_define(sock, word, dict)
 	dict_close(sock)
 	return defs, err
+end
+
+if arg and arg[1] then
+    defs, err = dict_get(arg[1], arg[2])
+    print(defs or err)
+else
+	io.write("Usage:\n  luasocket dict.lua <word> [<dictionary>]\n")
 end

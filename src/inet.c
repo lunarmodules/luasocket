@@ -1,11 +1,14 @@
 /*=========================================================================*\
-* Internet domain class
+* Internet domain class: inherits from the Socket class, and implement
+* a few methods shared by all internet related objects
 * Lua methods:
 *   getpeername: gets socket peer ip address and port
 *   getsockname: gets local socket ip address and port
 * Global Lua fuctions:
 *   toip: gets resolver info on host name
 *   tohostname: gets resolver info on dotted-quad
+*
+* RCS ID: $Id$
 \*=========================================================================*/
 #include <string.h>
 
@@ -145,7 +148,7 @@ static int inet_lua_getpeername(lua_State *L)
 {
     p_sock sock = (p_sock) lua_touserdata(L, 1);
     struct sockaddr_in peer;
-    int peer_len = sizeof(peer);
+    size_t peer_len = sizeof(peer);
     if (getpeername(sock->fd, (SA *) &peer, &peer_len) < 0) {
         lua_pushnil(L);
         return 1;
@@ -167,7 +170,7 @@ static int inet_lua_getsockname(lua_State *L)
 {
     p_sock sock = (p_sock) lua_touserdata(L, 1);
     struct sockaddr_in local;
-    int local_len = sizeof(local);
+    size_t local_len = sizeof(local);
     if (getsockname(sock->fd, (SA *) &local, &local_len) < 0) {
         lua_pushnil(L);
         return 1;
