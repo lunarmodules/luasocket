@@ -8,7 +8,7 @@
 #define _LUASOCKET_H_
 
 /* Current luasocket version */
-#define LUASOCKET_VERSION "LuaSocket 1.3b"
+#define LUASOCKET_VERSION "LuaSocket 1.4"
 
 /*-------------------------------------------------------------------------*\
 * These can be changed to according to the applications' needs.
@@ -31,6 +31,6 @@
 * Initializes the library interface with Lua and the socket library.
 * Defines the symbols exported to Lua.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API void lua_socketlibopen(lua_State *L);
+LUASOCKET_API int lua_socketlibopen(lua_State *L);
 
 #endif /* _LUASOCKET_H_ */
