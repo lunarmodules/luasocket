@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- HTTP/1.1 client support for the Lua language.
--- LuaSocket 1.4a toolkit.
+-- LuaSocket 1.4 toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
 -- Conforming to: RFC 2616, LTN7
@@ -18,23 +18,23 @@ Public.TIMEOUT = 60
 -- default port for document retrieval
 Public.PORT = 80
 -- user agent field sent in request
-Public.USERAGENT = "LuaSocket 1.4a"
+Public.USERAGENT = "LuaSocket 1.4"
 -- block size used in transfers
 Public.BLOCKSIZE = 8192
 
 -----------------------------------------------------------------------------
 -- Required libraries
 -----------------------------------------------------------------------------
-dofile "buffer.lua"
+dofile "concat.lua"
 dofile "url.lua"
 dofile "code.lua"
 
 -----------------------------------------------------------------------------
 -- Tries to get a pattern from the server and closes socket on error
 --   sock: socket connected to the server
---   ...: patterns to receive
+--   ...: pattern to receive
 -- Returns
---   ...: received patterns
+--   ...: received pattern
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Private.try_receive(...)
@@ -313,6 +313,26 @@ function Private.send_indirect(data, send_cb, chunk, size)
 end
 
 -----------------------------------------------------------------------------
+-- Sends mime headers
+-- Input
+--   sock: server socket
+--   headers: table with mime headers to be sent
+-- Returns
+--   err: error message if any
+-----------------------------------------------------------------------------
+function Private.send_headers(sock, headers)
+    local err
+    headers = headers or {}
+    -- send request headers 
+    for i, v in headers do
+        err = %Private.try_send(sock, i .. ": " .. v .. "\r\n")
+        if err then return err end
+    end
+    -- mark end of request headers
+    return %Private.try_send(sock, "\r\n")
+end
+
+-----------------------------------------------------------------------------
 -- Sends a HTTP request message through socket
 -- Input
 --   sock: socket connected to the server
@@ -340,12 +360,7 @@ function Private.send_request(sock, method, uri, headers, body_cb)
         end
     end 
     -- send request headers 
-    for i, v in headers do
-        err = %Private.try_send(sock, i .. ": " .. v .. "\r\n")
-        if err then return err end
-    end
-    -- mark end of request headers
-    err = %Private.try_send(sock, "\r\n")
+    err = %Private.send_headers(sock, headers)
     if err then return err end
     -- send request message body, if any
     if body_cb then 
@@ -427,7 +442,7 @@ function Private.authorize(request, parsed, response)
         body_cb = request.body_cb,
         headers = request.headers
     }
-    return %Public.request_indirect(authorize, response)
+    return %Public.request_cb(authorize, response)
 end
 
 -----------------------------------------------------------------------------
@@ -467,7 +482,7 @@ function Private.redirect(request, response)
         body_cb = request.body_cb,
         headers = request.headers
     }
-    return %Public.request_indirect(redirect, response)
+    return %Public.request_cb(redirect, response)
 end
 
 -----------------------------------------------------------------------------
@@ -484,6 +499,23 @@ function Private.request_uri(parsed)
     if parsed.query then uri = uri .. "?" .. parsed.query end
     if parsed.fragment then uri = uri .. "#" .. parsed.fragment end
     return uri
+end
+
+-----------------------------------------------------------------------------
+-- Builds a request table from a URL or request table
+-- Input
+--   url_or_request: target url or request table (a table with the fields:
+--     url: the target URL
+--     user: account user name
+--     password: account password)
+-- Returns
+--   request: request table
+-----------------------------------------------------------------------------
+function Private.build_request(data)
+    local request = {}
+    if type(data) == "table" then for i, v in data do request[i] = v end
+    else request.url = data end
+    return request
 end
 
 -----------------------------------------------------------------------------
@@ -506,8 +538,12 @@ end
 --     code: server status code, or nil if failed
 --     error: error message, or nil if successfull
 -----------------------------------------------------------------------------
-function Public.request_indirect(request, response)
-    local parsed = URL.parse_url(request.url, {port = %Public.PORT, path ="/"})
+function Public.request_cb(request, response)
+    local parsed = URL.parse_url(request.url, {
+		host = "",
+		port = %Public.PORT, 
+		path ="/"
+	})
     -- explicit authentication info overrides that given by the URL
     parsed.user = request.user or parsed.user
     parsed.password = request.password or parsed.password
@@ -578,10 +614,10 @@ function Public.request(request)
     end
     local cat = Concat.create()
     response.body_cb = function(chunk, err)
-        %cat:addstring(chunk)
+        if chunk then %cat:addstring(chunk) end
         return 1
     end
-    %Public.request_indirect(request, response)
+    response = %Public.request_cb(request, response)
     response.body = cat:getresult()
     response.body_cb = nil
     return response
@@ -590,18 +626,20 @@ end
 -----------------------------------------------------------------------------
 -- Retrieves a URL by the method "GET"
 -- Input
---   url: request URL, i.e. the document to be retrieved
+--   url_or_request: target url or request table (a table with the fields:
+--     url: the target URL
+--     user: account user name
+--     password: account password)
 -- Returns
 --   body: response message body, or nil if failed
 --   headers: response header fields received, or nil if failed
 --   status: server response status line, or nil if failed
 --   error: error message if any
 -----------------------------------------------------------------------------
-function Public.get(url)
-    local response = %Public.request {
-        method = "GET", 
-        url = url 
-    }
+function Public.get(url_or_request)
+	local request = %Private.build_request(url_or_request)
+	request.method = "GET"
+    local response = %Public.request(request)
     return response.body, response.headers, 
         response.status, response.error
 end
@@ -609,7 +647,11 @@ end
 -----------------------------------------------------------------------------
 -- Retrieves a URL by the method "POST"
 -- Input
---   url: request URL, i.e. the document to be retrieved
+--   url_or_request: target url or request table (a table with the fields:
+--     url: the target URL
+--     body: request message body
+--     user: account user name
+--     password: account password)
 --   body: request message body, or nil if none
 -- Returns
 --   body: response message body, or nil if failed
@@ -617,12 +659,11 @@ end
 --   status: server response status line, or nil if failed
 --   error: error message, or nil if successfull
 -----------------------------------------------------------------------------
-function Public.post(url, body)
-    local response = %Public.request {
-        method = "POST", 
-        url = url,
-        body = body
-    }
+function Public.post(url_or_request, body)
+	local request = %Private.build_request(url_or_request)
+	request.method = "POST"
+	request.body = request.body or body
+    local response = %Public.request(request)
     return response.body, response.headers, 
         response.status, response.error
 end
