@@ -238,7 +238,7 @@ static int meth_bind(lua_State *L)
         return 2;
     }
     /* turn master object into a server object if there was a listen */
-    if (backlog > 0) aux_setclass(L, "tcp{server}", 1);
+    if (backlog >= 0) aux_setclass(L, "tcp{server}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }

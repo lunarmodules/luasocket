@@ -1,3 +1,10 @@
+
+comment the need of a content-length header in the post method...
+
+comment the callback.lua module and the new mime module.
+    escape and unescape are missing!
+
+add _tostring methods!
 add callback module to manual
 change stay to redirect in http.lua and in manual
 add timeout to request table

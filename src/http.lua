@@ -421,7 +421,7 @@ end
 -----------------------------------------------------------------------------
 local function authorize(reqt, parsed, respt)
     reqt.headers["authorization"] = "Basic " .. 
-        (socket.code.b64(parsed.user .. ":" .. parsed.password))
+        (socket.mime.b64(parsed.user .. ":" .. parsed.password))
     local autht = {
         nredirects = reqt.nredirects,
         method = reqt.method,
@@ -429,8 +429,8 @@ local function authorize(reqt, parsed, respt)
         body_cb = reqt.body_cb,
         headers = reqt.headers,
         timeout = reqt.timeout,
-        host = reqt.host,
-        port = reqt.port
+        proxyhost = reqt.proxyhost,
+        proxyport = reqt.proxyport
     }
     return request_cb(autht, respt)
 end
@@ -471,8 +471,8 @@ local function redirect(reqt, respt)
         body_cb = reqt.body_cb,
         headers = reqt.headers,
         timeout = reqt.timeout,
-        host = reqt.host,
-        port = reqt.port
+        proxyhost = reqt.proxyhost,
+        proxyport = reqt.proxyport
     }
     respt = request_cb(redirt, respt)
     -- we pass the location header as a clue we tried to redirect
@@ -482,8 +482,8 @@ end
 
 -----------------------------------------------------------------------------
 -- Computes the request URI from the parsed request URL
--- If host and port are given in the request table, we use he
--- absoluteURI format. Otherwise, we use the abs_path format.
+-- If we are using a proxy, we use the absoluteURI format. 
+-- Otherwise, we use the abs_path format.
 -- Input
 --   parsed: parsed URL
 -- Returns
@@ -491,7 +491,7 @@ end
 -----------------------------------------------------------------------------
 local function request_uri(reqt, parsed)
     local url
-    if not reqt.host and not reqt.port then
+    if not reqt.proxyhost and not reqt.proxyport then
         url = { 
            path = parsed.path, 
            params = parsed.params, 
@@ -543,6 +543,7 @@ end
 --     error: error message, or nil if successfull
 -----------------------------------------------------------------------------
 function request_cb(reqt, respt)
+    local sock, ret
     local parsed = socket.url.parse(reqt.url, {
         host = "",
         port = PORT, 
@@ -561,14 +562,14 @@ function request_cb(reqt, respt)
     -- fill default headers
     reqt.headers = fill_headers(reqt.headers, parsed)
     -- try to connect to server
-    local sock
     sock, respt.error = socket.tcp()
     if not sock then return respt end
     -- set connection timeout so that we do not hang forever
     sock:settimeout(reqt.timeout or TIMEOUT)
-    local ret
-    ret, respt.error = sock:connect(reqt.host or parsed.host, 
-        reqt.port or parsed.port)
+    ret, respt.error = sock:connect(
+        reqt.proxyhost or PROXYHOST or parsed.host, 
+        reqt.proxyport or PROXYPORT or parsed.port
+    )
     if not ret then 
         sock:close()
         return respt 

@@ -6,9 +6,102 @@
 -- RCS ID: $Id$
 ----------------------------------------------------------------------------
 
-local Public, Private = {}, {}
-local socket = _G[LUASOCKET_LIBNAME] -- get LuaSocket namespace
-socket.url = Public
+-- make sure LuaSocket is loaded
+if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
+-- get LuaSocket namespace
+local socket = _G[LUASOCKET_LIBNAME]
+if not socket then error('module requires LuaSocket') end
+-- create smtp namespace inside LuaSocket namespace
+local url = {}
+socket.url = url
+-- make all module globals fall into smtp namespace
+setmetatable(url, { __index = _G })
+setfenv(1, url)
+
+-----------------------------------------------------------------------------
+-- Encodes a string into its escaped hexadecimal representation
+-- Input 
+--   s: binary string to be encoded
+-- Returns
+--   escaped representation of string binary
+-----------------------------------------------------------------------------
+function escape(s)
+    return string.gsub(s, "(.)", function(c)
+        return string.format("%%%02x", string.byte(c))
+    end)
+end
+
+-----------------------------------------------------------------------------
+-- Protects a path segment, to prevent it from interfering with the
+-- url parsing. 
+-- Input 
+--   s: binary string to be encoded
+-- Returns
+--   escaped representation of string binary
+-----------------------------------------------------------------------------
+local function make_set(t)
+	local s = {}
+	for i = 1, table.getn(t) do
+		s[t[i]] = 1
+	end
+	return s
+end
+
+-- these are allowed withing a path segment, along with alphanum
+-- other characters must be escaped
+local segment_set = make_set {
+    "-", "_", ".", "!", "~", "*", "'", "(", 
+	")", ":", "@", "&", "=", "+", "$", ",",
+}
+
+local function protect_segment(s)
+	return string.gsub(s, "(%W)", function (c) 
+		if segment_set[c] then return c
+		else return escape(c) end
+	end)
+end
+
+-----------------------------------------------------------------------------
+-- Encodes a string into its escaped hexadecimal representation
+-- Input 
+--   s: binary string to be encoded
+-- Returns
+--   escaped representation of string binary
+-----------------------------------------------------------------------------
+function unescape(s)
+    return string.gsub(s, "%%(%x%x)", function(hex)
+        return string.char(tonumber(hex, 16))
+    end)
+end
+
+-----------------------------------------------------------------------------
+-- Builds a path from a base path and a relative path
+-- Input
+--   base_path
+--   relative_path
+-- Returns
+--   corresponding absolute path
+-----------------------------------------------------------------------------
+local function absolute_path(base_path, relative_path)
+    if string.sub(relative_path, 1, 1) == "/" then return relative_path end
+    local path = string.gsub(base_path, "[^/]*$", "")
+    path = path .. relative_path
+    path = string.gsub(path, "([^/]*%./)", function (s) 
+        if s ~= "./" then return s else return "" end
+    end)
+    path = string.gsub(path, "/%.$", "/")
+    local reduced 
+    while reduced ~= path do
+        reduced = path
+        path = string.gsub(reduced, "([^/]*/%.%./)", function (s)
+            if s ~= "../../" then return "" else return s end
+        end)
+    end
+    path = string.gsub(reduced, "([^/]*/%.%.)$", function (s)
+        if s ~= "../.." then return "" else return s end
+    end)
+    return path
+end
 
 -----------------------------------------------------------------------------
 -- Parses a url and returns a table with all its parts according to RFC 2396
@@ -28,7 +121,7 @@ socket.url = Public
 -- Obs:
 --   the leading '/' in {/<path>} is considered part of <path>
 -----------------------------------------------------------------------------
-function Public.parse(url, default)
+function parse(url, default)
     -- initialize default parameters
     local parsed = default or {}
     -- empty url is parsed to nil
@@ -66,11 +159,11 @@ end
 -- Rebuilds a parsed URL from its components.
 -- Components are protected if any reserved or unallowed characters are found
 -- Input
---   parsed: parsed URL, as returned by Public.parse
+--   parsed: parsed URL, as returned by parse
 -- Returns
 --   a stringing with the corresponding URL
 -----------------------------------------------------------------------------
-function Public.build(parsed)
+function build(parsed)
     local url = parsed.path or ""
     if parsed.params then url = url .. ";" .. parsed.params end
     if parsed.query then url = url .. "?" .. parsed.query end
@@ -102,9 +195,9 @@ end
 -- Returns
 --   corresponding absolute url
 -----------------------------------------------------------------------------
-function Public.absolute(base_url, relative_url)
-    local base = Public.parse(base_url)
-    local relative = Public.parse(relative_url)
+function absolute(base_url, relative_url)
+    local base = parse(base_url)
+    local relative = parse(relative_url)
     if not base then return relative_url
     elseif not relative then return base_url
     elseif relative.scheme then return relative_url
@@ -121,10 +214,10 @@ function Public.absolute(base_url, relative_url)
                     end
                 end
             else     
-                relative.path = Private.absolute_path(base.path,relative.path)
+                relative.path = absolute_path(base.path,relative.path)
             end
         end
-        return Public.build(relative)
+        return build(relative)
     end
 end
 
@@ -135,13 +228,13 @@ end
 -- Returns
 --   segment: a table with one entry per segment
 -----------------------------------------------------------------------------
-function Public.parse_path(path)
+function parse_path(path)
 	local parsed = {}
 	path = path or ""
 	path = string.gsub(path, "%s", "")
 	string.gsub(path, "([^/]+)", function (s) table.insert(parsed, s) end)
 	for i = 1, table.getn(parsed) do
-		parsed[i] = socket.code.unescape(parsed[i])
+		parsed[i] = unescape(parsed[i])
 	end
 	if string.sub(path, 1, 1) == "/" then parsed.is_absolute = 1 end
 	if string.sub(path, -1, -1) == "/" then parsed.is_directory = 1 end
@@ -154,9 +247,9 @@ end
 --   parsed: path segments
 --   unsafe: if true, segments are not protected before path is built
 -- Returns
---   path: correspondin path stringing
+--   path: corresponding path stringing
 -----------------------------------------------------------------------------
-function Public.build_path(parsed, unsafe)
+function build_path(parsed, unsafe)
 	local path = ""
 	local n = table.getn(parsed)
 	if unsafe then
@@ -170,66 +263,14 @@ function Public.build_path(parsed, unsafe)
 		end
 	else
 		for i = 1, n-1 do
-			path = path .. Private.protect_segment(parsed[i])
+			path = path .. protect_segment(parsed[i])
 			path = path .. "/"
 		end
 		if n > 0 then
-			path = path .. Private.protect_segment(parsed[n])
+			path = path .. protect_segment(parsed[n])
 			if parsed.is_directory then path = path .. "/" end
 		end
 	end
 	if parsed.is_absolute then path = "/" .. path end
 	return path
-end
-
-function Private.make_set(t)
-	local s = {}
-	for i = 1, table.getn(t) do
-		s[t[i]] = 1
-	end
-	return s
-end
-
--- these are allowed withing a path segment, along with alphanum
--- other characters must be escaped
-Private.segment_set = Private.make_set {
-    "-", "_", ".", "!", "~", "*", "'", "(", 
-	")", ":", "@", "&", "=", "+", "$", ",",
-}
-
-function Private.protect_segment(s)
-	local segment_set = Private.segment_set
-	return string.gsub(s, "(%W)", function (c) 
-		if segment_set[c] then return c
-		else return socket.code.escape(c) end
-	end)
-end
-
------------------------------------------------------------------------------
--- Builds a path from a base path and a relative path
--- Input
---   base_path
---   relative_path
--- Returns
---   corresponding absolute path
------------------------------------------------------------------------------
-function Private.absolute_path(base_path, relative_path)
-    if string.sub(relative_path, 1, 1) == "/" then return relative_path end
-    local path = string.gsub(base_path, "[^/]*$", "")
-    path = path .. relative_path
-    path = string.gsub(path, "([^/]*%./)", function (s) 
-        if s ~= "./" then return s else return "" end
-    end)
-    path = string.gsub(path, "/%.$", "/")
-    local reduced 
-    while reduced ~= path do
-        reduced = path
-        path = string.gsub(reduced, "([^/]*/%.%./)", function (s)
-            if s ~= "../../" then return "" else return s end
-        end)
-    end
-    path = string.gsub(reduced, "([^/]*/%.%.)$", function (s)
-        if s ~= "../.." then return "" else return s end
-    end)
-    return path
 end

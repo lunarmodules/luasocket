@@ -5,14 +5,14 @@
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
 dofile("noglobals.lua")
 
-local host, proxyh, proxyp, request, response
+local host, proxyhost, proxyport, request, response
 local ignore, expect, index, prefix, cgiprefix
 
 local t = socket.time()
 
 host = host or "diego.princeton.edu"
-proxyh = proxyh or "localhost"
-proxyp = proxyp or 3128
+proxyhost = proxyhost or "localhost"
+proxyport = proxyport or 3128
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
 
@@ -129,8 +129,8 @@ request = {
 	method = "POST",
 	body = index,
     headers = { ["content-length"] = string.len(index) },
-    port = proxyp,
-    host = proxyh
+    proxyport = proxyport,
+    proxyhost = proxyhost
 }
 expect = {
 	body = index,
@@ -170,8 +170,8 @@ check_request(request, expect, ignore)
 io.write("testing proxy with redirection: ")
 request = {
 	url = "http://" .. host .. prefix,
-    host = proxyh,
-    port = proxyp
+    proxyhost = proxyhost,
+    proxyport = proxyport
 }
 expect = {
 	body = index,
@@ -267,7 +267,7 @@ io.write("testing manual basic auth: ")
 request = {
 	url = "http://" .. host .. prefix .. "/auth/index.html",
 	headers = {
-		authorization = "Basic " .. (socket.code.b64("luasocket:password"))
+		authorization = "Basic " .. (socket.mime.b64("luasocket:password"))
 	}
 }
 expect = {

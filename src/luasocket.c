@@ -33,7 +33,7 @@
 #include "tcp.h"
 #include "udp.h"
 #include "select.h"
-#include "code.h"
+#include "mime.h"
 
 /*=========================================================================*\
 * Exported functions
@@ -52,13 +52,13 @@ LUASOCKET_API int luaopen_socket(lua_State *L)
     tcp_open(L);
     udp_open(L);
     select_open(L);
-    code_open(L);
+    mime_open(L);
 #ifdef LUASOCKET_COMPILED
 #include "auxiliar.lch"
 #include "concat.lch"
 #include "url.lch"
 #include "callback.lch"
-#include "code.lch"
+#include "mime.lch"
 #include "smtp.lch"
 #include "ftp.lch"
 #include "http.lch"
@@ -67,7 +67,7 @@ LUASOCKET_API int luaopen_socket(lua_State *L)
     lua_dofile(L, "concat.lua");
     lua_dofile(L, "url.lua");
     lua_dofile(L, "callback.lua");
-    lua_dofile(L, "code.lua");
+    lua_dofile(L, "mime.lua");
     lua_dofile(L, "smtp.lua");
     lua_dofile(L, "ftp.lua");
     lua_dofile(L, "http.lua");

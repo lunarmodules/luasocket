@@ -42,8 +42,8 @@ function nicesize(b)
 end
 
 -- returns a string with the current state of the download
-function gauge(got, dt, size)
-	local rate = got / dt
+function gauge(got, delta, size)
+	local rate = got / delta
 	if size and size >= 1 then
 		return string.format("%s received, %s/s throughput, " ..
 			"%.0f%% done, %s remaining", 
@@ -55,53 +55,56 @@ function gauge(got, dt, size)
 		return string.format("%s received, %s/s throughput, %s elapsed", 
 			nicesize(got), 
 			nicesize(rate),
-			nicetime(dt))
+			nicetime(delta))
 	end
 end
 
 -- creates a new instance of a receive_cb that saves to disk
 -- kind of copied from luasocket's manual callback examples
-function receive2disk(file, size)
-	local aux = {
-        start = socket.time(),
-        got = 0,
-        file = io.open(file, "wb"),
-		size = size
-    }
-    local receive_cb = function(chunk, err)
-        local dt = socket.time() - aux.start  -- elapsed time since start
-        if not chunk or chunk == "" then
-			io.write("\n")
-            aux.file:close()
-            return
+function stats(size)
+    local start = socket.time()
+    local got = 0
+    return function(chunk)
+        -- elapsed time since start
+        local delta = socket.time() - start 
+        if chunk then 
+            -- total bytes received
+            got = got + string.len(chunk)    
+            -- not enough time for estimate
+            if delta > 0.1 then 
+                io.stderr:write("\r", gauge(got, delta, size)) 
+                io.stderr:flush()
+            end
+            return chunk
+        else 
+            -- close up
+            io.stderr:write("\n") 
+            return ""
         end
-        aux.file:write(chunk)
-        aux.got = aux.got + string.len(chunk)  -- total bytes received
-        if dt < 0.1 then return 1 end          -- not enough time for estimate
-		io.write("\r", gauge(aux.got, dt, aux.size))
-        return 1
     end
-	return receive_cb
 end
 
 -- downloads a file using the ftp protocol
 function getbyftp(url, file)
+    local save = socket.callback.receive.file(file or io.stdout)
+    if file then 
+        save = socket.callback.receive.chain(stats(gethttpsize(url)), save)
+    end
     local err = socket.ftp.get_cb {
         url = url,
-        content_cb = receive2disk(file),
+        content_cb = save,
         type = "i"
     }
-	print()
 	if err then print(err) end
 end
 
 -- downloads a file using the http protocol
-function getbyhttp(url, file, size)
-    local response = socket.http.request_cb(
-        {url = url},
-		{body_cb = receive2disk(file, size)}
-    )
-	print()
+function getbyhttp(url, file)
+    local save = socket.callback.receive.file(file or io.stdout)
+    if file then 
+        save = socket.callback.receive.chain(stats(gethttpsize(url)), save)
+    end
+    local response = socket.http.request_cb({url = url}, {body_cb = save})
 	if response.code ~= 200 then print(response.status or response.error) end
 end
 
@@ -116,26 +119,22 @@ function gethttpsize(url)
 	end
 end
 
--- determines the scheme and the file name of a given url
-function getschemeandname(url, name)
+-- determines the scheme 
+function getscheme(url)
 	-- this is an heuristic to solve a common invalid url poblem
 	if not string.find(url, "//") then url = "//" .. url end
 	local parsed = socket.url.parse(url, {scheme = "http"})
-	if name then return parsed.scheme, name end
-	local segment = socket.url.parse_path(parsed.path)
-	name = segment[table.getn(segment)]
-	if segment.is_directory then name = nil end
-	return parsed.scheme, name
+	return parsed.scheme
 end
 
 -- gets a file either by http or ftp, saving as <name>
 function get(url, name)
-	local scheme
-    scheme, name = getschemeandname(url, name)
-	if not name then print("unknown file name")
-	elseif scheme == "ftp" then getbyftp(url, name)
-	elseif scheme == "http" then getbyhttp(url, name, gethttpsize(url)) 
+    local fout = name and io.open(name, "wb")
+	local scheme = getscheme(url)
+	if scheme == "ftp" then getbyftp(url, fout)
+	elseif scheme == "http" then getbyhttp(url, fout)
 	else print("unknown scheme" .. scheme) end
+    if name then fout:close() end
 end
 
 -- main program

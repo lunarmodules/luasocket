@@ -36,21 +36,21 @@
 <h2 id=stream>Streaming with Callbacks</h2> 
 
 <p>
-HTTP and FTP  transfers sometimes involve large  amounts of information.
-Sometimes an application  needs to generate outgoing data  in real time,
-or needs  to process incoming  information as  it is being  received. To
-address these  problems, LuaSocket  allows HTTP  message bodies  and FTP
-file  contents to  be received  or sent  through the  callback mechanism
-outlined below. 
+HTTP, FTP, and SMTP transfers sometimes involve large  amounts of
+information.  Sometimes an application  needs to generate outgoing data 
+in real time, or needs  to process incoming  information as  it is being
+received. To address these  problems, LuaSocket allows HTTP and SMTP message
+bodies  and FTP file  contents to  be received  or sent  through the
+callback mechanism outlined below.  
 </p>
 
 <p>
-Instead of  returning the entire contents  of a FTP file  or HTTP message
-body as  strings to the Lua  application, the library allows  the user to
+Instead of  returning the entire contents of an entity 
+as strings to the Lua  application, the library allows  the user to
 provide a  <em>receive callback</em> that  will be called  with successive
 chunks of data, as the data becomes available. Conversely, the <em>send
-callbacks</em> should be used when data needed by LuaSocket 
-is generated incrementally by the application. 
+callbacks</em> can be used when the application wants to incrementally 
+provide LuaSocket with the data to be sent. 
 </p>
 
 <!-- tohostname +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -68,21 +68,26 @@ callback receives  successive chunks  of downloaded  data.
 <p class=parameters>
 <tt>Chunk</tt> contains the current chunk of data.
 When the transmission  is over, the function  is called with an  
-empty string (i.e.&nbsp;<tt>""</tt>) as  the <tt>chunk</tt>. If an  error occurs, the
-function  receives <tt>nil</tt> as <tt>chunk</tt> and  an error  message as
-<tt>err</tt>. 
+empty string (i.e.&nbsp;<tt>""</tt>) as  the <tt>chunk</tt>. 
+If an  error occurs, the function  receives <tt>nil</tt> 
+as <tt>chunk</tt> and  an error  message in <tt>err</tt>. 
 </p>
 
 <p class=return>
-The callback  can abort transmission by returning
-<tt>nil</tt> as its first return value. In that case, it can also return
-an error  message. Any non-<tt>nil</tt>  return value proceeds  with the
-transmission. 
+The callback  can abort transmission by returning <tt>nil</tt> as its first
+return value, and an optional error  message as the
+second return value. If the application wants to continue receiving
+data, the function should return non-<tt>nil</tt> as it's first return
+value. In this case, the function can optionally return a 
+new callback function, to replace itself, as the second return value.  
+</p>
+
+<p class=note>
+Note: The <tt>callback</tt> module provides several standard receive callbacks, including the following:
 </p>
 
 <pre class=example>
--- The implementation of socket.callback.receive_concat
-function Public.receive_concat(concat)
+function receive.concat(concat)
     concat = concat or socket.concat.create()
     local callback = function(chunk, err)
         -- if not finished, add chunk
@@ -94,6 +99,12 @@ function Public.receive_concat(concat)
     return callback, concat
 end
 </pre>
+
+<p class=note>
+This function creates a new receive callback that concatenates all
+received chunks into a the same concat object, which can later be 
+queried for its contents.
+</p>
 
 <!-- send_cb ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -107,45 +118,27 @@ library needs more data to be sent.
 </p>
 
 <p class=return> 
-Each time the callback is called, it
-should return the next part of the information the library is expecting,
-followed by the total number of bytes to be sent. 
-The callback can abort
-the  process  at any  time  by  returning  <tt>nil</tt> followed  by  an
-optional error message. 
+Each time the callback is called, it should return the next chunk of data.  It
+can optionally return, as it's second return value, a new callback to replace
+itself.  The callback can abort the  process  at any  time  by  returning
+<tt>nil</tt> followed  by  an optional error message. 
 </p>
 
-
 <p class=note>
-Note: The need for the second return value comes from the fact that, with
-the HTTP protocol for instance, the library needs to know in advance the
-total number of bytes that will be sent. 
+Note: Below is the implementation of the <tt>callback.send.file</tt> 
+function. Given an open file handle, it returns a send callback that will send the contents of that file, chunk by chunk.
 </p>
 
 <pre class=example>
--- The implementation of socket.callback.send_file
-function Public.send_file(file)
-    local callback
-    -- if successfull, return the callback that reads from the file
+function send.file(file, io_err)
+    -- if successful, return the callback that reads from the file
     if file then
-        -- get total size
-        local size = file:seek("end") 
-        -- go back to start of file
-        file:seek("set")
-        callback = function()
+        return function()
             -- send next block of data
-            local chunk = file:read(Public.BLOCKSIZE)
-            if not chunk then file:close() end
-            return chunk, size
+            return (file:read(BLOCKSIZE)) or ""
         end
     -- else, return a callback that just aborts the transfer
-    else
-        callback = function() 
-            -- just abort
-            return nil, "unable to open file"
-        end
-    end
-    return callback, file
+    else return fail(io_err or "unable to open file") end
 end
 </pre>
 

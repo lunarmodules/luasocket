@@ -234,7 +234,7 @@ const char *inet_trybind(p_sock ps, const char *address, unsigned short port,
         return sock_bindstrerror();
     } else {
         sock_setnonblocking(ps);
-        if (backlog > 0) sock_listen(ps, backlog);
+        if (backlog >= 0) sock_listen(ps, backlog);
         return NULL;
     }
 }

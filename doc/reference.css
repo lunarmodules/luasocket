@@ -16,7 +16,6 @@ blockquote { margin-left: 3em; }
 a[href] { color: #00007f; }
 
 p.name { 
-    font-size: large; 
     font-family: monospace; 
     padding-top: 1em;
 }
