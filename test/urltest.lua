@@ -1,17 +1,3 @@
-function mysetglobal (varname, oldvalue, newvalue)
-    print("changing " .. varname)
-     %rawset(%globals(), varname, newvalue)
-end
-function mygetglobal (varname, newvalue)
-    print("checking " .. varname)
-     return %rawget(%globals(), varname)
-end
-settagmethod(tag(nil), "setglobal", mysetglobal)
-settagmethod(tag(nil), "getglobal", mygetglobal)
-
-assert(dofile "../lua/code.lua")
-assert(dofile "../lua/url.lua")
-
 local check_build_url = function(parsed)
 	local built = URL.build_url(parsed)
     if built ~= parsed.url then
