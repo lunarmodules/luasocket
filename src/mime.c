@@ -35,16 +35,19 @@ static int mime_global_unqp(lua_State *L);
 static int mime_global_qpfmt(lua_State *L);
 static int mime_global_eol(lua_State *L);
 
-static void b64fill(UC *b64unbase);
+static void b64setup(UC *b64unbase);
 static size_t b64encode(UC c, UC *input, size_t size, luaL_Buffer *buffer);
 static size_t b64pad(const UC *input, size_t size, luaL_Buffer *buffer);
 static size_t b64decode(UC c, UC *input, size_t size, luaL_Buffer *buffer);
 
-static void qpfill(UC *qpclass, UC *qpunbase);
+static void qpsetup(UC *qpclass, UC *qpunbase);
 static void qpquote(UC c, luaL_Buffer *buffer);
 static size_t qpdecode(UC c, UC *input, size_t size, luaL_Buffer *buffer);
 static size_t qpencode(UC c, UC *input, size_t size, 
         const char *marker, luaL_Buffer *buffer);
+
+static const char *checklstring(lua_State *L, int n, size_t *l);
+static const char *optlstring(lua_State *L, int n, const char *v, size_t *l);
 
 /* code support functions */
 static luaL_reg func[] = {
@@ -96,8 +99,27 @@ void mime_open(lua_State *L)
     lua_settable(L, -3);
     lua_pop(L, 1);
     /* initialize lookup tables */
-    qpfill(qpclass, qpunbase);
-    b64fill(b64unbase);
+    qpsetup(qpclass, qpunbase);
+    b64setup(b64unbase);
+}
+
+/*-------------------------------------------------------------------------*\
+* Check if a string was provided. We accept false also. 
+\*-------------------------------------------------------------------------*/
+static const char *checklstring(lua_State *L, int n, size_t *l)
+{
+    if (lua_isnil(L, n) || (lua_isboolean(L, n) && !lua_toboolean(L, n))) {
+        *l = 0;
+        return NULL;
+    } else return luaL_checklstring(L, n, l);
+}
+
+static const char *optlstring(lua_State *L, int n, const char *v, size_t *l)
+{
+    if (lua_isnil(L, n) || (lua_isboolean(L, n) && !lua_toboolean(L, n))) {
+        *l = 0;
+        return NULL;
+    } else return luaL_optlstring(L, n, v, l);
 }
 
 /*=========================================================================*\
@@ -105,19 +127,19 @@ void mime_open(lua_State *L)
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Incrementaly breaks a string into lines
-* A, n = fmt(B, length, left)
+* A, n = fmt(l, B, length, marker)
 * A is a copy of B, broken into lines of at most 'length' bytes. 
-* Left is how many bytes are left in the first line of B. 'n' is the number 
-* of bytes left in the last line of A. 
+* 'l' is how many bytes are left for the first line of B. 
+* 'n' is the number of bytes left in the last line of A. 
+* Marker is the end-of-line marker.
 \*-------------------------------------------------------------------------*/
 static int mime_global_fmt(lua_State *L)
 {
     size_t size = 0;
-    const UC *input = (UC *) (lua_isnil(L, 1)? NULL: 
-            luaL_checklstring(L, 1, &size));
+    int left = (int) luaL_checknumber(L, 1);
+    const UC *input = (UC *) checklstring(L, 2, &size);
     const UC *last = input + size;
-    int length = (int) luaL_checknumber(L, 2);
-    int left = (int) luaL_optnumber(L, 3, length);
+    int length = (int) luaL_optnumber(L, 3, 76);
     const char *marker = luaL_optstring(L, 4, CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
@@ -140,7 +162,7 @@ static int mime_global_fmt(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Fill base64 decode map. 
 \*-------------------------------------------------------------------------*/
-static void b64fill(UC *b64unbase) 
+static void b64setup(UC *b64unbase) 
 {
     int i;
     for (i = 0; i < 255; i++) b64unbase[i] = 255;
@@ -255,7 +277,7 @@ static int mime_global_b64(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last) 
         asize = b64encode(*input++, atom, asize, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last) 
@@ -283,7 +305,7 @@ static int mime_global_unb64(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last) 
         asize = b64decode(*input++, atom, asize, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last) 
@@ -311,7 +333,7 @@ static int mime_global_unb64(lua_State *L)
 * Split quoted-printable characters into classes
 * Precompute reverse map for encoding
 \*-------------------------------------------------------------------------*/
-static void qpfill(UC *qpclass, UC *qpunbase)
+static void qpsetup(UC *qpclass, UC *qpunbase)
 {
     int i;
     for (i = 0; i < 256; i++) qpclass[i] = QP_QUOTED;
@@ -417,15 +439,14 @@ static int mime_global_qp(lua_State *L)
 
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = (UC *) (lua_isnil(L, 1) ? NULL: 
-            luaL_checklstring(L, 1, &isize));
+    const UC *input = (UC *) checklstring(L, 1, &isize);
     const UC *last = input + isize;
     const char *marker = luaL_optstring(L, 3, CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpencode(*input++, atom, asize, marker, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)
@@ -486,14 +507,13 @@ static int mime_global_unqp(lua_State *L)
 
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = (UC *) (lua_isnil(L, 1) ? NULL: 
-            luaL_checklstring(L, 1, &isize));
+    const UC *input = (UC *) checklstring(L, 1, &isize);
     const UC *last = input + isize;
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpdecode(*input++, atom, asize, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)
@@ -506,21 +526,20 @@ static int mime_global_unqp(lua_State *L)
 
 /*-------------------------------------------------------------------------*\
 * Incrementally breaks a quoted-printed string into lines
-* A, n = qpfmt(B, length, left)
+* A, n = qpfmt(l, B, length)
 * A is a copy of B, broken into lines of at most 'length' bytes. 
-* Left is how many bytes are left in the first line of B. 'n' is the number 
-* of bytes left in the last line of A. 
+* 'l' is how many bytes are left for the first line of B. 
+* 'n' is the number of bytes left in the last line of A. 
 * There are two complications: lines can't be broken in the middle
 * of an encoded =XX, and there might be line breaks already
 \*-------------------------------------------------------------------------*/
 static int mime_global_qpfmt(lua_State *L)
 {
     size_t size = 0;
-    const UC *input = (UC *) (lua_isnil(L, 1)? NULL: 
-            luaL_checklstring(L, 1, &size));
+    int left = (int) luaL_checknumber(L, 1);
+    const UC *input = (UC *) checklstring(L, 2, &size);
     const UC *last = input + size;
-    int length = (int) luaL_checknumber(L, 2);
-    int left = (int) luaL_optnumber(L, 3, length);
+    int length = (int) luaL_optnumber(L, 3, 76);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last) {
@@ -597,15 +616,14 @@ static int mime_global_eol(lua_State *L)
 {
     size_t asize = 0, isize = 0;
     UC atom[2];
-    const UC *input = (UC *) (lua_isnil(L, 1)? NULL: 
-            luaL_checklstring(L, 1, &isize));
+    const UC *input = (UC *) checklstring(L, 1, &isize);
     const UC *last = input + isize;
     const char *marker = luaL_optstring(L, 3, CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = eolconvert(*input++, atom, asize, marker, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)

@@ -19,6 +19,9 @@ tests
     checar garbage collection
     check for interrupts
 
+trust character constants in mime.c? noooooo.
+smtp.lua needs stuff filter
+
 new option.c module to put all options (TCP and UDP share...)?
 testar os options!
 add _tostring methods!

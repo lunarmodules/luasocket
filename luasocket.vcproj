@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="net/include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE, LUASOCKET_DEBUG"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE, LUASOCKET_DEBUG, LUASOCKET_COMPILED"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"

@@ -10,75 +10,71 @@ socket.mime = mime
 setmetatable(mime, { __index = _G })
 setfenv(1, mime)
 
-base64 = {}
-qprint = {}
+-- encode, decode and wrap algorithm tables
+local et = {}
+local dt = {}
+local wt = {}
 
-function base64.encode()
-    local unfinished = ""
-    return function(chunk)
-        local done
-        done, unfinished = b64(unfinished, chunk)
-        return done
+-- creates a function that chooses an algorithm from a given table 
+local function choose(table)
+    return function(method, ...)
+        local f = table[method or "nil"]
+        if not f then return nil, "unknown method (" .. tostring(method) .. ")"
+        else return f(unpack(arg)) end
     end
 end
 
-function base64.decode()
-    local unfinished = ""
+-- creates a function that cicles a filter with a given initial
+-- context and extra arguments
+local function cicle(f, ctx, ...)
     return function(chunk)
-        local done
-        done, unfinished = unb64(unfinished, chunk)
-        return done
+        local ret
+        ret, ctx = f(ctx, chunk, unpack(arg))
+        return ret
     end
 end
 
-function qprint.encode(mode)
-    mode = (mode == "binary") and "=0D=0A" or "\13\10" 
-    local unfinished = ""
-    return function(chunk)
-        local done
-        done, unfinished = qp(unfinished, chunk, mode)
-        return done
-    end
+-- function that choose the encoding, decoding or wrap algorithm
+encode = choose(et) 
+decode = choose(dt)
+wrap = choose(wt)
+
+-- define the encoding algorithms
+et['base64'] = function()
+    return cicle(b64, "")
 end
 
-function qprint.decode()
-    local unfinished = ""
-    return function(chunk)
-        local done
-        done, unfinished = unqp(unfinished, chunk)
-        return done
-    end
+et['quoted-printable'] = function(mode)
+    return cicle(qp, "", (mode == "binary") and "=0D=0A" or "\13\10")
 end
 
-function split(length, marker)
+-- define the decoding algorithms
+dt['base64'] = function()
+    return cicle(unb64, "")
+end
+
+dt['quoted-printable'] = function()
+    return cicle(unqp, "")
+end
+
+-- define the wrap algorithms
+wt['character'] = function(length)
     length = length or 76
-    local left = length
-    return function(chunk)
-        local done
-        done, left = fmt(chunk, length, left, marker)
-        return done
-    end
+    return cicle(fmt, length, length) 
 end
+wt['base64'] = wt['character']
 
-function qprint.split(length)
+wt['quoted-printable'] = function(length)
     length = length or 76
-    local left = length
-    return function(chunk)
-        local done
-        done, left = qpfmt(chunk, length, left)
-        return done
-    end
+    return cicle(qpfmt, length, length) 
 end
 
+-- define the end-of-line translation function
 function canonic(marker)
-    local unfinished = ""
-    return function(chunk)
-        local done
-        done, unfinished = eol(unfinished, chunk, marker)
-        return done
-    end
+    return cicle(eol, "", marker)
 end
 
+-- chains several filters together
 function chain(...)
     local layers = table.getn(arg)
     return function (chunk)

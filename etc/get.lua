@@ -19,7 +19,7 @@ function nicetime(s)
 			end
 		end
 	end
-	if l == "s" then return string.format("%2.0f%s", s, l)
+	if l == "s" then return string.format("%5.0f%s", s, l)
 	else return string.format("%5.2f%s", s, l) end
 end
 
@@ -42,20 +42,16 @@ function nicesize(b)
 end
 
 -- returns a string with the current state of the download
+local remaining_s = "%s received, %s/s throughput, %2.0f%% done, %s remaining"
+local elapsed_s =   "%s received, %s/s throughput, %s elapsed                "
 function gauge(got, delta, size)
 	local rate = got / delta
 	if size and size >= 1 then
-		return string.format("%s received, %s/s throughput, " ..
-			"%.0f%% done, %s remaining", 
-            nicesize(got),  
-			nicesize(rate), 
-			100*got/size, 
-			nicetime((size-got)/rate))
+		return string.format(remaining_s, nicesize(got),  nicesize(rate), 
+			100*got/size, nicetime((size-got)/rate))
 	else 
-		return string.format("%s received, %s/s throughput, %s elapsed", 
-			nicesize(got), 
-			nicesize(rate),
-			nicetime(delta))
+		return string.format(elapsed_s, nicesize(got), 
+			nicesize(rate), nicetime(delta))
 	end
 end
 
@@ -78,7 +74,7 @@ function stats(size)
             return chunk
         else 
             -- close up
-            io.stderr:write("\n") 
+            io.stderr:write("\r", gauge(got, delta), "\n") 
             return ""
         end
     end

@@ -66,8 +66,8 @@ local function compare(input, output)
 end
 
 local function encode_qptest(mode)
-    local encode = socket.mime.qprint.encode(mode)
-    local split = socket.mime.qprint.split()
+    local encode = socket.mime.encode("quoted-printable", mode)
+    local split = socket.mime.wrap("quoted-printable")
     local chain = socket.mime.chain(encode, split)
     transform(qptest, eqptest, chain)
 end
@@ -77,7 +77,7 @@ local function compare_qptest()
 end
 
 local function decode_qptest()
-    local decode = socket.mime.qprint.decode()
+    local decode = socket.mime.decode("quoted-printable")
     transform(eqptest, dqptest, decode)
 end
 
@@ -151,23 +151,23 @@ local function cleanup_qptest()
 end
 
 local function encode_b64test()
-    local e1 = socket.mime.base64.encode()
-    local e2 = socket.mime.base64.encode()
-    local e3 = socket.mime.base64.encode()
-    local e4 = socket.mime.base64.encode()
-    local sp4 = socket.mime.split()
-    local sp3 = socket.mime.split(59)
-    local sp2 = socket.mime.split(30)
-    local sp1 = socket.mime.split(27)
+    local e1 = socket.mime.encode("base64")
+    local e2 = socket.mime.encode("base64")
+    local e3 = socket.mime.encode("base64")
+    local e4 = socket.mime.encode("base64")
+    local sp4 = socket.mime.wrap("character")
+    local sp3 = socket.mime.wrap("character", 59)
+    local sp2 = socket.mime.wrap("character", 30)
+    local sp1 = socket.mime.wrap("character", 27)
     local chain = socket.mime.chain(e1, sp1, e2, sp2, e3, sp3, e4, sp4)
     transform(b64test, eb64test, chain)
 end
 
 local function decode_b64test()
-    local d1 = socket.mime.base64.decode()
-    local d2 = socket.mime.base64.decode()
-    local d3 = socket.mime.base64.decode()
-    local d4 = socket.mime.base64.decode()
+    local d1 = socket.mime.decode("base64")
+    local d2 = socket.mime.decode("base64")
+    local d3 = socket.mime.decode("base64")
+    local d4 = socket.mime.decode("base64")
     local chain = socket.mime.chain(d1, d2, d3, d4)
     transform(eb64test, db64test, chain)
 end
