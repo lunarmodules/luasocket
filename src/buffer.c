@@ -67,7 +67,7 @@ int buf_send(lua_State *L, p_buf buf)
     tm_markstart(&base->base_tm);
     for (arg = 2; arg <= top; arg++) { /* first arg is socket object */
         size_t done, len;
-        cchar *data = luaL_opt_lstr(L, arg, NULL, &len);
+        cchar *data = luaL_optlstring(L, arg, NULL, &len);
         if (!data || err != PRIV_DONE) break;
         err = sendraw(L, buf, data, len, &done);
         total += done;
@@ -111,12 +111,12 @@ int buf_receive(lua_State *L, p_buf buf)
         top++;
     }
     /* make sure we have enough stack space */
-    luaL_check_stack(L, top+LUA_MINSTACK, "too many arguments");
+    luaL_checkstack(L, top+LUA_MINSTACK, "too many arguments");
     /* receive all patterns */
     for (arg = 2; arg <= top && err == PRIV_DONE; arg++) {
         if (!lua_isnumber(L, arg)) {
             static cchar *patternnames[] = {"*l", "*lu", "*a", "*w", NULL};
-            cchar *pattern = luaL_opt_string(L, arg, NULL);
+            cchar *pattern = luaL_optstring(L, arg, NULL);
             /* get next pattern */
             switch (luaL_findstring(pattern, patternnames)) {
                 case 0: /* DOS line pattern */
@@ -126,10 +126,10 @@ int buf_receive(lua_State *L, p_buf buf)
                 case 2: /* Until closed pattern */
                     err = recvall(L, buf); break;
                 case 3: /* Word pattern */
-                    luaL_arg_check(L, 0, arg, "word patterns are deprecated");
+                    luaL_argcheck(L, 0, arg, "word patterns are deprecated");
                     break;
                 default: /* else it is an error */
-                    luaL_arg_check(L, 0, arg, "invalid receive pattern");
+                    luaL_argcheck(L, 0, arg, "invalid receive pattern");
                     break;
             }
         /* raw pattern */

@@ -1,4 +1,6 @@
 #include <lua.h>
+#include <lauxlib.h>
+
 #include "lspriv.h"
 #include "lsselect.h"
 #include "lsfd.h"

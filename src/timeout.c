@@ -149,7 +149,7 @@ static int tm_lua_time(lua_State *L)
 \*-------------------------------------------------------------------------*/
 int tm_lua_sleep(lua_State *L)
 {
-    double n = luaL_check_number(L, 1);
+    double n = luaL_checknumber(L, 1);
 #ifdef WIN32
     Sleep(n*1000);
 #else

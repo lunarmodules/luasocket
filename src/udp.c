@@ -135,7 +135,7 @@ static int udp_lua_receive(lua_State *L)
 {
     p_udp udp = (p_udp) lua_touserdata(L, 1);
     unsigned char buffer[UDP_DATAGRAMSIZE];
-    size_t got, wanted = (size_t) luaL_opt_number(L, 2, sizeof(buffer));
+    size_t got, wanted = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
     int err;
     p_tm tm = &udp->base_tm;
     wanted = MIN(wanted, sizeof(buffer));
@@ -164,7 +164,7 @@ static int udp_lua_receivefrom(lua_State *L)
     struct sockaddr_in peer;
     int peer_len = sizeof(peer);
     unsigned char buffer[UDP_DATAGRAMSIZE];
-    size_t wanted = (size_t) luaL_opt_number(L, 2, sizeof(buffer));
+    size_t wanted = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
     size_t got;
     int err;
     if (udp->udp_connected) luaL_error(L, "receivefrom on connected socket");
@@ -200,7 +200,7 @@ static int udp_lua_send(lua_State *L)
     p_tm tm = &udp->base_tm;
     size_t wanted, sent = 0;
     int err;
-    cchar *data = luaL_check_lstr(L, 2, &wanted);
+    cchar *data = luaL_checklstring(L, 2, &wanted);
     if (!udp->udp_connected) luaL_error(L, "send on unconnected socket");
     tm_markstart(tm);
     err = compat_send(udp->fd, data, wanted, &sent, tm_getremaining(tm));
@@ -224,9 +224,9 @@ static int udp_lua_sendto(lua_State *L)
 {
     p_udp udp = (p_udp) lua_touserdata(L, 1);
     size_t wanted, sent = 0;
-    cchar *data = luaL_check_lstr(L, 2, &wanted);
-    cchar *ip = luaL_check_string(L, 3);
-    ushort port = (ushort) luaL_check_number(L, 4);
+    cchar *data = luaL_checklstring(L, 2, &wanted);
+    cchar *ip = luaL_checkstring(L, 3);
+    ushort port = (ushort) luaL_checknumber(L, 4);
     p_tm tm = &udp->base_tm;
     struct sockaddr_in peer;
     int err;
@@ -255,8 +255,8 @@ static int udp_lua_sendto(lua_State *L)
 static int udp_lua_setsockname(lua_State * L)
 {
     p_udp udp = (p_udp) lua_touserdata(L, 1);
-    cchar *address = luaL_check_string(L, 2);
-    ushort port = (ushort) luaL_check_number(L, 3);
+    cchar *address = luaL_checkstring(L, 2);
+    ushort port = (ushort) luaL_checknumber(L, 3);
     cchar *err = inet_trybind((p_inet) udp, address, port);
     if (err) lua_pushstring(L, err);
     else lua_pushnil(L);
@@ -275,8 +275,8 @@ static int udp_lua_setsockname(lua_State * L)
 static int udp_lua_setpeername(lua_State *L)
 {
     p_udp udp = (p_udp) lua_touserdata(L, 1);
-    cchar *address = luaL_check_string(L, 2);
-    ushort port = (ushort) luaL_check_number(L, 3);
+    cchar *address = luaL_checkstring(L, 2);
+    ushort port = (ushort) luaL_checknumber(L, 3);
     cchar *err = inet_tryconnect((p_inet) udp, address, port);
     if (!err) {
         udp->udp_connected = 1;

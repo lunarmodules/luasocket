@@ -86,7 +86,7 @@ void inet_construct(lua_State *L, p_inet inet)
 \*-------------------------------------------------------------------------*/
 static int inet_lua_toip(lua_State *L)
 {
-    cchar *address = luaL_check_string(L, 1);
+    cchar *address = luaL_checkstring(L, 1);
     struct in_addr addr;
     struct hostent *hp;
     if (inet_aton(address, &addr))
@@ -114,7 +114,7 @@ static int inet_lua_toip(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int inet_lua_tohostname(lua_State *L)
 {
-    cchar *address = luaL_check_string(L, 1);
+    cchar *address = luaL_checkstring(L, 1);
     struct in_addr addr;
     struct hostent *hp;
     if (inet_aton(address, &addr))
