@@ -576,7 +576,7 @@ int global_select(lua_State *L)
     int ms = lua_isnil(L, 3) ? -1 : (int) (luaL_opt_number(L, 3, -1) * 1000);
     fd_set readfds, *prfds = NULL, writefds, *pwfds = NULL;
     struct timeval tm, *ptm = NULL;
-    int ret;
+    int ret, dirty = 0;
     unsigned max = 0;
     SOCKET s;
     int byfds, canread, canwrite;
@@ -604,7 +604,7 @@ int global_select(lua_State *L)
                     out which of the other sockets can be written to 
                     or read from immediately. */
                     if (!bf_isempty(sock)) {
-                        ms = 0;
+                        ms = 0; dirty = 1;
                         lua_pushnumber(L, lua_getn(L, canread) + 1);
                         lua_pushvalue(L, -2);
                         lua_settable(L, canread);
@@ -648,7 +648,7 @@ int global_select(lua_State *L)
     /* see if we can read, write or if we timedout */
     ret = select(max, prfds, pwfds, NULL, ptm);
     /* did we timeout? */
-    if (ret <= 0 && ms >= 0) { 
+    if (ret <= 0 && ms >= 0 && !dirty) { 
         push_error(L, NET_TIMEOUT);
         return 3;
     }
