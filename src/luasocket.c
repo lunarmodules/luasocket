@@ -24,12 +24,13 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "tm.h"
-#include "buf.h"
-#include "sock.h"
+#include "timeout.h"
+#include "buffer.h"
+#include "socket.h"
 #include "inet.h"
 #include "tcp.h"
 #include "udp.h"
+#include "select.h"
 
 /*=========================================================================*\
 * Exported functions
@@ -39,6 +40,7 @@
 \*-------------------------------------------------------------------------*/
 LUASOCKET_API int luaopen_socketlib(lua_State *L)
 {
+    if (!sock_open()) return 0;
     /* create namespace table */
     lua_pushstring(L, LUASOCKET_LIBNAME);
     lua_newtable(L);
@@ -53,13 +55,28 @@ LUASOCKET_API int luaopen_socketlib(lua_State *L)
     lua_pushstring(L, LUASOCKET_LIBNAME);
     lua_settable(L, LUA_GLOBALSINDEX);
     /* initialize all modules */
-    sock_open(L);
     tm_open(L);
     buf_open(L);
     inet_open(L); 
     tcp_open(L);
     udp_open(L);
-    /* load all Lua code */
-    lua_dofile(L, "luasocket.lua");
-    return 0;
+    select_open(L);
+#ifdef LUASOCKET_COMPILED
+#include "auxiliar.lch"
+#include "concat.lch"
+#include "code.lch"
+#include "url.lch"
+#include "smtp.lch"
+#include "ftp.lch"
+#include "http.lch"
+#else
+    lua_dofile(L, "auxiliar.lua");
+    lua_dofile(L, "concat.lua");
+    lua_dofile(L, "code.lua");
+    lua_dofile(L, "url.lua");
+    lua_dofile(L, "smtp.lua");
+    lua_dofile(L, "ftp.lua");
+    lua_dofile(L, "http.lua");
+#endif
+    return 1;
 }

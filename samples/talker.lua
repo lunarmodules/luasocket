@@ -1,3 +1,9 @@
+-----------------------------------------------------------------------------
+-- TCP sample: Little program to send text lines to a given host/port
+-- LuaSocket 1.5 sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 host = host or "localhost"
 port = port or 8080
 if arg then

@@ -38,6 +38,7 @@ static luaL_reg func[] = {
 void inet_open(lua_State *L)
 {
     luaL_openlib(L, LUASOCKET_LIBNAME, func, 0);
+    lua_pop(L, 1);
 }
 
 /*=========================================================================*\
@@ -114,7 +115,7 @@ static int inet_global_tohostname(lua_State *L)
 int inet_meth_getpeername(lua_State *L, p_sock ps)
 {
     struct sockaddr_in peer;
-    size_t peer_len = sizeof(peer);
+    socklen_t peer_len = sizeof(peer);
     if (getpeername(*ps, (SA *) &peer, &peer_len) < 0) {
         lua_pushnil(L);
         return 1;
@@ -135,7 +136,7 @@ int inet_meth_getpeername(lua_State *L, p_sock ps)
 int inet_meth_getsockname(lua_State *L, p_sock ps)
 {
     struct sockaddr_in local;
-    size_t local_len = sizeof(local);
+    socklen_t local_len = sizeof(local);
     if (getsockname(*ps, (SA *) &local, &local_len) < 0) {
         lua_pushnil(L);
         return 1;

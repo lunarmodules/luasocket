@@ -1,6 +1,8 @@
 -----------------------------------------------------------------------------
 -- Little program that checks links in HTML files
 -- LuaSocket 1.5 sample files.
+-- Author: Diego Nehab
+-- RCS ID: $Id$
 -----------------------------------------------------------------------------
 socket.http.TIMEOUT = 10
 

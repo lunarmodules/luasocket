@@ -2,22 +2,81 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-1.5-work
+DIST = luasocket-1.5-alpha
 
-LUA = concat.lua code.lua url.lua http.lua smtp.lua ftp.lua lsselect.lua \
-  cl-compat.lua
+LUA = \
+    concat.lua \
+    code.lua \
+    url.lua \
+    http.lua \
+    smtp.lua \
+    ftp.lua \
+    select.lua \
+    luasocket.lua
 
-TESTS = testclnt.lua testsrvr.lua testcmd.lua codetest.lua \
-  urltest.lua concattest.lua
+TESTS = \
+    testclnt.lua \
+    testsrvr.lua \
+    testcmd.lua \
+    codetest.lua \
+    urltest.lua \
+    concattest.lua \
+	ftptest.lua \
+    httptest.lua \
+    smtptest.lua \
+    mbox.lua \
+    udptest.lua
 
-EXAMPLES = check-links.lua daytimeclnt.lua dict.lua echoclnt.lua \
-  echosrvr.lua get.lua listener.lua talker.lua tinyirc.lua tftpclnt.lua
+EXAMPLES = \
+    check-links.lua \
+    daytimeclnt.lua \
+    echoclnt.lua \
+    echosrvr.lua \
+    get.lua \
+    listener.lua \
+    talker.lua \
+    tinyirc.lua
+
+ETC = \
+    cl-compat.lua \
+    tftp.lua \
+    dict.lua 
+
+MAIN = \
+	auxiliar.c \
+	auxiliar.h \
+	buffer.c \
+	buffer.h \
+	error.c \
+	error.h \
+	inet.c \
+	inet.h \
+	io.c \
+	io.h \
+	lua.c \
+	luasocket.c \
+	luasocket.h \
+	makefile \
+	select.c \
+	select.h \
+	socket.h \
+	tcp.c \
+	tcp.h \
+	timeout.c \
+	timeout.h \
+	udp.c \
+	udp.h \
+	usocket.c \
+	usocket.h \
+	wsocket.c \
+	wsocket.h \
 
 dist:
 	mkdir -p $(DIST)/examples
 	mkdir -p $(DIST)/tests
-	cp -vf *.c $(DIST)
-	cp -vf *.h $(DIST)
+	mkdir -p $(DIST)/etc
+	mkdir -p $(DIST)/lua
+	cp -vf $(MAIN) $(DIST)
 	cp -vf $(LUA) $(DIST)
 	cp -vf makefile $(DIST)
 	cp -vf README $(DIST)
@@ -25,6 +84,8 @@ dist:
 	cp -vf README.examples $(DIST)/examples/README
 	cp -vf $(TESTS) $(DIST)/tests
 	cp -vf README.tests $(DIST)/tests/README
+	cp -vf $(ETC) $(DIST)/etc
+	cp -vf README.etc $(DIST)/etc/README
 	tar -zcvf $(DIST).tar.gz $(DIST)
 	zip -r $(DIST).zip $(DIST)
 

@@ -7,7 +7,7 @@
 #define INET_H 
 
 #include <lua.h>
-#include "sock.h"
+#include "socket.h"
 
 /*-------------------------------------------------------------------------*\
 * Exported functions

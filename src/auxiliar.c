@@ -3,12 +3,7 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include "aux.h"
-
-/*=========================================================================*\
-* Internal function prototypes
-\*=========================================================================*/
-static void *aux_getgroupudata(lua_State *L, const char *group, int objidx);
+#include "auxiliar.h"
 
 /*=========================================================================*\
 * Exported functions
@@ -20,18 +15,19 @@ static void *aux_getgroupudata(lua_State *L, const char *group, int objidx);
 \*-------------------------------------------------------------------------*/
 void aux_newclass(lua_State *L, const char *name, luaL_reg *func)
 {
-    luaL_newmetatable(L, name);
+    lua_pushstring(L, name);
+    lua_newtable(L);
     lua_pushstring(L, "__index");
     lua_newtable(L);
     luaL_openlib(L, NULL, func, 0);
     lua_pushstring(L, "class");
     lua_pushstring(L, name);
-    lua_settable(L, -3);
-    lua_settable(L, -3);
+    lua_rawset(L, -3);
     lua_pushstring(L, "group");
     lua_newtable(L);
-    lua_settable(L, -3);
-    lua_pop(L, 1);
+    lua_rawset(L, -3);
+    lua_rawset(L, -3);
+    lua_rawset(L, LUA_REGISTRYINDEX);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -39,13 +35,16 @@ void aux_newclass(lua_State *L, const char *name, luaL_reg *func)
 \*-------------------------------------------------------------------------*/
 void aux_add2group(lua_State *L, const char *name, const char *group)
 {
-    luaL_getmetatable(L, name);
+    lua_pushstring(L, name);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    lua_pushstring(L, "__index");
+    lua_rawget(L, -2);
     lua_pushstring(L, "group");
-    lua_gettable(L, -2);
+    lua_rawget(L, -2);
     lua_pushstring(L, group);
     lua_pushnumber(L, 1);
-    lua_settable(L, -3);
-    lua_pop(L, 2);
+    lua_rawset(L, -3);
+    lua_pop(L, 3);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -53,7 +52,7 @@ void aux_add2group(lua_State *L, const char *name, const char *group)
 \*-------------------------------------------------------------------------*/
 void *aux_checkclass(lua_State *L, const char *name, int objidx)
 {
-    void *data = luaL_checkudata(L, objidx, name);
+    void *data = aux_getclassudata(L, name, objidx);
     if (!data) {
         char msg[45];
         sprintf(msg, "%.35s expected", name);
@@ -81,7 +80,8 @@ void *aux_checkgroup(lua_State *L, const char *group, int objidx)
 \*-------------------------------------------------------------------------*/
 void aux_setclass(lua_State *L, const char *name, int objidx)
 {
-    luaL_getmetatable(L, name);
+    lua_pushstring(L, name);
+    lua_rawget(L, LUA_REGISTRYINDEX);
     if (objidx < 0) objidx--;
     lua_setmetatable(L, objidx);
 }
@@ -92,17 +92,47 @@ void aux_setclass(lua_State *L, const char *name, int objidx)
 /*-------------------------------------------------------------------------*\
 * Get a userdata if object belongs to a given group. 
 \*-------------------------------------------------------------------------*/
-static void *aux_getgroupudata(lua_State *L, const char *group, int objidx)
+void *aux_getgroupudata(lua_State *L, const char *group, int objidx)
 {
-    if (!lua_getmetatable(L, objidx)) return NULL;
-    lua_pushstring(L, "group");
-    lua_gettable(L, -2);
-    if (lua_isnil(L, -1)) {
+    if (!lua_getmetatable(L, objidx)) 
+        return NULL;
+    lua_pushstring(L, "__index");
+    lua_rawget(L, -2);
+    if (!lua_istable(L, -1)) {
         lua_pop(L, 2);
         return NULL;
     }
+    lua_pushstring(L, "group");
+    lua_rawget(L, -2);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 3);
+        return NULL;
+    }
     lua_pushstring(L, group);
-    lua_gettable(L, -2);
+    lua_rawget(L, -2);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 4);
+        return NULL;
+    }
+    lua_pop(L, 4);
+    return lua_touserdata(L, objidx);
+}
+
+/*-------------------------------------------------------------------------*\
+* Get a userdata if object belongs to a given class. 
+\*-------------------------------------------------------------------------*/
+void *aux_getclassudata(lua_State *L, const char *group, int objidx)
+{
+    if (!lua_getmetatable(L, objidx)) 
+        return NULL;
+    lua_pushstring(L, "__index");
+    lua_rawget(L, -2);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 2);
+        return NULL;
+    }
+    lua_pushstring(L, "class");
+    lua_rawget(L, -2);
     if (lua_isnil(L, -1)) {
         lua_pop(L, 3);
         return NULL;
@@ -110,4 +140,3 @@ static void *aux_getgroupudata(lua_State *L, const char *group, int objidx)
     lua_pop(L, 3);
     return lua_touserdata(L, objidx);
 }
-

@@ -1,6 +1,8 @@
 -----------------------------------------------------------------------------
 -- Little program to download files from URLs
 -- LuaSocket 1.5 sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
 -----------------------------------------------------------------------------
 -- formats a number of seconds into human readable form
 function nicetime(s)

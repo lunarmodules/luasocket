@@ -1,16 +1,9 @@
-function set_add(set, sock)
-    table.insert(set, sock)
-end
-
-function set_remove(set, sock)
-    for i = 1, table.getn(set) do
-        if set[i] == sock then
-           table.remove(set, i)
-           break
-        end
-    end 
-end
-
+-----------------------------------------------------------------------------
+-- Select sample: simple text line server
+-- LuaSocket 1.5 sample files.
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 host = host or "*"
 port1 = port1 or 8080
 port2 = port2 or 8081
@@ -21,49 +14,62 @@ if arg then
 end
 
 server1, error = socket.bind(host, port1)
-if not server1 then print(error) exit() end
+assert(server1, error)
 server1:timeout(1)
 server2, error = socket.bind(host, port2)
-if not server2 then print(error) exit() end
+assert(server2, error)
 server2:timeout(1)
 
-sock_set = {server1, server2}
+function newset()
+    local reverse = {}
+    local set = {}
+    setmetatable(set, { __index = {
+        insert = function(set, value) 
+            table.insert(set, value)
+            reverse[value] = table.getn(set)
+        end,
+        remove = function(set, value)
+            table.remove(set, reverse[value])
+            reverse[value] = nil
+        end,
+        id = function(set, value)
+            return reverse[value]
+        end
+    }})
+    return set
+end
 
-sock_id = {}
-sock_id[server1] = 1
-sock_id[server2] = 2
-next_id = 3
+sockets = newset()
+
+sockets:insert(server1)
+sockets:insert(server2)
 
 while 1 do
-    local readable, _, error = socket.select(sock_set, nil)
-    for _, sock in readable do
-        -- is it a server socket
-        if sock_id[sock] < 3 then
-            local incomming = sock:accept()
-            if incomming then 
-                incomming:timeout(1)
-				sock_id[incomming] = next_id
-                set_add(sock_set, incomming) 
-                io.write("Added client id ", next_id, ". ", 
-					table.getn(sock_set)-2, " total.\n")
-				next_id = next_id + 1
+    local readable, _, error = socket.select(sockets, nil)
+    for _, input in readable do
+        -- is it a server socket?
+        local id = sockets:id(input)
+        if input == server1 or input == server2 then
+            local new = input:accept()
+            if new then 
+                new:timeout(1)
+                sockets:insert(new) 
+                io.write("Server ", id, " got client ", sockets:id(new), "\n")
             end
         -- it is a client socket
         else
-            local line, error = sock:receive()
-			local id = sock_id[sock]
+            local line, error = input:receive()
             if error then 
-                sock:close()
-                set_remove(sock_set, sock) 
-                io.write("Removed client number ", id, ". ",
-					getn(sock_set)-2, " total.\n")
+                input:close()
+                io.write("Removing client ", id, "\n")
+                sockets:remove(input) 
             else
             	io.write("Broadcasting line '", id, "> ", line, "'.\n")
-            	__, writable, error = socket.select(nil, sock_set, 1)
+            	__, writable, error = socket.select(nil, sockets, 1)
             	if not error then
-                	for ___, outgoing in writable do
-                        io.write("Sending to client ", sock_id[outgoing], "\n")
-                    	outgoing:send(id, "> ", line, "\r\n")
+                	for ___, output in writable do
+                        io.write("Sending to client ", sockets:id(output), "\n")
+                    	output:send(id, "> ", line, "\r\n")
                 	end
             	else io.write("No one ready to listen!!!\n") end
 			end

@@ -12,8 +12,8 @@
 #include <lauxlib.h>
 
 #include "luasocket.h"
-#include "aux.h"
-#include "tm.h"
+#include "auxiliar.h"
+#include "timeout.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -118,6 +118,7 @@ int tm_gettime(void)
 void tm_open(lua_State *L)
 {
     luaL_openlib(L, LUASOCKET_LIBNAME, func, 0);
+    lua_pop(L, 1);
 }
 
 /*-------------------------------------------------------------------------*\

@@ -1,3 +1,9 @@
+-----------------------------------------------------------------------------
+-- UDP sample: daytime protocol client
+-- LuaSocket 1.5 sample files.
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 host = host or "127.0.0.1"
 port = port or 13
 if arg then

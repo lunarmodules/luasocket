@@ -1,3 +1,9 @@
+-----------------------------------------------------------------------------
+-- UDP sample: echo protocol client
+-- LuaSocket 1.5 sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 host = host or "localhost"
 port = port or 7
 if arg then

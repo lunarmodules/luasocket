@@ -2,10 +2,9 @@
 * Select implementation
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef SLCT_H_
-#define SLCT_H_
+#ifndef SELECT_H
+#define SELECT_H
 
-void select_addclass(lua_State *L, cchar *lsclass);
 void select_open(lua_State *L);
 
-#endif
+#endif /* SELECT_H */

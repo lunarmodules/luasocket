@@ -1,24 +1,8 @@
-/*=========================================================================*\
-* Socket compatibilization module for Unix
-*
-* RCS ID: $Id$
-\*=========================================================================*/
-#include <lua.h>
-#include <lauxlib.h>
 #include <string.h>
 
-#include "sock.h"
+#include "socket.h"
 
-/*=========================================================================*\
-* Internal function prototypes
-\*=========================================================================*/
-static const char *try_setoption(lua_State *L, p_sock ps);
-static const char *try_setbooloption(lua_State *L, p_sock ps, int name);
-
-/*=========================================================================*\
-* Exported functions.
-\*=========================================================================*/
-int sock_open(lua_State *L)
+int sock_open(void)
 {
     /* instals a handler to ignore sigpipe. */
     struct sigaction new;
@@ -43,13 +27,13 @@ const char *sock_create(p_sock ps, int domain, int type, int protocol)
     return NULL;
 }
 
-const char *sock_connect(p_sock ps, SA *addr, size_t addr_len)
+const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len)
 {
     if (connect(*ps, addr, addr_len) < 0) return sock_connectstrerror();
     else return NULL;
 }
 
-const char *sock_bind(p_sock ps, SA *addr, size_t addr_len)
+const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
 {
     if (bind(*ps, addr, addr_len) < 0) return sock_bindstrerror();
     else return NULL;
@@ -60,17 +44,25 @@ void sock_listen(p_sock ps, int backlog)
     listen(*ps, backlog);
 }
 
-void sock_accept(p_sock ps, p_sock pa, SA *addr, size_t *addr_len, int timeout)
+int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len, 
+        int timeout)
 {
     t_sock sock = *ps;
     struct timeval tv;
+    SA dummy_addr;
+    socklen_t dummy_len;
     fd_set fds;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
     FD_SET(sock, &fds);
-    select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+    if (select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL) <= 0)
+        return IO_TIMEOUT;
+    if (!addr) addr = &dummy_addr;
+    if (!addr_len) addr_len = &dummy_len;
     *pa = accept(sock, addr, addr_len);
+    if (*pa == SOCK_INVALID) return IO_ERROR;
+    else return IO_DONE;
 }
 
 int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, 
@@ -108,7 +100,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
 }
 
 int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent, 
-        SA *addr, size_t addr_len, int timeout)
+        SA *addr, socklen_t addr_len, int timeout)
 {
     t_sock sock = *ps;
     struct timeval tv;
@@ -169,7 +161,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
 }
 
 int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got, 
-        SA *addr, size_t *addr_len, int timeout)
+        SA *addr, socklen_t *addr_len, int timeout)
 {
     t_sock sock = *ps;
     struct timeval tv;
@@ -196,9 +188,6 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
     }
 }
 
-/*-------------------------------------------------------------------------*\
-* Returns a string describing the last host manipulation error.
-\*-------------------------------------------------------------------------*/
 const char *sock_hoststrerror(void)
 {
     switch (h_errno) {
@@ -210,9 +199,6 @@ const char *sock_hoststrerror(void)
     }
 }
 
-/*-------------------------------------------------------------------------*\
-* Returns a string describing the last socket manipulation error.
-\*-------------------------------------------------------------------------*/
 const char *sock_createstrerror(void)
 {
     switch (errno) {
@@ -224,9 +210,6 @@ const char *sock_createstrerror(void)
     }
 }
 
-/*-------------------------------------------------------------------------*\
-* Returns a string describing the last bind command error.
-\*-------------------------------------------------------------------------*/
 const char *sock_bindstrerror(void)
 {
     switch (errno) {
@@ -241,9 +224,6 @@ const char *sock_bindstrerror(void)
     }
 }
 
-/*-------------------------------------------------------------------------*\
-* Returns a string describing the last connect error.
-\*-------------------------------------------------------------------------*/
 const char *sock_connectstrerror(void)
 {
     switch (errno) {
@@ -259,20 +239,12 @@ const char *sock_connectstrerror(void)
     }
 }
 
-/*-------------------------------------------------------------------------*\
-* Sets the SO_REUSEADDR socket option
-* Input
-*   sock: socket descriptor
-\*-------------------------------------------------------------------------*/
 void sock_setreuseaddr(p_sock ps)
 {
     int val = 1;
     setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
 }
 
-/*-------------------------------------------------------------------------*\
-* Put socket into blocking mode.
-\*-------------------------------------------------------------------------*/
 void sock_setblocking(p_sock ps)
 {
     int flags = fcntl(*ps, F_GETFL, 0);
@@ -280,68 +252,9 @@ void sock_setblocking(p_sock ps)
     fcntl(*ps, F_SETFL, flags);
 }
 
-/*-------------------------------------------------------------------------*\
-* Put socket into non-blocking mode.
-\*-------------------------------------------------------------------------*/
 void sock_setnonblocking(p_sock ps)
 {
     int flags = fcntl(*ps, F_GETFL, 0);
     flags |= O_NONBLOCK;
     fcntl(*ps, F_SETFL, flags);
-}
-
-/*-------------------------------------------------------------------------*\
-* Tries to set extended udp socket options
-* Input
-*   udp: udp structure
-*   oldtop: top of stack
-* Returns
-*   NULL if successfull, error message on error
-\*-------------------------------------------------------------------------*/
-const char *sock_trysetoptions(lua_State *L, p_sock ps)
-{
-    if (!lua_istable(L, 1)) luaL_argerror(L, 1, "invalid options table");
-    lua_pushnil(L);
-    while (lua_next(L, 1)) {
-        const char *err = try_setoption(L, ps);
-        lua_pop(L, 1);
-        if (err) return err;
-    }
-    return NULL;
-}
-
-/*-------------------------------------------------------------------------*\
-* Set socket options from a table on top of Lua stack.
-* Supports SO_KEEPALIVE, SO_DONTROUTE, and SO_BROADCAST options.
-* Input
-*   sock: socket 
-* Returns
-*   1 if successful, 0 otherwise
-\*-------------------------------------------------------------------------*/
-static const char *try_setoption(lua_State *L, p_sock ps)
-{
-    static const char *options[] = {
-        "SO_KEEPALIVE", "SO_DONTROUTE", "SO_BROADCAST", NULL
-    };
-    const char *option = lua_tostring(L, -2);
-    if (!lua_isstring(L, -2)) return "invalid option";
-    switch (luaL_findstring(option, options)) {
-        case 0: return try_setbooloption(L, ps, SO_KEEPALIVE);
-        case 1: return try_setbooloption(L, ps, SO_DONTROUTE);
-        case 2: return try_setbooloption(L, ps, SO_BROADCAST);
-        default: return "unsupported option";
-    }
-}
-
-/*=========================================================================*\
-* Internal functions.
-\*=========================================================================*/
-static const char *try_setbooloption(lua_State *L, p_sock ps, int name)
-{
-    int bool, res;
-    if (!lua_isnumber(L, -1)) luaL_error(L, "invalid option value");
-    bool = (int) lua_tonumber(L, -1);
-    res = setsockopt(*ps, SOL_SOCKET, name, (char *) &bool, sizeof(bool));
-    if (res < 0) return "error setting option";
-    else return NULL;
 }

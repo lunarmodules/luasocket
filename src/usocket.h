@@ -31,6 +31,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#ifdef __APPLE__
+/* for some reason socklen_t is not defined in mac os x */
+typedef int socklen_t;
+#endif
+
 typedef int t_sock;
 typedef t_sock *p_sock;
 

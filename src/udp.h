@@ -3,8 +3,8 @@
 
 #include <lua.h>
 
-#include "tm.h"
-#include "sock.h"
+#include "timeout.h"
+#include "socket.h"
 
 #define UDP_DATAGRAMSIZE 576
 

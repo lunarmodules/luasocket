@@ -13,6 +13,8 @@ void aux_newclass(lua_State *L, const char *name, luaL_reg *func);
 void aux_add2group(lua_State *L, const char *name, const char *group);
 void *aux_checkclass(lua_State *L, const char *name, int objidx);
 void *aux_checkgroup(lua_State *L, const char *group, int objidx);
+void *aux_getclassudata(lua_State *L, const char *group, int objidx);
+void *aux_getgroupudata(lua_State *L, const char *group, int objidx);
 void aux_setclass(lua_State *L, const char *name, int objidx);
 
 /* min and max macros */

@@ -8,7 +8,7 @@
 
 #include <lua.h>
 #include "io.h"
-#include "tm.h"
+#include "timeout.h"
 
 /* buffer size in bytes */
 #define BUF_SIZE 8192

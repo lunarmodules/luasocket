@@ -1,7 +1,17 @@
 #ifndef IO_H
 #define IO_H
 
-#include "error.h"
+#include <stdio.h>
+
+/* IO error codes */
+enum {
+    IO_DONE,         /* operation completed successfully */
+    IO_TIMEOUT,      /* operation timed out */
+    IO_CLOSED,       /* the connection has been closed */
+    IO_ERROR,        /* something wrong... */
+    IO_REFUSED,      /* transfer has been refused */
+    IO_LIMITED       /* maximum number of bytes reached */
+};
 
 /* interface to send function */
 typedef int (*p_send) (

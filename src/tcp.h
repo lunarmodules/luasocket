@@ -3,9 +3,9 @@
 
 #include <lua.h>
 
-#include "buf.h"
-#include "tm.h"
-#include "sock.h"
+#include "buffer.h"
+#include "timeout.h"
+#include "socket.h"
 
 typedef struct t_tcp_ {
     t_sock sock;

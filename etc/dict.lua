@@ -1,6 +1,8 @@
 -----------------------------------------------------------------------------
 -- Little program to download DICT word definitions
 -- LuaSocket 1.5 sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
 -----------------------------------------------------------------------------
 function get_status(sock, valid)
 	local line, err = sock:receive()

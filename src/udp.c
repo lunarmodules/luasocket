@@ -10,43 +10,49 @@
 
 #include "luasocket.h"
 
-#include "aux.h"
+#include "auxiliar.h"
+#include "socket.h"
 #include "inet.h"
+#include "error.h"
 #include "udp.h"
 
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-static int udp_global_create(lua_State *L);
-static int udp_meth_send(lua_State *L);
-static int udp_meth_sendto(lua_State *L);
-static int udp_meth_receive(lua_State *L);
-static int udp_meth_receivefrom(lua_State *L);
-static int udp_meth_getsockname(lua_State *L);
-static int udp_meth_getpeername(lua_State *L);
-static int udp_meth_setsockname(lua_State *L);
-static int udp_meth_setpeername(lua_State *L);
-static int udp_meth_close(lua_State *L);
-static int udp_meth_timeout(lua_State *L);
+static int global_create(lua_State *L);
+static int meth_send(lua_State *L);
+static int meth_sendto(lua_State *L);
+static int meth_receive(lua_State *L);
+static int meth_receivefrom(lua_State *L);
+static int meth_getsockname(lua_State *L);
+static int meth_getpeername(lua_State *L);
+static int meth_setsockname(lua_State *L);
+static int meth_setpeername(lua_State *L);
+static int meth_close(lua_State *L);
+static int meth_timeout(lua_State *L);
+static int meth_fd(lua_State *L);
+static int meth_dirty(lua_State *L);
 
 /* udp object methods */
 static luaL_reg udp[] = {
-    {"setpeername", udp_meth_setpeername},
-    {"setsockname", udp_meth_setsockname},
-    {"getsockname", udp_meth_getsockname},
-    {"getpeername", udp_meth_getpeername},
-    {"send",        udp_meth_send},
-    {"sendto",      udp_meth_sendto},
-    {"receive",     udp_meth_receive},
-    {"receivefrom", udp_meth_receivefrom},
-    {"timeout",     udp_meth_timeout},
-    {"close",       udp_meth_close},
+    {"setpeername", meth_setpeername},
+    {"setsockname", meth_setsockname},
+    {"getsockname", meth_getsockname},
+    {"getpeername", meth_getpeername},
+    {"send",        meth_send},
+    {"sendto",      meth_sendto},
+    {"receive",     meth_receive},
+    {"receivefrom", meth_receivefrom},
+    {"timeout",     meth_timeout},
+    {"close",       meth_close},
+    {"fd",          meth_fd},
+    {"dirty",       meth_dirty},
     {NULL,          NULL}
 };
 
 /* functions in library namespace */
 static luaL_reg func[] = {
-    {"udp", udp_global_create},
+    {"udp", global_create},
     {NULL, NULL}
 };
 
@@ -59,8 +65,10 @@ void udp_open(lua_State *L)
     aux_newclass(L, "udp{connected}", udp);
     aux_newclass(L, "udp{unconnected}", udp);
     /* create class groups */
-    aux_add2group(L, "udp{connected}", "udp{any}");
+    aux_add2group(L, "udp{connected}",   "udp{any}");
     aux_add2group(L, "udp{unconnected}", "udp{any}");
+    aux_add2group(L, "udp{connected}",   "select{able}");
+    aux_add2group(L, "udp{unconnected}", "select{able}");
     /* define library functions */
     luaL_openlib(L, LUASOCKET_LIBNAME, func, 0); 
     lua_pop(L, 1);
@@ -72,7 +80,7 @@ void udp_open(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Send data through connected udp socket
 \*-------------------------------------------------------------------------*/
-static int udp_meth_send(lua_State *L)
+static int meth_send(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{connected}", 1);
     p_tm tm = &udp->tm;
@@ -90,7 +98,7 @@ static int udp_meth_send(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Send data through unconnected udp socket
 \*-------------------------------------------------------------------------*/
-static int udp_meth_sendto(lua_State *L)
+static int meth_sendto(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     size_t count, sent = 0;
@@ -117,7 +125,7 @@ static int udp_meth_sendto(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Receives data from a UDP socket
 \*-------------------------------------------------------------------------*/
-static int udp_meth_receive(lua_State *L)
+static int meth_receive(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     char buffer[UDP_DATAGRAMSIZE];
@@ -136,11 +144,11 @@ static int udp_meth_receive(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Receives data and sender from a UDP socket
 \*-------------------------------------------------------------------------*/
-static int udp_meth_receivefrom(lua_State *L)
+static int meth_receivefrom(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     struct sockaddr_in addr;
-    size_t addr_len = sizeof(addr);
+    socklen_t addr_len = sizeof(addr);
     char buffer[UDP_DATAGRAMSIZE];
     size_t got, count = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
     int err;
@@ -162,15 +170,33 @@ static int udp_meth_receivefrom(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
+* Select support methods
+\*-------------------------------------------------------------------------*/
+static int meth_fd(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{any}", 1);
+    lua_pushnumber(L, udp->sock);
+    return 1;
+}
+
+static int meth_dirty(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{any}", 1);
+    (void) udp;
+    lua_pushboolean(L, 0);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
 * Just call inet methods
 \*-------------------------------------------------------------------------*/
-static int udp_meth_getpeername(lua_State *L)
+static int meth_getpeername(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{connected}", 1);
     return inet_meth_getpeername(L, &udp->sock);
 }
 
-static int udp_meth_getsockname(lua_State *L)
+static int meth_getsockname(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     return inet_meth_getsockname(L, &udp->sock);
@@ -179,7 +205,7 @@ static int udp_meth_getsockname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Just call tm methods
 \*-------------------------------------------------------------------------*/
-static int udp_meth_timeout(lua_State *L)
+static int meth_timeout(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     return tm_meth_timeout(L, &udp->tm);
@@ -188,7 +214,7 @@ static int udp_meth_timeout(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Turns a master udp object into a client object.
 \*-------------------------------------------------------------------------*/
-static int udp_meth_setpeername(lua_State *L)
+static int meth_setpeername(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     const char *address =  luaL_checkstring(L, 2);
@@ -211,7 +237,7 @@ static int udp_meth_setpeername(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Closes socket used by object 
 \*-------------------------------------------------------------------------*/
-static int udp_meth_close(lua_State *L)
+static int meth_close(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     sock_destroy(&udp->sock);
@@ -221,7 +247,7 @@ static int udp_meth_close(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Turns a master object into a server object
 \*-------------------------------------------------------------------------*/
-static int udp_meth_setsockname(lua_State *L)
+static int meth_setsockname(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
@@ -242,7 +268,7 @@ static int udp_meth_setsockname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Creates a master udp object 
 \*-------------------------------------------------------------------------*/
-int udp_global_create(lua_State *L)
+int global_create(lua_State *L)
 {
     /* allocate udp object */
     p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));

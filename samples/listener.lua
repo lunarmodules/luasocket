@@ -1,6 +1,8 @@
 -----------------------------------------------------------------------------
--- Little program to dump lines received at a given port
+-- TCP sample: Little program to dump lines received at a given port
 -- LuaSocket 1.5 sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
 -----------------------------------------------------------------------------
 host = host or "*"
 port = port or 8080

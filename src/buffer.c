@@ -7,8 +7,8 @@
 #include <lauxlib.h>
 
 #include "error.h"
-#include "aux.h"
-#include "buf.h"
+#include "auxiliar.h"
+#include "buffer.h"
 
 /*=========================================================================*\
 * Internal function prototypes
