@@ -309,7 +309,7 @@ int sock_gethostbyname(const char *addr, struct hostent **hp) {
 const char *sock_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case WSAHOST_NOT_FOUND: return "host_not_found";
+        case WSAHOST_NOT_FOUND: return "host not found";
         default: return wstrerror(err); 
     }
 }
@@ -317,8 +317,9 @@ const char *sock_hoststrerror(int err) {
 const char *sock_strerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case WSAEADDRINUSE: return "eaddrinuse";
-        case WSAECONNREFUSED: return "econnrefused";
+        case WSAEADDRINUSE: return "address already in use";
+        case WSAECONNREFUSED: return "connection refused";
+        case WSAEACCES: return "permission denied";
         case WSAECONNABORTED: return "closed";
         case WSAECONNRESET: return "closed";
         case WSAETIMEDOUT: return "timeout";

@@ -3,8 +3,11 @@
 -- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
 -- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
-
 local socket = require("socket")
+
+-- override protection to make sure we see all errors
+-- socket.protect = function(s) return s end
+
 local http = require("http")
 local mime = require("mime")
 local url = require("url")
@@ -19,7 +22,7 @@ http.TIMEOUT = 10
 
 local t = socket.gettime()
 
-host = host or "diego.princeton.edu"
+host = host or "diego.student.princeton.edu"
 proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"

@@ -90,7 +90,8 @@ socket.sinkt["keep-open"] = function(sock)
         dirty = function() return sock:dirty() end
     }, { 
         __call = function(self, chunk, err)
-            return sock:send(chunk)
+            if chunk then return sock:send(chunk)
+            else return 1 end
         end
     })
 end

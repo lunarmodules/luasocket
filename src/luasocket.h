@@ -13,7 +13,7 @@
 /*-------------------------------------------------------------------------*\
 * Current luasocket version
 \*-------------------------------------------------------------------------*/
-#define LUASOCKET_VERSION "LuaSocket 2.0 (beta)"
+#define LUASOCKET_VERSION "LuaSocket 2.0 (beta2)"
 
 /*-------------------------------------------------------------------------*\
 * This macro prefixes all exported API functions

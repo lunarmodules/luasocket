@@ -41,6 +41,7 @@ void buf_init(p_buf buf, p_io io, p_tm tm);
 int buf_meth_send(lua_State *L, p_buf buf);
 int buf_meth_receive(lua_State *L, p_buf buf);
 int buf_meth_getstats(lua_State *L, p_buf buf);
+int buf_meth_setstats(lua_State *L, p_buf buf);
 int buf_isempty(p_buf buf);
 
 #endif /* BUF_H */

@@ -24,6 +24,7 @@ static int meth_listen(lua_State *L);
 static int meth_bind(lua_State *L);
 static int meth_send(lua_State *L);
 static int meth_getstats(lua_State *L);
+static int meth_setstats(lua_State *L);
 static int meth_getsockname(lua_State *L);
 static int meth_getpeername(lua_State *L);
 static int meth_shutdown(lua_State *L);
@@ -49,6 +50,7 @@ static luaL_reg tcp[] = {
     {"getpeername", meth_getpeername},
     {"getsockname", meth_getsockname},
     {"getstats",    meth_getstats},
+    {"setstats",    meth_setstats},
     {"listen",      meth_listen},
     {"receive",     meth_receive},
     {"send",        meth_send},
@@ -115,6 +117,11 @@ static int meth_receive(lua_State *L) {
 static int meth_getstats(lua_State *L) {
     p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     return buf_meth_getstats(L, &tcp->buf);
+}
+
+static int meth_setstats(lua_State *L) {
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    return buf_meth_setstats(L, &tcp->buf);
 }
 
 /*-------------------------------------------------------------------------*\

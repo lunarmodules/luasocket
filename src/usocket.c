@@ -205,7 +205,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
     /* loop until we send something or we give up on error */
     *sent = 0;
     for ( ;; ) {
-        ssize_t put = send(*ps, data, count, 0);
+        long put = (long) send(*ps, data, count, 0);
         /* if we sent anything, we are done */
         if (put > 0) {
             *sent = put;
@@ -236,7 +236,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
     if (*ps == SOCK_INVALID) return IO_CLOSED;
     *sent = 0;
     for ( ;; ) {
-        ssize_t put = sendto(*ps, data, count, 0, addr, len);  
+        long put = (long) sendto(*ps, data, count, 0, addr, len);  
         if (put > 0) {
             *sent = put;
             return IO_DONE;
@@ -257,7 +257,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
     int err;
     if (*ps == SOCK_INVALID) return IO_CLOSED;
     for ( ;; ) {
-        ssize_t taken = recv(*ps, data, count, 0);
+        long taken = (long) recv(*ps, data, count, 0);
         if (taken > 0) {
             *got = taken;
             return IO_DONE;
@@ -280,7 +280,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
     int err;
     if (*ps == SOCK_INVALID) return IO_CLOSED;
     for ( ;; ) {
-        ssize_t taken = recvfrom(*ps, data, count, 0, addr, len);
+        long taken = (long) recvfrom(*ps, data, count, 0, addr, len);
         if (taken > 0) {
             *got = taken;
             return IO_DONE;
@@ -335,7 +335,7 @@ int sock_gethostbyname(const char *addr, struct hostent **hp) {
 const char *sock_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case HOST_NOT_FOUND: return "host_not_found";
+        case HOST_NOT_FOUND: return "host not found";
         default: return hstrerror(err);
     }
 }
@@ -343,9 +343,9 @@ const char *sock_hoststrerror(int err) {
 const char *sock_strerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case EADDRINUSE: return "eaddrinuse";
-        case EACCES: return "eaccess";
-        case ECONNREFUSED: return "econnrefused";
+        case EADDRINUSE: return "address already in use";
+        case EACCES: return "permission denied";
+        case ECONNREFUSED: return "connection refused";
         case ECONNABORTED: return "closed";
         case ECONNRESET: return "closed";
         case ETIMEDOUT: return "timedout";

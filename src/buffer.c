@@ -60,6 +60,17 @@ int buf_meth_getstats(lua_State *L, p_buf buf) {
 }
 
 /*-------------------------------------------------------------------------*\
+* object:setstats() interface
+\*-------------------------------------------------------------------------*/
+int buf_meth_setstats(lua_State *L, p_buf buf) {
+    buf->received = (long) luaL_optnumber(L, 2, buf->received); 
+    buf->sent = (long) luaL_optnumber(L, 3, buf->sent); 
+    if (lua_isnumber(L, 4)) buf->birthday = tm_gettime() - lua_tonumber(L, 4);
+    lua_pushnumber(L, 1);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
 * object:send() interface
 \*-------------------------------------------------------------------------*/
 int buf_meth_send(lua_State *L, p_buf buf) {
@@ -68,12 +79,12 @@ int buf_meth_send(lua_State *L, p_buf buf) {
     int err = IO_DONE;
     size_t size, sent;
     const char *data = luaL_checklstring(L, 2, &size);
-    ssize_t start = (ssize_t) luaL_optnumber(L, 3, 1);
-    ssize_t end = (ssize_t) luaL_optnumber(L, 4, -1);
+    long start = (long) luaL_optnumber(L, 3, 1);
+    long end = (long) luaL_optnumber(L, 4, -1);
     if (start < 0) start = size+start+1;
     if (end < 0) end = size+end+1;
     if (start < 1) start = 1;
-    if (end > size) end = size;
+    if (end > (long) size) end = size;
     if (start <= end) err = sendraw(buf, data+start-1, end-start+1, &sent);
     /* check if there was an error */
     if (err != IO_DONE) {
