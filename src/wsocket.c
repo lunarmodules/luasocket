@@ -129,10 +129,11 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
 \*-------------------------------------------------------------------------*/
 int sock_connected(p_sock ps, p_tm tm) {
     int err;
+    /* give windows time to find out what is up (yes, disgusting) */
     if ((err = sock_waitfd(ps, WAITFD_C, tm)) == IO_CLOSED) {
         int len = sizeof(err);
         /* give windows time to set the error (yes, disgusting) */
-        Sleep(0);
+        Sleep(10);
         /* find out why we failed */
         getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *)&err, &len); 
         /* we KNOW there was an error. if 'why' is 0, we will return

@@ -77,7 +77,7 @@ int buf_meth_send(lua_State *L, p_buf buf) {
     int top = lua_gettop(L);
     p_tm tm = tm_markstart(buf->tm);
     int err = IO_DONE;
-    size_t size, sent;
+    size_t size = 0, sent = 0;
     const char *data = luaL_checklstring(L, 2, &size);
     long start = (long) luaL_optnumber(L, 3, 1);
     long end = (long) luaL_optnumber(L, 4, -1);

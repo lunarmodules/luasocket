@@ -57,7 +57,7 @@ function init()
         assert(iport, "invalid arguments")
         -- create our server socket
         local server = assert(socket.bind("*", iport))
-        server:settimeout(0.1) -- we don't want to be killed by bad luck
+        server:settimeout(0) -- we don't want to be killed by bad luck
         -- make sure server is tested for readability
         receiving:insert(server)
         -- add server context
@@ -71,7 +71,7 @@ end
 
 -- starts a connection in a non-blocking way
 function connect(who, host, port)
-    who:settimeout(0.1)
+    who:settimeout(0)
 print("trying to connect peer", who, host, port)
     local ret, err = who:connect(host, port)
     if not ret and err == "timeout" then
@@ -89,12 +89,11 @@ print("connection failed", who)
     end
 end
 
--- gets rid of a client and its peer
+-- gets rid of a client
 function kick(who)
     if who and context[who] then
         sending:remove(who)
         receiving:remove(who)
-        local peer = context[who].peer
         context[who] = nil
         who:close()
     end

@@ -10,8 +10,8 @@
 
 /* timeout control structure */
 typedef struct t_tm_ {
-    double total;          /* total number of miliseconds for operation */
     double block;          /* maximum time for blocking calls */
+    double total;          /* total number of miliseconds for operation */
     double start;          /* time of start of operation */
 } t_tm;
 typedef t_tm *p_tm;
