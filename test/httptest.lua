@@ -1,21 +1,14 @@
--- needs Alias from /home/i/diego/public/html/luasocket/test to 
+-- needs Alias from /home/c/diego/tec/luasocket/test to 
 -- /luasocket-test
--- needs ScriptAlias from /home/i/diego/public/html/luasocket/test/cgi
--- to /luasocket-test/cgi
+-- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
+-- to /luasocket-test-cgi
+-- needs AllowOverride AuthConfig on /home/c/diego/tec/luasocket/test/auth
 
-function mysetglobal (varname, oldvalue, newvalue)
-	print("changing " .. varname)
-     %rawset(%globals(), varname, newvalue)
-end
-function mygetglobal (varname, newvalue)
-	print("checking " .. varname)
-     return %rawget(%globals(), varname)
-end
-settagmethod(tag(nil), "setglobal", mysetglobal)
-settagmethod(tag(nil), "getglobal", mygetglobal)
+dofile("noglobals.lua")
 
 local similar = function(s1, s2)
-	return strlower(gsub(s1, "%s", "")) == strlower(gsub(s2, "%s", ""))
+	return strlower(gsub(s1 or "", "%s", "")) == 
+        strlower(gsub(s2 or "", "%s", ""))
 end
 
 local fail = function(s)
@@ -52,36 +45,32 @@ local check_request = function(request, expect, ignore)
 	print("ok")
 end
 
-local host, request, response, ignore, expect, index, prefix, cgiprefix
+dofile("../src/modules/http.lua")
 
--- load http
-assert(dofile("../lua/http.lua"))
-assert(dofile("../lua/code.lua"))
-assert(dofile("../lua/concat.lua"))
-assert(dofile("../lua/url.lua"))
+local request, response, ignore, expect, index, prefix, cgiprefix
 
 local t = _time()
 
-host = host or "localhost"
+HOST = HOST or "localhost"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
 index = readfile("index.html")
 
 write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
-local back = HTTP.get("http://" .. host .. forth)
+local back = HTTP.get("http://" .. HOST .. forth)
 if similar(back, forth) then print("ok")
 else fail("failed!") end
 
 write("testing query string correctness: ")
 forth = "this+is+the+query+string"
-back = HTTP.get("http://" .. host .. cgiprefix .. "/query-string?" .. forth)
+back = HTTP.get("http://" .. HOST .. cgiprefix .. "/query-string?" .. forth)
 if similar(back, forth) then print("ok")
 else fail("failed!") end
 
 write("testing document retrieval: ")
 request = {
-	url = "http://" .. host .. prefix .. "/index.html"
+	url = "http://" .. HOST .. prefix .. "/index.html"
 }
 expect = {
 	body = index,
@@ -95,7 +84,7 @@ check_request(request, expect, ignore)
 
 write("testing HTTP redirection: ")
 request = {
-	url = "http://" .. host .. prefix
+	url = "http://" .. HOST .. prefix
 }
 expect = {
 	body = index,
@@ -110,7 +99,7 @@ check_request(request, expect, ignore)
 
 write("testing automatic auth failure: ")
 request = {
-    url = "http://really:wrong@" .. host .. prefix .. "/auth/index.html"
+    url = "http://really:wrong@" .. HOST .. prefix .. "/auth/index.html"
 }
 expect = {
     code = 401
@@ -124,7 +113,7 @@ check_request(request, expect, ignore)
 
 write("testing HTTP redirection failure: ")
 request = {
-	url = "http://" .. host .. prefix,
+	url = "http://" .. HOST .. prefix,
 	stay = 1
 }
 expect = {
@@ -150,7 +139,7 @@ check_request(request, expect, ignore)
 
 write("testing invalid url: ")
 request = {
-	url = host .. prefix
+	url = HOST .. prefix
 }
 local c, e = connect("", 80)
 expect = {
@@ -161,7 +150,7 @@ check_request(request, expect, ignore)
 
 write("testing document not found: ")
 request = {
-	url = "http://" .. host .. "/wrongdocument.html"
+	url = "http://" .. HOST .. "/wrongdocument.html"
 }
 expect = {
 	code = 404
@@ -175,7 +164,7 @@ check_request(request, expect, ignore)
 
 write("testing auth failure: ")
 request = {
-	url = "http://" .. host .. prefix .. "/auth/index.html"
+	url = "http://" .. HOST .. prefix .. "/auth/index.html"
 }
 expect = {
 	code = 401
@@ -189,7 +178,7 @@ check_request(request, expect, ignore)
 
 write("testing manual basic auth: ")
 request = {
-	url = "http://" .. host .. prefix .. "/auth/index.html",
+	url = "http://" .. HOST .. prefix .. "/auth/index.html",
 	headers = {
 		authorization = "Basic " .. Code.base64("luasocket:password")
 	}
@@ -206,7 +195,7 @@ check_request(request, expect, ignore)
 
 write("testing automatic basic auth: ")
 request = {
-	url = "http://luasocket:password@" .. host .. prefix .. "/auth/index.html"
+	url = "http://luasocket:password@" .. HOST .. prefix .. "/auth/index.html"
 }
 expect = {
 	code = 200,
@@ -220,7 +209,7 @@ check_request(request, expect, ignore)
 
 write("testing auth info overriding: ")
 request = {
-	url = "http://really:wrong@" .. host .. prefix .. "/auth/index.html",
+	url = "http://really:wrong@" .. HOST .. prefix .. "/auth/index.html",
 	user = "luasocket",
 	password = "password"
 }
@@ -236,7 +225,7 @@ check_request(request, expect, ignore)
 
 write("testing cgi output retrieval (probably chunked...): ")
 request = {
-    url = "http://" .. host .. cgiprefix .. "/cat-index-html"
+    url = "http://" .. HOST .. cgiprefix .. "/cat-index-html"
 }
 expect = {
 	body = index,
@@ -250,7 +239,7 @@ check_request(request, expect, ignore)
 
 write("testing redirect loop: ")
 request = {
-    url = "http://" .. host .. cgiprefix .. "/redirect-loop"
+    url = "http://" .. HOST .. cgiprefix .. "/redirect-loop"
 }
 expect = {
     code = 302
@@ -264,7 +253,7 @@ check_request(request, expect, ignore)
 
 write("testing post method: ")
 request = {
-	url = "http://" .. host .. cgiprefix .. "/cat",
+	url = "http://" .. HOST .. cgiprefix .. "/cat",
 	method = "POST",
 	body = index
 }
@@ -280,7 +269,7 @@ check_request(request, expect, ignore)
 
 write("testing wrong scheme: ")
 request = {
-	url = "wrong://" .. host .. cgiprefix .. "/cat",
+	url = "wrong://" .. HOST .. cgiprefix .. "/cat",
 	method = "GET"
 }
 expect = {
@@ -292,24 +281,24 @@ check_request(request, expect, ignore)
 
 local body
 write("testing simple get function: ")
-body = HTTP.get("http://" .. host .. prefix .. "/index.html")
+body = HTTP.get("http://" .. HOST .. prefix .. "/index.html")
 check(body == index)
 
 write("testing simple get function with table args: ")
 body = HTTP.get {
-	url = "http://really:wrong@" .. host .. prefix .. "/auth/index.html",
+	url = "http://really:wrong@" .. HOST .. prefix .. "/auth/index.html",
 	user = "luasocket",
 	password = "password"
 }
 check(body == index)
 
 write("testing simple post function: ")
-body = HTTP.post("http://" .. host .. cgiprefix .. "/cat", index)
+body = HTTP.post("http://" .. HOST .. cgiprefix .. "/cat", index)
 check(body == index)
 
 write("testing simple post function with table args: ")
 body = HTTP.post {
-	url = "http://" .. host .. cgiprefix .. "/cat",
+	url = "http://" .. HOST .. cgiprefix .. "/cat",
 	body = index
 }
 check(body == index)
