@@ -143,8 +143,8 @@ function Public.parse_path(path)
 	for i = 1, table.getn(parsed) do
 		parsed[i] = Code.unescape(parsed[i])
 	end
-	if stringsub(path, 1, 1) == "/" then parsed.is_absolute = 1 end
-	if stringsub(path, -1, -1) == "/" then parsed.is_directory = 1 end
+	if string.sub(path, 1, 1) == "/" then parsed.is_absolute = 1 end
+	if string.sub(path, -1, -1) == "/" then parsed.is_directory = 1 end
 	return parsed
 end
 
@@ -214,7 +214,7 @@ end
 --   corresponding absolute path
 -----------------------------------------------------------------------------
 function Private.absolute_path(base_path, relative_path)
-    if stringsub(relative_path, 1, 1) == "/" then return relative_path end
+    if string.sub(relative_path, 1, 1) == "/" then return relative_path end
     local path = string.gsub(base_path, "[^/]*$", "")
     path = path .. relative_path
     path = string.gsub(path, "([^/]*%./)", function (s) 

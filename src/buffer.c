@@ -74,7 +74,7 @@ int buf_send(lua_State *L, p_buf buf)
     }
     priv_pusherror(L, err);
     lua_pushnumber(L, total);
-#ifdef _DEBUG
+#ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
     lua_pushnumber(L, tm_getelapsed(&base->base_tm)/1000.0);
 #endif
@@ -139,7 +139,7 @@ int buf_receive(lua_State *L, p_buf buf)
     for ( ; arg <= top; arg++) lua_pushnil(L);
     /* last return is an error code */
     priv_pusherror(L, err);
-#ifdef _DEBUG
+#ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
     lua_pushnumber(L, tm_getelapsed(&base->base_tm)/1000.0);
 #endif

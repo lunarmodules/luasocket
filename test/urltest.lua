@@ -30,7 +30,7 @@ end
 
 local check_parse_path = function(path, expect)
 	local parsed = URL.parse_path(path)
-	for i = 1, max(getn(parsed), getn(expect)) do
+	for i = 1, math.max(table.getn(parsed), table.getn(expect)) do
 		if parsed[i] ~= expect[i] then
 			print(path)
 		    write("segment: ", i, " = '", Code.hexa(tostring(parsed[i])),

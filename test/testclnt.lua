@@ -2,32 +2,32 @@ HOST = HOST or "localhost"
 PORT = PORT or "8080"
 
 function pass(...)
-    local s = call(format, arg)
-    write(s, "\n")
+    local s = string.format(unpack(arg))
+    io.write(s, "\n")
 end
 
 function fail(...)
-    local s = call(format, arg)
-    write("ERROR: ", s, "!\n")
-    exit()
+    local s = string.format(unpack(arg))
+    io.write("ERROR: ", s, "!\n")
+    os.exit()
 end
 
 function warn(...)
-    local s = call(format, arg)
-    write("WARNING: ", s, "\n")
+    local s = format(unpack(arg))
+    io.write("WARNING: ", s, "\n")
 end
 
 function remote(...)
-    local s = call(format, arg)
-    s = gsub(s, "\n", ";")
-    s = gsub(s, "%s+", " ")
-    s = gsub(s, "^%s*", "")
+    local s = string.format(unpack(arg))
+    s = string.gsub(s, "\n", ";")
+    s = string.gsub(s, "%s+", " ")
+    s = string.gsub(s, "^%s*", "")
     control:send(s, "\n")
     control:receive()
 end
 
 function test(test)
-    write("----------------------------------------------\n",
+    io.write("----------------------------------------------\n",
         "testing: ", test, "\n",
         "----------------------------------------------\n")
 end
@@ -66,50 +66,68 @@ function check_timeout(tm, sl, elapsed, err, opp, mode, alldone)
     end
 end
 
-write("----------------------------------------------\n",
+io.write("----------------------------------------------\n",
 "LuaSocket Test Procedures\n",
 "----------------------------------------------\n")
 
-if not _time or not _sleep then fail("not compiled with _DEBUG") end
+if not socket._time or not socket._sleep then 
+    fail("not compiled with _DEBUG") 
+end
 
-start = _time()
+start = socket._time()
 
 function tcpreconnect()
-    write("attempting data connection... ")
+    io.write("attempting data connection... ")
     if data then data:close() end
     remote [[
         if data then data:close() data = nil end
         data = server:accept()
     ]]
-    data, error = connect(HOST, PORT)
-    if not data then fail(error) 
+    data, err = socket.connect(HOST, PORT)
+    if not data then fail(err) 
     else pass("connected!") end
 end
 reconnect = tcpreconnect
 
 pass("attempting control connection...")
-control, error = connect(HOST, PORT)
-if error then fail(error)
+control, err = socket.connect(HOST, PORT)
+if err then fail(err)
 else pass("connected!") end
 
 ------------------------------------------------------------------------
 test("bugs")
 
-write("empty host connect: ")
+io.write("empty host connect: ")
 function empty_connect()
     if data then data:close() data = nil end
     remote [[
         if data then data:close() data = nil end
         data = server:accept()
     ]]
-    data, err = connect("", PORT)
+    data, err = socket.connect("", PORT)
     if not data then 
         pass("ok")
-        data = connect(HOST, PORT)
+        data = socket.connect(HOST, PORT)
     else fail("should not have connected!") end
 end
 
 empty_connect()
+
+io.write("active close: ")
+function active_close()
+    reconnect()
+    if socket._isclosed(data) then fail("should not be closed") end
+    data:close()
+    if not socket._isclosed(data) then fail("should be closed") end
+    data = nil
+    local udp = socket.udp()
+    if socket._isclosed(udp) then fail("should not be closed") end
+    udp:close()
+    if not socket._isclosed(udp) then fail("should be closed") end
+    pass("ok")
+end
+
+active_close()
 
 ------------------------------------------------------------------------
 test("method registration")
@@ -133,7 +151,7 @@ test_methods(control, {
 })
 
 if udpsocket then
-    test_methods(udpsocket(), {
+    test_methods(socket.udp(), {
         "close", 
         "timeout", 
         "send", 
@@ -147,50 +165,27 @@ if udpsocket then
     })
 end
 
-test_methods(bind("*", 0), {
+test_methods(socket.bind("*", 0), {
     "close", 
     "timeout", 
     "accept" 
 })
 
-if pipe then
-    local p1, p2 = pipe()
-    test_methods(p1, {
-        "close", 
-        "timeout", 
-        "send",
-        "receive" 
-    })
-    test_methods(p2, {
-        "close", 
-        "timeout", 
-        "send",
-        "receive" 
-    })
-end
-
-if filesocket then
-    test_methods(filesocket(0), {
-        "close", 
-        "timeout", 
-        "send",
-        "receive" 
-    })
-end
-
 ------------------------------------------------------------------------
 test("select function")
 function test_selectbugs()
-    local r, s, e = select(nil, nil, 0.1)
+    local r, s, e = socket.select(nil, nil, 0.1)
     assert(type(r) == "table" and type(s) == "table" and e == "timeout")
     pass("both nil: ok")
-    local udp = udpsocket()
+    local udp = socket.udp()
     udp:close()
-    r, s, e = select({ data }, { data }, 0.1)
+    r, s, e = socket.select({ udp }, { udp }, 0.1)
     assert(type(r) == "table" and type(s) == "table" and e == "timeout")
     pass("closed sockets: ok")
-    e = call(select, {"wrong", 1, 0.1}, "x", nil)
-    assert(e == nil)
+    e = pcall(socket.select, "wrong", 1, 0.1)
+    assert(e == false)
+    e = pcall(socket.select, {}, 1, 0.1)
+    assert(e == false)
     pass("invalid input: ok")
 end
 
@@ -202,8 +197,8 @@ reconnect()
 
 function test_asciiline(len)
     local str, str10, back, err
-    str = strrep("x", mod(len, 10))
-    str10 = strrep("aZb.c#dAe?", floor(len/10))
+    str = string.rep("x", math.mod(len, 10))
+    str10 = string.rep("aZb.c#dAe?", math.floor(len/10))
     str = str .. str10
     pass(len .. " byte(s) line")
 remote "str = data:receive()"
@@ -229,8 +224,9 @@ reconnect()
 
 function test_rawline(len)
     local str, str10, back, err
-    str = strrep(strchar(47), mod(len, 10))
-    str10 = strrep(strchar(120,21,77,4,5,0,7,36,44,100), floor(len/10))
+    str = string.rep(string.char(47), math.mod(len, 10))
+    str10 = string.rep(string.char(120,21,77,4,5,0,7,36,44,100), 
+            math.floor(len/10))
     str = str .. str10
     pass(len .. " byte(s) line")
 remote "str = data:receive()"
@@ -260,12 +256,12 @@ test("raw transfer")
 reconnect()
 
 function test_raw(len)
-    local half = floor(len/2)
+    local half = math.floor(len/2)
     local s1, s2, back, err
-    s1 = strrep("x", half)
-    s2 = strrep("y", len-half)
+    s1 = string.rep("x", half)
+    s2 = string.rep("y", len-half)
     pass(len .. " byte(s) block")
-remote (format("str = data:receive(%d)", len))
+remote (string.format("str = data:receive(%d)", len))
     err = data:send(s1)
     if err then fail(err) end
     err = data:send(s2)
@@ -312,17 +308,18 @@ test("mixed patterns")
 reconnect()
 
 function test_mixed(len)
-    local inter = floor(len/3)
-    local p1 = "unix " .. strrep("x", inter) .. "line\n"
-    local p2 = "dos " .. strrep("y", inter) .. "line\r\n"
-    local p3 = "raw " .. strrep("z", inter) .. "bytes"
+    local inter = math.floor(len/3)
+    local p1 = "unix " .. string.rep("x", inter) .. "line\n"
+    local p2 = "dos " .. string.rep("y", inter) .. "line\r\n"
+    local p3 = "raw " .. string.rep("z", inter) .. "bytes"
     local bp1, bp2, bp3
     pass(len .. " byte(s) patterns")
-remote (format("str = data:receive(%d)", strlen(p1)+strlen(p2)+strlen(p3)))
+remote (string.format("str = data:receive(%d)", 
+            string.len(p1)+string.len(p2)+string.len(p3)))
     err = data:send(p1, p2, p3)
     if err then fail(err) end
 remote "data:send(str)"
-    bp1, bp2, bp3, err = data:receive("*lu", "*l", strlen(p3))
+    bp1, bp2, bp3, err = data:receive("*lu", "*l", string.len(p3))
     if err then fail(err) end
     if bp1.."\n" == p1 and bp2.."\r\n" == p2 and bp3 == p3 then
         pass("patterns match")
@@ -349,7 +346,7 @@ function test_closed()
     local str = 'little string'
     reconnect()
     pass("trying read detection")
-    remote (format ([[
+    remote (string.format ([[
         data:send('%s')
         data:close()
         data = nil
@@ -366,7 +363,7 @@ function test_closed()
         data:close()
         data = nil
     ]]
-    err, total = data:send(strrep("ugauga", 100000))
+    err, total = data:send(string.rep("ugauga", 100000))
     if not err then 
 pass("failed: output buffer is at least %d bytes long!", total)
     elseif err ~= "closed" then 
@@ -384,19 +381,19 @@ function test_blockingtimeoutreceive(len, tm, sl)
     local str, err, total
     reconnect()
     pass("%d bytes, %ds return timeout, %ds pause", len, tm, sl)
-    remote (format ([[
+    remote (string.format ([[
         data:timeout(%d)
-        str = strrep('a', %d)
+        str = string.rep('a', %d)
         data:send(str)
         print('server: sleeping for %ds')
-        _sleep(%d)
+        socket._sleep(%d)
         print('server: woke up')
         data:send(str)
     ]], 2*tm, len, sl, sl))
     data:timeout(tm, "return")
     str, err, elapsed = data:receive(2*len)
     check_timeout(tm, sl, elapsed, err, "receive", "return", 
-        strlen(str) == 2*len)
+        string.len(str) == 2*len)
 end
 test_blockingtimeoutreceive(800091, 1, 3)
 test_blockingtimeoutreceive(800091, 2, 3)
@@ -409,16 +406,16 @@ function test_returntimeoutsend(len, tm, sl)
     local str, err, total
     reconnect()
     pass("%d bytes, %ds return timeout, %ds pause", len, tm, sl)
-    remote (format ([[
+    remote (string.format ([[
         data:timeout(%d)
         str = data:receive(%d)
         print('server: sleeping for %ds')
-        _sleep(%d)
+        socket._sleep(%d)
         print('server: woke up')
         str = data:receive(%d)
     ]], 2*tm, len, sl, sl, len))
     data:timeout(tm, "return")
-    str = strrep("a", 2*len)
+    str = string.rep("a", 2*len)
     err, total, elapsed = data:send(str)
     check_timeout(tm, sl, elapsed, err, "send", "return", 
         total == 2*len)
@@ -435,19 +432,19 @@ function test_blockingtimeoutreceive(len, tm, sl)
     local str, err, total
     reconnect()
     pass("%d bytes, %ds blocking timeout, %ds pause", len, tm, sl)
-    remote (format ([[
+    remote (string.format ([[
         data:timeout(%d)
-        str = strrep('a', %d)
+        str = string.rep('a', %d)
         data:send(str)
         print('server: sleeping for %ds')
-        _sleep(%d)
+        socket._sleep(%d)
         print('server: woke up')
         data:send(str)
     ]], 2*tm, len, sl, sl))
     data:timeout(tm)
     str, err, elapsed = data:receive(2*len)
     check_timeout(tm, sl, elapsed, err, "receive", "blocking", 
-        strlen(str) == 2*len)
+        string.len(str) == 2*len)
 end
 test_blockingtimeoutreceive(800091, 1, 3)
 test_blockingtimeoutreceive(800091, 2, 3)
@@ -461,16 +458,16 @@ function test_blockingtimeoutsend(len, tm, sl)
     local str, err, total
     reconnect()
     pass("%d bytes, %ds blocking timeout, %ds pause", len, tm, sl)
-    remote (format ([[
+    remote (string.format ([[
         data:timeout(%d)
         str = data:receive(%d)
         print('server: sleeping for %ds')
-        _sleep(%d)
+        socket._sleep(%d)
         print('server: woke up')
         str = data:receive(%d)
     ]], 2*tm, len, sl, sl, len))
     data:timeout(tm)
-    str = strrep("a", 2*len)
+    str = string.rep("a", 2*len)
     err, total, elapsed = data:send(str)
     check_timeout(tm, sl, elapsed, err, "send", "blocking",
         total == 2*len)
@@ -481,4 +478,4 @@ test_blockingtimeoutsend(800091, 3, 2)
 test_blockingtimeoutsend(800091, 3, 1)
 
 ------------------------------------------------------------------------
-test(format("done in %.2fs", _time() - start))
+test(string.format("done in %.2fs", socket._time() - start))

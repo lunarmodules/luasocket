@@ -20,7 +20,7 @@
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-#ifdef _DEBUG
+#ifdef LUASOCKET_DEBUG
 static int tm_lua_time(lua_State *L);
 static int tm_lua_sleep(lua_State *L);
 #endif
@@ -123,7 +123,7 @@ int tm_gettime(void)
 void tm_open(lua_State *L)
 {
     (void) L;
-#ifdef _DEBUG
+#ifdef LUASOCKET_DEBUG
     lua_pushcfunction(L, tm_lua_time);
     priv_newglobal(L, "_time");
     lua_pushcfunction(L, tm_lua_sleep);
@@ -137,7 +137,7 @@ void tm_open(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Returns the time the system has been up, in secconds.
 \*-------------------------------------------------------------------------*/
-#ifdef _DEBUG
+#ifdef LUASOCKET_DEBUG
 static int tm_lua_time(lua_State *L)
 {
     lua_pushnumber(L, tm_gettime()/1000.0);

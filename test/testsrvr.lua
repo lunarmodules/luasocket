@@ -1,8 +1,8 @@
 HOST = HOST or "localhost"
 PORT = PORT or "8080"
 
-server, error = bind(HOST, PORT)
-if not server then print("server: " .. tostring(error)) exit() end
+server, error = socket.bind(HOST, PORT)
+if not server then print("server: " .. tostring(error)) os.exit() end
 while 1 do
     print("server: waiting for client connection...");
     control = server:accept()
@@ -19,6 +19,6 @@ while 1 do
             print("server: closing connection...")
             break
         end
-        dostring(command)
+        (loadstring(command))()
     end
 end

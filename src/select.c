@@ -31,8 +31,6 @@ void select_open(lua_State *L)
 {
     /* push select auxiliar lua function and register
     * select_lua_select with it as an upvalue */
-#ifdef LUASOCKET_DEBUG
-#endif
     luaL_loadfile(L, "lsselect.lua");
     lua_call(L, 0, 1);
     lua_pushcclosure(L, select_lua_select, 1);

@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
-HTTP = Public
+http = Public
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -195,7 +195,7 @@ end
 function Private.receivebody_bylength(sock, length, receive_cb)
     local uerr, go
     while length > 0 do
-        local size = min(Public.BLOCKSIZE, length)
+        local size = math.min(Public.BLOCKSIZE, length)
         local chunk, err = sock:receive(size)
         if err then 
             go, uerr = receive_cb(nil, err)
@@ -542,7 +542,7 @@ function Public.request_cb(request, response)
 		scheme = "http"
     })
 	if parsed.scheme ~= "http" then
-		response.error = format("unknown scheme '%s'", parsed.scheme)
+		response.error = string.format("unknown scheme '%s'", parsed.scheme)
 		return response
 	end
     -- explicit authentication info overrides that given by the URL
