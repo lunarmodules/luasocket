@@ -1,6 +1,3 @@
-create the getstats method. 
-
-    sent, received, age = sock:getstats()
 
 take a look at DB's smtp patch
 
@@ -28,5 +25,7 @@ testar os options!
   - inet_ntoa também é uma merda.
 
 
+create the getstats method. 
+    sent, received, age = sock:getstats()
 *fix local domain socket kludge of name size
 *use TLS 

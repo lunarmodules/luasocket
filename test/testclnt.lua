@@ -448,6 +448,7 @@ test_methods(socket.tcp(), {
     "getfd",
     "getpeername",
     "getsockname",
+    "getstats",
     "listen",
     "receive",
     "send",

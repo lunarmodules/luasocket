@@ -27,6 +27,8 @@
 
 /* buffer control structure */
 typedef struct t_buf_ {
+    double birthday;        /* throttle support info: creation time, */
+    int sent, received;     /* bytes sent, and bytes received */
     p_io io;                /* IO driver used for this buffer */
     p_tm tm;                /* timeout management for this buffer */
 	size_t first, last;     /* index of first and last bytes of stored data */
@@ -38,6 +40,7 @@ int buf_open(lua_State *L);
 void buf_init(p_buf buf, p_io io, p_tm tm);
 int buf_meth_send(lua_State *L, p_buf buf);
 int buf_meth_receive(lua_State *L, p_buf buf);
+int buf_meth_getstats(lua_State *L, p_buf buf);
 int buf_isempty(p_buf buf);
 
 #endif /* BUF_H */

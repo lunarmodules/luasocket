@@ -45,6 +45,18 @@ void buf_init(p_buf buf, p_io io, p_tm tm) {
 	buf->first = buf->last = 0;
     buf->io = io;
     buf->tm = tm;
+    buf->received = buf->sent = 0;
+    buf->birthday = tm_gettime();
+}
+
+/*-------------------------------------------------------------------------*\
+* object:getstats() interface
+\*-------------------------------------------------------------------------*/
+int buf_meth_getstats(lua_State *L, p_buf buf) {
+    lua_pushnumber(L, buf->received);
+    lua_pushnumber(L, buf->sent);
+    lua_pushnumber(L, tm_gettime() - buf->birthday);
+    return 3;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -141,6 +153,7 @@ static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent) {
         total += done;
     }
     *sent = total;
+    buf->sent += total;
     return err;
 }
 
@@ -205,6 +218,7 @@ static int recvline(p_buf buf, luaL_Buffer *b) {
 * transport layer
 \*-------------------------------------------------------------------------*/
 static void buf_skip(p_buf buf, size_t count) {
+    buf->received += count;
     buf->first += count;
     if (buf_isempty(buf)) 
         buf->first = buf->last = 0;
