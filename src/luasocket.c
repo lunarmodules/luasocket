@@ -316,12 +316,14 @@ static int global_udpsocket(lua_State *L)
 	int top = lua_gettop(L);
     p_sock sock = push_udptable(L, tags);
     if (!sock) return 2;
-	if (top >= 1 && lua_istable(L, 1)) {
-		lua_pushnil(L);
-		while (lua_next(L, 1)) {
-			if (!set_option(L, sock)) lua_error(L, "invalid socket option");
-			lua_pop(L, 1);
-		}
+	if (top >= 1 ) {
+		if  (lua_istable(L, 1)) {
+			lua_pushnil(L);
+			while (lua_next(L, 1)) {
+				if (!set_option(L, sock)) lua_error(L, "error setting option");
+				lua_pop(L, 1);
+			}
+		} else luaL_argerror(L, 1, "invalid options");
 	}
     return 1;
 }
@@ -590,7 +592,7 @@ int global_select(lua_State *L)
     /* writable sockets table to be returned */
     lua_newtable(L); canwrite = lua_gettop(L);
     /* get sockets we will test for readability into fd_set */
-    if (!lua_isnil(L, 1)) {
+    if (lua_istable(L, 1)) {
         lua_pushnil(L);
         while (lua_next(L, 1)) {
             if (lua_tag(L, -1) == tags->table) { /* skip strange fields */
@@ -620,7 +622,7 @@ int global_select(lua_State *L)
         }
     }
     /* get sockets we will test for writability into fd_set */
-    if (!lua_isnil(L, 2)) {
+    if (lua_istable(L, 2)) {
         lua_pushnil(L);
         while (lua_next(L, 2)) {
             if (lua_tag(L, -1) == tags->table) { /* skip strange fields */
@@ -1070,23 +1072,31 @@ static int set_option(lua_State *L, p_sock sock)
 	static const char *const optionnames[] = {
 		"SO_KEEPALIVE", "SO_DONTROUTE", "SO_BROADCAST", "SO_LINGER", NULL
 	};
-	const char *option = lua_tostring(L, -2);
+	const char *option;
 	int err;
+	if (!lua_isstring(L, -2)) return 0;
+	option = lua_tostring(L, -2);
 	switch (luaL_findstring(option, optionnames)) {
 		case 0: {
-			int bool = (int) lua_tonumber(L, -1);
+			int bool;
+			if (!lua_isnumber(L, -1)) return 0;
+		    bool = (int) lua_tonumber(L, -1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_KEEPALIVE, &bool, 
 				sizeof(bool));
 			return err >= 0;
 		}
 		case 1: {
-			int bool = (int) lua_tonumber(L, -1);
+			int bool;
+			if (!lua_isnumber(L, -1)) return 0;
+		    bool = (int) lua_tonumber(L, -1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_DONTROUTE, &bool, 
 				sizeof(bool));
 			return err >= 0;
 		}
 		case 2: {
-			int bool = (int) lua_tonumber(L, -1);
+			int bool;
+			if (!lua_isnumber(L, -1)) return 0;
+		    bool = (int) lua_tonumber(L, -1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_BROADCAST, &bool,
 				sizeof(bool));
 			return err >= 0;
@@ -1096,10 +1106,12 @@ static int set_option(lua_State *L, p_sock sock)
 			if (!lua_istable(L, -1)) return 0;
 			lua_pushstring(L, "l_onoff");
 			lua_gettable(L, -2);
+			if (!lua_isnumber(L, -1)) return 0;
 			linger.l_onoff = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			lua_pushstring(L, "l_linger");
 			lua_gettable(L, -2);
+			if (!lua_isnumber(L, -1)) return 0;
 			linger.l_linger = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_LINGER, &linger, 
@@ -1678,8 +1690,8 @@ void lua_socketlibopen(lua_State *L)
 #endif
 #ifdef _DEBUG
     /* test support functions */
-    lua_pushcfunction(L, global_sleep); lua_setglobal(L, "sleep");
-    lua_pushcfunction(L, global_time); lua_setglobal(L, "time");
+    lua_pushcfunction(L, global_sleep); lua_setglobal(L, "_sleep");
+    lua_pushcfunction(L, global_time); lua_setglobal(L, "_time");
 #endif
 #ifndef LUASOCKET_NOGLOBALS
     {
