@@ -1,3 +1,6 @@
+get rid of a = socket.try() in the manual, except for protected cases.
+    replace it with assert.
+
 
 think about a dispatcher.
     - it creates a server and receives a function that will do the work on
