@@ -84,8 +84,9 @@ int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, int timeout)
         if (err > 0) {
             char dummy;
             /* try reading so that errno is set */
-            if (recv(sock, &dummy, 0, 0) < 0) return IO_ERROR;
-            return IO_DONE;
+            if (recv(sock, &dummy, 0, 0) < 0 && errno != EAGAIN)
+                return IO_ERROR;
+            else return IO_DONE;
         /* if no event happened, there was a timeout */
         } else return IO_TIMEOUT;
     /* otherwise connection succeeded */
