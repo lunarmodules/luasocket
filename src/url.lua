@@ -7,6 +7,7 @@
 ----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
+local socket = _G[LUASOCKET_LIBNAME] -- get LuaSocket namespace
 socket.url = Public
 
 -----------------------------------------------------------------------------
