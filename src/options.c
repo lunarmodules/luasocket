@@ -3,6 +3,7 @@
 
 #include "auxiliar.h"
 #include "options.h"
+#include "inet.h"
 
 static int opt_setmembership(lua_State *L, p_sock ps, int level, int name);
 static int opt_setboolean(lua_State *L, p_sock ps, int level, int name);

@@ -140,7 +140,7 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len, p_tm tm)
 {
     t_sock sock = *ps;
     SA dummy_addr;
-    socklen_t dummy_len;
+    socklen_t dummy_len = sizeof(dummy_addr);
     if (sock == SOCK_INVALID) return IO_CLOSED;
     if (!addr) addr = &dummy_addr;
     if (!addr_len) addr_len = &dummy_len;

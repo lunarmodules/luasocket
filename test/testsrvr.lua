@@ -6,7 +6,8 @@ if not server then print("server: " .. tostring(error)) os.exit() end
 ack = "\n"
 while 1 do
     print("server: waiting for client connection...");
-    control = server:accept()
+    control, error = server:accept()
+    assert(control, error)
     -- control:setoption("nodelay", true)
     while 1 do 
         command, error = control:receive()

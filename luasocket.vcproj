@@ -140,6 +140,9 @@
 				RelativePath=".\mime.c">
 			</File>
 			<File
+				RelativePath=".\options.c">
+			</File>
+			<File
 				RelativePath=".\select.c">
 			</File>
 			<File

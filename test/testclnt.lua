@@ -132,6 +132,7 @@ end
 
 ------------------------------------------------------------------------
 function test_asciiline(len)
+    reconnect()
     local str, str10, back, err
     str = string.rep("x", math.mod(len, 10))
     str10 = string.rep("aZb.c#dAe?", math.floor(len/10))
@@ -149,6 +150,7 @@ end
 
 ------------------------------------------------------------------------
 function test_rawline(len)
+    reconnect()
     local str, str10, back, err
     str = string.rep(string.char(47), math.mod(len, 10))
     str10 = string.rep(string.char(120,21,77,4,5,0,7,36,44,100), 
@@ -167,6 +169,7 @@ end
 
 ------------------------------------------------------------------------
 function test_raw(len)
+    reconnect()
     local half = math.floor(len/2)
     local s1, s2, back, err
     s1 = string.rep("x", half)
@@ -186,8 +189,8 @@ end
 
 ------------------------------------------------------------------------
 function test_totaltimeoutreceive(len, tm, sl)
-    local str, err, total
     reconnect()
+    local str, err, total
     pass("%d bytes, %ds total timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
         data:settimeout(%d)
@@ -206,8 +209,8 @@ end
 
 ------------------------------------------------------------------------
 function test_totaltimeoutsend(len, tm, sl)
-    local str, err, total
     reconnect()
+    local str, err, total
     pass("%d bytes, %ds total timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
         data:settimeout(%d)
@@ -226,8 +229,8 @@ end
 
 ------------------------------------------------------------------------
 function test_blockingtimeoutreceive(len, tm, sl)
-    local str, err, total
     reconnect()
+    local str, err, total
     pass("%d bytes, %ds blocking timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
         data:settimeout(%d)
@@ -246,8 +249,8 @@ end
 
 ------------------------------------------------------------------------
 function test_blockingtimeoutsend(len, tm, sl)
-    local str, err, total
     reconnect()
+    local str, err, total
     pass("%d bytes, %ds blocking timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
         data:settimeout(%d)
@@ -266,11 +269,14 @@ end
 
 ------------------------------------------------------------------------
 function empty_connect()
+    reconnect()
     if data then data:close() data = nil end
+print("before remote")
     remote [[
         if data then data:close() data = nil end
         data = server:accept()
     ]]
+print("after remote")
     data, err = socket.connect("", port)
     if not data then 
         pass("ok")
@@ -445,7 +451,6 @@ test("connect with timeout (if it hangs, it failed:)")
 connect_timeout()
 
 test("mixed patterns")
-reconnect()
 test_mixed(1)
 test_mixed(17)
 test_mixed(200)
@@ -457,7 +462,6 @@ test_mixed(17)
 test_mixed(1)
 
 test("character line")
-reconnect()
 test_asciiline(1)
 test_asciiline(17)
 test_asciiline(200)
