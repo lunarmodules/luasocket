@@ -87,7 +87,7 @@ end
 local function sendsource(mesgt)
     -- set content-type if user didn't override
     if not mesgt.headers or not mesgt.headers["content-type"] then
-        coroutine.yield('content-type: text/plain; charset="iso-88591"\r\n')
+        coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n')
     end
     -- finish headers
     coroutine.yield("\r\n")
@@ -104,7 +104,7 @@ end
 local function sendstring(mesgt)
     -- set content-type if user didn't override
     if not mesgt.headers or not mesgt.headers["content-type"] then
-        coroutine.yield('content-type: text/plain; charset="iso-88591"\r\n')
+        coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n')
     end
     -- finish headers
     coroutine.yield("\r\n")
@@ -135,7 +135,7 @@ local function adjustheaders(mesgt)
     mesgt.headers = mesgt.headers or {}
     mesgt.headers["mime-version"] = "1.0" 
     mesgt.headers["date"] = mesgt.headers["date"] or 
-        os.date("%a, %d %b %Y %H:%M:%S") .. (mesgt.zone or ZONE)
+        os.date("!%a, %d %b %Y %H:%M:%S ") .. (mesgt.zone or ZONE)
     mesgt.headers["x-mailer"] = mesgt.headers["x-mailer"] or socket.version
 end
 
