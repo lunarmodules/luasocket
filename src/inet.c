@@ -37,13 +37,10 @@ static luaL_reg func[] = {
 \*-------------------------------------------------------------------------*/
 int inet_open(lua_State *L)
 {
-    lua_pushstring(L, LUASOCKET_LIBNAME);
-    lua_gettable(L, LUA_GLOBALSINDEX);
     lua_pushstring(L, "dns");
     lua_newtable(L);
     luaL_openlib(L, NULL, func, 0);
     lua_settable(L, -3);
-    lua_pop(L, 1);
     return 0;
 }
 

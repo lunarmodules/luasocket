@@ -50,8 +50,7 @@ int select_open(lua_State *L)
 #else
     lua_dofile(L, "select.lua");
 #endif
-    luaL_openlib(L, LUASOCKET_LIBNAME, func, 1);
-    lua_pop(L, 1);
+    luaL_openlib(L, NULL, func, 1);
     aux_newclass(L, "select{fd_set}", set);
     return 0;
 }

@@ -1,4 +1,5 @@
-require"http"
+socket = require("socket")
+http = require("http")
 
 if not arg or not arg[1] or not arg[2] then
     print("luasocket cddb.lua <category> <disc-id> [<server>]")
@@ -31,7 +32,7 @@ end
 local host = socket.dns.gethostname()
 local query = "%s?cmd=cddb+read+%s+%s&hello=LuaSocket+%s+LuaSocket+2.0&proto=6"
 local url = string.format(query, server, arg[1], arg[2], host)
-local body, headers, code, error = socket.http.get(url)
+local body, headers, code, error = http.get(url)
 
 if code == 200 then 
     local data, code, error = parse(body)

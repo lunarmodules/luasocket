@@ -4,7 +4,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-require"socket"
+local socket = require("socket")
 
 function get_status(sock, valid)
 	local line, err = sock:receive()
@@ -77,5 +77,5 @@ if arg and arg[1] then
     defs, err = dict_get(arg[1], arg[2])
     print(defs or err)
 else
-	io.write("Usage:\n  luasocket dict.lua <word> [<dictionary>]\n")
+	io.write("Usage:\n  lua dict.lua <word> [<dictionary>]\n")
 end

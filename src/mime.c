@@ -76,9 +76,8 @@ static UC b64unbase[256];
 \*-------------------------------------------------------------------------*/
 MIME_API int luaopen_mime(lua_State *L)
 {
-    lua_pushstring(L, MIME_LIBNAME);
-    lua_setglobal(L, "MIME_LIBNAME");
-    luaL_openlib(L, MIME_LIBNAME, func, 0);
+    lua_newtable(L);
+    luaL_openlib(L, NULL, func, 0);
     /* initialize lookup tables */
     qpsetup(qpclass, qpunbase);
     b64setup(b64unbase);
@@ -626,7 +625,6 @@ static int eolprocess(int c, int last, const char *marker,
         luaL_putchar(buffer, c);
         return 0;
     }
-
 }
 
 /*-------------------------------------------------------------------------*\

@@ -1,7 +1,7 @@
 This directory contains code that is more useful than the examples. This code
 *is* supported.
 
-    lua.lua and luasocket.lua
+    lua.lua
 
 These are modules to suport dynamic loading of LuaSocket by the stand alone
 Lua Interpreter with the use of the "require" function. For my Mac OS X

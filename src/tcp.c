@@ -96,8 +96,7 @@ int tcp_open(lua_State *L)
     aux_add2group(L, "tcp{client}", "select{able}");
     aux_add2group(L, "tcp{server}", "select{able}");
     /* define library functions */
-    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0); 
-    lua_pop(L, 1);
+    luaL_openlib(L, NULL, func, 0); 
     return 0;
 }
 

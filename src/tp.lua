@@ -5,16 +5,18 @@
 -- Conforming to: RFC 2616, LTN7
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
--- make sure LuaSocket is loaded
-require("socket")
--- get LuaSocket namespace
-local socket = _G[LUASOCKET_LIBNAME] 
 
--- create namespace inside LuaSocket namespace
-socket.tp  = socket.tp or {}
--- make all module globals fall into namespace
-setmetatable(socket.tp, { __index = _G })
-setfenv(1, socket.tp)
+-----------------------------------------------------------------------------
+-- Load other required modules
+-----------------------------------------------------------------------------
+local socket = require("socket")
+
+-----------------------------------------------------------------------------
+-- Setup namespace
+-----------------------------------------------------------------------------
+tp = {}
+setmetatable(tp, { __index = _G })
+setfenv(1, tp)
 
 TIMEOUT = 60
 
@@ -107,3 +109,5 @@ function connect(host, port)
     control:settimeout(TIMEOUT)
     return setmetatable({control = control}, metat)
 end
+
+return tp

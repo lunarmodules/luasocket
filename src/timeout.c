@@ -143,8 +143,7 @@ int tm_gettime(void)
 \*-------------------------------------------------------------------------*/
 int tm_open(lua_State *L)
 {
-    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0);
-    lua_pop(L, 1);
+    luaL_openlib(L, NULL, func, 0);
     return 0;
 }
 

@@ -4,15 +4,14 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-
-require"http"
-
-socket.http.TIMEOUT = 10
+local http = require("http")
+local url = require("url")
+http.TIMEOUT = 10
 
 cache = {}
 
 function readfile(path)
-	path = socket.url.unescape(path)
+	path = url.unescape(path)
 	local file, error = io.open(path, "r")
 	if file then 
         local body = file:read("*a")
@@ -21,32 +20,32 @@ function readfile(path)
     else return nil, error end
 end
 
-function getstatus(url)
-	local parsed = socket.url.parse(url, { scheme = "file" })
-	if cache[url] then return cache[url] end
+function getstatus(u)
+	local parsed = url.parse(u, {scheme = "file"})
+	if cache[u] then return cache[u] end
 	local res
     if parsed.scheme == "http" then
-        local request = { url = url, method = "HEAD" }
-        local response = socket.http.request(request)
+        local request = {url = u, method = "HEAD"}
+        local response = http.request(request)
         if response.code == 200 then res = nil
         else res = response.status or response.error end
     elseif parsed.scheme == "file" then
-        local file, error = io.open(socket.url.unescape(parsed.path), "r")
+        local file, error = io.open(url.unescape(parsed.path), "r")
         if file then
              file:close()
              res = nil
         else res = error end
     else res = string.format("unhandled scheme '%s'", parsed.scheme) end
-    cache[url] = res
+    cache[u] = res
 	return res
 end
 
-function retrieve(url)
-	local parsed = socket.url.parse(url, { scheme = "file" })
+function retrieve(u)
+	local parsed = url.parse(u, { scheme = "file" })
     local body, headers, code, error
-    local base = url
+    local base = u
 	if parsed.scheme == "http" then 
-        body, headers, code, error = socket.http.get(url)
+        body, headers, code, error = http.get(u)
         if code == 200 then 
             base = base or headers.location
         end
@@ -62,19 +61,19 @@ function getlinks(body, base)
     local links = {}
     -- extract links
 	body = string.gsub(body, '[Hh][Rr][Ee][Ff]%s*=%s*"([^"]*)"', function(href)
-        table.insert(links, socket.url.absolute(base, href))
+        table.insert(links, url.absolute(base, href))
     end)
 	body = string.gsub(body, "[Hh][Rr][Ee][Ff]%s*=%s*'([^']*)'", function(href)
-        table.insert(links, socket.url.absolute(base, href))
+        table.insert(links, url.absolute(base, href))
     end)
 	string.gsub(body, "[Hh][Rr][Ee][Ff]%s*=%s*(.-)>", function(href)
-        table.insert(links, socket.url.absolute(base, href))
+        table.insert(links, url.absolute(base, href))
     end)
     return links
 end
 
-function checklinks(url)
-	local base, body, error = retrieve(url)
+function checklinks(u)
+	local base, body, error = retrieve(u)
     if not body then print(error) return end
     local links = getlinks(body, base)
     for _, l in ipairs(links) do
@@ -91,5 +90,5 @@ if table.getn(arg) < 1 then
 end
 for _, a in ipairs(arg) do
 	print("Checking ", a)
-	checklinks(socket.url.absolute("file:", a))
+	checklinks(url.absolute("file:", a))
 end

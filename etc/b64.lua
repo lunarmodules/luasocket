@@ -1,5 +1,5 @@
-require("ltn12")
-require("mime")
+local ltn12 = require("ltn12")
+local mime = require("mime")
 local source = ltn12.source.file(io.stdin)
 local sink = ltn12.sink.file(io.stdout)
 local convert

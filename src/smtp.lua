@@ -5,21 +5,27 @@
 -- Conforming to RFC 2821
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
--- make sure LuaSocket is loaded
-require("socket")
--- get LuaSocket namespace
-local socket = _G[LUASOCKET_LIBNAME] 
 
-require("ltn12")
-require("tp")
+-----------------------------------------------------------------------------
+-- Load SMTP from dynamic library
+-- Comment these lines if you are loading static
+-----------------------------------------------------------------------------
+local open = assert(loadlib("smtp", "luaopen_smtp"))
+local smtp = assert(open())
 
--- create smtp namespace inside LuaSocket namespace
-local smtp = socket.smtp or {}
-socket.smtp = smtp
+-----------------------------------------------------------------------------
+-- Load other required modules
+-----------------------------------------------------------------------------
+local socket = require("socket")
+local ltn12 = require("ltn12")
+local tp = require("tp")
+
+-----------------------------------------------------------------------------
+-- Setup namespace 
+-----------------------------------------------------------------------------
 -- make all module globals fall into smtp namespace
 setmetatable(smtp, { __index = _G })
 setfenv(1, smtp)
-
 
 -- default server used to send e-mails
 SERVER = "localhost"
@@ -89,7 +95,7 @@ end
 
 function open(server, port)
     print(server or SERVER, port or PORT)
-    local tp, error = socket.tp.connect(server or SERVER, port or PORT)
+    local tp, error = tp.connect(server or SERVER, port or PORT)
     if not tp then return nil, error end
     return setmetatable({tp = tp}, metat)
 end
@@ -176,11 +182,16 @@ end
 
 -- set defaul headers
 local function adjust_headers(mesgt)
-    mesgt.headers = mesgt.headers or {}
-    mesgt.headers["mime-version"] = "1.0" 
-    mesgt.headers["date"] = mesgt.headers["date"] or 
+    local lower = {}
+    for i,v in (mesgt or lower) do
+        lower[string.lower(i)] = v
+    end
+    lower["date"] = lower["date"] or 
         os.date("!%a, %d %b %Y %H:%M:%S ") .. (mesgt.zone or ZONE)
-    mesgt.headers["x-mailer"] = mesgt.headers["x-mailer"] or socket.version
+    lower["x-mailer"] = lower["x-mailer"] or socket.version
+    -- this can't be overriden
+    lower["mime-version"] = "1.0" 
+    mesgt.headers = lower
 end
 
 function message(mesgt)

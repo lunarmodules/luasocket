@@ -1,10 +1,16 @@
--- create module namespace 
-ltn12 = ltn12 or {}
--- make all globals fall into ltn12 namespace
+-----------------------------------------------------------------------------
+-- LTN12 - Filters, sources, sinks and pumps.
+-- LuaSocket toolkit.
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- Setup namespace
+-----------------------------------------------------------------------------
+local ltn12 = {}
 setmetatable(ltn12, { __index = _G })
 setfenv(1, ltn12)
-
--- sub namespaces
 filter = {}
 source = {}
 sink = {}
@@ -13,15 +19,14 @@ pump = {}
 -- 2048 seems to be better in windows...
 BLOCKSIZE = 2048
 
-local function second(a, b)
-    return b
-end
-
 local function shift(a, b, c)
     return b, c
 end
 
--- returns a high level filter that cycles a cycles a low-level filter
+-----------------------------------------------------------------------------
+-- Filter stuff
+-----------------------------------------------------------------------------
+-- returns a high level filter that cycles a low-level filter
 function filter.cycle(low, ctx, extra)
     return function(chunk)
         local ret
@@ -61,6 +66,9 @@ function filter.chain(...)
     return f
 end
 
+-----------------------------------------------------------------------------
+-- Source stuff
+-----------------------------------------------------------------------------
 -- create an empty source
 local function empty()
     return nil
@@ -162,6 +170,9 @@ function source.cat(...)
     end
 end
 
+-----------------------------------------------------------------------------
+-- Sink stuff
+-----------------------------------------------------------------------------
 -- creates a sink that stores into a table
 function sink.table(t)
     t = t or {}
@@ -224,6 +235,9 @@ function sink.chain(f, snk)
     end
 end
 
+-----------------------------------------------------------------------------
+-- Pump stuff
+-----------------------------------------------------------------------------
 -- pumps one chunk from the source to the sink
 function pump.step(src, snk)
     local chunk, src_err = src()
@@ -239,3 +253,5 @@ function pump.all(src, snk, step)
         if not ret then return not err, err end
     end
 end
+
+return ltn12

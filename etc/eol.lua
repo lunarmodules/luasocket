@@ -1,6 +1,5 @@
-require"mime.lua"
-require"ltn12.lua"
-
+local mime = require("mime")
+local ltn12 = require("ltn12")
 local marker = '\n'
 if arg and arg[1] == '-d' then marker = '\r\n' end
 local filter = mime.normalize(marker)

@@ -4,16 +4,12 @@
 -- Author: Diego Nehab
 -- Conforming to: RFC 2396, LTN7
 -- RCS ID: $Id$
-----------------------------------------------------------------------------
--- make sure LuaSocket is loaded
-require("socket")
--- get LuaSocket namespace
-local socket = _G[LUASOCKET_LIBNAME]
+-----------------------------------------------------------------------------
 
--- create url namespace inside LuaSocket namespace
-local url = socket.url or {}
-socket.url = url
--- make all module globals fall into url namespace
+-----------------------------------------------------------------------------
+-- Setup namespace
+-----------------------------------------------------------------------------
+local url = {}
 setmetatable(url, { __index = _G })
 setfenv(1, url)
 
@@ -275,3 +271,5 @@ function build_path(parsed, unsafe)
 	if parsed.is_absolute then path = "/" .. path end
 	return path
 end
+
+return url

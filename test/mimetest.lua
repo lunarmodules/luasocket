@@ -1,6 +1,6 @@
-require("socket")
-require("ltn12")
-require("mime")
+local socket = require("socket")
+local ltn12 = require("ltn12")
+local mime = require("mime")
 
 dofile("testsupport.lua")
 

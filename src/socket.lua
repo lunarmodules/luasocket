@@ -6,18 +6,9 @@
 
 -----------------------------------------------------------------------------
 -- Load LuaSocket from dynamic library
--- Comment these lines if you are loading static
 -----------------------------------------------------------------------------
-open, err1, err2 = loadlib("luasocket", "luaopen_socket")
-if not open then error(err1) end
-open()
-if not LUASOCKET_LIBNAME then error("LuaSocket init failed") end
-
------------------------------------------------------------------------------
--- Namespace independence
------------------------------------------------------------------------------
-local socket = _G[LUASOCKET_LIBNAME]
-if not socket then error('LuaSocket init failed') end
+local open = assert(loadlib("luasocket", "luaopen_socket"))
+local socket = assert(open())
 
 -----------------------------------------------------------------------------
 -- Auxiliar functions
@@ -172,3 +163,5 @@ end
 socket.sourcet["default"] = socket.sourcet["until-closed"]
 
 socket.source = socket.choose(socket.sourcet)
+
+return socket

@@ -4,9 +4,10 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-require"http"
-require"ftp"
-require"url"
+socket = require("socket")
+http = require("http")
+ftp = require("ftp")
+url = require("url")
 
 -- formats a number of seconds into human readable form
 function nicetime(s)
@@ -84,55 +85,55 @@ function stats(size)
 end
 
 -- determines the size of a http file
-function gethttpsize(url)
-	local respt = socket.http.request {method = "HEAD", url = url}
+function gethttpsize(u)
+	local respt = http.request {method = "HEAD", url = u}
 	if respt.code == 200 then
 		return tonumber(respt.headers["content-length"])
 	end
 end
 
 -- downloads a file using the http protocol
-function getbyhttp(url, file)
+function getbyhttp(u, file)
     local save = ltn12.sink.file(file or io.stdout)
     -- only print feedback if output is not stdout
-    if file then save = ltn12.sink.chain(stats(gethttpsize(url)), save) end
-    local respt = socket.http.request {url = url, sink = save }
+    if file then save = ltn12.sink.chain(stats(gethttpsize(u)), save) end
+    local respt = http.request {url = u, sink = save }
 	if respt.code ~= 200 then print(respt.status or respt.error) end
 end
 
 -- downloads a file using the ftp protocol
-function getbyftp(url, file)
+function getbyftp(u, file)
     local save = ltn12.sink.file(file or io.stdout)
     -- only print feedback if output is not stdout
     -- and we don't know how big the file is
     if file then save = ltn12.sink.chain(stats(), save) end
-    local gett = socket.url.parse(url)
+    local gett = url.parse(u)
     gett.sink = save
     gett.type = "i"
-    local ret, err = socket.ftp.get(gett) 
+    local ret, err = ftp.get(gett) 
 	if err then print(err) end
 end
 
 -- determines the scheme 
-function getscheme(url)
+function getscheme(u)
 	-- this is an heuristic to solve a common invalid url poblem
-	if not string.find(url, "//") then url = "//" .. url end
-	local parsed = socket.url.parse(url, {scheme = "http"})
+	if not string.find(u, "//") then u = "//" .. u end
+	local parsed = url.parse(u, {scheme = "http"})
 	return parsed.scheme
 end
 
 -- gets a file either by http or ftp, saving as <name>
-function get(url, name)
+function get(u, name)
     local fout = name and io.open(name, "wb")
-	local scheme = getscheme(url)
-	if scheme == "ftp" then getbyftp(url, fout)
-	elseif scheme == "http" then getbyhttp(url, fout)
+	local scheme = getscheme(u)
+	if scheme == "ftp" then getbyftp(u, fout)
+	elseif scheme == "http" then getbyhttp(u, fout)
 	else print("unknown scheme" .. scheme) end
 end
 
 -- main program
 arg = arg or {}
 if table.getn(arg) < 1 then 
-	io.write("Usage:\n  luasocket get.lua <remote-url> [<local-file>]\n")
+	io.write("Usage:\n  lua get.lua <remote-url> [<local-file>]\n")
 	os.exit(1)
 else get(arg[1], arg[2]) end

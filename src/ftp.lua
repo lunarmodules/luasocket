@@ -5,21 +5,22 @@
 -- Conforming to: RFC 959, LTN7
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
--- make sure LuaSocket is loaded
-require("socket")
--- get LuaSocket namespace
-local socket = _G[LUASOCKET_LIBNAME] 
 
--- require other modules
-require("ltn12")
-require("url")
-require("tp")
+-----------------------------------------------------------------------------
+-- Load other required modules
+-----------------------------------------------------------------------------
+local socket = require("socket")
+local ltn12 = require("ltn12")
+local url = require("url")
+local tp = require("tp")
 
--- create namespace inside LuaSocket namespace
-socket.ftp  = socket.ftp or {}
+-----------------------------------------------------------------------------
+-- Setup namespace
+-----------------------------------------------------------------------------
+local ftp = {}
 -- make all module globals fall into namespace
-setmetatable(socket.ftp, { __index = _G })
-setfenv(1, socket.ftp)
+setmetatable(ftp, { __index = _G })
+setfenv(1, ftp)
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -196,8 +197,8 @@ local default = {
 	scheme = "ftp"
 }
 
-local function parse(url)
-    local putt = socket.try(socket.url.parse(url, default))
+local function parse(u)
+    local putt = socket.try(url.parse(u, default))
     socket.try(putt.scheme == "ftp", "invalid scheme '" .. putt.scheme .. "'")
     socket.try(putt.host, "invalid host")
     local pat = "^type=(.)$"
@@ -208,8 +209,8 @@ local function parse(url)
     return putt
 end
 
-local function sput(url, body)
-    local putt = parse(url) 
+local function sput(u, body)
+    local putt = parse(u) 
     putt.source = ltn12.source.string(body)
     return tput(putt)
 end
@@ -230,8 +231,8 @@ local function tget(gett)
     return ftp:close()
 end
 
-local function sget(url, body)
-    local gett = parse(url) 
+local function sget(u, body)
+    local gett = parse(u) 
     local t = {}
     gett.sink = ltn12.sink.table(t)
     tget(gett)

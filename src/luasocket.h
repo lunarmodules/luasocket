@@ -16,13 +16,6 @@
 #define LUASOCKET_VERSION "LuaSocket 2.0 (beta)"
 
 /*-------------------------------------------------------------------------*\
-* Library's namespace
-\*-------------------------------------------------------------------------*/
-#ifndef LUASOCKET_LIBNAME
-#define LUASOCKET_LIBNAME "socket"
-#endif
-
-/*-------------------------------------------------------------------------*\
 * This macro prefixes all exported API functions
 \*-------------------------------------------------------------------------*/
 #ifndef LUASOCKET_API

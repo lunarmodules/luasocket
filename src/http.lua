@@ -5,23 +5,22 @@
 -- Conforming to RFC 2616
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
--- make sure LuaSocket is loaded
-require("socket")
--- get LuaSocket namespace
-local socket = _G[LUASOCKET_LIBNAME] 
 
--- require other modules
-require("ltn12")
-require("mime")
--- get MIME namespace
-local mime = _G[MIME_LIBNAME] 
-require("url")
+-----------------------------------------------------------------------------
+-- Load other required modules
+-------------------------------------------------------------------------------
+local socket = require("socket")
+local ltn12 = require("ltn12")
+local mime = require("mime")
+local url = require("url")
 
--- create namespace inside LuaSocket namespace
-socket.http  = socket.http or {}
+-----------------------------------------------------------------------------
+-- Setup namespace
+-------------------------------------------------------------------------------
+http = {}
 -- make all module globals fall into namespace
-setmetatable(socket.http, { __index = _G })
-setfenv(1, socket.http)
+setmetatable(http, { __index = _G })
+setfenv(1, http)
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -116,17 +115,17 @@ local function receive_status(reqt, respt, tmp)
 end
 
 local function request_uri(reqt, respt, tmp)
-    local url = tmp.parsed
+    local u = tmp.parsed
     if not reqt.proxy then
         local parsed = tmp.parsed
-        url = { 
+        u = { 
            path = parsed.path, 
            params = parsed.params, 
            query = parsed.query, 
            fragment = parsed.fragment
         }
     end
-    return socket.url.build(url)
+    return url.build(u)
 end
 
 local function send_request(reqt, respt, tmp)
@@ -155,7 +154,7 @@ local function open(reqt, respt, tmp)
     local proxy = reqt.proxy or PROXY
     local host, port
     if proxy then 
-        local pproxy = socket.url.parse(proxy) 
+        local pproxy = url.parse(proxy) 
         socket.try(pproxy.port and pproxy.host, "invalid proxy")
         host, port = pproxy.host, pproxy.port
     else 
@@ -169,15 +168,13 @@ end
 
 local function adjust_headers(reqt, respt, tmp)
     local lower = {}
-    local headers = reqt.headers or {}
-    -- set default headers
-    lower["user-agent"] = USERAGENT
     -- override with user values
-    for i,v in headers do
+    for i,v in (reqt.headers or lower) do
         lower[string.lower(i)] = v
     end
+    lower["user-agent"] = lower["user-agent"] or USERAGENT
+    -- these cannot be overriden
     lower["host"] = tmp.parsed.host
-    -- this cannot be overriden
     lower["connection"] = "close"
     -- store results
     tmp.headers = lower
@@ -185,7 +182,7 @@ end
 
 local function parse_url(reqt, respt, tmp)
     -- parse url with default fields
-    local parsed = socket.url.parse(reqt.url, {
+    local parsed = url.parse(reqt.url, {
         host = "",
         port = PORT, 
         path ="/",
@@ -250,7 +247,7 @@ local function redirect(reqt, respt, tmp)
         method = reqt.method,
         -- the RFC says the redirect URL has to be absolute, but some
         -- servers do not respect that
-        url = socket.url.absolute(reqt.url, respt.headers["location"]),
+        url = url.absolute(reqt.url, respt.headers["location"]),
         source = reqt.source,
         sink = reqt.sink,
         headers = reqt.headers,
@@ -296,20 +293,20 @@ function request(reqt)
     return respt
 end
 
-function get(url)
+function get(u)
     local t = {}
     respt = request { 
-        url = url, 
+        url = u, 
         sink = ltn12.sink.table(t) 
     }
     return (table.getn(t) > 0 or nil) and table.concat(t), respt.headers, 
         respt.code, respt.error
 end
 
-function post(url, body)
+function post(u, body)
     local t = {}
     respt = request { 
-        url = url, 
+        url = u, 
         method = "POST", 
         source = ltn12.source.string(body),
         sink = ltn12.sink.table(t),
@@ -318,3 +315,5 @@ function post(url, body)
     return (table.getn(t) > 0 or nil) and table.concat(t), 
         respt.headers, respt.code, respt.error
 end
+
+return http

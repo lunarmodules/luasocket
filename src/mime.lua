@@ -9,19 +9,17 @@
 -- Load MIME from dynamic library
 -- Comment these lines if you are loading static
 -----------------------------------------------------------------------------
-open, err1, err2 = loadlib("mime", "luaopen_mime")
-if not open then error(err1) end
-open()
-if not MIME_LIBNAME then error("MIME init failed") end
+local open = assert(loadlib("mime", "luaopen_mime"))
+local mime = assert(open())
 
 -----------------------------------------------------------------------------
--- Namespace independence
+-- Load other required modules
 -----------------------------------------------------------------------------
-local mime = _G[MIME_LIBNAME] 
-if not mime then error('MIME init FAILED') end
+local ltn12 = require("ltn12")
 
-require("ltn12")
-
+-----------------------------------------------------------------------------
+-- Setup namespace 
+-----------------------------------------------------------------------------
 -- make all module globals fall into mime namespace
 setmetatable(mime, { __index = _G })
 setfenv(1, mime)

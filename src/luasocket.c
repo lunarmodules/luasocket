@@ -33,7 +33,6 @@
 #include "tcp.h"
 #include "udp.h"
 #include "select.h"
-#include "smtp.h"
 
 /*-------------------------------------------------------------------------*\
 * Modules
@@ -47,7 +46,6 @@ static const luaL_reg mod[] = {
     {"tcp", tcp_open},
     {"udp", udp_open},
     {"select", select_open},
-    {"smtp", smtp_open},
     {NULL, NULL}
 };
 
@@ -56,7 +54,6 @@ static const luaL_reg mod[] = {
 \*-------------------------------------------------------------------------*/
 LUASOCKET_API int luaopen_socket(lua_State *L) {
     int i;
-    for (i = 0; mod[i].name; i++) 
-        mod[i].func(L);
+    for (i = 0; mod[i].name; i++) mod[i].func(L);
     return 1;
 }
