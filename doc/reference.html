@@ -35,31 +35,6 @@
 
 <h2>Reference</h2>
 
-<!-- callback +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<blockquote>
-<a href="callback.html">Callbacks (socket.callback)</a>
-<blockquote>
-<a href="callback.html#done">done</a>,
-<a href="callback.html#fail">fail</a>.
-</blockquote>
-<blockquote>
-<a href="callback.html#send">send</a>:
-<a href="callback.html#send.chain">chain</a>,
-<a href="callback.html#send.file">file</a>,
-<a href="callback.html#send.string">string</a>.
-</blockquote>
-<blockquote>
-<a href="callback.html#receive">receive</a>:
-<a href="callback.html#receive.chain">chain</a>,
-<a href="callback.html#receive.file">file</a>,
-<a href="callback.html#receive.concat">concat</a>.
-</blockquote>
-</blockquote>
-</table>
-
-<!-- dns ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
 <blockquote>
 <a href="dns.html">DNS services (socket.dns)</a>
 <blockquote>
@@ -75,34 +50,45 @@
 <a href="ftp.html">FTP (socket.ftp)</a>
 <blockquote>
 <a href="ftp.html#get">get</a>,
-<a href="ftp.html#get_cb">get_cb</a>,
 <a href="ftp.html#put">put</a>,
-<a href="ftp.html#put_cb">put_cb</a>.
+<a href="ftp.html#open">open</a>.
 </blockquote>
 </blockquote>
 
 <!-- misc ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="global.html">Globals (socket)</a>
+<a href="global.html">Globals</a>
 <blockquote>
-<a href="global.html#bind">bind</a>,
-<a href="global.html#callback">callback</a>,
-<a href="global.html#concat">concat</a>,
-<a href="global.html#connect">connect</a>,
-<a href="global.html#debug">debug</a>,
-<a href="global.html#dns">dns</a>,
-<a href="global.html#ftp">ftp</a>,
-<a href="global.html#http">http</a>,
+<a href="global.html#LUASOCKET_LIBNAME">LUASOCKET_LIBNAME</a>,
 <a href="global.html#mime">mime</a>,
-<a href="global.html#select">select</a>,
-<a href="global.html#sleep">sleep</a>,
-<a href="global.html#smtp">smtp</a>,
-<a href="global.html#time">time</a>,
-<a href="global.html#tcp">tcp</a>.
-<a href="global.html#udp">udp</a>,
-<a href="global.html#url">url</a>,
-<a href="global.html#version">version</a>.
+<a href="global.html#ltn12">ltn12</a>,
+<a href="global.html#socket">socket</a>.
+</blockquote>
+</blockquote>
+</table>
+
+<blockquote>
+<a href="socket.html">LuaSocket namespace (socket)</a>
+<blockquote>
+<a href="socket.html#bind">bind</a>,
+<a href="socket.html#connect">connect</a>,
+<a href="socket.html#debug">debug</a>,
+<a href="socket.html#dns">dns</a>,
+<a href="socket.html#ftp">ftp</a>,
+<a href="socket.html#http">http</a>,
+<a href="socket.html#protect">protect</a>,
+<a href="socket.html#select">select</a>,
+<a href="socket.html#sink">sink</a>,
+<a href="socket.html#source">source</a>,
+<a href="socket.html#sleep">sleep</a>,
+<a href="socket.html#smtp">smtp</a>,
+<a href="socket.html#time">time</a>,
+<a href="socket.html#tcp">tcp</a>,
+<a href="socket.html#try">try</a>,
+<a href="socket.html#udp">udp</a>,
+<a href="socket.html#url">url</a>,
+<a href="socket.html#version">version</a>.
 </blockquote>
 </blockquote>
 </table>
@@ -115,15 +101,49 @@
 <blockquote>
 <a href="http.html#get">get</a>,
 <a href="http.html#post">post</a>,
-<a href="http.html#request">request</a>,
-<a href="http.html#request_cb">request_cb</a>.
+<a href="http.html#request">request</a>.
+</blockquote>
+</blockquote>
+
+<!-- ltn12 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<blockquote>
+<a href="ltn12.html">LTN012 (ltn12)</a>
+<blockquote>
+<a href="ltn12.html#filter">filter</a>:
+<a href="ltn12.html#chain">chain</a>,
+<a href="ltn12.html#cycle">cycle</a>.
+</blockquote>
+<blockquote>
+<a href="ltn12.html#pump">pump</a>:
+<a href="ltn12.html#all">all</a>,
+<a href="ltn12.html#step">step</a>.
+</blockquote>
+<blockquote>
+<a href="ltn12.html#sink">sink</a>:
+<a href="ltn12.html#chain">chain</a>,
+<a href="ltn12.html#error">error</a>,
+<a href="ltn12.html#chain">file</a>,
+<a href="ltn12.html#file">null</a>,
+<a href="ltn12.html#simplify">simplify</a>,
+<a href="ltn12.html#table">table</a>.
+</blockquote>
+<blockquote>
+<a href="ltn12.html#source">source</a>: 
+<a href="ltn12.html#cat">cat</a>,
+<a href="ltn12.html#chain">chain</a>,
+<a href="ltn12.html#empty">empty</a>,
+<a href="ltn12.html#file">file</a>,
+<a href="ltn12.html#simplify">simplify</a>,
+<a href="ltn12.html#simplify">rewind</a>,
+<a href="ltn12.html#simplify">string</a>.
 </blockquote>
 </blockquote>
 
 <!-- mime +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="mime.html">MIME (socket.mime) </a>
+<a href="mime.html">MIME (mime) </a>
 <blockquote>
 <a href="mime.html#high">high-level</a>:
 <a href="mime.html#normalize">normalize</a>,
@@ -149,7 +169,9 @@
 <blockquote>
 <a href="smtp.html">SMTP (socket.smtp)</a>
 <blockquote>
-<a href="smtp.html#mail">mail</a>
+<a href="smtp.html#mail">open</a>,
+<a href="smtp.html#message">message</a>,
+<a href="smtp.html#send">send</a>.
 </blockquote>
 </blockquote>
 
