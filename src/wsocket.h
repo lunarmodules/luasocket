@@ -13,7 +13,6 @@
 #include <winsock.h>
 
 typedef int socklen_t;
-typedef int ssize_t;
 typedef SOCKET t_sock;
 typedef t_sock *p_sock;
 

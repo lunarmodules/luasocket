@@ -72,6 +72,7 @@ static int mod_open(lua_State *L, const luaL_reg *mod)
 {
     for (; mod->name; mod++) mod->func(L);
 #ifdef LUASOCKET_COMPILED
+#include "ltn12.lch"
 #include "auxiliar.lch"
 #include "concat.lch"
 #include "url.lch"
@@ -81,6 +82,7 @@ static int mod_open(lua_State *L, const luaL_reg *mod)
 #include "ftp.lch"
 #include "http.lch"
 #else
+    lua_dofile(L, "ltn12.lua");
     lua_dofile(L, "auxiliar.lua");
     lua_dofile(L, "concat.lua");
     lua_dofile(L, "url.lua");

@@ -191,7 +191,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
         int timeout)
 {
     t_sock sock = *ps;
-    ssize_t put;
+    int put;
     int ret;
     /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
@@ -227,7 +227,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         SA *addr, socklen_t addr_len, int timeout)
 {
     t_sock sock = *ps;
-    ssize_t put;
+    int put;
     int ret;
     /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
@@ -262,7 +262,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
 int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
 {
     t_sock sock = *ps;
-    ssize_t taken;
+    int taken;
     if (sock == SOCK_INVALID) return IO_CLOSED;
     taken = recv(sock, data, (int) count, 0);
     if (taken <= 0) {
@@ -288,7 +288,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         SA *addr, socklen_t *addr_len, int timeout)
 {
     t_sock sock = *ps;
-    ssize_t taken;
+    int taken;
     if (sock == SOCK_INVALID) return IO_CLOSED;
     taken = recvfrom(sock, data, (int) count, 0, addr, addr_len);
     if (taken <= 0) {

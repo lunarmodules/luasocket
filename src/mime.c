@@ -9,8 +9,6 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "luasocket.h"
-#include "auxiliar.h"
 #include "mime.h"
 
 /*=========================================================================*\
@@ -83,12 +81,10 @@ static UC b64unbase[256];
 \*-------------------------------------------------------------------------*/
 int mime_open(lua_State *L)
 {
-    lua_pushstring(L, LUASOCKET_LIBNAME);
-    lua_gettable(L, LUA_GLOBALSINDEX);
     lua_pushstring(L, "mime");
     lua_newtable(L);
     luaL_openlib(L, NULL, func, 0);
-    lua_settable(L, -3);
+    lua_settable(L, LUA_GLOBALSINDEX);
     lua_pop(L, 1);
     /* initialize lookup tables */
     qpsetup(qpclass, qpunbase);
@@ -110,7 +106,7 @@ static int mime_global_wrp(lua_State *L)
 {
     size_t size = 0;
     int left = (int) luaL_checknumber(L, 1);
-    const UC *input = (UC *) aux_optlstring(L, 2, NULL, &size);
+    const UC *input = (UC *) luaL_optlstring(L, 2, NULL, &size);
     const UC *last = input + size;
     int length = (int) luaL_optnumber(L, 3, 76);
     luaL_Buffer buffer;
@@ -261,7 +257,7 @@ static int mime_global_b64(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last) 
         asize = b64encode(*input++, atom, asize, &buffer);
-    input = (UC *) aux_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last) 
@@ -289,7 +285,7 @@ static int mime_global_unb64(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last) 
         asize = b64decode(*input++, atom, asize, &buffer);
-    input = (UC *) aux_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last) 
@@ -426,14 +422,14 @@ static int mime_global_qp(lua_State *L)
 
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = (UC *) aux_optlstring(L, 1, NULL, &isize);
+    const UC *input = (UC *) luaL_optlstring(L, 1, NULL, &isize);
     const UC *last = input + isize;
     const char *marker = luaL_optstring(L, 3, CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpencode(*input++, atom, asize, marker, &buffer);
-    input = (UC *) aux_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)
@@ -495,13 +491,13 @@ static int mime_global_unqp(lua_State *L)
 
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = (UC *) aux_optlstring(L, 1, NULL, &isize);
+    const UC *input = (UC *) luaL_optlstring(L, 1, NULL, &isize);
     const UC *last = input + isize;
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpdecode(*input++, atom, asize, &buffer);
-    input = (UC *) aux_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)
@@ -525,7 +521,7 @@ static int mime_global_qpwrp(lua_State *L)
 {
     size_t size = 0;
     int left = (int) luaL_checknumber(L, 1);
-    const UC *input = (UC *) aux_optlstring(L, 2, NULL, &size);
+    const UC *input = (UC *) luaL_optlstring(L, 2, NULL, &size);
     const UC *last = input + size;
     int length = (int) luaL_optnumber(L, 3, 76);
     luaL_Buffer buffer;
@@ -576,54 +572,52 @@ static int mime_global_qpwrp(lua_State *L)
 * probably other more obscure conventions.
 \*-------------------------------------------------------------------------*/
 #define eolcandidate(c) (c == CR || c == LF)
-static size_t eolconvert(UC c, UC *input, size_t size, 
-        const char *marker, luaL_Buffer *buffer)
+static size_t eolprocess(int c, int ctx, const char *marker, 
+        luaL_Buffer *buffer)
 {
-    input[size++] = c;
-    /* deal with all characters we can deal */
-    if (eolcandidate(input[0])) {
-        if (size < 2) return size; 
+    if (eolcandidate(ctx)) {
         luaL_addstring(buffer, marker);
-        if (eolcandidate(input[1])) {
-            if (input[0] == input[1]) luaL_addstring(buffer, marker);
-        } else luaL_putchar(buffer, input[1]);
-        return 0;
+        if (eolcandidate(c)) {
+            if (c == ctx)
+                luaL_addstring(buffer, marker);
+            return 0;
+        } else {
+            luaL_putchar(buffer, c);
+            return 0;
+        }
     } else {
-        luaL_putchar(buffer, input[0]);
-        return 0;
+        if (!eolcandidate(c)) {
+            luaL_putchar(buffer, c);
+            return 0;
+        } else
+            return c;
     }
 }
 
 /*-------------------------------------------------------------------------*\
 * Converts a string to uniform EOL convention. 
-* A, B = eol(C, D, marker)
-* A is the converted version of the largest prefix of C .. D that 
-* can be converted without doubts. 
-* B has the remaining bytes of C .. D, *without* convertion.
+* A, n = eol(o, B, marker)
+* A is the converted version of the largest prefix of B that can be
+* converted unambiguously. 'o' is the context returned by the previous 
+* call. 'n' is the new context.
 \*-------------------------------------------------------------------------*/
 static int mime_global_eol(lua_State *L)
 {
-    size_t asize = 0, isize = 0;
-    UC atom[2];
-    const UC *input = (UC *) aux_optlstring(L, 1, NULL, &isize);
-    const UC *last = input + isize;
+    int ctx = luaL_checkint(L, 1);
+    size_t isize = 0;
+    const char *input = luaL_optlstring(L, 2, NULL, &isize);
+    const char *last = input + isize;
     const char *marker = luaL_optstring(L, 3, CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
-        asize = eolconvert(*input++, atom, asize, marker, &buffer);
-    input = (UC *) aux_optlstring(L, 2, NULL, &isize);
-    if (input) {
-        last = input + isize;
-        while (input < last)
-            asize = eolconvert(*input++, atom, asize, marker, &buffer);
-    /* if there is something in atom, it's one character, and it
-     * is a candidate. so we output a new line */
-    } else if (asize > 0) {
-        luaL_addstring(&buffer, marker);
-        asize = 0;
+        ctx = eolprocess(*input++, ctx, marker, &buffer);
+    /* if the last character was a candidate, we output a new line */ 
+    if (!input) {
+       if (eolcandidate(ctx)) luaL_addstring(&buffer, marker);
+       ctx = 0;
     }
     luaL_pushresult(&buffer);
-    lua_pushlstring(L, (char *) atom, asize);
+    lua_pushnumber(L, ctx);
     return 2;
 }

@@ -1,4 +1,4 @@
-dofile("noglobals.lua")
+dofile("testsupport.lua")
 
 local qptest = "qptest.bin"
 local eqptest = "qptest.bin2"
@@ -31,26 +31,13 @@ local mao = [[
     assim, nem tudo o que dava exprimia grande confiança.
 ]]
 
-local fail = function(s)
-    s = s or "failed"
-	assert(nil, s)
-end
-
-local readfile = function(name)
-	local f = io.open(name, "r")
-	if not f then return nil end
-	local s = f:read("*a")
-	f:close()
-	return s
-end
-
 local function transform(input, output, filter)
     local fi, err = io.open(input, "rb")
     if not fi then fail(err) end
     local fo, err = io.open(output, "wb")
     if not fo then fail(err) end
     while 1 do 
-        local chunk = fi:read(math.random(0, 256))
+        local chunk = fi:read(math.random(0, 1024))
         fo:write(filter(chunk))
         if not chunk then break end
     end 
@@ -58,17 +45,10 @@ local function transform(input, output, filter)
     fo:close()
 end
 
-local function compare(input, output)
-    local original = readfile(input)
-    local recovered = readfile(output)
-    if original ~= recovered then fail("recovering failed")
-    else print("ok") end
-end
-
 local function encode_qptest(mode)
-    local encode = socket.mime.encode("quoted-printable", mode)
-    local split = socket.mime.wrap("quoted-printable")
-    local chain = socket.mime.chain(encode, split)
+    local encode = mime.encode("quoted-printable", mode)
+    local split = mime.wrap("quoted-printable")
+    local chain = ltn12.filter.chain(encode, split)
     transform(qptest, eqptest, chain)
 end
 
@@ -77,7 +57,7 @@ local function compare_qptest()
 end
 
 local function decode_qptest()
-    local decode = socket.mime.decode("quoted-printable")
+    local decode = mime.decode("quoted-printable")
     transform(eqptest, dqptest, decode)
 end
 
@@ -151,24 +131,24 @@ local function cleanup_qptest()
 end
 
 local function encode_b64test()
-    local e1 = socket.mime.encode("base64")
-    local e2 = socket.mime.encode("base64")
-    local e3 = socket.mime.encode("base64")
-    local e4 = socket.mime.encode("base64")
-    local sp4 = socket.mime.wrap()
-    local sp3 = socket.mime.wrap(59)
-    local sp2 = socket.mime.wrap("base64", 30)
-    local sp1 = socket.mime.wrap(27)
-    local chain = socket.mime.chain(e1, sp1, e2, sp2, e3, sp3, e4, sp4)
+    local e1 = mime.encode("base64")
+    local e2 = mime.encode("base64")
+    local e3 = mime.encode("base64")
+    local e4 = mime.encode("base64")
+    local sp4 = mime.wrap()
+    local sp3 = mime.wrap(59)
+    local sp2 = mime.wrap("base64", 30)
+    local sp1 = mime.wrap(27)
+    local chain = ltn12.filter.chain(e1, sp1, e2, sp2, e3, sp3, e4, sp4)
     transform(b64test, eb64test, chain)
 end
 
 local function decode_b64test()
-    local d1 = socket.mime.decode("base64")
-    local d2 = socket.mime.decode("base64")
-    local d3 = socket.mime.decode("base64")
-    local d4 = socket.mime.decode("base64")
-    local chain = socket.mime.chain(d1, d2, d3, d4)
+    local d1 = mime.decode("base64")
+    local d2 = mime.decode("base64")
+    local d3 = mime.decode("base64")
+    local d4 = mime.decode("base64")
+    local chain = ltn12.filter.chain(d1, d2, d3, d4)
     transform(eb64test, db64test, chain)
 end
 
@@ -182,11 +162,11 @@ local function compare_b64test()
 end
 
 local function identity_test()
-    local chain = socket.mime.chain(
-        socket.mime.encode("quoted-printable"),
-        socket.mime.encode("base64"),
-        socket.mime.decode("base64"),
-        socket.mime.decode("quoted-printable")
+    local chain = ltn12.filter.chain(
+        mime.encode("quoted-printable"),
+        mime.encode("base64"),
+        mime.decode("base64"),
+        mime.decode("quoted-printable")
     )
     transform(b64test, eb64test, chain)
     compare(b64test, eb64test)
@@ -195,8 +175,8 @@ end
 
 
 local function padcheck(original, encoded)
-    local e = (socket.mime.b64(original))
-    local d = (socket.mime.unb64(encoded))
+    local e = (mime.b64(original))
+    local d = (mime.unb64(encoded))
     if e ~= encoded then fail("encoding failed") end
     if d ~= original then fail("decoding failed") end
 end
@@ -206,8 +186,8 @@ local function chunkcheck(original, encoded)
     for i = 0, len do
         local a = string.sub(original, 1, i)
         local b = string.sub(original, i+1)
-        local e, r = socket.mime.b64(a, b)
-        local f = (socket.mime.b64(r))
+        local e, r = mime.b64(a, b)
+        local f = (mime.b64(r))
         if (e .. f ~= encoded) then fail(e .. f) end
     end
 end
@@ -231,6 +211,13 @@ end
 
 local t = socket.time()
 
+identity_test()
+encode_b64test()
+decode_b64test()
+compare_b64test()
+cleanup_b64test()
+padding_b64test()
+
 create_qptest()
 encode_qptest()
 decode_qptest()
@@ -239,13 +226,5 @@ encode_qptest("binary")
 decode_qptest()
 compare_qptest()
 cleanup_qptest()
-
-encode_b64test()
-decode_b64test()
-compare_b64test()
-cleanup_b64test()
-padding_b64test()
-
-identity_test()
 
 print(string.format("done in %.2fs", socket.time() - t))

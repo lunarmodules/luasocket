@@ -2,10 +2,10 @@ local convert
 arg = arg or {}
 local mode = arg and arg[1] or "-et"
 if mode == "-et" then
-    local canonic = socket.mime.canonic()
+    local normalize = socket.mime.normalize()
     local qp = socket.mime.encode("quoted-printable")
     local wrap = socket.mime.wrap("quoted-printable")
-    convert = socket.mime.chain(canonic, qp, wrap)
+    convert = socket.mime.chain(normalize, qp, wrap)
 elseif mode == "-eb" then
     local qp = socket.mime.encode("quoted-printable", "binary")
     local wrap = socket.mime.wrap("quoted-printable")

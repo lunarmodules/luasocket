@@ -19,9 +19,15 @@
 * Separar as classes em arquivos
 * Retorno de sendto em datagram sockets pode ser refused
 
+unify filter and send/receive callback. new sink/source/pump idea.
+get rid of aux_optlstring
+wrap sink and sources with a function that performs the replacement
+get rid of unpack in mime.lua
 
 check garbage collection in test*.lua
 pop3???
+
+break chain into a simpler binary chain and a complex (recursive) one. 
 
 add socket.TIMEOUT to be default timeout? 
 
