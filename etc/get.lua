@@ -71,12 +71,11 @@ function stats(size)
                 io.stderr:write("\r", gauge(got, delta, size)) 
                 io.stderr:flush()
             end
-            return chunk
         else 
             -- close up
             io.stderr:write("\r", gauge(got, delta), "\n") 
-            return ""
         end
+        return chunk
     end
 end
 

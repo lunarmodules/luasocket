@@ -127,7 +127,7 @@ function parse(url, default)
     -- empty url is parsed to nil
     if not url or url == "" then return nil end
     -- remove whitespace
-    url = string.gsub(url, "%s", "")
+    -- url = string.gsub(url, "%s", "")
     -- get fragment
     url = string.gsub(url, "#(.*)$", function(f) parsed.fragment = f end)
     -- get scheme
@@ -139,6 +139,7 @@ function parse(url, default)
     url = string.gsub(url, "%?(.*)", function(q) parsed.query = q end)
     -- get params
     url = string.gsub(url, "%;(.*)", function(p) parsed.params = p end)
+    -- path is whatever was left
     if url ~= "" then parsed.path = url end
     local authority = parsed.authority
     if not authority then return parsed end
@@ -164,7 +165,8 @@ end
 --   a stringing with the corresponding URL
 -----------------------------------------------------------------------------
 function build(parsed)
-    local url = parsed.path or ""
+    local ppath = parse_path(parsed.path or "")
+    local url = build_path(ppath)
     if parsed.params then url = url .. ";" .. parsed.params end
     if parsed.query then url = url .. "?" .. parsed.query end
 	local authority = parsed.authority
@@ -183,7 +185,7 @@ function build(parsed)
     if authority then url = "//" .. authority .. url end
     if parsed.scheme then url = parsed.scheme .. ":" .. url end
     if parsed.fragment then url = url .. "#" .. parsed.fragment end
-    url = string.gsub(url, "%s", "")
+    -- url = string.gsub(url, "%s", "")
     return url
 end
 
@@ -214,7 +216,7 @@ function absolute(base_url, relative_url)
                     end
                 end
             else     
-                relative.path = absolute_path(base.path,relative.path)
+                relative.path = absolute_path(base.path or "", relative.path)
             end
         end
         return build(relative)
@@ -231,7 +233,7 @@ end
 function parse_path(path)
 	local parsed = {}
 	path = path or ""
-	path = string.gsub(path, "%s", "")
+	--path = string.gsub(path, "%s", "")
 	string.gsub(path, "([^/]+)", function (s) table.insert(parsed, s) end)
 	for i = 1, table.getn(parsed) do
 		parsed[i] = unescape(parsed[i])

@@ -59,7 +59,7 @@ end
 local check_absolute_url = function(base, relative, absolute)
 	local res = socket.url.absolute(base, relative)
 	if res ~= absolute then 
-		write("absolute: In test for '", relative, "' expected '", 
+		io.write("absolute: In test for '", relative, "' expected '", 
             absolute, "' but got '", res, "'\n")
 		exit()
 	end
@@ -71,7 +71,7 @@ local check_parse_url = function(gaba)
 	local parsed = socket.url.parse(url)
 	for i, v in gaba do
 		if v ~= parsed[i] then
-			write("parse: In test for '", url, "' expected ", i, " = '", 
+			io.write("parse: In test for '", url, "' expected ", i, " = '", 
            	    v, "' but got '", tostring(parsed[i]), "'\n")
 			for i,v in parsed do print(i,v) end
 			exit()
@@ -79,7 +79,7 @@ local check_parse_url = function(gaba)
 	end
 	for i, v in parsed do
 		if v ~= gaba[i] then
-			write("parse: In test for '", url, "' expected ", i, " = '", 
+			io.write("parse: In test for '", url, "' expected ", i, " = '", 
            	    tostring(gaba[i]), "' but got '", v, "'\n")
 			for i,v in parsed do print(i,v) end
 			exit()

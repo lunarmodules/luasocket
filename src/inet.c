@@ -44,6 +44,7 @@ int inet_open(lua_State *L)
     luaL_openlib(L, NULL, func, 0);
     lua_settable(L, -3);
     lua_pop(L, 1);
+    return 0;
 }
 
 /*=========================================================================*\
