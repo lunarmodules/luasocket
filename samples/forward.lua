@@ -162,7 +162,10 @@ print("starting to foward", who)
             elseif snd_err ~= "timeout" then return kick(who) end
         end
         -- if we are done receiving, we are done
-        if not rec_err then return kick(who) end
+        if not rec_err then 
+            kick(who) 
+            kick(peer)
+        end
     end
 end
 
