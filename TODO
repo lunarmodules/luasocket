@@ -1,3 +1,6 @@
+test associativity of socket.select
+    probably if is dirty, no assoc is created. wonder why...
+
 take a look at DB's smtp patch
 
 optmize aux_getgroupudata (Mike idea)

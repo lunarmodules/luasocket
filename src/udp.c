@@ -41,7 +41,6 @@ static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
-static void pusherror(lua_State *L, int code);
 
 /* udp object methods */
 static luaL_reg udp[] = {
@@ -100,18 +99,14 @@ int udp_open(lua_State *L)
     return 0;
 }
 
-
 /*=========================================================================*\
 * Lua methods
 \*=========================================================================*/
-/*-------------------------------------------------------------------------*\
-* Pushes the error message
-\*-------------------------------------------------------------------------*/
-void pusherror(lua_State *L, int code) {
-    const char *err = code != IO_USER? io_strerror(code): "refused";
-    err = err? err: sock_strerror();
-    if (err) lua_pushstring(L, err);
-    else lua_pushnil(L);
+const char *udp_strerror(int err) {
+    /* a 'closed' error on an unconnected means the target address was not
+     * accepted by the transport layer */
+    if (err == IO_CLOSED) return "refused";
+    else return sock_strerror(err);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -125,12 +120,13 @@ static int meth_send(lua_State *L) {
     const char *data = luaL_checklstring(L, 2, &count);
     tm_markstart(tm);
     err = sock_send(&udp->sock, data, count, &sent, tm);
-    if (err == IO_DONE) lua_pushnumber(L, sent);
-    else lua_pushnil(L);
-    /* a 'closed' error on an unconnected means the target address was not
-     * accepted by the transport layer */
-    pusherror(L, err == IO_CLOSED ? IO_USER : err);
-    return 2;
+    if (err != IO_DONE) {
+        lua_pushnil(L);
+        lua_pushstring(L, udp_strerror(err));
+        return 2;
+    }
+    lua_pushnumber(L, sent);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -153,12 +149,13 @@ static int meth_sendto(lua_State *L) {
     tm_markstart(tm);
     err = sock_sendto(&udp->sock, data, count, &sent, 
             (SA *) &addr, sizeof(addr), tm);
-    if (err == IO_DONE) lua_pushnumber(L, sent);
-    else lua_pushnil(L);
-    /* a 'closed' error on an unconnected means the target address was not
-     * accepted by the transport layer */
-    pusherror(L, err == IO_CLOSED ? IO_USER : err);
-    return 2;
+    if (err != IO_DONE) {
+        lua_pushnil(L);
+        lua_pushstring(L, udp_strerror(err));
+        return 2;
+    }
+    lua_pushnumber(L, sent);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -173,10 +170,13 @@ static int meth_receive(lua_State *L) {
     count = MIN(count, sizeof(buffer));
     tm_markstart(tm);
     err = sock_recv(&udp->sock, buffer, count, &got, tm);
-    if (err == IO_DONE) lua_pushlstring(L, buffer, got);
-    else lua_pushnil(L);
-    pusherror(L, err);
-    return 2;
+    if (err != IO_DONE) {
+        lua_pushnil(L);
+        lua_pushstring(L, udp_strerror(err));
+        return 2;
+    }
+    lua_pushlstring(L, buffer, got);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -201,7 +201,7 @@ static int meth_receivefrom(lua_State *L) {
         return 3;
     } else {
         lua_pushnil(L);
-        pusherror(L, err);
+        lua_pushstring(L, udp_strerror(err));
         return 2;
     }
 }

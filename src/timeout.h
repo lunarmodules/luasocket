@@ -25,4 +25,6 @@ double tm_getstart(p_tm tm);
 double tm_gettime(void);
 int tm_meth_settimeout(lua_State *L, p_tm tm);
 
+#define tm_iszero(tm)   ((tm)->block == 0.0)
+
 #endif /* TM_H */

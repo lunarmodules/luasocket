@@ -160,22 +160,22 @@ static int meth_accept(lua_State *L)
     p_tcp server = (p_tcp) aux_checkclass(L, "tcp{server}", 1);
     p_tm tm = tm_markstart(&server->tm);
     t_sock sock;
-    const char *err = sock_accept(&server->sock, &sock, NULL, NULL, tm);
+    int err = sock_accept(&server->sock, &sock, NULL, NULL, tm);
     /* if successful, push client socket */
-    if (!err) {
+    if (err == IO_DONE) {
         p_tcp clnt = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
         aux_setclass(L, "tcp{client}", -1);
         /* initialize structure fields */
         sock_setnonblocking(&sock);
         clnt->sock = sock;
         io_init(&clnt->io, (p_send) sock_send, (p_recv) sock_recv, 
-                (p_geterr) sock_geterr, &clnt->sock);
+                (p_error) sock_ioerror, &clnt->sock);
         tm_init(&clnt->tm, -1, -1);
         buf_init(&clnt->buf, &clnt->io, &clnt->tm);
         return 1;
     } else {
         lua_pushnil(L); 
-        lua_pushstring(L, err);
+        lua_pushstring(L, sock_strerror(err));
         return 2;
     }
 }
@@ -236,10 +236,10 @@ static int meth_listen(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
     int backlog = (int) luaL_optnumber(L, 2, 32);
-    const char *err = sock_listen(&tcp->sock, backlog);
-    if (err) {
+    int err = sock_listen(&tcp->sock, backlog);
+    if (err != IO_DONE) {
         lua_pushnil(L);
-        lua_pushstring(L, err);
+        lua_pushstring(L, sock_strerror(err));
         return 2;
     }
     /* turn master object into a server object */
@@ -320,7 +320,7 @@ static int global_create(lua_State *L)
         sock_setnonblocking(&sock);
         tcp->sock = sock;
         io_init(&tcp->io, (p_send) sock_send, (p_recv) sock_recv, 
-                (p_geterr) sock_geterr, &tcp->sock);
+                (p_error) sock_ioerror, &tcp->sock);
         tm_init(&tcp->tm, -1, -1);
         buf_init(&tcp->buf, &tcp->io, &tcp->tm);
         return 1;

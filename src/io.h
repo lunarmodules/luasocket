@@ -21,12 +21,17 @@
 
 /* IO error codes */
 enum {
-    IO_DONE,            /* operation completed successfully */
-    IO_TIMEOUT,         /* operation timed out */
-    IO_CLOSED,          /* the connection has been closed */
-    IO_CLIPPED,         /* maxium bytes count reached */
-    IO_USER             /* last element in enum is user custom error */
+    IO_DONE = 0,        /* operation completed successfully */
+    IO_TIMEOUT = -1,    /* operation timed out */
+    IO_CLOSED = -2,     /* the connection has been closed */
+    IO_CLIPPED = -3     /* maxium bytes count reached */
 };
+
+/* interface to error message function */
+typedef const char *(*p_error) (
+    void *ctx,          /* context needed by send */ 
+    int err             /* error code */
+);
 
 /* interface to send function */
 typedef int (*p_send) (
@@ -37,12 +42,6 @@ typedef int (*p_send) (
     p_tm tm             /* timeout control */
 );
 
-/* returns an error string */
-typedef const char *(*p_geterr) (
-    void *ctx,          /* context needed by geterror */ 
-    int code            /* error code */
-);
- 
 /* interface to recv function */
 typedef int (*p_recv) (
     void *ctx,          /* context needed by recv */ 
@@ -57,12 +56,11 @@ typedef struct t_io_ {
     void *ctx;          /* context needed by send/recv */
     p_send send;        /* send function pointer */
     p_recv recv;        /* receive function pointer */
-    p_geterr geterr;    /* receive function pointer */
+    p_error error;      /* strerror function */
 } t_io;
 typedef t_io *p_io;
 
-const char *io_strerror(int code);
-void io_pusherror(lua_State *L, p_io io, int code);
-void io_init(p_io io, p_send send, p_recv recv, p_geterr geterr, void *ctx);
+void io_init(p_io io, p_send send, p_recv recv, p_error error, void *ctx);
+const char *io_strerror(int err); 
 
 #endif /* IO_H */

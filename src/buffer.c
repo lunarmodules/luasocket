@@ -77,7 +77,7 @@ int buf_meth_send(lua_State *L, p_buf buf) {
     /* check if there was an error */
     if (err != IO_DONE) {
         lua_pushnil(L);
-        io_pusherror(L, buf->io, err); 
+        lua_pushstring(L, buf->io->error(buf->io->ctx, err)); 
         lua_pushnumber(L, total);
     } else {
         lua_pushnumber(L, total);
@@ -98,22 +98,26 @@ int buf_meth_receive(lua_State *L, p_buf buf) {
     int err = IO_DONE, top = lua_gettop(L);
     p_tm tm = tm_markstart(buf->tm);
     luaL_Buffer b;
+    size_t size;
+    const char *part = luaL_optlstring(L, 3, "", &size);
+    /* initialize buffer with optional extra prefix 
+     * (useful for concatenating previous partial results) */
     luaL_buffinit(L, &b);
-    /* receive all patterns */
+    luaL_addlstring(&b, part, size);
+    /* receive new patterns */
     if (!lua_isnumber(L, 2)) {
-        static const char *patternnames[] = {"*l", "*a", NULL};
-        const char *pattern = luaL_optstring(L, 2, "*l");
-        /* get next pattern */
-        int p = luaL_findstring(pattern, patternnames);
-        if (p == 0) err = recvline(buf, &b);
-        else if (p == 1) err = recvall(buf, &b); 
+        const char *p= luaL_optstring(L, 2, "*l");
+        if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b);
+        else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b); 
         else luaL_argcheck(L, 0, 2, "invalid receive pattern");
         /* get a fixed number of bytes */
     } else err = recvraw(buf, (size_t) lua_tonumber(L, 2), &b);
     /* check if there was an error */
     if (err != IO_DONE) {
+        /* we can't push anyting in the stack before pushing the
+         * contents of the buffer. this is the reason for the complication */
         luaL_pushresult(&b);
-        io_pusherror(L, buf->io, err); 
+        lua_pushstring(L, buf->io->error(buf->io->ctx, err)); 
         lua_pushvalue(L, -2); 
         lua_pushnil(L);
         lua_replace(L, -4);
