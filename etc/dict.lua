@@ -1,39 +1,67 @@
--- dict.lua
--- simple client for DICT protocol (see http://www.dict.org/)
--- shows definitions for each word from stdin. uses only "wn" dictionary.
--- if a word is "=", then the rest of the line is sent verbatim as a protocol
--- command to the server.
-
-if verbose then verbose=write else verbose=function()end end
-
-verbose(">>> connecting to server\n")
-local s,e=connect("dict.org",2628)
-assert(s,e)
-verbose(">>> connected\n")
-
-while 1 do
- local w=read"*w"
- if w==nil then break end
- if w=="=" then
-  w=read"*l"
-  verbose(">>>",w,"\n")
-  s:send(w,"\r\n")
- else
-  verbose(">>> looking up `",w,"'\n")
-  s:send("DEFINE wn ",w,"\r\n")
- end
- while 1 do
-  local l=s:receive()
-  if l==nil then break end
-  if strfind(l,"^[0-9]") then
-   write("<<< ",l,"\n")
-  else
-   write(l,"\n")
-  end
-  if strfind(l,"^250") or strfind(l,"^[45]") then break end
- end
+function get_status(sock, valid)
+	local line, err = sock:receive()
+	local code, par
+	if not line then sock:close() return err end
+	_, _, code = strfind(line, "^(%d%d%d)")
+	code = tonumber(code)
+	if code ~= valid then return code end
+	if code == 150 then
+		_,_,_, par = strfind(line, "^(%d%d%d) (%d*)")
+		par = tonumber(par)
+	end
+	return nil, par
 end
 
-s:send("QUIT\r\n")
-verbose("<<< ",s:receive(),"\n")
-s:close()
+function get_def(sock)
+	local line, err = sock:receive()
+	local def = ""
+	while (not err) and line ~= "." do
+		def = def .. line .. "\n"
+		line, err = sock:receive()
+	end
+	if err then sock:close() return nil, err 
+	else return def end
+end
+
+function dict_open()
+	local sock, err = connect("dict.org", 2628)
+	if not sock then return nil, err end
+	sock:timeout(10)
+  	local code, par = get_status(sock, 220)
+	if code then return nil, code end
+	return sock
+end
+
+function dict_define(sock, word, dict)
+	dict = dict or "web1913"
+  	sock:send("DEFINE " .. dict .. " " .. word .. "\r\n")
+  	local code, par = get_status(sock, 150)
+	if code or not par then return nil, code end
+	local defs = ""
+	for i = 1, par do
+		local def
+  		code, par = get_status(sock, 151)
+		if code then return nil, code end
+		def, err = get_def(sock)
+		if not def then return nil, err end
+		defs = defs .. def .. "\n"
+	end
+  	code, par = get_status(sock, 250)
+	if code then return nil, code end
+	return gsub(defs, "%s%s$", "")
+end
+
+function dict_close(sock)
+	sock:send("QUIT\r\n")
+	local code, par = get_status(sock, 221)
+	sock:close()
+	return code
+end
+
+function dict_get(word, dict)
+	local sock, err = dict_open()
+	if not sock then return nil, err end
+	local defs, err = dict_define(sock, word, dict)
+	dict_close(sock)
+	return defs, err
+end
