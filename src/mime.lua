@@ -1,6 +1,27 @@
-if not ltn12 then error('Requires LTN12 module') end
--- create mime namespace
-mime = mime or {}
+-----------------------------------------------------------------------------
+-- MIME support for the Lua language.
+-- Author: Diego Nehab
+-- Conforming to RFCs 2045-2049
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- Load MIME from dynamic library
+-- Comment these lines if you are loading static
+-----------------------------------------------------------------------------
+open, err1, err2 = loadlib("mime", "luaopen_mime")
+if not open then error(err1) end
+open()
+if not MIME_LIBNAME then error("MIME init failed") end
+
+-----------------------------------------------------------------------------
+-- Namespace independence
+-----------------------------------------------------------------------------
+local mime = _G[MIME_LIBNAME] 
+if not mime then error('MIME init FAILED') end
+
+require("ltn12")
+
 -- make all module globals fall into mime namespace
 setmetatable(mime, { __index = _G })
 setfenv(1, mime)

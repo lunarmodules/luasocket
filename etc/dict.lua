@@ -8,12 +8,11 @@ function get_status(sock, valid)
 	local line, err = sock:receive()
 	local code, par
 	if not line then sock:close() return err end
-	_, _, code = string.find(line, "^(%d%d%d)")
+	code = socket.skip(2, string.find(line, "^(%d%d%d)"))
 	code = tonumber(code)
 	if code ~= valid then return code end
 	if code == 150 then
-		_,_,_, par = string.find(line, "^(%d%d%d) (%d*)")
-		par = tonumber(par)
+		par = tonumber(socket.skip(2, string.find(line, "^%d%d%d (%d*)"))
 	end
 	return nil, par
 end

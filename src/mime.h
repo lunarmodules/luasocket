@@ -12,6 +12,13 @@
 \*=========================================================================*/
 #include <lua.h>
 
-int mime_open(lua_State *L);
+int luaopen_mime(lua_State *L);
+
+/*-------------------------------------------------------------------------*\
+* Library's namespace
+\*-------------------------------------------------------------------------*/
+#ifndef MIME_LIBNAME
+#define MIME_LIBNAME "mime"
+#endif
 
 #endif /* MIME_H */

@@ -125,7 +125,7 @@ function parse(url, default)
     -- initialize default parameters
     local parsed = default or {}
     -- empty url is parsed to nil
-    if not url or url == "" then return nil end
+    if not url or url == "" then return nil, "invalid url" end
     -- remove whitespace
     -- url = string.gsub(url, "%s", "")
     -- get fragment

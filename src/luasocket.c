@@ -35,38 +35,6 @@
 #include "udp.h"
 #include "select.h"
 #include "smtp.h"
-#include "mime.h"
-
-/*=========================================================================*\
-* Declarations
-\*=========================================================================*/
-static int mod_open(lua_State *L, const luaL_reg *mod);
-
-
-static int mod_open(lua_State *L, const luaL_reg *mod)
-{
-    for (; mod->name; mod++) mod->func(L);
-#ifdef LUASOCKET_COMPILED
-#include "ltn12.lch"
-#include "auxiliar.lch"
-#include "url.lch"
-#include "mime.lch"
-#include "tp.lch"
-#include "smtp.lch"
-#include "http.lch"
-#include "ftp.lch"
-#else
-    lua_dofile(L, "ltn12.lua");
-    lua_dofile(L, "auxiliar.lua");
-    lua_dofile(L, "url.lua");
-    lua_dofile(L, "mime.lua");
-    lua_dofile(L, "tp.lua");
-    lua_dofile(L, "smtp.lua");
-    lua_dofile(L, "http.lua");
-    lua_dofile(L, "ftp.lua");
-#endif
-    return 0;
-}
 
 /*-------------------------------------------------------------------------*\
 * Modules
@@ -80,7 +48,6 @@ static const luaL_reg mod[] = {
     {"tcp", tcp_open},
     {"udp", udp_open},
     {"select", select_open},
-    {"mime", mime_open},
     {"smtp", smtp_open},
     {NULL, NULL}
 };
@@ -90,11 +57,13 @@ static const luaL_reg mod[] = {
 \*-------------------------------------------------------------------------*/
 LUASOCKET_API int luaopen_socket(lua_State *L)
 {
+    int i;
     if (!sock_open()) {
         lua_pushnil(L);
         lua_pushstring(L, "unable to initialize library");
         return 2;
     }
-    mod_open(L, mod);
+    for (i = 0; mod[i].name; i++) 
+        mod[i].func(L);
     return 1;
 }

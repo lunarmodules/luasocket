@@ -3,6 +3,10 @@
 -- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
 -- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
+
+require("luasocket")
+require("http")
+
 dofile("testsupport.lua")
 
 local host, proxy, request, response, index_file

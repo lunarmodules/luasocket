@@ -10,6 +10,12 @@ if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME] 
 if not socket then error('module requires LuaSocket') end
+
+-- require other modules
+require("ltn12")
+require("mime")
+require("url")
+
 -- create namespace inside LuaSocket namespace
 socket.http  = socket.http or {}
 -- make all module globals fall into namespace
@@ -41,7 +47,7 @@ end
 
 local function receive_headers(reqt, respt, tmp)
     local sock = tmp.sock
-    local line, name, value, _
+    local line, name, value
     local headers = {}
     -- store results
     respt.headers = headers
@@ -50,7 +56,7 @@ local function receive_headers(reqt, respt, tmp)
     -- headers go until a blank line is found
     while line ~= "" do
         -- get field-name and value
-        _, _, name, value = string.find(line, "^(.-):%s*(.*)")
+        name, value = socket.skip(2, string.find(line, "^(.-):%s*(.*)"))
         socket.try(name and value, "malformed reponse headers")
         name = string.lower(name)
         -- get next line (value might be folded)

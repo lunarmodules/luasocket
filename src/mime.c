@@ -74,15 +74,15 @@ static UC b64unbase[256];
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int mime_open(lua_State *L)
+int luaopen_mime(lua_State *L)
 {
-    lua_pushstring(L, "mime");
-    lua_newtable(L);
-    luaL_openlib(L, NULL, func, 0);
-    lua_settable(L, LUA_GLOBALSINDEX);
+    lua_pushstring(L, MIME_LIBNAME);
+    lua_setglobal(L, "MIME_LIBNAME");
+    luaL_openlib(L, MIME_LIBNAME, func, 0);
     /* initialize lookup tables */
     qpsetup(qpclass, qpunbase);
     b64setup(b64unbase);
+    lua_pop(L, 1);
     return 0;
 }
 

@@ -20,20 +20,20 @@ TIMEOUT = 60
 
 -- gets server reply (works for SMTP and FTP)
 local function get_reply(control)
-    local code, current, separator, _
+    local code, current, sep
     local line, err = control:receive()
     local reply = line
     if err then return nil, err end
-    _, _, code, separator = string.find(line, "^(%d%d%d)(.?)")
+    code, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
     if not code then return nil, "invalid server reply" end
-    if separator == "-" then -- reply is multiline
+    if sep == "-" then -- reply is multiline
         repeat
             line, err = control:receive()
             if err then return nil, err end
-            _,_, current, separator = string.find(line, "^(%d%d%d)(.?)")
+            current, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
             reply = reply .. "\n" .. line
         -- reply ends with same code
-        until code == current and separator == " " 
+        until code == current and sep == " " 
     end
     return code, reply
 end

@@ -1,8 +1,16 @@
+-----------------------------------------------------------------------------
+-- SMTP client support for the Lua language.
+-- LuaSocket toolkit.
+-- Author: Diego Nehab
+-- Conforming to RFC 2821
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 -- make sure LuaSocket is loaded
 if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME] 
 if not socket then error('module requires LuaSocket') end
+
 -- create smtp namespace inside LuaSocket namespace
 local smtp = socket.smtp or {}
 socket.smtp = smtp
@@ -19,11 +27,6 @@ PORT = 25
 DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default time zone (means we don't know)
 ZONE = "-0000"
-
-
-local function shift(a, b, c)
-    return b, c
-end
 
 -- high level stuffing filter
 function stuff()
@@ -82,6 +85,7 @@ function metat.__index:send(mailt)
 end
 
 function open(server, port)
+    print(server or SERVER, port or PORT)
     local tp, error = socket.tp.connect(server or SERVER, port or PORT)
     if not tp then return nil, error end
     return setmetatable({tp = tp}, metat)
@@ -180,17 +184,15 @@ function message(mesgt)
     adjust_headers(mesgt)
     -- create and return message source
     local co = coroutine.create(function() send_message(mesgt) end)
-    return function() return shift(coroutine.resume(co)) end
+    return function() return socket.skip(1, coroutine.resume(co)) end
 end
 
 ---------------------------------------------------------------------------
 -- High level SMTP API
 -----------------------------------------------------------------------------
 send = socket.protect(function(mailt)
-    local server = mailt.server or SERVER
-    local port = mailt.port or PORT
-    local smtp = socket.try(open(server, port))
-    smtp:greet(mailt.domain or DOMAIN)
+    local smtp = socket.try(open(mailt.server, mailt.port))
+    smtp:greet(mailt.domain)
     smtp:send(mailt)
     smtp:quit()
     return smtp:close()

@@ -8,7 +8,7 @@ local server = arg[3] or "http://freedb.freedb.org/~cddb/cddb.cgi"
 function parse(body)
     local lines = string.gfind(body, "(.-)\r\n")
     local status = lines()
-    local _, _, code, message = string.find(status, "(%d%d%d) (.*)")
+    local code, message = socket.skip(2, string.find(status, "(%d%d%d) (.*)"))
     if tonumber(code) ~= 210 then
         return nil, code, message
     end
@@ -16,7 +16,7 @@ function parse(body)
     for l in lines do 
         local c = string.sub(l, 1, 1)
         if c ~= '#' and c ~= '.' then
-            local _, _, key, value = string.find(l, "(.-)=(.*)")
+            local key, value = socket.skip(2, string.find(l, "(.-)=(.*)"))
             value = string.gsub(value, "\\n", "\n")
             value = string.gsub(value, "\\\\", "\\")
             value = string.gsub(value, "\\t", "\t")
