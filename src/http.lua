@@ -14,7 +14,7 @@ local TIMEOUT = 60
 -- default port for document retrieval
 local PORT = 80
 -- user agent field sent in request
-local USERAGENT = "LuaSocket 1.2 HTTP 1.1"
+local USERAGENT = "LuaSocket 1.3 HTTP 1.1"
 
 -----------------------------------------------------------------------------
 -- Tries to get a pattern from the server and closes socket on error
@@ -86,7 +86,7 @@ end
 --        all name_i are lowercase
 --   nil and error message in case of error
 -----------------------------------------------------------------------------
-local get_headers = function(sock, headers)
+local get_hdrs = function(sock, headers)
     local line, err
     local name, value
     -- get first line
@@ -121,63 +121,120 @@ end
 -- Receives a chunked message body
 -- Input
 --   sock: socket connected to the server
+--   callback: function to receive chunks
 -- Returns
---   body: a string containing the body of the message
---   nil and error message in case of error
+--   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local try_getchunked = function(sock)
-    local chunk_size, line, err
-    local body = ""
+local try_getchunked = function(sock, callback)
+    local chunk, size, line, err
     repeat 
         -- get chunk size, skip extention
         line, err = %try_get(sock)
-        if err then return nil, err end
-        chunk_size = tonumber(gsub(line, ";.*", ""), 16)
-        if not chunk_size then 
+        if err then 
+			callback(nil, err)
+			return err 
+		end
+        size = tonumber(gsub(line, ";.*", ""), 16)
+        if not size then 
             sock:close()
-            return nil, "invalid chunk size"
+            callback(nil, "invalid chunk size")
+			return "invalid chunk size"
         end
         -- get chunk
-        line, err = %try_get(sock, chunk_size) 
-        if err then return nil, err end
-        -- concatenate new chunk
-        body = body .. line
+        chunk, err = %try_get(sock, size) 
+        if err then 
+			callback(nil, err)
+			return err
+		end
+		-- pass chunk to callback
+		if not callback(chunk) then
+			sock:close()
+			return "aborted by callback"
+		end
         -- skip blank line
         _, err = %try_get(sock)
-        if err then return nil, err end
-    until chunk_size <= 0
-	return body
+        if err then 
+			callback(nil, err)
+			return err
+		end
+    until size <= 0
+	-- let callback know we are done
+	callback("", "done")
 end
 
 -----------------------------------------------------------------------------
--- Receives http body
+-- Receives a message body by content-length
 -- Input
 --   sock: socket connected to the server
---   headers: response header fields
+--   callback: function to receive chunks
 -- Returns
---    body: a string containing the body of the document
---    nil and error message in case of error
--- Obs:
---    headers: headers might be modified by chunked transfer
+--   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local get_body = function(sock, headers)
-    local body, err
-    if headers["transfer-encoding"] == "chunked" then
-		body, err = %try_getchunked(sock)
-		if err then return nil, err end
-        -- store extra entity headers
-        --_, err = %get_headers(sock, headers)
-        --if err then return nil, err end
-    elseif headers["content-length"] then
-        body, err = %try_get(sock, tonumber(headers["content-length"]))
-        if err then return nil, err end
+local try_getbylength = function(sock, length, callback)
+	while length > 0 do
+		local size = min(4096, length)
+		local chunk, err = sock:receive(size)
+		if err then 
+			callback(nil, err)
+			return err
+		end
+		if not callback(chunk) then 
+			sock:close()
+			return "aborted by callback" 
+		end
+		length = length - size 
+	end
+	callback("", "done")
+end
+
+-----------------------------------------------------------------------------
+-- Receives a message body by content-length
+-- Input
+--   sock: socket connected to the server
+--   callback: function to receive chunks
+-- Returns
+--   nil if successfull or an error message in case of error
+-----------------------------------------------------------------------------
+local try_getuntilclosed = function(sock, callback)
+	local err
+	while 1 do
+		local chunk, err = sock:receive(4096)
+		if err == "closed" or not err then 
+		    if not callback(chunk) then
+				sock:close()
+				return "aborted by callback"
+			end
+			if err then break end
+		else 
+			callback(nil, err)
+			return err
+		end
+	end
+	callback("", "done")
+end
+
+-----------------------------------------------------------------------------
+-- Receives http response body
+-- Input
+--   sock: socket connected to the server
+--   resp_hdrs: response header fields
+--   callback: function to receive chunks
+-- Returns
+--    nil if successfull or an error message in case of error
+-----------------------------------------------------------------------------
+local try_getbody = function(sock, resp_hdrs, callback)
+    local err
+    if resp_hdrs["transfer-encoding"] == "chunked" then
+        -- get by chunked transfer-coding of message body
+		return %try_getchunked(sock, callback)
+    elseif tonumber(resp_hdrs["content-length"]) then
+        -- get by content-length
+		local length = tonumber(resp_hdrs["content-length"])
+        return %try_getbylength(sock, length, callback)
     else 
-        -- get it all until connection closes!
-        body, err = %try_get(sock, "*a") 
-        if err then return nil, err end
+        -- get it all until connection closes
+        return %try_getuntilclosed(sock, callback) 
     end
-    -- return whole body
-    return body
 end
 
 -----------------------------------------------------------------------------
@@ -219,57 +276,51 @@ local split_url = function(url, default)
 end
 
 -----------------------------------------------------------------------------
--- Tries to send request body, using chunked transfer-encoding
--- Apache, for instance, accepts only 8kb of body in a post to a CGI script
--- if we use only the content-length header field...
--- Input
---   sock: socket connected to the server
---   body: body to be sent in request
--- Returns
---   err: nil in case of success, error message otherwise
------------------------------------------------------------------------------
-local try_sendchunked = function(sock, body)
-    local wanted = strlen(body)
-    local first = 1
-    local chunk_size
-    local err
-    while wanted > 0 do
-        chunk_size = min(wanted, 1024)
-        err = %try_send(sock, format("%x\r\n", chunk_size))
-        if err then return err end
-        err = %try_send(sock, strsub(body, first, first + chunk_size - 1))
-        if err then return err end
-        err = %try_send(sock, "\r\n")
-        if err then return err end
-        wanted = wanted - chunk_size
-        first = first + chunk_size
-    end
-    err = %try_send(sock, "0\r\n")
-    return err
-end
-
------------------------------------------------------------------------------
 -- Sends a http request message through socket
 -- Input
 --   sock: socket connected to the server
 --   method: request method to  be used
 --   path: url path
---   headers: request headers to be sent
---   body: request message body, if any
+--   req_hdrs: request headers to be sent
+--   callback: callback to send request message body
 -- Returns
 --   err: nil in case of success, error message otherwise
 -----------------------------------------------------------------------------
-local send_request = function(sock, method, path, headers, body)
-    local err = %try_send(sock, method .. " " .. path .. " HTTP/1.1\r\n")
+local send_request = function(sock, method, path, req_hdrs, callback)
+    local chunk, size, done
+	-- send request line
+	local err = %try_send(sock, method .. " " .. path .. " HTTP/1.1\r\n")
     if err then return err end
-    for i, v in headers do
+	-- send request headers 
+    for i, v in req_hdrs do
         err = %try_send(sock, i .. ": " .. v .. "\r\n")
         if err then return err end
     end
+	-- if there is a request message body, add content-length header
+	if callback then
+		chunk, size = callback()
+		if chunk and size then
+            err = %try_send(sock, "content-length: "..tostring(size).."\r\n")
+		    if err then return err end
+        else
+           sock:close()
+           return size or "invalid callback return"
+        end
+	end 
+	-- mark end of request headers
     err = %try_send(sock, "\r\n")
-    --if not err and body then err = %try_sendchunked(sock, body) end
-    if not err and body then err = %try_send(sock, body) end
-    return err
+    if err then return err end
+	-- send message request body, getting it chunk by chunk from callback
+    if callback then 
+		done = 0
+		while chunk and chunk ~= "" and done < size do
+			err =  %try_send(sock, chunk)
+			if err then return err end
+			done = done + strlen(chunk)
+            chunk, err = callback()
+		end
+		if not chunk then return err end
+	end
 end
 
 -----------------------------------------------------------------------------
@@ -280,12 +331,17 @@ end
 -- Returns
 --   1 if a message body should be processed, nil otherwise
 -----------------------------------------------------------------------------
-function has_responsebody(method, code)
+function has_respbody(method, code)
     if method == "HEAD" then return nil end
     if code == 204 or code == 304 then return nil end
     if code >= 100 and code < 200 then return nil end
     return 1
 end
+
+-----------------------------------------------------------------------------
+-- We need base64 convertion routines for Basic Authentication Scheme
+-----------------------------------------------------------------------------
+dofile("base64.lua")
 
 -----------------------------------------------------------------------------
 -- Converts field names to lowercase and add message body size specification
@@ -296,14 +352,12 @@ end
 -- Returns
 --   lower: a table with the same headers, but with lowercase field names
 -----------------------------------------------------------------------------
-local fill_headers = function(headers, parsed, body)
+local fill_hdrs = function(headers, parsed, body)
     local lower = {}
     headers = headers or {}
     for i,v in headers do
         lower[strlower(i)] = v
     end
-    --if body then lower["transfer-encoding"] = "chunked" end
-    if body then lower["content-length"] = tostring(strlen(body)) end
     lower["connection"] = "close"
     lower["host"] = parsed.host
     lower["user-agent"] = %USERAGENT
@@ -315,9 +369,58 @@ local fill_headers = function(headers, parsed, body)
 end
 
 -----------------------------------------------------------------------------
--- We need base64 convertion routines for Basic Authentication Scheme
+-- Sends a HTTP request and retrieves the server reply using callbacks to
+-- send the request body and receive the response body
+-- Input
+--   method: "GET", "PUT", "POST" etc
+--   url: target uniform resource locator
+--   req_hdrs: request headers to send
+--   req_body: function to return request message body
+--   resp_body: function to receive response message body
+-- Returns
+--   resp_hdrs: response header fields received, if sucessfull
+--   resp_line: server response status line, if successfull
+--   err: error message if any
 -----------------------------------------------------------------------------
-dofile("base64.lua")
+function http_requestindirect(method, url, req_hdrs, req_body, resp_body)
+    local sock, err
+    local resp_hdrs
+    local resp_line, resp_code
+    -- get url components
+    local parsed = %split_url(url, {port = %PORT, path ="/"})
+    -- methods are case sensitive
+    method = strupper(method)
+    -- fill default headers
+    req_hdrs = %fill_hdrs(req_hdrs, parsed)
+    -- try connection
+    sock, err = connect(parsed.host, parsed.port)
+    if not sock then return nil, nil, err end
+    -- set connection timeout
+    sock:timeout(%TIMEOUT)
+    -- send request
+    err = %send_request(sock, method, parsed.path, req_hdrs, req_body)
+    if err then return nil, nil, err end
+    -- get server message
+    resp_code, resp_line, err = %get_status(sock)
+    if err then return nil, nil, err end
+    -- deal with reply
+    resp_hdrs, err = %get_hdrs(sock, {})
+    if err then return nil, line, err end
+    -- did we get a redirect? should we automatically retry?
+    if (resp_code == 301 or resp_code == 302) and 
+       (method == "GET" or method == "HEAD") then 
+		sock:close()
+        return http_requestindirect(method, resp_hdrs["location"], req_hdrs, 
+            req_body, resp_body)
+    end 
+    -- get body if status and method combination allow one
+    if has_respbody(method, resp_code) then
+        err = %try_getbody(sock, resp_hdrs, resp_body)
+        if err then return resp_hdrs, resp_line, err end
+    end
+    sock:close()
+    return resp_hdrs, resp_line
+end
 
 -----------------------------------------------------------------------------
 -- Sends a HTTP request and retrieves the server reply
@@ -329,46 +432,29 @@ dofile("base64.lua")
 -- Returns
 --   resp_body: response message body, if successfull
 --   resp_hdrs: response header fields received, if sucessfull
---   line: server response status line, if successfull
+--   resp_line: server response status line, if successfull
 --   err: error message if any
 -----------------------------------------------------------------------------
-function http_request(method, url, headers, body)
-    local sock, err
-    local resp_hdrs, response_body
-    local line, code
-    -- get url components
-    local parsed = %split_url(url, {port = %PORT, path ="/"})
-    -- methods are case sensitive
-    method = strupper(method)
-    -- fill default headers
-    headers = %fill_headers(headers, parsed, body)
-    -- try connection
-    sock, err = connect(parsed.host, parsed.port)
-    if not sock then return nil, nil, nil, err end
-    -- set connection timeout
-    sock:timeout(%TIMEOUT)
-    -- send request
-    err = %send_request(sock, method, parsed.path, headers, body)
-    if err then return nil, nil, nil, err end
-    -- get server message
-    code, line, err = %get_status(sock)
-    if err then return nil, nil, nil, err end
-    -- deal with reply
-    resp_hdrs, err = %get_headers(sock, {})
-    if err then return nil, nil, line, err end
-    -- get body if status and method allow one
-    if has_responsebody(method, code) then
-        resp_body, err = %get_body(sock, resp_hdrs)
-        if err then return nil, resp_hdrs, line, err end
+function http_request(method, url, req_hdrs, body)
+	local resp_hdrs, resp_line, err
+	local req_callback = function() 
+        return %body, strlen(%body) 
     end
-    sock:close()
-    -- should we automatically retry?
-    if (code == 301 or code == 302) then
-        if (method == "GET" or method == "HEAD") and resp_hdrs["location"] then 
-            return http_request(method, resp_hdrs["location"], headers, body)
-        else return nil, resp_hdrs, line end
-    end
-    return resp_body, resp_hdrs, line
+	local resp_aux = { resp_body = "" }
+	local resp_callback = function(chunk, err)
+		if not chunk then
+		    %resp_aux.resp_body = nil
+		    %resp_aux.err = err
+			return nil
+		end
+		%resp_aux.resp_body = %resp_aux.resp_body .. chunk
+		return 1
+	end
+	if not body then resp_callback = nil end
+    resp_hdrs, resp_line, err = http_requestindirect(method, url, req_hdrs,
+            req_callback, resp_callback)
+	if err then return nil, resp_hdrs, resp_line, err
+	else return resp_aux.resp_body, resp_hdrs, resp_line, resp_aux.err end
 end
 
 -----------------------------------------------------------------------------
