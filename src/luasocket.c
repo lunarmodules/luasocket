@@ -8,12 +8,14 @@
 * This module is part of an effort to make the most important features
 * of the IPv4 Socket layer available to Lua scripts.
 * The Lua interface to TCP/IP follows the BSD TCP/IP API closely, 
-* trying to simplify all tasks involved in setting up a client connection 
-* and server connections. 
+* trying to simplify all tasks involved in setting up both client 
+* and server connections.
 * The provided IO routines, send and receive, follow the Lua style, being 
 * very similar to the standard Lua read and write functions.
 * The module implements both a BSD bind and a Winsock2 bind, and has 
 * been tested on several Unix flavors, as well as Windows 98 and NT. 
+*
+* RCS ID: $Id$
 \*=========================================================================*/
 
 /*=========================================================================*\
@@ -1660,7 +1662,7 @@ static int receive_word(lua_State *L, p_sock sock)
 * Initializes the library interface with Lua and the socket library.
 * Defines the symbols exported to Lua.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API void lua_socketlibopen(lua_State *L)
+LUASOCKET_API int lua_socketlibopen(lua_State *L)
 {
     struct luaL_reg funcs[] = {
         {"bind", global_tcpbind},
@@ -1674,6 +1676,8 @@ LUASOCKET_API void lua_socketlibopen(lua_State *L)
     /* declare new Lua tags for used userdata values */
     p_tags tags = (p_tags) lua_newuserdata(L, sizeof(t_tags));
     if (!tags) lua_error(L, "out of memory");
+	/* remove tags userdatum from stack but avoid garbage collection */
+	lua_ref(L, 1);
     tags->client = lua_newtag(L);
     tags->server = lua_newtag(L);
     tags->table = lua_newtag(L);
@@ -1690,7 +1694,7 @@ LUASOCKET_API void lua_socketlibopen(lua_State *L)
     lua_settagmethod(L, tags->table, "gc");
 #ifdef WIN32
     /* WinSock needs special initialization */
-    winsock_open();
+    if (!winsock_open()) return 0;
 #else
     /* avoid getting killed by a SIGPIPE signal thrown by send */
     handle_sigpipe();
@@ -1716,6 +1720,7 @@ LUASOCKET_API void lua_socketlibopen(lua_State *L)
         }
     }
 #endif
+	return 1;
 }
 
 /*=========================================================================*\
