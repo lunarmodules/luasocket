@@ -11,7 +11,6 @@
 local string = require("string")
 local table = require("table")
 local base = require("base")
-local coroutine = require("coroutine")
 module("ltn12")
 
 filter = {}
