@@ -273,11 +273,11 @@ end
 --   server: server socket bound to local address
 --   name: file name 
 --   is_directory: is file a directory name?
---   download_cb: callback to receive file contents
+--   content_cb: callback to receive file contents
 -- Returns
 --   err: error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
-function Private.retrieve(control, server, name, is_directory, download_cb)
+function Private.retrieve(control, server, name, is_directory, content_cb)
 	local code, answer
 	local data
 	-- ask server for file or directory listing accordingly
@@ -295,7 +295,7 @@ function Private.retrieve(control, server, name, is_directory, download_cb)
 		control:close()
 		return answer 
 	end
-	answer = %Private.receive_indirect(data, download_cb)
+	answer = %Private.receive_indirect(data, content_cb)
 	if answer then 
 		control:close()
 		return answer
@@ -380,10 +380,9 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Private.change_type(control, params)
-	local type
-	if params == "type=i" then type = "i" 
-	elseif params == "type=a" then type = "a" end
-	if type then 
+	local type, _
+	_, _, type = strfind(params or "", "type=(.)")
+	if type == "a" or type == "i" then 
 		local code, err = %Private.command(control, "type", type, {200})
 		if not code then return err end
 	end
@@ -443,25 +442,25 @@ end
 -- Input
 --   control: control connection with server
 --   request: a table with the fields:
---     upload_cb: send callback to send file contents
+--     content_cb: send callback to send file contents
 --   segment: parsed URL path segments
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Private.upload(control, request, segment)
-	local code, name, upload_cb
+	local code, name, content_cb
 	-- get remote file name
 	name = segment[getn(segment)]
 	if not name then 
 		control:close()
 		return "Invalid file path" 
 	end
-	upload_cb = request.upload_cb
+	content_cb = request.content_cb
 	-- setup passive connection
 	local server, answer = %Private.port(control)
 	if not server then return answer end
 	-- ask server to receive file
-	code, answer = %Private.store(control, server, name, upload_cb)
+	code, answer = %Private.store(control, server, name, content_cb)
 	if not code then return answer end
 end
 
@@ -470,15 +469,15 @@ end
 -- Input
 --   control: control connection with server
 --   request: a table with the fields:
---     download_cb: receive callback to receive file contents
+--     content_cb: receive callback to receive file contents
 --   segment: parsed URL path segments
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Private.download(control, request, segment)
-	local code, name, is_directory, download_cb
+	local code, name, is_directory, content_cb
 	is_directory = segment.is_directory
-	download_cb = request.download_cb
+	content_cb = request.content_cb
 	-- get remote file name
 	name = segment[getn(segment)]
 	if not name and not is_directory then 
@@ -490,7 +489,7 @@ function Private.download(control, request, segment)
 	if not server then return answer end
 	-- ask server to send file or directory listing
 	code, answer = %Private.retrieve(control, server, name, 
-		is_directory, download_cb)
+		is_directory, content_cb)
 	if not code then return answer end
 end
 
@@ -511,7 +510,8 @@ function Private.parse_url(request)
 		user = "anonymous", 
 		port = 21, 
 		path = "/",
-		password = %Public.EMAIL
+		password = %Public.EMAIL,
+		scheme = "ftp"
 	})
 	-- explicit login information overrides that given by URL
 	parsed.user = request.user or parsed.user
@@ -560,12 +560,15 @@ end
 --     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
 --     user: account user name
 --     password: account password
---     download_cb: receive callback to receive file contents
+--     content_cb: receive callback to receive file contents
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Public.get_cb(request)
 	local parsed = %Private.parse_url(request)
+	if parsed.scheme ~= "ftp" then 
+		return format("unknown scheme '%s'", parsed.scheme)
+	end
 	local control, err = %Private.open(parsed)
 	if not control then return err end
 	local segment = %Private.parse_path(parsed)
@@ -583,12 +586,15 @@ end
 --     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
 --     user: account user name
 --     password: account password
---     upload_cb: send callback to send file contents
+--     content_cb: send callback to send file contents
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Public.put_cb(request)
 	local parsed = %Private.parse_url(request)
+	if parsed.scheme ~= "ftp" then 
+		return format("unknown scheme '%s'", parsed.scheme)
+	end
 	local control, err = %Private.open(parsed)
 	if not control then return err end
 	local segment = %Private.parse_path(parsed)
@@ -612,7 +618,7 @@ end
 -----------------------------------------------------------------------------
 function Public.put(url_or_request, content)
 	local request = %Private.build_request(url_or_request)
-	request.upload_cb = function()
+	request.content_cb = function()
 		return %content, strlen(%content)
 	end
 	return %Public.put_cb(request)
@@ -633,7 +639,7 @@ end
 function Public.get(url_or_request)
 	local cat = Concat.create()
 	local request = %Private.build_request(url_or_request)
-	request.download_cb = function(chunk, err)
+	request.content_cb = function(chunk, err)
 		if chunk then %cat:addstring(chunk) end
 		return 1
 	end
