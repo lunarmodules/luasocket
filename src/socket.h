@@ -49,7 +49,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count,
 void sock_setnonblocking(p_sock ps);
 void sock_setblocking(p_sock ps);
 
-int sock_waitfd(int fd, int sw, p_tm tm);
+int sock_waitfd(p_sock ps, int sw, p_tm tm);
 int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm);
 
 int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm); 

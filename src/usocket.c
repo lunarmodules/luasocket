@@ -22,10 +22,10 @@
 #define WAITFD_R        POLLIN
 #define WAITFD_W        POLLOUT
 #define WAITFD_C        (POLLIN|POLLOUT)
-int sock_waitfd(int fd, int sw, p_tm tm) {
+int sock_waitfd(p_sock ps, int sw, p_tm tm) {
     int ret;
     struct pollfd pfd;
-    pfd.fd = fd;
+    pfd.fd = *ps;
     pfd.events = sw;
     pfd.revents = 0;
     if (tm_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
@@ -44,7 +44,7 @@ int sock_waitfd(int fd, int sw, p_tm tm) {
 #define WAITFD_W        2
 #define WAITFD_C        (WAITFD_R|WAITFD_W)
 
-int sock_waitfd(int fd, int sw, p_tm tm) {
+int sock_waitfd(p_sock ps, int sw, p_tm tm) {
     int ret;
     fd_set rfds, wfds, *rp, *wp;
     struct timeval tv, *tp;
@@ -53,8 +53,8 @@ int sock_waitfd(int fd, int sw, p_tm tm) {
     do {
         /* must set bits within loop, because select may have modifed them */
         rp = wp = NULL;
-        if (sw & WAITFD_R) { FD_ZERO(&rfds); FD_SET(fd, &rfds); rp = &rfds; }
-        if (sw & WAITFD_W) { FD_ZERO(&wfds); FD_SET(fd, &wfds); wp = &wfds; }
+        if (sw & WAITFD_R) { FD_ZERO(&rfds); FD_SET(*ps, &rfds); rp = &rfds; }
+        if (sw & WAITFD_W) { FD_ZERO(&wfds); FD_SET(*ps, &wfds); wp = &wfds; }
         t = tm_getretry(tm);
         tp = NULL;
         if (t >= 0.0) {
@@ -62,11 +62,11 @@ int sock_waitfd(int fd, int sw, p_tm tm) {
             tv.tv_usec = (int)((t-tv.tv_sec)*1.0e6);
             tp = &tv;
         }
-        ret = select(fd+1, rp, wp, NULL, tp);
+        ret = select(*ps+1, rp, wp, NULL, tp);
     } while (ret == -1 && errno == EINTR);
     if (ret == -1) return errno;
     if (ret == 0) return IO_TIMEOUT;
-    if (sw == WAITFD_C && FD_ISSET(fd, &rfds)) return IO_CLOSED;
+    if (sw == WAITFD_C && FD_ISSET(*ps, &rfds)) return IO_CLOSED;
     return IO_DONE;
 }
 #endif
@@ -177,7 +177,7 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
 \*-------------------------------------------------------------------------*/
 int sock_connected(p_sock ps, p_tm tm) {
     int err;
-    if ((err = sock_waitfd(*ps, WAITFD_C, tm) == IO_CLOSED)) {
+    if ((err = sock_waitfd(ps, WAITFD_C, tm) == IO_CLOSED)) {
         if (recv(*ps, (char *) &err, 0, 0) == 0) return IO_DONE;
         else return errno;
     } else return err;
@@ -198,7 +198,7 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
         err = errno;
         if (err == EINTR) continue;
         if (err != EAGAIN && err != ECONNABORTED) return err;
-        if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
     /* can't reach here */
     return IO_UNKNOWN;
@@ -230,7 +230,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
         /* if failed fatal reason, report error */
         if (err != EAGAIN) return err;
         /* wait until we can send something or we timeout */
-        if ((err = sock_waitfd(*ps, WAITFD_W, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     }
     /* can't reach here */
     return IO_UNKNOWN;
@@ -255,7 +255,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         if (put == 0 || err == EPIPE) return IO_CLOSED;
         if (err == EINTR) continue;
         if (err != EAGAIN) return err;
-        if ((err = sock_waitfd(*ps, WAITFD_W, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     }
     return IO_UNKNOWN;
 }
@@ -277,7 +277,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
         if (taken == 0) return IO_CLOSED;
         if (err == EINTR) continue;
         if (err != EAGAIN) return err; 
-        if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err; 
+        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err; 
     }
     return IO_UNKNOWN;
 }
@@ -300,7 +300,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         if (taken == 0) return IO_CLOSED;
         if (err == EINTR) continue;
         if (err != EAGAIN) return err; 
-        if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err; 
+        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err; 
     }
     return IO_UNKNOWN;
 }

@@ -45,15 +45,15 @@ int sock_close(void) {
 #define WAITFD_E        4
 #define WAITFD_C        (WAITFD_E|WAITFD_W)
 
-int sock_waitfd(t_sock fd, int sw, p_tm tm) {
+int sock_waitfd(p_sock ps, int sw, p_tm tm) {
     int ret;
     fd_set rfds, wfds, efds, *rp = NULL, *wp = NULL, *ep = NULL;
     struct timeval tv, *tp = NULL;
     double t;
     if (tm_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
-    if (sw & WAITFD_R) { FD_ZERO(&rfds); FD_SET(fd, &rfds); rp = &rfds; }
-    if (sw & WAITFD_W) { FD_ZERO(&wfds); FD_SET(fd, &wfds); wp = &wfds; }
-    if (sw & WAITFD_C) { FD_ZERO(&efds); FD_SET(fd, &efds); ep = &efds; }
+    if (sw & WAITFD_R) { FD_ZERO(&rfds); FD_SET(*ps, &rfds); rp = &rfds; }
+    if (sw & WAITFD_W) { FD_ZERO(&wfds); FD_SET(*ps, &wfds); wp = &wfds; }
+    if (sw & WAITFD_C) { FD_ZERO(&efds); FD_SET(*ps, &efds); ep = &efds; }
     if ((t = tm_get(tm)) >= 0.0) {
         tv.tv_sec = (int) t;
         tv.tv_usec = (int) ((t-tv.tv_sec)*1.0e6);
@@ -62,7 +62,7 @@ int sock_waitfd(t_sock fd, int sw, p_tm tm) {
     ret = select(0, rp, wp, ep, tp);
     if (ret == -1) return WSAGetLastError();
     if (ret == 0) return IO_TIMEOUT;
-    if (sw == WAITFD_C && FD_ISSET(fd, &efds)) return IO_CLOSED;
+    if (sw == WAITFD_C && FD_ISSET(*ps, &efds)) return IO_CLOSED;
     return IO_DONE;
 }
 
@@ -127,15 +127,15 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
 /*-------------------------------------------------------------------------*\
 * Check if socket is connected
 \*-------------------------------------------------------------------------*/
-int sock_connected(p_sock ps) {
+int sock_connected(p_sock ps, p_tm tm) {
     int err;
-    if ((err = sock_waitfd(*ps, WAITFD_C, tm)) == IO_CLOSED) {
+    if ((err = sock_waitfd(ps, WAITFD_C, tm)) == IO_CLOSED) {
         int len = sizeof(err);
         /* give windows time to set the error (yes, disgusting) */
         Sleep(0);
         /* find out why we failed */
         getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *)&err, &len); 
-        /* we KNOW there was an error. if why is 0, we will return
+        /* we KNOW there was an error. if 'why' is 0, we will return
         * "unknown error", but it's not really our fault */
         return err > 0? err: IO_UNKNOWN; 
     } else return err;
@@ -181,7 +181,7 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
         /* if we failed because there was no connectoin, keep trying */
         if (err != WSAEWOULDBLOCK && err != WSAECONNABORTED) return err;
         /* call select to avoid busy wait */
-        if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     } 
     /* can't reach here */
     return IO_UNKNOWN; 
@@ -213,7 +213,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
         /* we can only proceed if there was no serious error */
         if (err != WSAEWOULDBLOCK) return err;
         /* avoid busy wait */
-        if ((err = sock_waitfd(*ps, WAITFD_W, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     } 
     /* can't reach here */
     return IO_UNKNOWN;
@@ -236,7 +236,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         }
         err = WSAGetLastError(); 
         if (err != WSAEWOULDBLOCK) return err;
-        if ((err = sock_waitfd(*ps, WAITFD_W, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     } 
     return IO_UNKNOWN;
 }
@@ -257,7 +257,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
         if (taken == 0) return IO_CLOSED;
         err = WSAGetLastError();
         if (err != WSAEWOULDBLOCK) return err;
-        if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
     return IO_UNKNOWN;
 }
@@ -279,7 +279,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         if (taken == 0) return IO_CLOSED;
         err = WSAGetLastError();
         if (err != WSAEWOULDBLOCK) return err;
-        if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err;
+        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
     return IO_UNKNOWN;
 }
