@@ -56,7 +56,7 @@ LUASOCKET_API int lua_socketlibopen(lua_State *L)
     buf_open(L);
     tcps_open(L); 
     udp_open(L);
-#if LUASOCKET_DEBUG
+#ifdef LUASOCKET_DOFILE
     lua_dofile(L, "concat.lua");
     lua_dofile(L, "code.lua");
     lua_dofile(L, "url.lua");

@@ -1,38 +1,12 @@
-This directory  contains the implementation  of the protocols  FTP, HTTP
-and SMTP, the URL parsing and composition module and the Concat and Code
-auxiliary modules. The files provided are:
+This release is work in progress. It has been tested on WinXP, Mac OS X,
+SunOS and Linux. The most important change is a major rewrite of the C code
+that attempts to make the library extensible. Also, all functions were
+moved to the 'socket' namespace. A few changes are expected for the final
+version, mostly in order to make the API more uniform.
 
-	http.lua				-- HTTP protocol implementation
+In this version, all Lua code has been built into the binary. For that, you
+will need a working versions of luac and bin2c, both available with your
+Lua distribution. Check makefile for details.
 
-The  module   http.lua  provides   general  HTTP  client   support.  The
-implementation conforms to the HTTP/1.1 standard, RFC 2068.
-
-	smtp.lua				-- SMTP protocol implementation
-	
-The module smtp.lua provides functionality  to send e-mail messages to a
-SMTP mail server. The implementation conforms to RFC 821.
-
-	ftp.lua					-- FTP protocol implementation
-
-The module ftp.lua provides functions  to download and upload files from
-and to FTP servers. The implementation conforms to RFC 959.
-
-	url.lua					-- URL parsing and composition
-
-The module url.lua provides routines to  split a URL into its components
-and to compose a base URL and relative URL into an absolute URL.
-
-	code.lua				-- some coding conversion routines
-
-The  code.lua module  provides  base64, hexa  and  escaped encoding  and
-decoding. The module  is used for the HTTP  Basic Authentication Scheme,
-and URL protection, conforming to RFC 2045.
-
-	concat.lua				-- fast concatenation library
-
-The module concat.lua implements, completely  in Lua, a set of functions
-that greatly improves the performance  of repeated concatenations of Lua
-strings. The algorithm was inventd by Roberto Ierusalimschy.
-
-These  modules are  part of  the  LuaSocket library  and are  supported.
-Please send any comments to diego@tecgraf.puc-rio.br.
+Have fun,
+Diego Nehab.

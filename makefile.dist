@@ -2,31 +2,32 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-1.4
+DIST = luasocket-1.5-work
 
-SRC = ~diego/tec/luasocket
+LUA = concat.lua code.lua url.lua http.lua smtp.lua ftp.lua lsselect.lua \
+  cl-compat.lua
+
+TESTS = testclnt.lua testsrvr.lua testcmd.lua codetest.lua \
+  urltest.lua concattest.lua
+
+EXAMPLES = check-links.lua daytimeclnt.lua dict.lua echoclnt.lua \
+  echosrvr.lua get.lua listener.lua talker.lua tinyirc.lua tftpclnt.lua
 
 dist:
-	mkdir -p $(DIST)/lua
 	mkdir -p $(DIST)/examples
-	mkdir -p $(DIST)/html
-	mkdir -p $(DIST)/test
+	mkdir -p $(DIST)/tests
 	cp -vf *.c $(DIST)
 	cp -vf *.h $(DIST)
+	cp -vf $(LUA) $(DIST)
 	cp -vf makefile $(DIST)
 	cp -vf README $(DIST)
-	cp -vf lua/*.lua $(DIST)/lua
-	cp -vf lua/README $(DIST)/lua
-	cp -vf examples/*.lua $(DIST)/examples
-	cp -vf examples/README $(DIST)/examples
-	cp -vf html/*.html $(DIST)/html
-	cp -vf html/*.png $(DIST)/html
-	cp -vf test/testclnt.lua $(DIST)/test
-	cp -vf test/testsrvr.lua $(DIST)/test
-	cp -vf test/testcmd.lua $(DIST)/test
-	cp -vf test/codetest.lua $(DIST)/test
-	cp -vf test/concattest.lua $(DIST)/test
-	cp -vf test/urltest.lua $(DIST)/test
-	cp -vf test/README $(DIST)/test
+	cp -vf $(EXAMPLES) $(DIST)/examples
+	cp -vf README.examples $(DIST)/examples/README
+	cp -vf $(TESTS) $(DIST)/tests
+	cp -vf README.tests $(DIST)/tests/README
 	tar -zcvf $(DIST).tar.gz $(DIST)
 	zip -r $(DIST).zip $(DIST)
+
+
+clean:
+	\rm -rf $(DIST) $(DIST).tar.gz $(DIST).zip
