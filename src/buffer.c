@@ -129,7 +129,7 @@ int sendraw(p_buf buf, const char *data, size_t count, size_t *sent)
     p_tm tm = buf->tm;
     size_t total = 0;
     int err = IO_DONE;
-    while (total < count && err == IO_DONE) {
+    while (total < count && (err == IO_DONE || err == IO_RETRY)) {
         size_t done;
         err = io->send(io->ctx, data+total, count-total, &done, tm_get(tm));
         total += done;

@@ -11,6 +11,7 @@ end
 function fail(...)
     local s = string.format(unpack(arg))
     io.stderr:write("ERROR: ", s, "!\n")
+socket.sleep(3)
     os.exit()
 end
 
@@ -432,6 +433,20 @@ function rebind_test()
 end
 
 ------------------------------------------------------------------------
+
+test("character line")
+test_asciiline(1)
+test_asciiline(17)
+test_asciiline(200)
+test_asciiline(4091)
+test_asciiline(80199)
+test_asciiline(8000000)
+test_asciiline(80199)
+test_asciiline(4091)
+test_asciiline(200)
+test_asciiline(17)
+test_asciiline(1)
+
 test("method registration")
 test_methods(socket.tcp(), {
    "accept",
@@ -498,18 +513,6 @@ test_mixed(200)
 test_mixed(17)
 test_mixed(1)
 
-test("character line")
-test_asciiline(1)
-test_asciiline(17)
-test_asciiline(200)
-test_asciiline(4091)
-test_asciiline(80199)
-test_asciiline(8000000)
-test_asciiline(80199)
-test_asciiline(4091)
-test_asciiline(200)
-test_asciiline(17)
-test_asciiline(1)
 
 test("binary line")
 reconnect()
