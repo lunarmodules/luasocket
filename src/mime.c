@@ -267,6 +267,7 @@ static int mime_global_b64(lua_State *L)
     if (!input) {
         asize = b64pad(atom, asize, &buffer);
         luaL_pushresult(&buffer);
+        if (!(*lua_tostring(L, -1))) lua_pushnil(L);
         lua_pushnil(L);
         return 2;
     }
@@ -306,6 +307,7 @@ static int mime_global_unb64(lua_State *L)
     /* if second is nil, we are done */
     if (!input) {
         luaL_pushresult(&buffer);
+        if (!(*lua_tostring(L, -1))) lua_pushnil(L);
         lua_pushnil(L);
         return 2;
     }
@@ -418,7 +420,7 @@ static size_t qppad(UC *input, size_t size, luaL_Buffer *buffer)
         if (qpclass[input[i]] == QP_PLAIN) luaL_putchar(buffer, input[i]);
         else qpquote(input[i], buffer);
     }
-    luaL_addstring(buffer, EQCRLF);
+    if (size > 0) luaL_addstring(buffer, EQCRLF);
     return 0;
 }
 
@@ -454,7 +456,9 @@ static int mime_global_qp(lua_State *L)
     if (!input) {
         asize = qppad(atom, asize, &buffer);
         luaL_pushresult(&buffer);
+        if (!(*lua_tostring(L, -1))) lua_pushnil(L);
         lua_pushnil(L);
+        return 2;
     }
     /* otherwise process rest of input */
     last = input + isize;
@@ -531,6 +535,7 @@ static int mime_global_unqp(lua_State *L)
     /* if second part is nil, we are done */
     if (!input) {
         luaL_pushresult(&buffer);
+        if (!(*lua_tostring(L, -1))) lua_pushnil(L);
         lua_pushnil(L);
         return 2;
     } 

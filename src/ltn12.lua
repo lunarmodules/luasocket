@@ -40,30 +40,27 @@ end
 function filter.chain(...) 
     local n = table.getn(arg)
     local top, index = 1, 1
+    local retry = ""
     return function(chunk)
+        retry = chunk and retry
         while true do 
             if index == top then
                 chunk = arg[index](chunk)
-                if chunk == "" or top == n then 
-                    return chunk
-                elseif chunk then 
-                    index = index + 1
+                if chunk == "" or top == n then return chunk
+                elseif chunk then index = index + 1
                 else 
                     top = top+1 
                     index = top
                 end
             else
-                local original = chunk
-                chunk = arg[index](original or "")
+                chunk = arg[index](chunk or "")
                 if chunk == "" then
                     index = index - 1
-                    chunk = original and chunk
+                    chunk = retry
                 elseif chunk then
                     if index == n then return chunk
                     else index = index + 1 end
-                else 
-                    base.error("filter returned inappropriate nil")
-                end
+                else base.error("filter returned inappropriate nil") end
             end
         end
     end
@@ -138,6 +135,8 @@ function source.rewind(src)
     end
 end
 
+local print = print
+
 -- chains a source with a filter
 function source.chain(src, f)
     base.assert(src and f)
@@ -151,13 +150,16 @@ function source.chain(src, f)
                 last_out = f(last_in)
                 if last_out ~= "" then return last_out end
                 if not last_in then 
-                    error('filter returned inappropriate ""') 
+                    base.error('filter returned inappropriate ""') 
                 end
             end
         elseif last_out then
             last_out = f(last_in and "")
             if last_in and not last_out then
-                error('filter returned inappropriate nil') 
+                base.error('filter returned inappropriate nil') 
+            end
+            if last_out == "" and not last_in then
+                base.error(base.tostring(f) .. ' returned inappropriate ""') 
             end
             return last_out
         else

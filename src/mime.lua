@@ -49,6 +49,15 @@ mime.decodet['quoted-printable'] = function()
     return ltn12.filter.cycle(unqp, "")
 end
 
+local io, string = io, string
+
+local function format(chunk)
+    if chunk then
+        if chunk == "" then return "''"
+        else return string.len(chunk) end
+    else return "nil" end
+end 
+
 -- define the line-wrap filters
 mime.wrapt['text'] = function(length)
     length = length or 76

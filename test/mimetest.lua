@@ -39,9 +39,13 @@ local mao = [[
 local function random(handle, io_err)
     if handle then
         return function()
+            if not handle then error("source is empty!", 2) end
             local len = math.random(0, 1024)
             local chunk = handle:read(len)
-            if not chunk then handle:close() end
+            if not chunk then 
+                handle:close() 
+                handle = nil
+            end
             return chunk
         end
     else return ltn12.source.empty(io_err or "unable to open file") end
@@ -73,6 +77,7 @@ local function encode_qptest(mode)
 end
 
 local function compare_qptest()
+io.write("testing qp encoding and wrap: ")
     compare(qptest, dqptest)
 end
 
@@ -173,7 +178,6 @@ local function encode_b64test()
     local sp2 = mime.wrap("base64", 30)
     local sp1 = mime.wrap(27)
     local chain = ltn12.filter.chain(e1, sp1, e2, sp2, e3, sp3, e4, sp4)
-    chain = socket.protect(chain)
     transform(b64test, eb64test, chain)
 end
 
@@ -193,10 +197,12 @@ local function cleanup_b64test()
 end
 
 local function compare_b64test()
+io.write("testing b64 chained encode: ")
     compare(b64test, db64test)
 end
 
 local function identity_test()
+io.write("testing identity: ")
     local chain = named(ltn12.filter.chain(
         named(mime.encode("quoted-printable"), "1 eq"),
         named(mime.encode("base64"), "2 eb"),
@@ -223,11 +229,12 @@ local function chunkcheck(original, encoded)
         local b = string.sub(original, i+1)
         local e, r = mime.b64(a, b)
         local f = (mime.b64(r))
-        if (e .. f ~= encoded) then fail(e .. f) end
+        if (e .. (f or "") ~= encoded) then fail(e .. (f or "")) end
     end
 end
 
 local function padding_b64test()
+io.write("testing b64 padding: ")
     padcheck("a", "YQ==")
     padcheck("ab", "YWI=")
     padcheck("abc", "YWJj")
