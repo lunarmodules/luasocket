@@ -278,6 +278,18 @@ ignore = {
 }
 check_request(request, expect, ignore)
 
+write("testing wrong scheme: ")
+request = {
+	url = "wrong://" .. host .. cgiprefix .. "/cat",
+	method = "GET"
+}
+expect = {
+	error = "unknown scheme 'wrong'"
+}
+ignore = {
+}
+check_request(request, expect, ignore)
+
 local body
 write("testing simple get function: ")
 body = HTTP.get("http://" .. host .. prefix .. "/index.html")
