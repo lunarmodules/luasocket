@@ -196,7 +196,7 @@ In case of error, the method returns <b><tt>nil</tt></b>.
 Note: It makes no sense to call this method on server objects.
 </p>
 
-<!-- getpeername ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- getsockname ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=getsockname>
 master:<b>getsockname()</b><br>
@@ -211,6 +211,22 @@ Returns the local address information associated to the object.
 <p class=return>
 The method returns a string with local IP address and a number with 
 the port. In case of error, the method returns <b><tt>nil</tt></b>.
+</p>
+
+<!-- getsockname ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=getstats>
+client:<b>getstats()</b><br>
+</p>
+
+<p class=description>
+Returns accounting information on the socket, useful for throttling
+of bandwidth. 
+</p>
+
+<p class=return>
+The method returns the number of bytes received, the number of bytes sent,
+and the age of the socket object in seconds. 
 </p>
 
 <!-- listen ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
