@@ -216,8 +216,7 @@ io.write("testing manual basic auth: ")
 request = {
 	url = "http://" .. host .. prefix .. "/auth/index.html",
 	headers = {
-		authorization = "Basic " .. 
-            socket.code.base64.encode("luasocket:password")
+		authorization = "Basic " .. (socket.code.b64("luasocket:password"))
 	}
 }
 expect = {

@@ -1,9 +1,10 @@
-
-
+write some utilities that use the code.lua module and put them 
+in etc, modify the README.etc file and makefile.dist (eol.lua is done)
 
 check for interrupt compliance
 add connect with timeout
 add gethostname and use it in HTTP, SMTP etc, and add manual entry.
+add thanks for cassino and david burgess
 
 add local connect, and manual entry
 

@@ -419,7 +419,7 @@ end
 -----------------------------------------------------------------------------
 local function authorize(reqt, parsed, respt)
     reqt.headers["authorization"] = "Basic " .. 
-        socket.code.base64.encode(parsed.user .. ":" .. parsed.password)
+        (socket.code.b64(parsed.user .. ":" .. parsed.password))
     local autht = {
         nredirects = reqt.nredirects,
         method = reqt.method,
