@@ -8,7 +8,7 @@
 #define _LUASOCKET_H_
 
 /* Current luasocket version */
-#define LUASOCKET_VERSION "LuaSocket 1.2.1"
+#define LUASOCKET_VERSION "LuaSocket 1.3b"
 
 /*-------------------------------------------------------------------------*\
 * These can be changed to according to the applications' needs.
