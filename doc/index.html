@@ -108,20 +108,40 @@ contains several examples, this user's manual and the test procedures.
 </p>
 
 <p>
-I  am also  providing  a Windows  binary  for those  that  want to  give
+I  am also  providing  PC Win32  binaries  for those  that  want to  give
 LuaSocket a quick try: 
 </p>
 
 <blockquote>
 <p>
-<a href="luasocket-2.0.exe">luasocket-2.0.exe</a>
+<a href="luasocket-2.0-beta-win32.zip">luasocket-2.0-beta-win32.zip</a>
 </p>
 </blockquote>
 
 <p>
-This  binary has been compiled  with the <tt>LUASOCKET_DEBUG</tt>
-option, and  should be able to run the automatic test procedures.
+The quick and dirty way to use these binaries is to unpack everything into a
+directory, say <tt>c:\luasocket</tt> (include all Lua files from the 
+LuaSocket distrbitution in the same directory too!). 
+Then set <tt>LUA_INIT</tt> to load the <tt>lua.lua</tt> helper file: 
 </p>
+
+<pre class=example>
+c:\luasocket\&gt; set LUA_INIT=@lua.lua
+</pre>
+
+<p>
+From that directory, you can then run the interpreter and it should find all
+files it needs. To download this manual page from the Internet, for example, 
+do the following:
+</p>
+
+<pre class=example>
+c:\luasocket\&gt; lua
+Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
+&gt; http = require"http"
+&gt; print(http.request"http://www.tecgraf.puc-rio.br/luasocket/")
+--&gt; this file
+</pre>
 
 <!-- thanks +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 

@@ -60,6 +60,49 @@ This constant is set to <tt><b>true</b></tt> if the library was compiled
 with debug support.
 </p>
 
+<!-- newtry +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=newtry> 
+socket.<b>newtry(</b>finalizer<b>)</b>
+</p>
+
+<p class=description>
+Creates and returns a <em>clean</em> 
+<a href="#try"><tt>try</tt></a>
+function that allows for cleanup before the exception 
+is  raised. 
+</p>
+
+<p class=parameters> 
+<tt>Finalizer</tt> is a function that will be called before
+<tt>try</tt> throws the exception. It will be called 
+in <em>protected</em> mode.
+</p>
+
+<p class=return> 
+The function returns your customized <tt>try</tt> function. 
+</p>
+
+<p class=note>
+Note: This idea saved a <em>lot</em> of work with the 
+implementation of protocols in LuaSocket: 
+</p>
+
+<pre class=example>
+foo = socket.protect(function()
+    -- connect somewhere
+    local c = socket.try(socket.connect("somewhere", 42))
+    -- create a try function that closes 'c' on error
+    local try = socket.newtry(function() c:close() end)
+    -- do everything reassured c will be closed 
+    try(c:send("helo there?\r\n"))
+    local answer = try(c:receive())
+    ...
+    try(c:send("good bye\r\n"))
+    c:close()
+end)
+</pre>
+
 
 <!-- protect +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -209,7 +252,7 @@ Freezes the program execution during a given amount of time.
 
 <p class=parameters> 
 <tt>Time</tt> is the number of seconds to sleep for. 
-The function truncates <tt>time</tt> to the nearest integer. 
+The function truncates <tt>time</tt> down to the nearest integer. 
 </p>
 
 <!-- source +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -252,7 +295,8 @@ socket.<b>time()</b>
 
 <p class=description>
 Returns the time in seconds, relative to the origin of the 
-universe. Only time differences are meaninful. 
+universe. You should subtract the values returned by this function
+to get meaningful values. 
 </p>
 
 <p class=return> 
