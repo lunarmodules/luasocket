@@ -1,4 +1,9 @@
-fix manual for gettime and sleep
+new scheme to choose family/protocol of object to create
+use new distribution scheme
+fix PROXY in http.lua
+change ltn13 to make sure drawbacks are obvious
+    - check discussion
+make sure errors not thrown by try() are not caught by protect()
 use wim's filter.chain
 use mike's "don't set to blocking before closing unless needed" patch?
 take a look at DB's smtp patch (add "extra argument" table)
