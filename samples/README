@@ -1,32 +1,32 @@
-This directory contains some sample  programs using LuaSocket as well as
-the automatic tests used to make sure the library is working properly.
+This directory  contains some  sample programs using  LuaSocket as
+well  as the  automatic tests  used to  make sure  the library  is
+working properly.
 
 The files provided are:
 
-	server.lua				-- test server
-	client.lua				-- test client
-	command.lua				-- test command definitions
+	testsrvr.lua			-- test server
+	testclnt.lua			-- test client
+	testcmd.lua				-- test command definitions
 
-The automatic tests are composed by three files: client.lua, command.lua
-and server.lua. To run the automatic tests  on your system, make sure to
-compile the library  with _DEBUG defined (check makefile)  and then open
-two terminals. Run 'luasocket server.lua'  on one of them and 'luasocket
-client.lua'  on the  other. The  programs should  start talking  to each
-other.
+To run  the automatic tests on  your system, make sure  to compile
+the library with _DEBUG defined (check makefile) and then open two
+terminals.  Run  'luasocket  testsrvr.lua'  on  one  of  them  and
+'luasocket testclnt.lua'  on the other. The  programs should start
+talking to each other.
 
-	listen.lua				-- echo server
-	talk.lua				-- echo tester
+	listener.lua			-- echo server
+	talker.lua				-- echo tester
 
-listen.lua  and talk.lua  are about  the simplest  applications you  can
-write  using  LuaSocket.  Run   'luasocket  listen.lua'  and  'luasocket
-talk.lua' on different terminals. Whatever  you type on talk.lua will be
-printed by listen.lua.
+listener.lua and  talker.lua are  about the  simplest applications
+you  can write  using  LuaSocket. Run  'luasocket listen.lua'  and
+'luasocket talk.lua' on different  terminals. Whatever you type on
+talk.lua will be printed by listen.lua.
 
 	dict.lua				-- dict client
 
-The  dict.lua module  is a  cool simple  client for  the DICT  protocol,
-written by Luiz  Henrique Figueiredo. Just run it and  enter a few words
-to see it working.
+The dict.lua module is a cool simple client for the DICT protocol,
+written by Luiz  Henrique Figueiredo. Just run it and  enter a few
+words to see it working.
 
 Good luck,
 Diego.
