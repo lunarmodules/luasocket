@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 #include <lauxlib.h>
@@ -620,7 +621,7 @@ int global_select(lua_State *L)
             /* get rid of lua_next value and expose index */
             lua_pop(L, 1);
         }
-    }
+    } else if (!lua_isnil(L, 1)) luaL_argerror(L, 1, "expected table or nil");
     /* get sockets we will test for writability into fd_set */
     if (lua_istable(L, 2)) {
         lua_pushnil(L);
@@ -639,7 +640,7 @@ int global_select(lua_State *L)
             /* get rid of lua_next value and expose index */
             lua_pop(L, 1);
         }
-    }
+    } else if (!lua_isnil(L, 2)) luaL_argerror(L, 2, "expected table or nil");
     max++;
     /* configure timeout value */
     if (ms >= 0) {
@@ -1081,24 +1082,24 @@ static int set_option(lua_State *L, p_sock sock)
 			int bool;
 			if (!lua_isnumber(L, -1)) return 0;
 		    bool = (int) lua_tonumber(L, -1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_KEEPALIVE, &bool, 
-				sizeof(bool));
+			err = setsockopt(sock->sock, SOL_SOCKET, SO_KEEPALIVE, 
+                (char *) &bool, sizeof(bool));
 			return err >= 0;
 		}
 		case 1: {
 			int bool;
 			if (!lua_isnumber(L, -1)) return 0;
 		    bool = (int) lua_tonumber(L, -1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_DONTROUTE, &bool, 
-				sizeof(bool));
+			err = setsockopt(sock->sock, SOL_SOCKET, SO_DONTROUTE, 
+                (char *) &bool, sizeof(bool));
 			return err >= 0;
 		}
 		case 2: {
 			int bool;
 			if (!lua_isnumber(L, -1)) return 0;
 		    bool = (int) lua_tonumber(L, -1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_BROADCAST, &bool,
-				sizeof(bool));
+			err = setsockopt(sock->sock, SOL_SOCKET, SO_BROADCAST, 
+                (char *) &bool, sizeof(bool));
 			return err >= 0;
 		}
 		case 3: {
@@ -1114,8 +1115,8 @@ static int set_option(lua_State *L, p_sock sock)
 			if (!lua_isnumber(L, -1)) return 0;
 			linger.l_linger = lua_tonumber(L, -1);
 			lua_pop(L, 1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_LINGER, &linger, 
-				sizeof(linger));
+			err = setsockopt(sock->sock, SOL_SOCKET, SO_LINGER, 
+                (char *) &linger, sizeof(linger));
 			return err >= 0;
 		}
 		default: return 0;
