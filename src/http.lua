@@ -633,7 +633,7 @@ end
 -- Returns
 --   body: response message body, or nil if failed
 --   headers: response header fields received, or nil if failed
---   status: server response status line, or nil if failed
+--   code: server response status code, or nil if failed
 --   error: error message if any
 -----------------------------------------------------------------------------
 function Public.get(url_or_request)
@@ -641,7 +641,7 @@ function Public.get(url_or_request)
 	request.method = "GET"
     local response = %Public.request(request)
     return response.body, response.headers, 
-        response.status, response.error
+        response.code, response.error
 end
 
 -----------------------------------------------------------------------------
@@ -656,7 +656,7 @@ end
 -- Returns
 --   body: response message body, or nil if failed
 --   headers: response header fields received, or nil if failed
---   status: server response status line, or nil if failed
+--   code: server response status code, or nil if failed
 --   error: error message, or nil if successfull
 -----------------------------------------------------------------------------
 function Public.post(url_or_request, body)
@@ -665,5 +665,5 @@ function Public.post(url_or_request, body)
 	request.body = request.body or body
     local response = %Public.request(request)
     return response.body, response.headers, 
-        response.status, response.error
+        response.code, response.error
 end
