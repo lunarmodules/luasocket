@@ -31,7 +31,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/luasocket.dll"
+				OutputFile="$(OutDir)/lsocket.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/luasocket.pdb"
@@ -79,7 +79,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
-				OutputFile="$(OutDir)/luasocket.dll"
+				OutputFile="$(OutDir)/lsocket.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -121,6 +121,9 @@
 			</File>
 			<File
 				RelativePath=".\buffer.c">
+			</File>
+			<File
+				RelativePath=".\compat-5.1.c">
 			</File>
 			<File
 				RelativePath=".\except.c">
