@@ -31,7 +31,7 @@ local check = function (v, e)
 end
 	
 local check_request = function(request, expect, ignore)
-	local response = http.request(request)
+	local response = socket.http.request(request)
 	for i,v in response do
 		if not ignore[i] then
 			if v ~= expect[i] then %fail(i .. " differs!") end
@@ -56,13 +56,13 @@ index = readfile("test/index.html")
 
 io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
-local back = http.get("http://" .. HOST .. forth)
+local back = socket.http.get("http://" .. HOST .. forth)
 if similar(back, forth) then print("ok")
 else fail("failed!") end
 
 io.write("testing query string correctness: ")
 forth = "this+is+the+query+string"
-back = http.get("http://" .. HOST .. cgiprefix .. "/query-string?" .. forth)
+back = socket.http.get("http://" .. HOST .. cgiprefix .. "/query-string?" .. forth)
 if similar(back, forth) then print("ok")
 else fail("failed!") end
 
@@ -178,7 +178,7 @@ io.write("testing manual basic auth: ")
 request = {
 	url = "http://" .. HOST .. prefix .. "/auth/index.html",
 	headers = {
-		authorization = "Basic " .. Code.base64("luasocket:password")
+		authorization = "Basic " .. socket.code.base64("luasocket:password")
 	}
 }
 expect = {
@@ -279,11 +279,11 @@ check_request(request, expect, ignore)
 
 local body
 io.write("testing simple get function: ")
-body = http.get("http://" .. HOST .. prefix .. "/index.html")
+body = socket.http.get("http://" .. HOST .. prefix .. "/index.html")
 check(body == index)
 
 io.write("testing simple get function with table args: ")
-body = http.get {
+body = socket.http.get {
 	url = "http://really:wrong@" .. HOST .. prefix .. "/auth/index.html",
 	user = "luasocket",
 	password = "password"
@@ -291,18 +291,18 @@ body = http.get {
 check(body == index)
 
 io.write("testing simple post function: ")
-body = http.post("http://" .. HOST .. cgiprefix .. "/cat", index)
+body = socket.http.post("http://" .. HOST .. cgiprefix .. "/cat", index)
 check(body == index)
 
 io.write("testing simple post function with table args: ")
-body = http.post {
+body = socket.http.post {
 	url = "http://" .. HOST .. cgiprefix .. "/cat",
 	body = index
 }
 check(body == index)
 
 io.write("testing HEAD method: ")
-response = http.request {
+response = socket.http.request {
   method = "HEAD",
   url = "http://www.tecgraf.puc-rio.br/~diego/"
 }

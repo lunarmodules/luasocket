@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
-http = Public
+socket.http = Public
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -427,7 +427,7 @@ end
 -----------------------------------------------------------------------------
 function Private.authorize(request, parsed, response)
     request.headers["authorization"] = "Basic " .. 
-        Code.base64(parsed.user .. ":" .. parsed.password)
+        socket.code.base64(parsed.user .. ":" .. parsed.password)
     local authorize = {
         redirects = request.redirects,
         method = request.method,
@@ -471,7 +471,7 @@ function Private.redirect(request, response)
         method = request.method,
         -- the RFC says the redirect URL has to be absolute, but some
         -- servers do not respect that 
-        url = URL.absolute_url(request.url, response.headers["location"]),
+        url = socket.url.absolute(request.url, response.headers["location"]),
         body_cb = request.body_cb,
         headers = request.headers
     }
@@ -535,7 +535,7 @@ end
 --     error: error message, or nil if successfull
 -----------------------------------------------------------------------------
 function Public.request_cb(request, response)
-    local parsed = URL.parse_url(request.url, {
+    local parsed = socket.url.parse(request.url, {
         host = "",
         port = Public.PORT, 
         path ="/",
@@ -622,7 +622,7 @@ function Public.request(request)
             return request.body, string.len(request.body) 
         end
     end
-    local cat = Concat.create()
+    local cat = socket.concat.create()
     response.body_cb = function(chunk, err)
         if chunk then cat:addstring(chunk) end
         return 1

@@ -13,8 +13,8 @@ function nicetime(s)
 			end
 		end
 	end
-	if l == "s" then return format("%2.0f%s", s, l)
-	else return format("%5.2f%s", s, l) end
+	if l == "s" then return string.format("%2.0f%s", s, l)
+	else return string.format("%5.2f%s", s, l) end
 end
 
 -- formats a number of bytes into human readable form
@@ -32,21 +32,21 @@ function nicesize(b)
 			end
 		end
 	end
-	return format("%7.2f%2s", b, l)
+	return string.format("%7.2f%2s", b, l)
 end
 
 -- returns a string with the current state of the download
 function gauge(got, dt, size)
 	local rate = got / dt
 	if size and size >= 1 then
-		return format("%s received, %s/s throughput, " ..
+		return string.format("%s received, %s/s throughput, " ..
 			"%.0f%% done, %s remaining", 
             nicesize(got),  
 			nicesize(rate), 
 			100*got/size, 
 			nicetime((size-got)/rate))
 	else 
-		return format("%s received, %s/s throughput, %s elapsed", 
+		return string.format("%s received, %s/s throughput, %s elapsed", 
 			nicesize(got), 
 			nicesize(rate),
 			nicetime(dt))
@@ -57,22 +57,22 @@ end
 -- kind of copied from luasocket's manual callback examples
 function receive2disk(file, size)
 	local aux = {
-        start = _time(),
+        start = socket._time(),
         got = 0,
-        file = openfile(file, "wb"),
+        file = io.open(file, "wb"),
 		size = size
     }
     local receive_cb = function(chunk, err)
-        local dt = _time() - %aux.start          -- elapsed time since start
+        local dt = socket._time() - %aux.start          -- elapsed time since start
         if not chunk or chunk == "" then
-			write("\n")
-            closefile(%aux.file)
+			io.write("\n")
+            aux.file:close()
             return
         end
-        write(%aux.file, chunk)
-        %aux.got = %aux.got + strlen(chunk)      -- total bytes received
+        aux.file:write(chunk)
+        aux.got = aux.got + string.len(chunk)      -- total bytes received
         if dt < 0.1 then return 1 end            -- not enough time for estimate
-		write("\r", gauge(%aux.got, dt, %aux.size))
+		io.write("\r", gauge(aux.got, dt, aux.size))
         return 1
     end
 	return receive_cb
@@ -80,7 +80,7 @@ end
 
 -- downloads a file using the ftp protocol
 function getbyftp(url, file)
-    local err = FTP.get_cb {
+    local err = socket.ftp.get_cb {
         url = url,
         content_cb = receive2disk(file),
         type = "i"
@@ -91,7 +91,7 @@ end
 
 -- downloads a file using the http protocol
 function getbyhttp(url, file, size)
-    local response = HTTP.request_cb(
+    local response = socket.http.request_cb(
         {url = url},
 		{body_cb = receive2disk(file, size)} 
     )
@@ -101,7 +101,7 @@ end
 
 -- determines the size of a http file
 function gethttpsize(url)
-	local response = HTTP.request {
+	local response = socket.http.request {
 		method = "HEAD",
  		url = url
 	}
@@ -113,11 +113,11 @@ end
 -- determines the scheme and the file name of a given url
 function getschemeandname(url, name)
 	-- this is an heuristic to solve a common invalid url poblem
-	if not strfind(url, "//") then url = "//" .. url end
-	local parsed = URL.parse_url(url, {scheme = "http"})
+	if not string.find(url, "//") then url = "//" .. url end
+	local parsed = socket.url.parse(url, {scheme = "http"})
 	if name then return parsed.scheme, name end
-	local segment = URL.parse_path(parsed.path)
-	name = segment[getn(segment)]
+	local segment = socket.url.parse_path(parsed.path)
+	name = segment[table.getn(segment)]
 	if segment.is_directory then name = nil end
 	return parsed.scheme, name
 end
@@ -134,7 +134,7 @@ end
 
 -- main program
 arg = arg or {}
-if getn(arg) < 1 then 
-	write("Usage:\n  luasocket -f get.lua <remote-url> [<local-file>]\n")
-	exit(1)
+if table.getn(arg) < 1 then 
+	io.write("Usage:\n  luasocket get.lua <remote-url> [<local-file>]\n")
+	os.exit(1)
 else get(arg[1], arg[2]) end

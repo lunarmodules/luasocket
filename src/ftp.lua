@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
-FTP = Public
+socket.ftp = Public
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -47,7 +47,7 @@ end
 -----------------------------------------------------------------------------
 function Private.try_receive(...)
     local sock = arg[1]
-    local data, err = call(sock.receive, arg)
+    local data, err = sock.receive(unpack(arg))
     if err then sock:close() end
     return data, err
 end
@@ -64,9 +64,9 @@ function Private.get_pasv(pasv)
 	local a, b, c, d, p1, p2, _
 	local ip, port
 	_,_, a, b, c, d, p1, p2 =
-		strfind(pasv, "(%d*),(%d*),(%d*),(%d*),(%d*),(%d*)")
+		string.find(pasv, "(%d*),(%d*),(%d*),(%d*),(%d*),(%d*)")
 	if not (a and b and c and d and p1 and p2) then return nil, nil end
-	ip = format("%d.%d.%d.%d", a, b, c, d)
+	ip = string.format("%d.%d.%d.%d", a, b, c, d)
 	port = tonumber(p1)*256 + tonumber(p2)
 	return ip, port
 end
@@ -100,13 +100,13 @@ function Private.get_answer(control)
 	local line, err = Private.try_receive(control)
 	local answer = line
 	if err then return nil, err end
-	_,_, code, sep = strfind(line, "^(%d%d%d)(.)")
+	_,_, code, sep = string.find(line, "^(%d%d%d)(.)")
 	if not code or not sep then return nil, answer end
 	if sep == "-" then -- answer is multiline
 		repeat 
 			line, err = Private.try_receive(control)
 			if err then return nil, err end
-			_,_, lastcode, sep = strfind(line, "^(%d%d%d)(.)")
+			_,_, lastcode, sep = string.find(line, "^(%d%d%d)(.)")
 			answer = answer .. "\n" .. line
 		until code == lastcode and sep == " " -- answer ends with same code
 	end
@@ -126,8 +126,8 @@ function Private.check_answer(control, success)
 	local answer, code = Private.get_answer(control)
 	if not answer then return nil, code end
 	if type(success) ~= "table" then success = {success} end
-	for i = 1, getn(success) do
-		if code == success[i] then
+	for _, s in ipairs(success) do
+		if code == s then
 			return code, answer
 		end
 	end
@@ -213,13 +213,13 @@ function Private.port(control)
 	local code, answer
 	local server, ctl_ip
 	ctl_ip, answer = control:getsockname()
-	server, answer = bind(ctl_ip, 0)
+	server, answer = socket.bind(ctl_ip, 0)
 	server:timeout(Public.TIMEOUT)
 	local ip, p, ph, pl
 	ip, p = server:getsockname()
-	pl = mod(p, 256)
+	pl = math.mod(p, 256)
 	ph = (p - pl)/256
-    local arg = gsub(format("%s,%d,%d", ip, ph, pl), "%.", ",")
+    local arg = string.gsub(string.format("%s,%d,%d", ip, ph, pl), "%.", ",")
 	code, answer = Private.command(control, "port", arg, {200})
 	if not code then 
 		server:close()
@@ -321,7 +321,7 @@ function Private.send_indirect(data, send_cb, chunk, size)
             data:close()
             return err
         end
-        sent = sent + strlen(chunk)
+        sent = sent + string.len(chunk)
         if sent >= size then break end
         chunk, size = send_cb()
     end
@@ -374,7 +374,7 @@ end
 -----------------------------------------------------------------------------
 function Private.change_type(control, params)
 	local type, _
-	_, _, type = strfind(params or "", "type=(.)")
+	_, _, type = string.find(params or "", "type=(.)")
 	if type == "a" or type == "i" then 
 		local code, err = Private.command(control, "type", type, {200})
 		if not code then return err end
@@ -391,7 +391,7 @@ end
 -----------------------------------------------------------------------------
 function Private.open(parsed)
 	-- start control connection
-	local control, err = connect(parsed.host, parsed.port)
+	local control, err = socket.connect(parsed.host, parsed.port)
 	if not control then return nil, err end
 	-- make sure we don't block forever
 	control:timeout(Public.TIMEOUT)
@@ -423,7 +423,7 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Private.change_dir(control, segment)
-	local n = getn(segment)
+    local n = table.getn(segment)
 	for i = 1, n-1 do
 		local code, answer = Private.cwd(control, segment[i])
 		if not code then return answer end
@@ -443,7 +443,7 @@ end
 function Private.upload(control, request, segment)
 	local code, name, content_cb
 	-- get remote file name
-	name = segment[getn(segment)]
+	name = segment[table.getn(segment)]
 	if not name then 
 		control:close()
 		return "Invalid file path" 
@@ -472,7 +472,7 @@ function Private.download(control, request, segment)
 	is_directory = segment.is_directory
 	content_cb = request.content_cb
 	-- get remote file name
-	name = segment[getn(segment)]
+	name = segment[table.getn(segment)]
 	if not name and not is_directory then 
 		control:close()
 		return "Invalid file path" 
@@ -498,7 +498,7 @@ end
 --   parsed: a table with parsed components
 -----------------------------------------------------------------------------
 function Private.parse_url(request)
-	local parsed = URL.parse_url(request.url, {
+	local parsed = socket.url.parse(request.url, {
 		host = "",
 		user = "anonymous", 
 		port = 21, 
@@ -521,9 +521,10 @@ end
 -- Returns
 --   dirs: a table with parsed directory components
 -----------------------------------------------------------------------------
-function Private.parse_path(parsed)
-	local segment = URL.parse_path(parsed.path)
-	segment.is_directory = segment.is_directory or (parsed.params == "type=d")
+function Private.parse_path(parsed_url)
+	local segment = socket.url.parse_path(parsed_url.path)
+	segment.is_directory = segment.is_directory or 
+        (parsed_url.params == "type=d")
 	return segment
 end
 
@@ -560,7 +561,7 @@ end
 function Public.get_cb(request)
 	local parsed = Private.parse_url(request)
 	if parsed.scheme ~= "ftp" then 
-		return format("unknown scheme '%s'", parsed.scheme)
+		return string.format("unknown scheme '%s'", parsed.scheme)
 	end
 	local control, err = Private.open(parsed)
 	if not control then return err end
@@ -586,7 +587,7 @@ end
 function Public.put_cb(request)
 	local parsed = Private.parse_url(request)
 	if parsed.scheme ~= "ftp" then 
-		return format("unknown scheme '%s'", parsed.scheme)
+		return string.format("unknown scheme '%s'", parsed.scheme)
 	end
 	local control, err = Private.open(parsed)
 	if not control then return err end
@@ -612,7 +613,7 @@ end
 function Public.put(url_or_request, content)
 	local request = Private.build_request(url_or_request)
 	request.content_cb = function()
-		return content, strlen(content)
+		return content, string.len(content)
 	end
 	return Public.put_cb(request)
 end
@@ -630,7 +631,7 @@ end
 --   err: error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
 function Public.get(url_or_request)
-	local cat = Concat.create()
+	local cat = socket.concat.create()
 	local request = Private.build_request(url_or_request)
 	request.content_cb = function(chunk, err)
 		if chunk then cat:addstring(chunk) end

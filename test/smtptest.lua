@@ -1,122 +1,130 @@
 local sent = {}
 
-local from = "luasock@tecgraf.puc-rio.br"
-local server = "mail.tecgraf.puc-rio.br"
-local rcpt = "luasock@tecgraf.puc-rio.br"
+local from = "diego@localhost"
+local server = "localhost"
+local rcpt = "luasocket@localhost"
 
-local name = "/var/spool/mail/luasock"
+local files = {
+    "/var/spool/mail/luasocket",
+    "/var/spool/mail/luasock1",
+    "/var/spool/mail/luasock2",
+    "/var/spool/mail/luasock3",
+}
 
-local t = _time()
+local t = socket._time()
 local err
 
-dofile("parsembox.lua")
-local parse = parse
+dofile("mbox.lua")
+local parse = mbox.parse
 dofile("noglobals.lua")
 
 local total = function()
 	local t = 0
-	for i = 1, getn(%sent) do
-		t = t + %sent[i].count
+	for i = 1, table.getn(sent) do
+		t = t + sent[i].count
 	end
 	return t
 end
 
 local similar = function(s1, s2)
-    return strlower(gsub(s1, "%s", "")) == strlower(gsub(s2, "%s", ""))
-end
-
-local readfile = function(name)
-    local f = readfrom(name)
-    if not f then return nil end
-    local s = read("*a")
-    readfrom()
-    return s
-end
-
-local capture = function(cmd)
-    readfrom("| " .. cmd)
-    local s = read("*a")
-    readfrom()
-    return s
+    return 
+    string.lower(string.gsub(s1, "%s", "")) == 
+    string.lower(string.gsub(s2, "%s", ""))
 end
 
 local fail = function(s)
     s = s or "failed!"
     print(s)
-    exit()
+    os.exit()
+end
+
+local readfile = function(name)
+	local f = io.open(name, "r")
+	if not f then 
+        fail("unable to open file!")
+        return nil 
+    end
+	local s = f:read("*a")
+	f:close()
+	return s
 end
 
 local empty = function()
-    local f = openfile(%name, "w")
-    closefile(f)
+    for i,v in ipairs(files) do
+        local f = io.open(v, "w")
+        if not f then 
+            fail("unable to open file!")
+        end
+        f:close()
+    end
 end
 
 local get = function()
-	return %readfile(%name)
-end
-
-local list = function()
-    return %capture("ls -l " .. %name)
+    s = ""
+    for i,v in ipairs(files) do
+	    s = s .. "\n" .. readfile(v)
+    end
+    return s
 end
 
 local check_headers = function(sent, got)
     sent = sent or {}
     got = got or {}
     for i,v in sent do
-        if not %similar(v, got[i]) then %fail("header " .. v .. "failed!") end
+        if not similar(v, got[i]) then fail("header " .. v .. "failed!") end
     end
 end
 
 local check_body = function(sent, got)
     sent = sent or ""
     got = got or ""
-    if not %similar(sent, got) then %fail("bodies differ!") end
+    if not similar(sent, got) then fail("bodies differ!") end
 end
 
 local check = function(sent, m)
-	write("checking ", m.headers.title, ": ")
-	for i = 1, getn(sent) do
+	io.write("checking ", m.headers.title, ": ")
+	for i = 1, table.getn(sent) do
 		local s = sent[i]
 		if s.title == m.headers.title and s.count > 0 then
-			%check_headers(s.headers, m.headers)
-			%check_body(s.body, m.body)
+			check_headers(s.headers, m.headers)
+			check_body(s.body, m.body)
 			s.count = s.count - 1
 			print("ok")
 			return
 		end
 	end
-	%fail("not found")
+	fail("not found")
 end
 
 local insert = function(sent, message)
 	if type(message.rcpt) == "table" then
-		message.count = getn(message.rcpt)
+		message.count = table.getn(message.rcpt)
 	else message.count = 1 end
 	message.headers = message.headers or {}
 	message.headers.title = message.title
-	tinsert(sent, message)
+	table.insert(sent, message)
 end
 
 local mark = function()
-	local time = _time()
+	local time = socket._time()
     return { time = time }
 end
 
 local wait = function(sentinel, n)
     local to
-	write("waiting for ", n, " messages: ")
+	io.write("waiting for ", n, " messages: ")
     while 1 do
-		local mbox = %parse.mbox(%get())
-		if n == getn(mbox) then break end
-        if _time() - sentinel.time > 50 then 
+		local mbox = parse(get())
+		if n == table.getn(mbox) then break end
+        if socket._time() - sentinel.time > 50 then 
             to = 1 
             break
         end
-        _sleep(1)
-        write(".")
-        flush(_STDOUT)
+        socket._sleep(1)
+        io.write(".")
+        io.stdout:flush()
     end
-	if to then %fail("timeout")
+	if to then fail("timeout")
 	else print("ok") end
 end
 
@@ -129,16 +137,16 @@ Otherwise the mailer would
 think that the dot
 .
 is the end of the message
-and the remaining will cause
+and the remaining text would cause
 a lot of trouble.
 ]]
 
 insert(sent, {
     from = from,
     rcpt = {
-		"luasock2@tecgraf.puc-rio.br",
-		"luasock",
-		"luasock1"
+		"luasocket@localhost",
+		"luasock3@dell-diego.cs.princeton.edu",
+		"luasock1@dell-diego.cs.princeton.edu"
 	},
 	body = "multiple rcpt body",
 	title = "multiple rcpt",
@@ -147,8 +155,8 @@ insert(sent, {
 insert(sent, {
     from = from,
     rcpt = {
-		"luasock2@tecgraf.puc-rio.br",
-		"luasock",
+		"luasock2@localhost",
+		"luasock3",
 		"luasock1"
 	},
     headers = {
@@ -199,9 +207,9 @@ insert(sent, {
     title = "minimum message"
 })
 
-write("testing host not found: ")
-local c, e = connect("wrong.host", 25)
-local err = SMTP.mail{
+io.write("testing host not found: ")
+local c, e = socket.connect("wrong.host", 25)
+local err = socket.smtp.mail{
 	from = from,
 	rcpt = rcpt,
 	server = "wrong.host"
@@ -209,44 +217,43 @@ local err = SMTP.mail{
 if e ~= err then fail("wrong error message")
 else print("ok") end
 
-write("testing invalid from: ")
-local err = SMTP.mail{
+io.write("testing invalid from: ")
+local err = socket.smtp.mail{
 	from = ' " " (( _ * ', 
 	rcpt = rcpt,
 }
 if not err then fail("wrong error message")
 else print(err) end
 
-write("testing no rcpt: ")
-local err = SMTP.mail{
+io.write("testing no rcpt: ")
+local err = socket.smtp.mail{
 	from = from, 
 }
 if not err then fail("wrong error message")
 else print(err) end
 
-write("clearing mailbox: ")
+io.write("clearing mailbox: ")
 empty()
 print("ok")
 
-write("sending messages: ")
-for i = 1, getn(sent) do
-    err = SMTP.mail(sent[i])
+io.write("sending messages: ")
+for i = 1, table.getn(sent) do
+    err = socket.smtp.mail(sent[i])
     if err then fail(err) end
-    write("+")
-    flush(_STDOUT)
+    io.write("+")
+    io.stdout:flush()
 end
 print("ok")
 
 wait(mark(), total())
 
-write("parsing mailbox: ")
-local mbox = parse.mbox(get())
-print(getn(mbox) .. " messages found!")
+io.write("parsing mailbox: ")
+local mbox = parse(get())
+print(table.getn(mbox) .. " messages found!")
 
-for i = 1, getn(mbox) do
+for i = 1, table.getn(mbox) do
 	check(sent, mbox[i])
 end
 
-
 print("passed all tests")
-print(format("done in %.2fs", _time() - t))
+print(string.format("done in %.2fs", socket._time() - t))

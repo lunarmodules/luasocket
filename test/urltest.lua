@@ -1,5 +1,8 @@
+
+
+
 local check_build_url = function(parsed)
-	local built = URL.build_url(parsed)
+	local built = socket.url.build(parsed)
     if built ~= parsed.url then
 	    print("built is different from expected")
 		print(built)
@@ -9,7 +12,7 @@ local check_build_url = function(parsed)
 end
 
 local check_protect = function(parsed, path, unsafe)
-	local built = URL.build_path(parsed, unsafe)
+	local built = socket.url.build_path(parsed, unsafe)
 	if built ~= path then
 		print(built, path)
 	    print("path composition failed.")
@@ -18,9 +21,9 @@ local check_protect = function(parsed, path, unsafe)
 end
 
 local check_invert = function(url)
-	local parsed = URL.parse_url(url)
-	parsed.path = URL.build_path(URL.parse_path(parsed.path))
-	local rebuilt = URL.build_url(parsed)
+	local parsed = socket.url.parse(url)
+	parsed.path = socket.url.build_path(socket.url.parse_path(parsed.path))
+	local rebuilt = socket.url.build(parsed)
 	if rebuilt ~= url then
 		print(url, rebuilt)
 	    print("original and rebuilt are different")
@@ -29,7 +32,7 @@ local check_invert = function(url)
 end
 
 local check_parse_path = function(path, expect)
-	local parsed = URL.parse_path(path)
+	local parsed = socket.url.parse_path(path)
 	for i = 1, math.max(table.getn(parsed), table.getn(expect)) do
 		if parsed[i] ~= expect[i] then
 			print(path)
@@ -48,7 +51,7 @@ local check_parse_path = function(path, expect)
 	    print("is_absolute mismatch")
 		exit()
 	end
-	local built = URL.build_path(expect)
+	local built = socket.url.build_path(expect)
 	if built ~= path then
 		print(built, path)
 	    print("path composition failed.")
@@ -57,7 +60,7 @@ local check_parse_path = function(path, expect)
 end
 
 local check_absolute_url = function(base, relative, absolute)
-	local res = URL.absolute_url(base, relative)
+	local res = socket.url.absolute(base, relative)
 	if res ~= absolute then 
 		write("absolute: In test for '", relative, "' expected '", 
             absolute, "' but got '", res, "'\n")
@@ -68,7 +71,7 @@ end
 local check_parse_url = function(gaba)
 	local url = gaba.url
 	gaba.url = nil
-	local parsed = URL.parse_url(url)
+	local parsed = socket.url.parse(url)
 	for i, v in gaba do
 		if v ~= parsed[i] then
 			write("parse: In test for '", url, "' expected ", i, " = '", 

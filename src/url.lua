@@ -8,7 +8,7 @@
 ----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
-URL = Public
+socket.url = Public
 
 -----------------------------------------------------------------------------
 -- Parses a url and returns a table with all its parts according to RFC 2396
@@ -28,7 +28,7 @@ URL = Public
 -- Obs:
 --   the leading '/' in {/<path>} is considered part of <path>
 -----------------------------------------------------------------------------
-function Public.parse_url(url, default)
+function Public.parse(url, default)
     -- initialize default parameters
     local parsed = default or {}
     -- empty url is parsed to nil
@@ -70,7 +70,7 @@ end
 -- Returns
 --   a stringing with the corresponding URL
 -----------------------------------------------------------------------------
-function Public.build_url(parsed)
+function Public.build(parsed)
     local url = parsed.path or ""
     if parsed.params then url = url .. ";" .. parsed.params end
     if parsed.query then url = url .. "?" .. parsed.query end
@@ -102,9 +102,9 @@ end
 -- Returns
 --   corresponding absolute url
 -----------------------------------------------------------------------------
-function Public.absolute_url(base_url, relative_url)
-    local base = Public.parse_url(base_url)
-    local relative = Public.parse_url(relative_url)
+function Public.absolute(base_url, relative_url)
+    local base = Public.parse(base_url)
+    local relative = Public.parse(relative_url)
     if not base then return relative_url
     elseif not relative then return base_url
     elseif relative.scheme then return relative_url
@@ -124,7 +124,7 @@ function Public.absolute_url(base_url, relative_url)
                 relative.path = Private.absolute_path(base.path,relative.path)
             end
         end
-        return Public.build_url(relative)
+        return Public.build(relative)
     end
 end
 
@@ -141,7 +141,7 @@ function Public.parse_path(path)
 	path = string.gsub(path, "%s", "")
 	string.gsub(path, "([^/]+)", function (s) table.insert(parsed, s) end)
 	for i = 1, table.getn(parsed) do
-		parsed[i] = Code.unescape(parsed[i])
+		parsed[i] = socket.code.unescape(parsed[i])
 	end
 	if string.sub(path, 1, 1) == "/" then parsed.is_absolute = 1 end
 	if string.sub(path, -1, -1) == "/" then parsed.is_directory = 1 end
@@ -201,7 +201,7 @@ function Private.protect_segment(s)
 	local segment_set = Private.segment_set
 	return string.gsub(s, "(%W)", function (c) 
 		if segment_set[c] then return c
-		else return Code.escape(c) end
+		else return socket.code.escape(c) end
 	end)
 end
 

@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
-SMTP = Public
+socket.smtp = Public
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -47,7 +47,7 @@ end
 -----------------------------------------------------------------------------
 function Private.try_receive(...)
     local sock = arg[1]
-    local data, err = call(sock.receive, arg)
+    local data, err = sock.receive(unpack(arg))
     if err then sock:close() end
     return data, err
 end
@@ -81,13 +81,13 @@ function Private.get_answer(control)
     local line, err = Private.try_receive(control)
     local answer = line
     if err then return nil, err end
-    _,_, code, sep = strfind(line, "^(%d%d%d)(.)")
+    _,_, code, sep = string.find(line, "^(%d%d%d)(.)")
     if not code or not sep then return nil, answer end
     if sep == "-" then -- answer is multiline
         repeat 
             line, err = Private.try_receive(control)
             if err then return nil, err end
-            _,_, lastcode, sep = strfind(line, "^(%d%d%d)(.)")
+            _,_, lastcode, sep = string.find(line, "^(%d%d%d)(.)")
             answer = answer .. "\n" .. line
         until code == lastcode and sep == " " -- answer ends with same code
     end
@@ -108,7 +108,7 @@ function Private.check_answer(control, success)
     local answer, code = Private.get_answer(control)
     if not answer then return nil, code end
     if type(success) ~= "table" then success = {success} end
-    for i = 1, getn(success) do
+    for i = 1, table.getn(success) do
         if code == success[i] then
             return code, answer
         end
@@ -157,7 +157,7 @@ end
 --   answer: complete server reply or error message
 -----------------------------------------------------------------------------
 function Private.send_mail(sock, sender)
-    local param = format("FROM:<%s>", sender or "")
+    local param = string.format("FROM:<%s>", sender or "")
     local err = Private.send_command(sock, "MAIL", param)
     if err then return nil, err end
     return Private.check_answer(sock, 250)
@@ -198,7 +198,7 @@ function Private.send_data(sock, headers, body)
     local code, answer = Private.check_answer(sock, 354)
     if not code then return nil, answer end
     -- avoid premature end in message body
-    body = gsub(body or "", "\n%.", "\n%.%.")
+    body = string.gsub(body or "", "\n%.", "\n%.%.")
     -- mark end of message body
     body = body .. "\r\n.\r\n"
     err = Private.send_headers(sock, headers)
@@ -220,8 +220,9 @@ function Private.send_rcpt(sock, rcpt)
     local err
 	local code, answer = nil, "No recipient specified"
     if type(rcpt) ~= "table" then rcpt = {rcpt} end
-    for i = 1, getn(rcpt) do
-        err = Private.send_command(sock, "RCPT", format("TO:<%s>", rcpt[i]))
+    for i = 1, table.getn(rcpt) do
+        err = Private.send_command(sock, "RCPT", 
+            string.format("TO:<%s>", rcpt[i]))
         if err then return nil, err end
         code, answer = Private.check_answer(sock, {250, 251})
         if not code then return code, answer end
@@ -242,7 +243,7 @@ function Private.open(server)
 	-- default server
 	server = server or Public.SERVER
 	-- connect to server and make sure we won't hang
-    local sock, err = connect(server, Public.PORT)
+    local sock, err = socket.connect(server, Public.PORT)
     if not sock then return nil, err end
     sock:timeout(Public.TIMEOUT)
     -- initial server greeting
