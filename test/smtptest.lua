@@ -4,26 +4,14 @@ local from = "luasock@tecgraf.puc-rio.br"
 local server = "mail.tecgraf.puc-rio.br"
 local rcpt = "luasock@tecgraf.puc-rio.br"
 
-local parse = {}
-
 local name = "/var/spool/mail/luasock"
 
 local t = _time()
 local err
 
-function mysetglobal (varname, oldvalue, newvalue)
-    print("changing " .. varname)
-     %rawset(%globals(), varname, newvalue)
-end
-function mygetglobal (varname, newvalue)
-    print("checking " .. varname)
-     return %rawget(%globals(), varname)
-end
-settagmethod(tag(nil), "setglobal", mysetglobal)
-settagmethod(tag(nil), "getglobal", mygetglobal)
-
-assert(dofile("../lua/smtp.lua"))
-assert(dofile("../lua/cl-compat.lua"))
+dofile("parsembox.lua")
+local parse = parse
+dofile("noglobals.lua")
 
 local total = function()
 	local t = 0
@@ -35,48 +23,6 @@ end
 
 local similar = function(s1, s2)
     return strlower(gsub(s1, "%s", "")) == strlower(gsub(s2, "%s", ""))
-end
-
-function parse.headers(headers_s)
-    local headers = {}
-    headers_s = "\n" .. headers_s .. "$$$:\n"
-    local i, j = 1, 1
-    local name, value, _
-    while 1 do
-        j = strfind(headers_s, "\n%S-:", i+1)
-        if not j then break end
-        _, _, name, value = strfind(strsub(headers_s, i+1, j-1), "(%S-): (.*)")
-        value = gsub(value, "\r\n", "\n")
-        value = gsub(value, "\n%s*", " ")
-        name = strlower(name)
-        if headers[name] then headers[name] = headers[name] .. ", " .. value
-        else headers[name] = value end
-        i, j = j, i
-    end
-    headers["$$$"] = nil
-    return headers
-end
-
-function parse.message(message_s)
-    message_s = gsub(message_s, "^.-\n", "")
-    local _, headers_s, body
-    _, _, headers_s, body = strfind(message_s, "^(.-\n)\n(.*)")
-	headers_s = headers_s or ""
-	body = body or ""
-    return { headers = %parse.headers(headers_s), body = body }
-end
-
-function parse.mbox(mbox_s)
-    local mbox = {}
-    mbox_s = "\n" .. mbox_s .. "\nFrom "
-    local i, j = 1, 1
-    while 1 do
-        j = strfind(mbox_s, "\nFrom ", i + 1)
-        if not j then break end
-        tinsert(mbox, %parse.message(strsub(mbox_s, i + 1, j - 1)))
-        i, j = j, i
-    end
-    return mbox
 end
 
 local readfile = function(name)
