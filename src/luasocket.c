@@ -20,11 +20,11 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include "compat-5.1.h"
+#include "luasocket.h"
 
 /*=========================================================================*\
 * LuaSocket includes
 \*=========================================================================*/
-#include "luasocket.h"
 
 #include "auxiliar.h"
 #include "except.h"

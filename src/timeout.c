@@ -9,7 +9,6 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "luasocket.h"
 #include "auxiliar.h"
 #include "timeout.h"
 

@@ -69,7 +69,7 @@ socket.sinkt["http-chunked"] = function(sock)
         __call = function(self, chunk, err)
             if not chunk then return sock:send("0\r\n\r\n") end
             local size = string.format("%X\r\n", string.len(chunk))
-            return sock:send(size, chunk, "\r\n")
+            return sock:send(size ..  chunk .. "\r\n")
         end
     })
 end
