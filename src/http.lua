@@ -13,6 +13,8 @@ local socket = _G[LUASOCKET_LIBNAME]
 -- require other modules
 require("ltn12")
 require("mime")
+-- get MIME namespace
+local mime = _G[MIME_LIBNAME] 
 require("url")
 
 -- create namespace inside LuaSocket namespace

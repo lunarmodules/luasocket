@@ -38,6 +38,7 @@ typedef struct sockaddr SA;
 * interface to sockets
 \*=========================================================================*/
 int sock_open(void);
+int sock_close(void);
 void sock_destroy(p_sock ps);
 void sock_shutdown(p_sock ps, int how); 
 int sock_send(p_sock ps, const char *data, size_t count, 

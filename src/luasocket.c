@@ -25,11 +25,10 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "base.h"
 #include "auxiliar.h"
+#include "base.h"
 #include "timeout.h"
 #include "buffer.h"
-#include "socket.h"
 #include "inet.h"
 #include "tcp.h"
 #include "udp.h"
@@ -40,10 +39,10 @@
 * Modules
 \*-------------------------------------------------------------------------*/
 static const luaL_reg mod[] = {
+    {"auxiliar", aux_open},
     {"base", base_open},
-    {"aux", aux_open},
-    {"tm", tm_open},
-    {"buf", buf_open},
+    {"timeout", tm_open},
+    {"buffer", buf_open},
     {"inet", inet_open},
     {"tcp", tcp_open},
     {"udp", udp_open},
@@ -55,14 +54,8 @@ static const luaL_reg mod[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes all library modules.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_socket(lua_State *L)
-{
+LUASOCKET_API int luaopen_socket(lua_State *L) {
     int i;
-    if (!sock_open()) {
-        lua_pushnil(L);
-        lua_pushstring(L, "unable to initialize library");
-        return 2;
-    }
     for (i = 0; mod[i].name; i++) 
         mod[i].func(L);
     return 1;

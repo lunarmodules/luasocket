@@ -82,8 +82,7 @@ int luaopen_mime(lua_State *L)
     /* initialize lookup tables */
     qpsetup(qpclass, qpunbase);
     b64setup(b64unbase);
-    lua_pop(L, 1);
-    return 0;
+    return 1;
 }
 
 /*=========================================================================*\

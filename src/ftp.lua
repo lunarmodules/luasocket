@@ -13,6 +13,7 @@ local socket = _G[LUASOCKET_LIBNAME]
 -- require other modules
 require("ltn12")
 require("url")
+require("tp")
 
 -- create namespace inside LuaSocket namespace
 socket.ftp  = socket.ftp or {}
@@ -101,7 +102,9 @@ function metat.__index:send(sendt)
     local data
     socket.try(self.pasvt or self.portt, "need port or pasv first")
     if self.pasvt then data = socket.try(pasv(self.pasvt)) end
-    socket.try(self.tp:command(sendt.command or "stor", sendt.argument))
+    local argument = sendt.argument or string.gsub(sendt.path, "^/", "")
+    local command =  sendt.command or "stor"
+    socket.try(self.tp:command(command, argument))
     local code, reply = socket.try(self.tp:check{"2..", "1.."})
     if self.portt then data = socket.try(port(self.portt)) end
     local step = sendt.step or ltn12.pump.step
@@ -128,7 +131,9 @@ function metat.__index:receive(recvt)
     local data
     socket.try(self.pasvt or self.portt, "need port or pasv first")
     if self.pasvt then data = socket.try(pasv(self.pasvt)) end
-    socket.try(self.tp:command(recvt.command or "retr", recvt.argument))
+    local argument = recvt.argument or string.gsub(recvt.path, "^/", "")
+    local command =  recvt.command or "retr"
+    socket.try(self.tp:command(command, argument))
     local code = socket.try(self.tp:check{"1..", "2.."})
     if self.portt then data = socket.try(port(self.portt)) end
     local source = socket.source("until-closed", data)
@@ -200,8 +205,6 @@ local function parse(url)
         putt.type = socket.skip(2, string.find(putt.params, pat))
         socket.try(putt.type == "a" or putt.type == "i")
     end
-    -- skip first backslash in path
-    putt.argument = string.sub(putt.path, 2)
     return putt
 end
 

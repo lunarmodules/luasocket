@@ -9,10 +9,11 @@
 require("socket")
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME]
+
 -- create url namespace inside LuaSocket namespace
 local url = socket.url or {}
 socket.url = url
--- make all module globals fall into smtp namespace
+-- make all module globals fall into url namespace
 setmetatable(url, { __index = _G })
 setfenv(1, url)
 

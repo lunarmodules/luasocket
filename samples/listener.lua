@@ -4,6 +4,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
+require("socket")
 host = host or "*"
 port = port or 8080
 if arg then
@@ -11,18 +12,10 @@ if arg then
 	port = arg[2] or port
 end
 print("Binding to host '" ..host.. "' and port " ..port.. "...")
-s, e = socket.bind(host, port)
-if not s then
-	print(e)
-	exit()
-end
-i, p = s:getsockname()
+s = socket.try(socket.bind(host, port))
+i, p  = socket.try(s:getsockname())
 print("Waiting connection from talker on " .. i .. ":" .. p .. "...")
-c, e = s:accept()
-if not c then
-	print(e)
-	exit()
-end
+c = socket.try(s:accept())
 print("Connected. Here is the stuff:")
 l, e = c:receive()
 while not e do

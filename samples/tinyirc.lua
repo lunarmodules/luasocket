@@ -4,6 +4,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
+require("socket")
 host = host or "*"
 port1 = port1 or 8080
 port2 = port2 or 8181
@@ -13,12 +14,10 @@ if arg then
     port2 = arg[3] or port2
 end
 
-server1, error = socket.bind(host, port1)
-assert(server1, error)
+server1 = socket.try(socket.bind(host, port1))
+server2 = socket.try(socket.bind(host, port2))
 server1:settimeout(1) -- make sure we don't block in accept
-server2, error = socket.bind(host, port2)
-assert(server2, error)
-server2:settimeout(1) -- make sure we don't block in accept
+server2:settimeout(1)
 
 io.write("Servers bound\n")
 
@@ -49,7 +48,7 @@ set:insert(server2)
 
 while 1 do
     local readable, _, error = socket.select(set, nil)
-    for _, input in readable do
+    for _, input in ipairs(readable) do
         -- is it a server socket?
         if input == server1 or input == server2 then
             io.write("Waiting for clients\n")
@@ -68,10 +67,12 @@ while 1 do
                 set:remove(input) 
             else
             	io.write("Broadcasting line '", line, "'\n")
-            	__, writable, error = socket.select(nil, set, 1)
+            	writable, error = socket.skip(1, socket.select(nil, set, 1))
             	if not error then
-                	for ___, output in writable do
-                    	output:send(line .. "\n")
+                	for __, output in ipairs(writable) do
+                    	if output ~= input then 
+                            output:send(line .. "\n")
+                        end
                 	end
             	else io.write("No client ready to receive!!!\n") end
 			end

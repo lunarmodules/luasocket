@@ -6,11 +6,12 @@
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 -- make sure LuaSocket is loaded
-require"socket"
+require("socket")
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME] 
 
-require"ltn12"
+require("ltn12")
+require("tp")
 
 -- create smtp namespace inside LuaSocket namespace
 local smtp = socket.smtp or {}

@@ -1,54 +1,14 @@
-* should be interrupt-safe
-* notice the change in callback conventions
-* new mime module replacing old code module (faster, more functionality)
-* new socket options (many)
-* only allocate in case of success
-* optimize for success (only call select if fails) 
-* add proxy support to http
-* add gethostname 
-* local connect 
-* connect with timeout
-* change code to mime
-* change stay to redirect 
-* add shutdown
-* change send/recv to avoid using select
-* O location do "redirect" pode ser relativo ao servidor atual (não pode,
-  mas os servidores fazem merda...)
-* Ajeitar para Lua 5.0
-* Padronizar os retornos de funccao
-* Separar as classes em arquivos
-* Retorno de sendto em datagram sockets pode ser refused
-* select sets are now associative
-* colocar pump.all, pump.step
-* mudar ltn12.html e usar o exemplo source.cat que está muito melhor.
-* break smtp.send into c = smtp.open, c:send() c:close()
-* fazer com que a socket.source e socket.sink sejam "selectable".
-* change mime.eol to output marker on detection of first candidate, instead
-  of on the second. that way it works in one pass for strings that end with 
-  one candidate.
-* unify backbone of smtp and ftp
-* unify filter and send/receive callback. new sink/source/pump idea.
-* get rid of aux_optlstring
-* get rid of unpack in mime.lua
-* create socket.(sink|source).simplify 
-* break chain into a simpler binary chain and a complex (recursive) one. 
-* Create a passive mode option for the FTP (good for firewall).
-* Modules should return their namespace table in the end of the chunk.
-
-
-get.lua precisa de ftp.get com url e sink
+ajeitar os README.*
+ajeitar select. upvalue nao tem nada a ver...
 make sure filter.chain fails gracefully.
 ajeitar o manual sobre select, mais liberal agora
-conjunto associativo
 
 falar sobre encodet/wrapt/decodet no manual sobre mime
-
 
 RECEIVE MUDOU!!! (partial stuff) COLOCAR NO MANUAL.
 HTTP.lua mudou bastante também.
 pump.step usado em todo mundo que recebe source ou sink
 
-colocar um userdata com gc metamethod pra chamar sock_close (WSAClose);
 sources ans sinks are always simple in http and ftp and smtp
 expose encode/decode tables to provide extensibility for mime module
 use coroutines instead of fancy filters
@@ -60,6 +20,7 @@ pop3???
 add socket.TIMEOUT to be default timeout? 
 
 manual
+    compatibility: select sets are associative
     add socket.connect and socket.bind to the manual
     say what a nil callback does for http
     check all occurences of it's
@@ -87,24 +48,9 @@ tests
     check for interrupts
 
 wrp can't break lines in the middle of a line break.
-call select before accept, not after, dumbass!
-get rid of setnonblocking/setblocking in the bind function
-close has to block...
-fmt is not a good name
-change wrap() to accept a number and default to "character"
-move gethostname to dns table
-get rid of _cb in name of functions? 
-trust character constants in mime.c? noooooo.
-smtp.lua needs stuff filter
 
 add comments into each C module.
-new option.c module to put all options (TCP and UDP share...)?
 testar os options!
-add _tostring methods!
-change all modules to use the new namespace scheme
-
-write some utilities that use the code.lua module and put them 
-in etc, modify the README.etc file and makefile.dist (eol.lua is done)
 
 use gethostname it in SMTP
 
@@ -150,3 +96,61 @@ Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
 
 - unix 92 bytes maximo no endereço, incluindo o zero
 - unix 9216 maximo de datagram size
+
+--------------
+these are done
+--------------
+
+* should be interrupt-safe
+* notice the change in callback conventions
+* new mime module replacing old code module (faster, more functionality)
+* new socket options (many)
+* only allocate in case of success
+* optimize for success (only call select if fails) 
+* add proxy support to http
+* add gethostname 
+* local connect 
+* connect with timeout
+* change code to mime
+* change stay to redirect 
+* add shutdown
+* change send/recv to avoid using select
+* O location do "redirect" pode ser relativo ao servidor atual (não pode,
+  mas os servidores fazem merda...)
+* Ajeitar para Lua 5.0
+* Padronizar os retornos de funccao
+* Separar as classes em arquivos
+* Retorno de sendto em datagram sockets pode ser refused
+* select sets are now associative
+* colocar pump.all, pump.step
+* mudar ltn12.html e usar o exemplo source.cat que está muito melhor.
+* break smtp.send into c = smtp.open, c:send() c:close()
+* fazer com que a socket.source e socket.sink sejam "selectable".
+* change mime.eol to output marker on detection of first candidate, instead
+  of on the second. that way it works in one pass for strings that end with 
+  one candidate.
+* unify backbone of smtp and ftp
+* unify filter and send/receive callback. new sink/source/pump idea.
+* get rid of aux_optlstring
+* get rid of unpack in mime.lua
+* create socket.(sink|source).simplify 
+* break chain into a simpler binary chain and a complex (recursive) one. 
+* Create a passive mode option for the FTP (good for firewall).
+* Modules should return their namespace table in the end of the chunk.
+* get.lua precisa de ftp.get com url e sink
+* conjunto associativo
+* colocar um userdata com gc metamethod pra chamar sock_close (WSAClose);
+* call select before accept, not after, dumbass!
+* get rid of setnonblocking/setblocking in the bind function
+* close has to block...
+* fmt is not a good name
+* change wrap() to accept a number and default to "character"
+* move gethostname to dns table
+* get rid of _cb in name of functions? 
+* trust character constants in mime.c? yup.
+* smtp.lua needs stuff filter
+* new option.c module to put all options (TCP and UDP share...)?
+* add _tostring methods!
+* change all modules to use the new namespace scheme
+* write some utilities that use the code.lua module and put them 
+* in etc, modify the README.etc file and makefile.dist (eol.lua is done)

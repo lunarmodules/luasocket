@@ -106,7 +106,10 @@ function getbyftp(url, file)
     -- only print feedback if output is not stdout
     -- and we don't know how big the file is
     if file then save = ltn12.sink.chain(stats(), save) end
-    local ret, err = socket.ftp.get {url = url, sink = save, type = "i"}
+    local gett = socket.url.parse(url)
+    gett.sink = save
+    gett.type = "i"
+    local ret, err = socket.ftp.get(gett) 
 	if err then print(err) end
 end
 

@@ -6,10 +6,10 @@
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 -- make sure LuaSocket is loaded
-if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
+require("socket")
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME] 
-if not socket then error('module requires LuaSocket') end
+
 -- create namespace inside LuaSocket namespace
 socket.tp  = socket.tp or {}
 -- make all module globals fall into namespace
@@ -35,6 +35,7 @@ local function get_reply(control)
         -- reply ends with same code
         until code == current and sep == " " 
     end
+print(reply)
     return code, reply
 end
 
@@ -58,6 +59,7 @@ function metat.__index:check(ok)
 end
 
 function metat.__index:command(cmd, arg)
+print(cmd, arg)
     if arg then return self.control:send(cmd .. " " .. arg.. "\r\n")
     else return self.control:send(cmd .. "\r\n") end
 end

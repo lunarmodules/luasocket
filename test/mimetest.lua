@@ -8,9 +8,13 @@ local qptest = "qptest.bin"
 local eqptest = "qptest.bin2"
 local dqptest = "qptest.bin3"
 
-local b64test = "luasocket"
+local b64test = "libluasocket.dylib"
 local eb64test = "b64test.bin"
 local db64test = "b64test.bin2"
+
+-- make sure test file exists
+local f = assert(io.open(b64test, "r"))
+f:close()
 
 -- from Machado de Assis, "A Mão e a Rosa"
 local mao = [[
