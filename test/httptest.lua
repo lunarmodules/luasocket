@@ -19,7 +19,7 @@ http.TIMEOUT = 10
 
 local t = socket.gettime()
 
-host = host or "diego.student.princeton.edu"
+host = host or "diego.student.dyn.cs.princeton.edu"
 proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
@@ -69,7 +69,6 @@ end
 io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
 local back, c, h = http.request("http://" .. host .. forth)
-print(back, c, h)
 if not back then fail(c) end
 back = url.parse(back)
 if similar(back.query, "this+is+the+query+string") then print("ok")
