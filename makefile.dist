@@ -2,7 +2,7 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-1.2
+DIST = luasocket-1.2.1
 
 SRC = ~diego/tec/luasocket
 
