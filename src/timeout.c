@@ -118,20 +118,25 @@ p_tm tm_markstart(p_tm tm) {
 }
 
 /*-------------------------------------------------------------------------*\
-* Gets time in ms, relative to system startup.
+* Gets time in s, relative to January 1, 1970 (UTC) 
 * Returns
-*   time in ms.
+*   time in s.
 \*-------------------------------------------------------------------------*/
 #ifdef _WIN32
 double tm_gettime(void) {
     FILETIME ft;
+    double t;
     GetSystemTimeAsFileTime(&ft);
-    return ft.dwLowDateTime/1.0e7 + ft.dwHighDateTime*(4294967296.0/1.0e7);
+    /* Windows file time (time since January 1, 1601 (UTC)) */
+    t  = ft.dwLowDateTime/1.0e7 + ft.dwHighDateTime*(4294967296.0/1.0e7);
+    /* convert to Unix Epoch time (time since January 1, 1970 (UTC)) */
+    return (t - 11644473600.0);
 }
 #else
 double tm_gettime(void) {
     struct timeval v;
     gettimeofday(&v, (struct timezone *) NULL);
+    /* Unix Epoch time (time since January 1, 1970 (UTC)) */
     return v.tv_sec + v.tv_usec/1.0e6;
 }
 #endif
