@@ -200,7 +200,6 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
 {
     t_sock sock = *ps;
     int put;
-    int ret;
     /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
     /* try to send something */
@@ -212,6 +211,9 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
         /* run select to avoid busy wait */
         if (WSAGetLastError() == WSAEWOULDBLOCK) {
             fd_set fds;
+            int ret;
+            /* optimize for the timeout = 0 case */
+            if (timeout == 0) return IO_TIMEOUT;
             FD_ZERO(&fds);
             FD_SET(sock, &fds);
             ret = sock_select(0, NULL, &fds, NULL, timeout);
@@ -236,13 +238,14 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
 {
     t_sock sock = *ps;
     int put;
-    int ret;
     if (sock == SOCK_INVALID) return IO_CLOSED;
     put = sendto(sock, data, (int) count, 0, addr, addr_len);
     if (put <= 0) {
         *sent = 0;
         if (WSAGetLastError() == WSAEWOULDBLOCK) {
             fd_set fds;
+            int ret;
+            if (timeout == 0) return IO_TIMEOUT;
             FD_ZERO(&fds);
             FD_SET(sock, &fds);
             ret = sock_select(0, NULL, &fds, NULL, timeout);
@@ -269,6 +272,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
         int ret;
         *got = 0;
         if (taken == 0 || WSAGetLastError() != WSAEWOULDBLOCK) return IO_CLOSED;
+        if (timeout == 0) return IO_TIMEOUT;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(0, &fds, NULL, NULL, timeout);
@@ -295,6 +299,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         int ret;
         *got = 0;
         if (taken == 0 || WSAGetLastError() != WSAEWOULDBLOCK) return IO_CLOSED;
+        if (timeout == 0) return IO_TIMEOUT;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(0, &fds, NULL, NULL, timeout);

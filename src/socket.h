@@ -60,6 +60,6 @@ const char *sock_listen(p_sock ps, int backlog);
 const char *sock_accept(p_sock ps, p_sock pa, SA *addr, 
         socklen_t *addr_len, p_tm tm);
 
-const char *sock_hoststrerror();
+const char *sock_hoststrerror(void);
 
 #endif /* SOCK_H */

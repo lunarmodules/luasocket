@@ -1,4 +1,11 @@
-make sure all modules that can use socket.newtry
+
+ajeitar o connect com a dica do mike
+    if ((err > 1 || !FD_ISSET(sock, &wfds)) &&
+    recv(sock, &dummy, 0, 0) < 0 && errno != EWOULDBLOCK) ...
+
+sort out the wrap around of gettime...
+optmize aux_getgroupudata
+make sure all modules that can use it actually use socket.newtry
 make select interrupt safe
 adicionar exemplos de expansão: pipe, local, named pipe
 Add service name translation.
@@ -9,5 +16,7 @@ testar os options!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 - SSL
-- unix 92 bytes maximo no endereço, incluindo o zero
-- unix 9216 maximo de datagram size
+
+these are done
+* unix 92 bytes maximo no endereço, incluindo o zero
+*  unix 9216 maximo de datagram size

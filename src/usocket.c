@@ -113,7 +113,7 @@ const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm)
         if (err > 0) {
             char dummy;
             /* recv will set errno to the value a blocking connect would set */
-            if (recv(sock, &dummy, 0, 0) < 0 && errno != EWOULDBLOCK)
+            if (recv(sock, &dummy, 0, 0) < 0 && errno != EAGAIN)
                 return sock_connectstrerror(errno);
             else 
                 return NULL;
@@ -179,7 +179,7 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
         /* if result is valid, we are done */
         if (*pa != SOCK_INVALID) return NULL;
         /* find out if we failed for a fatal reason */
-        if (errno != EWOULDBLOCK && errno != ECONNABORTED)
+        if (errno != EAGAIN && errno != ECONNABORTED)
             return sock_acceptstrerror(errno);
         /* call select to avoid busy-wait. */
         FD_ZERO(&fds);
@@ -206,21 +206,23 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
     while (put < 0 && errno == EINTR);
     /* deal with failure */
     if (put <= 0) {
+        int ret;
         fd_set fds;
         /* in any case, nothing has been sent */
         *sent = 0;
+        /* only proceed to select if no error happened */
+        if (errno != EAGAIN) return IO_ERROR;
+        /* optimize for the timeout = 0 case */
+        if (timeout == 0) return IO_TIMEOUT;
         /* here we know the connection has been closed */
         if (errno == EPIPE) return IO_CLOSED;
         /* run select to avoid busy wait */
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        if (sock_select(sock+1, NULL, &fds, NULL, timeout) <= 0) {
-            /* here the call was interrupted. calling again might work */
-            if (errno == EINTR) return IO_RETRY;
-            /* here there was no data before timeout */
-            else return IO_TIMEOUT;
-            /* here we didn't send anything, but now we can */
-        } else return IO_RETRY;
+        ret = sock_select(sock+1, NULL, &fds, NULL, timeout);
+        if (ret == 0) return IO_TIMEOUT;
+        else if (ret > 0 || errno == EINTR) return IO_RETRY;
+        else return IO_ERROR;
     /* here we successfully sent something */
     } else {
         *sent = put;
@@ -240,15 +242,18 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
     do put = sendto(sock, data, count, 0, addr, addr_len);  
     while (put < 0 && errno == EINTR);
     if (put <= 0) {
+        int ret;
         fd_set fds;
         *sent = 0;
+        if (errno != EAGAIN) return IO_ERROR;
+        if (timeout == 0) return IO_TIMEOUT;
         if (errno == EPIPE) return IO_CLOSED;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        if (sock_select(sock+1, NULL, &fds, NULL, timeout) <= 0) {
-            if (errno == EINTR) return IO_RETRY;
-            else return IO_TIMEOUT;
-        } else return IO_RETRY;
+        ret = sock_select(sock+1, NULL, &fds, NULL, timeout);
+        if (ret == 0) return IO_TIMEOUT;
+        else if (ret > 0 || errno == EINTR) return IO_RETRY;
+        else return IO_ERROR;
     } else {
         *sent = put;
         return IO_DONE;
@@ -270,12 +275,14 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
         int ret;
         *got = 0;
         if (taken == 0) return IO_CLOSED;
+        if (errno != EAGAIN) return IO_ERROR;
+        if (timeout == 0) return IO_TIMEOUT;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(sock+1, &fds, NULL, NULL, timeout);
-        if (ret < 0 && errno == EINTR) return IO_RETRY;
         if (ret == 0) return IO_TIMEOUT;
-        return IO_RETRY;
+        else if (ret > 0 || errno == EINTR) return IO_RETRY;
+        else return IO_ERROR;
     } else {
         *got = taken;
         return IO_DONE;
@@ -298,12 +305,14 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         int ret;
         *got = 0;
         if (taken == 0) return IO_CLOSED;
+        if (errno != EAGAIN) return IO_ERROR;
+        if (timeout == 0) return IO_TIMEOUT;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(sock+1, &fds, NULL, NULL, timeout);
-        if (ret < 0 && errno == EINTR) return IO_RETRY;
         if (ret == 0) return IO_TIMEOUT;
-        return IO_RETRY;
+        else if (ret > 0 || errno == EINTR) return IO_RETRY;
+        else return IO_ERROR;
     } else {
         *got = taken;
         return IO_DONE;
@@ -363,7 +372,7 @@ static const char *sock_createstrerror(int err)
 static const char *sock_acceptstrerror(int err)
 {
     switch (err) {
-        case EWOULDBLOCK: return io_strerror(IO_RETRY);
+        case EAGAIN: return io_strerror(IO_RETRY);
         case EBADF: return "invalid descriptor";
         case ENOBUFS: case ENOMEM: return "insuffucient buffer space";
         case ENOTSOCK: return "descriptor not a socket";
