@@ -1,6 +1,3 @@
-use wim's filter.chain or something better
-make sure standard libraries are "required" by modules before use.
-eliminate globals from namespaces created by module().
 ftp.send/recv return bytes transfered?
 new scheme to choose family/protocol of object to create
 change ltn13 to make sure drawbacks are obvious
@@ -23,6 +20,9 @@ testar os options!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 
+*eliminate globals from namespaces created by module().
+*make sure standard libraries are "required" by modules before use.
+*use wim's filter.chain or something better
 *close wasn't returning 1
 *make sure errors not thrown by try() are not caught by protect()
 *move wsocket.c:sock_send kludge to buffer.c:sendraw?

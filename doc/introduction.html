@@ -4,7 +4,8 @@
 
 <head>
 <meta name="description" content="LuaSocket: Introduction to the core">
-<meta name="keywords" content="Lua, Library, TCP, UDP, Network, Support"> 
+<meta name="keywords" content="Lua, LuaSocket, TCP, UDP, Network,
+Library, Support"> 
 <title>LuaSocket: Introduction to the core</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
@@ -26,6 +27,7 @@
 <p class=bar>
 <a href="home.html">home</a> &middot;
 <a href="home.html#download">download</a> &middot;
+<a href="instalation.html">instalation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a> 
 </p>
@@ -103,29 +105,6 @@ functions from the DNS module are provided to convert between host names and IP 
 Together, these changes make network programming in LuaSocket much simpler
 than it is in C, as the following sections will show.
 </p>
-
-<!-- initializing +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<h3>Initializing the library</h3>
-
-<p>
-The core LuaSocket is almost entirely implemented in C. It is 
-usually available as a dynamic library which the interpreter can load 
-with the help of a loader module written in Lua. 
-Beginning with version 2.0 and following the Lua 5.0 trend, all LuaSocket
-functionality is defined inside tables (or rather namespaces). No global
-variables are ever created.
-Namespaces are obtained with the <tt>require</tt> Lua function, which loads
-and initializes any required library and returns the namespace. 
-For example, the core functionality or LuaSocket is usually available
-from the "<tt>socket</tt>" namespace. 
-</p>
-
-<pre class="example">
-socket = require("socket")
-print(socket.VERSION)
---&gt; LuaSocket 2.0
-</pre>
 
 <!-- tcp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -318,6 +297,17 @@ io.write(socket.try((udp:receive())))
 </pre>
 </blockquote>
 
+<!-- More +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h3 id=more>Much more</h3>
+
+<p> LuaSocket offers much more than TCP and UDP support. As the library
+evolved, support for <a href=http.html>HTTP</a>, <a href=ftp.html>FTP</a>,
+<a href=smtp.html>SMTP</a>, <a href=mime.html>MIME</a>, <a
+href=url.html>URLs</a> and much more was made available.</a> These are
+mostly implemented in Lua itself, with critical parts implemented in C for
+efficiency</p>
+
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <div class=footer>
@@ -326,6 +316,7 @@ io.write(socket.try((udp:receive())))
 <p class=bar>
 <a href="home.html">home</a> &middot;
 <a href="home.html#down">download</a> &middot;
+<a href="instalation.html">instalation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a>
 </p>

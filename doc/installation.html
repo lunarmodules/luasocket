@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+<meta name="description" content="LuaSocket: Introduction to the core">
+<meta name="keywords" content="Lua, LuaSocket, TCP, UDP, Network, Support,
+Installation"> 
+<title>LuaSocket: Instalation</title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=header>
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align=center><a href="http://www.lua.org">
+<img width=128 height=128 border=0 alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align=center valign=top>Network support for the Lua language
+</td></tr>
+</table>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="instalation.html">instalation</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+</center>
+<hr>
+</div>
+
+<!-- instalation ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2>Instalation</h2>
+
+<p> LuaSocket 2.0 uses the new package proposal for Lua 5.1, throught the
+compatibility module <a href=http://www.keplerproject.org/compat/>
+Compat-5.1</a> released in conjunction with Roberto Ierusalimschy and <a
+href=http://www.keplerproject.org/">The Kepler project</a>.  The proposal
+was considered important enough by the community to justify early adoption.
+All Lua library developers are encouraged to change their libraries in
+preparation for the release of Lua 5.1. </p>
+
+<p> As far as LuaSocket is concerned, this means that whoever is 
+deploying a solution that uses LuaSocket has a lot of freedom. Here we
+describe only the standard distribution. If the standard doesn't meet your
+needs, we refer you to the Lua discussion list, where any quesetion about
+the package scheme will likely be answered promptly.
+</p>
+
+<h3>Directory structure</h3>
+
+<p> The new package scheme has a root directory for the libraries installed
+on a given system. Let's call this directory <tt>&lt;ROOT&gt;</tt>. 
+On my system, this is the <tt>/usr/local/share/lua/5.0</tt> directory.
+Here is the standard LuaSocket distribution directory structure:</p>
+
+<pre class=example>
+&lt;ROOT&gt;/compat-5.1.lua
+&lt;ROOT&gt;/socket.lua
+&lt;ROOT&gt;/lsocket.dll
+&lt;ROOT&gt;/mime.lua
+&lt;ROOT&gt;/lmime.dll
+&lt;ROOT&gt;/ltn12.lua
+&lt;ROOT&gt;/socket/http.lua
+&lt;ROOT&gt;/socket/tp.lua
+&lt;ROOT&gt;/socket/ftp.lua
+&lt;ROOT&gt;/socket/smtp.lua
+&lt;ROOT&gt;/socket/url.lua
+</pre>
+
+<p> Naturally, on Unix systems, <tt>lsocket.dll</tt> and <tt>lmime.dll</tt>
+would be replaced by <tt>lsocket.so</tt> and <tt>lmime.so</tt>. In Mac OS
+X, they would be replaced by <tt>lsocket.dylib</tt> and
+<tt>lmime.dylib</tt>. </p>
+
+<p> In order for the interpreter to find all LuaSocket components, three
+environment variables need to be set. The first environment variable tells
+the interpreter to load the <tt>compat-5.1.lua</tt> module. </p>
+
+<pre class=example>
+LUA_INIT=@&lt;ROOT&gt;/compat-5.1.lua
+</pre>
+
+The other two environment variables instruct the compatibility module to
+look for dynamic libraries and modules in the appropriate directories and
+with the appropriate filename extensions.
+
+<pre class=example>
+LUA_PATH=&lt;ROOT&gt;/?.lua;?.lua
+LUA_CPATH=&lt;ROOT&gt;/?.dll;?.dll
+</pre>
+
+<p> Again, naturally, in Unix the shared library extension would be
+<tt>.so</tt> instead of <tt>.dll</tt> and on Mac OS X they would be
+<tt>.dylib</tt></p>
+
+<h3>Using LuaSocket</h3>
+
+<p> With the above setup, and an interpreter with shared library support,
+it should be easy to use LuaSocket. Just fire the interpreter and use the
+<tt>require</tt> function to gain access to whatever module you need:</p>
+
+<pre class=example>
+Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
+&gt; socket = require("socket")
+&gt; print(socket.VERSION)
+--&gt; LuaSocket 2.0 (beta3)
+</pre>
+
+<p> Each module loads their dependencies automatically, so you only need to
+load the modues you are directly dependent upon. <p>
+
+<pre class=example>
+Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
+&gt; http = require("socket.http")
+&gt; print(http.get("http://www.tecgraf.puc-rio.br/luasocket"))
+--&gt; homepage gets dumped to terminal
+</pre>
+
+<!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=footer>
+<hr>
+<center>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#down">download</a> &middot;
+<a href="instalation.html">instalation</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+<p>
+<small>
+Last modified by Diego Nehab on <br>
+Thu Jun 17 02:47:21 EDT 2004
+</small>
+</p>
+</center>
+</div>
+
+</body>
+</html>
