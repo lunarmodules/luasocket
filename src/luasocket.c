@@ -211,13 +211,13 @@ static char *socket_strerror(void);
 static char *connect_strerror(void);
 
 /* socket auxiliary functions */
-const char *tcp_trybind(p_sock sock, const char *address, 
+static const char *tcp_trybind(p_sock sock, const char *address, 
     unsigned short port, int backlog);
-const char *tcp_tryconnect(p_sock sock, const char *address, 
+static const char *tcp_tryconnect(p_sock sock, const char *address, 
     unsigned short port);
-const char *udp_setpeername(p_sock sock, const char *address, 
+static const char *udp_setpeername(p_sock sock, const char *address, 
     unsigned short port);
-const char *udp_setsockname(p_sock sock, const char *address, 
+static const char *udp_setsockname(p_sock sock, const char *address, 
     unsigned short port);
 static void set_reuseaddr(p_sock sock);
 static void set_blocking(p_sock sock);
@@ -586,24 +586,27 @@ int global_select(lua_State *L)
     if (!lua_isnil(L, 1)) {
         lua_pushnil(L);
         while (lua_next(L, 1)) {
-            if (lua_tag(L, -1) == tags->table) {
+            if (lua_tag(L, -1) == tags->table) { /* skip strange fields */
                 p_sock sock = get_sock(L, -1, tags, NULL);
-                lua_pushnumber(L, sock->sock);
-                lua_pushvalue(L, -2);
-                lua_settable(L, byfds);
-                if (sock->sock > max) max = sock->sock;
-                /* a socket can have unread data in our internal buffer. in
-                * that case, we only call select to find out which of the 
-                * other sockets can be written to or read from immediately. */
-                if (!bf_isempty(sock)) {
-                    ms = 0;
-                    lua_pushnumber(L, lua_getn(L, canread) + 1);
-                    lua_pushvalue(L, -2);
-                    lua_settable(L, canread);
-                } else {
-                    FD_SET(sock->sock, &readfds);
-                    prfds = &readfds;
-                }
+				if (sock->sock != INVALID_SOCKET) { /* skip closed sockets */
+                	lua_pushnumber(L, sock->sock);
+                	lua_pushvalue(L, -2);
+                	lua_settable(L, byfds);
+                	if (sock->sock > max) max = sock->sock;
+                	/* a socket can have unread data in our internal 
+					buffer. in that case, we only call select to find 
+					out which of the other sockets can be written to 
+					or read from immediately. */
+                	if (!bf_isempty(sock)) {
+                    	ms = 0;
+                    	lua_pushnumber(L, lua_getn(L, canread) + 1);
+                    	lua_pushvalue(L, -2);
+                    	lua_settable(L, canread);
+                	} else {
+                    	FD_SET(sock->sock, &readfds);
+                    	prfds = &readfds;
+                	}
+				}
             }
             /* get rid of lua_next value and expose index */
             lua_pop(L, 1);
@@ -613,14 +616,16 @@ int global_select(lua_State *L)
     if (!lua_isnil(L, 2)) {
         lua_pushnil(L);
         while (lua_next(L, 2)) {
-            if (lua_tag(L, -1) == tags->table) {
+            if (lua_tag(L, -1) == tags->table) { /* skip strange fields */
                 p_sock sock = get_sock(L, -1, tags, NULL);
-                lua_pushnumber(L, sock->sock);
-                lua_pushvalue(L, -2);
-                lua_settable(L, byfds);
-                if (sock->sock > max) max = sock->sock;
-                FD_SET(sock->sock, &writefds);
-                pwfds = &writefds;
+				if (sock->sock != INVALID_SOCKET) { /* skip closed sockets */
+                	lua_pushnumber(L, sock->sock);
+                	lua_pushvalue(L, -2);
+                	lua_settable(L, byfds);
+                	if (sock->sock > max) max = sock->sock;
+                	FD_SET(sock->sock, &writefds);
+                	pwfds = &writefds;
+				}
             }
             /* get rid of lua_next value and expose index */
             lua_pop(L, 1);
@@ -995,7 +1000,7 @@ static void handle_sigpipe(void)
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-const char *tcp_tryconnect(p_sock sock, const char *address, 
+static const char *tcp_tryconnect(p_sock sock, const char *address, 
     unsigned short port)
 {
     struct sockaddr_in remote;
@@ -1053,7 +1058,7 @@ void set_reuseaddr(p_sock sock)
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-const char *tcp_trybind(p_sock sock, const char *address, 
+static const char *tcp_trybind(p_sock sock, const char *address, 
     unsigned short port, int backlog)
 {
     struct sockaddr_in local;
@@ -1106,7 +1111,7 @@ const char *tcp_trybind(p_sock sock, const char *address,
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-const char *udp_setsockname(p_sock sock, const char *address, 
+static const char *udp_setsockname(p_sock sock, const char *address, 
     unsigned short port)
 {
     struct sockaddr_in local;
@@ -1151,7 +1156,7 @@ const char *udp_setsockname(p_sock sock, const char *address,
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-const char *udp_setpeername(p_sock sock, const char *address, 
+static const char *udp_setpeername(p_sock sock, const char *address, 
     unsigned short port)
 {
     struct sockaddr_in local;
