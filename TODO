@@ -4,6 +4,7 @@ get rid of "base." kludge
 make sure sock_gethostname.*  only return success if the hp is not 
 null!
 change 'l' prefix in C libraries to 'l-something'...
+    don't forget the declarations in luasocket.h and mime.h!!!
 leave code for losers that don't have nanosleep
 
 "foo.bar.baz" previously had to provide luaopen_foobarbaz() and now 
