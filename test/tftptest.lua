@@ -14,7 +14,7 @@ function readfile(file)
 	return a
 end
 
-host = host or "goya"
+host = host or "localhost"
 print("downloading")
 err = tftp_get(host, 69, "index.html", "index.got")
 assert(not err, err)
