@@ -1,6 +1,6 @@
 ===Using finalized exceptions===
-==or how to get rid of all those if statements==
-by Diego Nehab
+==or How to get rid of all those if statements==
+by DiegoNehab
 
 {{{
 

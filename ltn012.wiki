@@ -1,6 +1,6 @@
 ===Filters, sources and sinks: design, motivation and examples===
 ==or Functional programming for the rest of us==
-by Diego Nehab
+by DiegoNehab
 
 {{{
 
