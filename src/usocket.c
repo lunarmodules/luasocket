@@ -17,12 +17,6 @@
 * Initializes module 
 \*-------------------------------------------------------------------------*/
 int sock_open(void) {
-#if DOESNT_COMPILE_TRY_THIS
-    struct sigaction ignore;
-    memset(&ignore, 0, sizeof(ignore));
-    ignore.sa_handler = SIG_IGN;
-    sigaction(SIGPIPE, &ignore, NULL);
-#endif
     /* instals a handler to ignore sigpipe or it will crash us */
     signal(SIGPIPE, SIG_IGN);
     return 1;
