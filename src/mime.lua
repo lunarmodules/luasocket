@@ -11,7 +11,7 @@ decodet = {}
 wrapt = {}
 
 -- creates a function that chooses a filter by name from a given table 
-function choose(table)
+local function choose(table)
     return function(name, opt1, opt2)
         if type(name) ~= "string" then 
             name, opt1, opt2 = "default", name, opt1
