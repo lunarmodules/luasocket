@@ -1,12 +1,12 @@
 /*=========================================================================*\
-* TCP/IP bind for the Lua language
+* IPv4 Sockets for the Lua language
 * Diego Nehab
 * 26/11/1999
 *
-* Module: LUASOCKET.C
+* Module: luasocket.c
 *
 * This module is part of an effort to make the most important features
-* of the TCP/IP protocol available to Lua scripts.
+* of the IPv4 Socket layer available to Lua scripts.
 * The Lua interface to TCP/IP follows the BSD TCP/IP API closely, 
 * trying to simplify all tasks involved in setting up a client connection 
 * and simple server connections. 
@@ -60,28 +60,20 @@
 #include <sys/socket.h>
 /* gethostbyname and gethostbyaddr functions */
 #include <netdb.h>
-/* for some reason, bcopy and it's friends are not defined automatically
-** on the IRIX plataforms... */
-#ifdef __sgi
-#include <bstring.h>
-#endif
 #endif
 
 /*=========================================================================*\
 * Datatype compatibilization and some simple changes
 \*=========================================================================*/
 #ifndef WIN32
-#define closesocket close		/* WinSock2 has a closesock function instead 
-								** of using the regular close function */
-#define SOCKET int				/* it defines a SOCKET type instead of
-								** using an integer file descriptor */
-#define INVALID_SOCKET (-1)		/* and uses the this macro to represent and 
-								** invalid socket */
-#ifndef INADDR_NONE				/* some unix flavours don't define this */
-#define INADDR_NONE (-1)
-#endif
-#ifndef CLK_TCK					/* SunOS, for instance, does not define */
-#define CLK_TCK 60				/* CLK_TCK */
+#define closesocket close        /* WinSock2 has a closesock function instead 
+                                 ** of using the regular close function */
+#define SOCKET int               /* it defines a SOCKET type instead of
+                                 ** using an integer file descriptor */
+#define INVALID_SOCKET (-1)      /* and uses the this macro to represent and 
+                                 ** invalid socket */
+#ifndef CLK_TCK                  /* SunOS, does not define CLK_TCK */
+#define CLK_TCK 60               
 #endif
 #endif
 
@@ -93,9 +85,10 @@
 * codes. The values are mapped into Lua values by the function
 * push_error.
 \*-------------------------------------------------------------------------*/
-#define NET_DONE -1				/* operation completed successfully */
-#define NET_TIMEOUT 0			/* operation timed out */
-#define NET_CLOSED 1			/* the connection has been closed */
+#define NET_DONE -1              /* operation completed successfully */
+#define NET_TIMEOUT 0            /* operation timed out */
+#define NET_CLOSED 1             /* the connection has been closed */
+#define NET_REFUSED 2            /* the data transfer has been refused */
 
 /*-------------------------------------------------------------------------*\
 * Time out mode to be checked
@@ -110,24 +103,31 @@
 #define P_SOCK "(p_sock)sock"
 
 /*-------------------------------------------------------------------------*\
+* The maximum message size handled (576 bytes should be enough...)
+\*-------------------------------------------------------------------------*/
+#define UDPMAX 4096
+
+/*-------------------------------------------------------------------------*\
 * Both socket types are stored in the same structure to simplify
 * implementation. The tag value used is different, though. 
-* The timeout and buffer parameters are not used by server sockets.
+* The buffer parameters are not used by server and UDP sockets.
 \*-------------------------------------------------------------------------*/
 typedef struct t_sock {
-	/* operating system socket object */
-	SOCKET sock;
-	/* start time of the current operation */	
-	int tm_start;
-	/* return and blocking timeout values (-1 if no limit) */
-	int tm_return, tm_block;
-	/* buffered I/O storage */
-	unsigned char bf_buffer[LUASOCKET_BUFFERSIZE];
-	/* first and last red bytes not yet passed to application */
-	int bf_first, bf_last;
+    /* operating system socket object */
+    SOCKET sock;
+    /* start time of the current operation */    
+    int tm_start;
+    /* return and blocking timeout values (-1 if no limit) */
+    int tm_return, tm_block;
+    /* buffered I/O storage */
+    unsigned char bf_buffer[LUASOCKET_BUFFERSIZE];
+    /* first and last red bytes not yet passed to application */
+    int bf_first, bf_last;
+    /* is this udp socket in "connected" state? */
+    int is_connected;
 #ifdef _DEBUG
-	/* end time of current operation, for debug purposes */
-	int tm_end;
+    /* end time of current operation, for debug purposes */
+    int tm_end;
 #endif
 } t_sock;
 typedef t_sock *p_sock;
@@ -136,7 +136,7 @@ typedef t_sock *p_sock;
 * Tags passed as closure values to global LuaSocket API functions
 \*-------------------------------------------------------------------------*/
 typedef struct t_tags {
-	int client, server, table;
+    int client, server, table, udp;
 } t_tags;
 typedef t_tags *p_tags;
 
@@ -151,27 +151,46 @@ typedef t_tags *p_tags;
 #define max(x, y) ((x) > (y) ? x : y)
 #endif
 
+/* we are lazy.. */
+typedef struct sockaddr SA;
+
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-/* luasocket API functions */
-static int global_connect(lua_State *L);
-static int global_bind(lua_State *L);
-static int table_listen(lua_State *L);
-static int table_accept(lua_State *L);
-static int table_send(lua_State *L);
-static int table_receive(lua_State *L);
+/* luasocket global API functions */
+static int global_tcpconnect(lua_State *L);
+static int global_tcpbind(lua_State *L);
+static int global_udpsocket(lua_State *L);
+static int global_toip(lua_State *L);
+static int global_tohostname(lua_State *L);
+
+/* luasocket table method API functions */
+static int table_tcpaccept(lua_State *L);
+static int table_tcpsend(lua_State *L);
+static int table_tcpreceive(lua_State *L);
+static int table_udpsendto(lua_State *L);
+static int table_udpreceivefrom(lua_State *L);
+static int table_udpsetpeername(lua_State *L);
 static int table_timeout(lua_State *L);
 static int table_close(lua_State *L);
+static int table_poll(lua_State *L);
+static int table_getpeername(lua_State *L);
+static int table_getsockname(lua_State *L);
+
+/* luasocket optional global API functions */
 #ifndef LUASOCKET_NOGLOBALS
-static int global_listen(lua_State *L);
-static int global_accept(lua_State *L);
+static int global_tcpaccept(lua_State *L);
+static int global_udpsendto(lua_State *L);
+static int global_udpreceivefrom(lua_State *L);
+static int global_udpsetpeername(lua_State *L);
+static int global_udpsetsockname(lua_State *L);
+static int global_getsockname(lua_State *L);
+static int global_getpeername(lua_State *L);
 static int global_send(lua_State *L);
 static int global_receive(lua_State *L);
 static int global_timeout(lua_State *L);
 static int global_close(lua_State *L);
-static p_sock get_selfclientsock(lua_State *L, p_tags tags);
-static p_sock get_selfserversock(lua_State *L, p_tags tags);
+static int global_poll(lua_State *L);
 #endif
 
 /* buffered I/O management */
@@ -195,28 +214,48 @@ static int receive_all(lua_State *L, p_sock sock);
 /* parameter manipulation functions */
 static p_tags pop_tags(lua_State *L);
 static p_sock pop_sock(lua_State *L);
-static p_sock get_selfsock(lua_State *L, p_tags tags);
-static int gc_sock(lua_State *L);
+static p_sock get_selfsock(lua_State *L, p_tags tags, int *tag);
 static p_sock push_servertable(lua_State *L, p_tags tags);
 static p_sock push_clienttable(lua_State *L, p_tags tags);
+static p_sock push_udptable(lua_State *L, p_tags tags);
 static void push_error(lua_State *L, int err);
+static void push_resolved(lua_State *L, struct hostent *hp);
 
 /* error code translations functions */
 static char *host_strerror(void);
 static char *bind_strerror(void);
-static char *sock_strerror(void);
+static char *socket_strerror(void);
 static char *connect_strerror(void);
 
-/* auxiliary functions */
+/* socket auxiliary functions */
+const char *tcp_trybind(p_sock sock, const char *address, 
+    unsigned short port, int backlog);
+const char *tcp_tryconnect(p_sock sock, const char *address, 
+    unsigned short port);
+const char *udp_setpeername(p_sock sock, const char *address, 
+    unsigned short port);
+const char *udp_setsockname(p_sock sock, const char *address, 
+    unsigned short port);
+static void set_reuseaddr(p_sock sock);
 static void set_blocking(p_sock sock);
 static void set_nonblocking(p_sock sock);
-static int create_tcpsocket(p_sock sock);
-static int fill_sockaddr(struct sockaddr_in *server, const char *hostname,
-    unsigned short port);
 
 #ifdef WIN32
 static int winsock_open(void);
+#define LUASOCKET_ATON
 #endif
+
+#ifdef LUASOCKET_ATON
+static int inet_aton(const char *cp, struct in_addr *inp);
+#endif
+
+#ifndef LUASOCKET_NOGLOBALS
+static p_sock get_selfserversock(lua_State *L, p_tags tags);
+static p_sock get_selfudpsock(lua_State *L, p_tags tags);
+#endif
+
+/* tag methods */
+static int gc_table(lua_State *L);
 
 /*=========================================================================*\
 * Test support functions
@@ -228,8 +267,8 @@ static int winsock_open(void);
 static int global_time(lua_State *L);
 static int global_time(lua_State *L)
 {
-	lua_pushnumber(L, tm_gettime()/1000.0);
-	return 1;
+    lua_pushnumber(L, tm_gettime()/1000.0);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -244,7 +283,7 @@ static int global_sleep(lua_State *L)
 #else
     sleep(sec);
 #endif
-	return 0;
+    return 0;
 }
 
 #endif
@@ -257,244 +296,427 @@ static int global_sleep(lua_State *L)
 * Creates a client socket and returns it to the Lua script. The timeout
 * values are initialized as -1 so that the socket will block at any
 * IO operation.
-* Lua Input
-*   host: host name or ip address to connect to 
+* Lua Input: address, port
+*   address: host name or ip address to connect to 
 *   port: port number on host
 * Lua Returns
-*   On success: client socket
+*   On success: client socket object
 *   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
-static int global_connect(lua_State *L)
+static int global_tcpconnect(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	const char *hostname = luaL_check_string(L, 1);
-	unsigned short port = (unsigned short) luaL_check_number(L, 2);
-	struct sockaddr_in server;
-	p_sock sock = push_clienttable(L, tags);
-	if (!sock) {
-		lua_pushnil(L);
-		lua_pushstring(L, "out of memory");
-		return 2;
-	}
-	if (!create_tcpsocket(sock)) {
-		lua_pushnil(L);
-		lua_pushstring(L, sock_strerror());
-		return 2;
-	}
-	/* fills the sockaddr structure with the information needed to
-	** connect our socket with the remote host */
-	if (!fill_sockaddr(&server, hostname, port)) {
-		lua_pushnil(L);
-		lua_pushstring(L, host_strerror());
-		return 2;
-	}
-	if (connect(sock->sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-		/* no connection? we close the socket to free the descriptor */
-		closesocket(sock->sock);
-		lua_pushnil(L);
-		lua_pushstring(L, connect_strerror());
-		return 2;
-	}
-	/* all operations on client sockets are non-blocking */
-	set_nonblocking(sock);
-	lua_pushnil(L);
-	return 2;
+    p_tags tags = pop_tags(L);
+    const char *address = luaL_check_string(L, 1);
+    unsigned short port = (unsigned short) luaL_check_number(L, 2);
+    p_sock sock = push_clienttable(L, tags);
+    const char *err;
+    if (!sock) {
+        lua_pushnil(L);
+        lua_pushstring(L, "out of memory");
+        return 2;
+    }
+    err = tcp_tryconnect(sock, address, port);
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    set_nonblocking(sock);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
-* Converts from ip number to host name
-* Lua Input
-*   ip: ip number
+* Creates a udp socket object and returns it to the Lua script. 
+* The timeout values are initialized as -1 so that the socket will block 
+* at any IO operation.
 * Lua Returns
-*   On success: domain name
+*   On success: udp socket
 *   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
-static int global_toip(lua_State *L)
+static int global_udpsocket(lua_State *L)
 {
-	struct hostent *host;
-	struct in_addr addr;
-	pop_tags(L);
-   	host = gethostbyname(luaL_check_string(L, 1));
-	if (!host) {
-		lua_pushnil(L);
-		lua_pushstring(L, host_strerror());
-		return 2;
-	}
-	memcpy(&addr, host->h_addr, (unsigned) host->h_length);
-	lua_pushstring(L, inet_ntoa(addr));
-	return 1;
+    p_tags tags = pop_tags(L);
+    p_sock sock = push_udptable(L, tags);
+    if (!sock) return 2;
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
-* Specifies the number of connections that can be queued on a server
-* socket.
-* Lua Input
-*   sock: server socket created by the bind function
-* Lua Returns
-*   On success: nil
-*   On error: an error message
-\*-------------------------------------------------------------------------*/
-static int table_listen(lua_State *L)
-{
-	p_sock sock = pop_sock(L);
-	unsigned int backlog = (unsigned int) luaL_check_number(L, 2);	
-	if (listen(sock->sock, backlog) < 0) {
-		lua_pushstring(L, "listen error");
-		return 1;
-	} else {
-		lua_pushnil(L);
-		return 1;
-	}
-}
-
-/*-------------------------------------------------------------------------*\
-* Returns a client socket attempting to connect to a server socket.
-* The function blocks until a client shows up.
-* Lua Input
+* Waits for and returns a client socket object attempting connection 
+* with a server socket. The function blocks until a client shows up or 
+* until a timeout condition is met.
+* Lua Input: sock
 *   sock: server socket created by the bind function
 * Lua Returns
 *   On success: client socket attempting connection
 *   On error: nil followed by an error message
 \*-------------------------------------------------------------------------*/
-static int table_accept(lua_State *L)
+static int table_tcpaccept(lua_State *L)
 {
-	struct sockaddr_in client_addr;
-	size_t client_len = sizeof(client_addr);
-	p_sock server = pop_sock(L);
-	p_tags tags = pop_tags(L);
-	p_sock client = push_clienttable(L, tags);
-	SOCKET accepted = accept(server->sock, (struct sockaddr *) &client_addr,
-		&client_len);
-	client->sock = accepted;
-	set_nonblocking(client);
-	lua_pushnil(L);
-	return 2;
+    struct sockaddr_in client_addr;
+    size_t client_len = sizeof(client_addr);
+    p_sock server = pop_sock(L);
+    p_tags tags = pop_tags(L);
+    p_sock client = push_clienttable(L, tags);
+    tm_markstart(server);
+	if (tm_gettimeleft(server) >= 0) {
+		set_nonblocking(server);
+		do {
+    		if (tm_timedout(server, TM_RECEIVE)) {
+        		lua_pushnil(L);
+        		push_error(L, NET_TIMEOUT);
+				return 2;
+    		}
+    	    client->sock = accept(server->sock, (SA *) &client_addr, 
+				&client_len);
+		} while (client->sock == INVALID_SOCKET);
+
+	} else {
+		set_blocking(server);
+    	client->sock = accept(server->sock, (SA *) &client_addr, &client_len);
+	}
+    set_nonblocking(client);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
 * Associates an address to a server socket.
-* Input
-*   host: host name or ip address to bind to 
+* Lua Input: address, port [, backlog]
+*   address: host name or ip address to bind to 
 *   port: port to bind to
-*   backlog: optional parameter specifying the number of connections
-*     to keep waiting before refuse a connection. the default value is 1.
-* Returns
-*   On success: server socket bound to address, the ip address and port bound
+*   backlog: connection queue length (default: 1)
+* Lua Returns
+*   On success: server socket bound to address
 *   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
-static int global_bind(lua_State *L)
+static int global_tcpbind(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	const char *hostname = luaL_check_string(L, 1);
-	unsigned short port = (unsigned short) luaL_check_number(L, 2);
-	unsigned int backlog = (unsigned int) luaL_opt_number(L, 3, 1.0);	
-	struct sockaddr_in server;
-	size_t server_size = sizeof(server);
-	p_sock sock = push_servertable(L, tags);
-	if (!sock) {
-		lua_pushnil(L);
-		lua_pushstring(L, sock_strerror());
-		return 2;
-	}
-	/* fills the sockaddr structure with the information needed to
-	** connect our socket with local address */
-	else if (!fill_sockaddr(&server, hostname, port)) {
-		free(sock);
-		lua_pushnil(L);
-		lua_pushstring(L, host_strerror());
-		return 2;
-	}
-	else if (bind(sock->sock,(struct sockaddr *)&server, server_size) < 0) {
-		lua_pushnil(L);
-		lua_pushstring(L, bind_strerror());
-		return 2;
-	}
-	/* define the connection waiting queue length */
-	else if (listen(sock->sock, backlog) < 0) {
-		lua_pushnil(L);
-		lua_pushstring(L, "listen error");
-		return 2;
-	} 
-	/* pass the created socket to Lua, as a server socket */
-	else {
-		/* get used address and port */
-		getsockname(sock->sock, (struct sockaddr *)&server, &server_size);
-		/* pass ip number */
-		lua_pushstring(L, inet_ntoa(server.sin_addr));
-		/* pass port number */
-		lua_pushnumber(L, ntohs(server.sin_port));
-		lua_pushnil(L);
-		return 4;
-	}
+    p_tags tags = pop_tags(L);
+    const char *address = luaL_check_string(L, 1);
+    unsigned short port = (unsigned short) luaL_check_number(L, 2);
+    int backlog = (int) luaL_opt_number(L, 3, 1);
+    p_sock sock = push_servertable(L, tags);
+    const char *err;
+    if (!sock) {
+        lua_pushnil(L);
+        lua_pushstring(L, "out of memory");
+        return 2;
+    }
+    err = tcp_trybind(sock, address, port, backlog);
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
-* Sets timeout values for IO operations on a client socket
-* Lua Input
+* Associates a local address to UDP socket
+* Lua Input: address, port
+*   address: host name or ip address to bind to 
+*   port: port to bind to
+* Lua Returns
+*   On success: nil
+*   On error: error message
+\*-------------------------------------------------------------------------*/
+static int table_udpsetsockname(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    const char *address = luaL_check_string(L, 2);
+    unsigned short port = (unsigned short) luaL_check_number(L, 3);
+    const char *err = udp_setsockname(sock, address, port);
+    if (err) {
+        lua_pushstring(L, err);
+        return 1;
+    }
+    lua_pushnil(L);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
+* Sets a peer for a UDP socket
+* Lua Input: address, port
+*   address: remote host name
+*   port: remote host port
+* Lua Returns
+*   On success: nil
+*   On error: error message
+\*-------------------------------------------------------------------------*/
+static int table_udpsetpeername(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    const char *address = luaL_check_string(L, 2);
+    unsigned short port = (unsigned short) luaL_check_number(L, 3);
+    const char *err = udp_setpeername(sock, address, port);
+    if (err) {
+        lua_pushstring(L, err);
+        return 1;
+    }
+    sock->is_connected = 1;
+    lua_pushnil(L);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
+* Sets timeout values for IO operations on a socket
+* Lua Input: sock, time [, mode]
 *   sock: client socket created by the connect function
 *   time: time out value in seconds
-*   mode: optional timeout mode. "block" specifies the upper bound on
-*     the time any IO operation on sock can cause the program to block.
-*     "return" specifies the upper bound on the time elapsed before the
-*     function returns control to the script. "block" is the default.
+*   mode: "b" for block timeout, "r" for return timeout. (default: b)
 \*-------------------------------------------------------------------------*/
 static int table_timeout(lua_State *L)
 {
-	p_sock sock = pop_sock(L);
-	int ms = (int) (luaL_check_number(L, 2)*1000.0);
-	const char *mode = luaL_opt_string(L, 3, "b");
-	switch (*mode) {
-		case 'b':
-			sock->tm_block = ms;
-			break;
-		case 'r':
-			sock->tm_return = ms;
-			break;
-		default:
-			luaL_arg_check(L, 0, 3, "invalid timeout mode");
-			break;
-	}
-	return 0;
+    p_sock sock = pop_sock(L);
+    int ms = lua_isnil(L, 2) ? -1 : (int) (luaL_check_number(L, 2)*1000.0);
+    const char *mode = luaL_opt_string(L, 3, "b");
+    switch (*mode) {
+        case 'b':
+            sock->tm_block = ms;
+            break;
+        case 'r':
+            sock->tm_return = ms;
+            break;
+        default:
+            luaL_arg_check(L, 0, 3, "invalid timeout mode");
+            break;
+    }
+    return 0;
 }
 
 /*-------------------------------------------------------------------------*\
-* Send data through a socket
+* Send data through a TCP socket
 * Lua Input: sock, a_1 [, a_2, a_3 ... a_n]
 *   sock: client socket created by the connect function
 *   a_i: strings to be sent. The strings will be sent on the order they
 *     appear as parameters
 * Lua Returns
 *   On success: nil, followed by the total number of bytes sent
-*   On error: NET_TIMEOUT if the connection timedout, or NET_CLOSED if
-*     the connection has been closed, followed by the total number of 
-*     bytes sent
+*   On error: error message
 \*-------------------------------------------------------------------------*/
-static int table_send(lua_State *L)
+static int table_tcpsend(lua_State *L)
 {
-	int arg;
-	p_sock sock = pop_sock(L);
-	int top = lua_gettop(L);
-	int total = 0;
-	int err = NET_DONE;
-	tm_markstart(sock);
-	for (arg = 2; arg <= top; arg++) { /* skip self table */
-		int sent, wanted;
-	 	const char *data = luaL_opt_lstr(L, arg, NULL, &wanted);
-	 	if (!data || err != NET_DONE) break;
-		err = send_raw(sock, data, wanted, &sent);
-		total += sent;
-	}
-	push_error(L, err);
-	lua_pushnumber(L, (double) total);
+    int arg;
+    p_sock sock = pop_sock(L);
+    int top = lua_gettop(L);
+    int total = 0;
+    int err = NET_DONE;
+    tm_markstart(sock);
+    for (arg = 2; arg <= top; arg++) { /* skip self table */
+        int sent;
+        size_t wanted;
+         const char *data = luaL_opt_lstr(L, arg, NULL, &wanted);
+         if (!data || err != NET_DONE) break;
+        err = send_raw(sock, data, wanted, &sent);
+        total += sent;
+    }
+    push_error(L, err);
+    lua_pushnumber(L, total);
 #ifdef _DEBUG
-	/* push time elapsed during operation as the last return value */
-	lua_pushnumber(L, (sock->tm_end - sock->tm_start)/1000.0);
+    /* push time elapsed during operation as the last return value */
+    lua_pushnumber(L, (sock->tm_end - sock->tm_start)/1000.0);
 #endif
-	return lua_gettop(L) - top;
+    return lua_gettop(L) - top;
 }
 
 /*-------------------------------------------------------------------------*\
-* Receive data from a socket
+* Send data through a unconnected UDP socket
+* Lua Input: sock, data, ip, port
+*   sock: udp socket
+*   data: data to be sent
+*   ip: ip address of target
+*   port: port in target
+* Lua Returns
+*   On success: nil, followed by the total number of bytes sent
+*   On error: error message
+\*-------------------------------------------------------------------------*/
+static int table_udpsendto(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    size_t wanted;
+     const char *data = luaL_check_lstr(L, 2, &wanted);
+    const char *ip = luaL_check_string(L, 3);
+    unsigned short port = (unsigned short) luaL_check_number(L, 4);
+    struct sockaddr_in peer;
+    int sent;
+    if (sock->is_connected) lua_error(L, "sendto on connected socket");
+    tm_markstart(sock);
+    if (tm_timedout(sock, TM_SEND)) {
+        push_error(L, NET_TIMEOUT);
+        return 1;
+    }
+    memset(&peer, 0, sizeof(peer));
+    peer.sin_family = AF_INET;
+    peer.sin_port = htons(port);
+    if (!inet_aton(ip, &peer.sin_addr)) lua_error(L, "invalid ip address");
+    sent = sendto(sock->sock, data, wanted, 0, (SA *) &peer, sizeof(peer));
+    if (sent >= 0) {
+        lua_pushnil(L);
+        lua_pushnumber(L, sent);
+        return 2;
+    } else {
+        push_error(L, NET_REFUSED);
+        return 1;
+    }
+}
+
+/*-------------------------------------------------------------------------*\
+* Returns the list of ip addresses associated with a host name
+* Lua Input: address
+*   address: ip address or hostname to dns lookup
+* Lua Returns
+*   On success: first IP address followed by a resolved table
+*   On error: nil, followed by an error message
+\*-------------------------------------------------------------------------*/
+static int global_toip(lua_State *L)
+{
+    const char *address = luaL_check_string(L, 1);
+    struct in_addr addr;
+    struct hostent *hp;
+    if (inet_aton(address, &addr))
+        hp = gethostbyaddr((char *) &addr, sizeof(addr), AF_INET);
+    else hp = gethostbyname(address);
+    if (!hp) {
+        lua_pushnil(L);
+        lua_pushstring(L, host_strerror());
+        return 2;
+    }
+	addr = *((struct in_addr *) hp->h_addr);
+    lua_pushstring(L, inet_ntoa(addr));
+    push_resolved(L, hp);
+    return 2;
+}
+
+/*-------------------------------------------------------------------------*\
+* Returns the list of host names associated with an ip address
+* Lua Input: address
+*   address: ip address or host name to reverse dns lookup
+* Lua Returns
+*   On success: canonic name followed by a resolved table
+*   On error: nil, followed by an error message
+\*-------------------------------------------------------------------------*/
+static int global_tohostname(lua_State *L)
+{
+    const char *address = luaL_check_string(L, 1);
+    struct in_addr addr;
+    struct hostent *hp;
+    if (inet_aton(address, &addr)) 
+        hp = gethostbyaddr((char *) &addr, sizeof(addr), AF_INET);
+    else hp = gethostbyname(address);
+    if (!hp) {
+        lua_pushnil(L);
+        lua_pushstring(L, host_strerror());
+        return 2;
+    }
+    lua_pushstring(L, hp->h_name);
+	push_resolved(L, hp);
+    return 2;
+}
+
+/*-------------------------------------------------------------------------*\
+* Send data through a connected UDP socket
+* Lua Input: sock, data
+*   sock: udp socket
+*   data: data to be sent
+* Lua Returns
+*   On success: nil, followed by the total number of bytes sent
+*   On error: error message
+\*-------------------------------------------------------------------------*/
+static int table_udpsend(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    size_t wanted;
+    int sent;
+    const char *data = luaL_check_lstr(L, 2, &wanted);
+    if (!sock->is_connected) lua_error(L, "send on unconnected socket");
+    tm_markstart(sock);
+    if (tm_timedout(sock, TM_SEND)) {
+        push_error(L, NET_TIMEOUT);
+        return 1;
+    }
+    sent = send(sock->sock, data, wanted, 0);
+    if (sent >= 0) {
+        lua_pushnil(L);
+        lua_pushnumber(L, sent);
+        return 2;
+    } else {
+        push_error(L, NET_REFUSED);
+        return 1;
+    }
+}
+
+/*-------------------------------------------------------------------------*\
+* Receives a datagram from a UDP socket
+* Lua Input: sock [, wanted]
+*   sock: client socket created by the connect function
+*   wanted: the number of bytes expected (default: UDPMAX)
+* Lua Returns
+*   On success: datagram received, ip and port of sender
+*   On error: nil, followed by an error message
+\*-------------------------------------------------------------------------*/
+static int table_udpreceivefrom(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    size_t wanted = (int) luaL_opt_number(L, 2, UDPMAX);
+    struct sockaddr_in peer;
+    size_t peer_len = sizeof(peer);
+    unsigned char buffer[UDPMAX];
+    int got;
+    if (sock->is_connected) lua_error(L, "receivefrom on connected socket");
+    tm_markstart(sock);
+    if (tm_timedout(sock, TM_RECEIVE)) {
+        lua_pushnil(L);
+        push_error(L, NET_TIMEOUT);
+        return 2;
+    }
+    wanted = min(wanted, sizeof(buffer));
+    got = recvfrom(sock->sock, buffer, wanted, 0, (SA *) &peer, &peer_len);
+    if (got >= 0) {
+        lua_pushlstring(L, buffer, got);
+        lua_pushstring(L, inet_ntoa(peer.sin_addr));
+        lua_pushnumber(L, ntohs(peer.sin_port));
+        return 3;
+    } else {
+        lua_pushnil(L);
+        push_error(L, NET_REFUSED);
+        return 2;
+    }
+}
+
+/*-------------------------------------------------------------------------*\
+* Receives data from a UDP socket
+* Lua Input: sock [, wanted]
+*   sock: client socket created by the connect function
+*   wanted: the number of bytes expected (default: UDPMAX)
+* Lua Returns
+*   On success: datagram received
+*   On error: nil, followed by an error message
+\*-------------------------------------------------------------------------*/
+static int table_udpreceive(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    size_t wanted = (size_t) luaL_opt_number(L, 2, UDPMAX);
+    unsigned char buffer[UDPMAX];
+    int got;
+    tm_markstart(sock);
+    if (tm_timedout(sock, TM_RECEIVE)) {
+        lua_pushnil(L);
+        push_error(L, NET_TIMEOUT);
+        return 2;
+    }
+    got = recv(sock->sock, buffer, min(wanted, sizeof(buffer)), 0);
+    if (got >= 0) {
+        lua_pushlstring(L, buffer, got);
+        return 1;
+    } else {
+        lua_pushnil(L);
+           push_error(L, NET_REFUSED);
+        return 2;
+    }
+}
+
+/*-------------------------------------------------------------------------*\
+* Receive data from a TCP socket
 * Lua Input: sock [pat_1, pat_2 ... pat_n]
 *   sock: client socket created by the connect function
 *   pat_i: may be one of the following 
@@ -509,60 +731,106 @@ static int table_send(lua_State *L)
 *   On error: all strings for which there was no error, followed by one
 *     nil value for the remaining strings, followed by an error code
 \*-------------------------------------------------------------------------*/
-static int table_receive(lua_State *L)
+static int table_tcpreceive(lua_State *L)
 {
-	static const char *const modenames[] = {"*l", "*lu", "*a", NULL};
-	const char *mode;
-	int err = NET_DONE;
-	int arg;
-	p_sock sock = pop_sock(L);
-	int top = lua_gettop(L);
-	tm_markstart(sock);
-	/* push default pattern if need be */
-	if (top < 2) {
-		lua_pushstring(L, "*l");
-		top++;
-	}
-	/* receive all patterns */
-	for (arg = 2; arg <= top; arg++) {
-		/* if one pattern failed, we just skip all other patterns */
-		if (err != NET_DONE) {
-			lua_pushnil(L);
-			continue;
-		}
-	 	if (lua_isnumber(L, arg)) {
-			int size = (int) lua_tonumber(L, arg);
-			err = receive_raw(L, sock, size);
-		} else {
-			mode = luaL_opt_string(L, arg, NULL);
-			/* get next pattern */
-			switch (luaL_findstring(mode, modenames)) {
-				/* DOS line mode */
-				case 0:
-					err = receive_dosline(L, sock);
-					break;
-				/* Unix line mode */
-				case 1:
-					err = receive_unixline(L, sock);
-					break;
-				/* until closed mode */
-				case 2:
-					err = receive_all(L, sock);
-					break;
-				/* else it is an error */
-				default: 
-					luaL_arg_check(L, 0, arg, "invalid receive pattern");
-					break;
-			}
-		}
-	} 
-	/* last return is an error code */
-	push_error(L, err);
+    static const char *const modenames[] = {"*l", "*lu", "*a", NULL};
+    const char *mode;
+    int err = NET_DONE;
+    int arg;
+    p_sock sock = pop_sock(L);
+    int top = lua_gettop(L);
+    tm_markstart(sock);
+    /* push default pattern if need be */
+    if (top < 2) {
+        lua_pushstring(L, "*l");
+        top++;
+    }
+	/* make sure we have enough stack space */
+	luaL_checkstack(L, top+LUA_MINSTACK, "too many arguments");
+    /* receive all patterns */
+    for (arg = 2; arg <= top; arg++) {
+        /* if one pattern failed, we just skip all other patterns */
+        if (err != NET_DONE) {
+            lua_pushnil(L);
+            continue;
+        }
+         if (lua_isnumber(L, arg)) {
+            int size = (int) lua_tonumber(L, arg);
+            err = receive_raw(L, sock, size);
+        } else {
+            mode = luaL_opt_string(L, arg, NULL);
+            /* get next pattern */
+            switch (luaL_findstring(mode, modenames)) {
+                /* DOS line mode */
+                case 0:
+                    err = receive_dosline(L, sock);
+                    break;
+                /* Unix line mode */
+                case 1:
+                    err = receive_unixline(L, sock);
+                    break;
+                /* until closed mode */
+                case 2:
+                    err = receive_all(L, sock);
+                    break;
+                /* else it is an error */
+                default: 
+                    luaL_arg_check(L, 0, arg, "invalid receive pattern");
+                    break;
+            }
+        }
+    } 
+    /* last return is an error code */
+    push_error(L, err);
 #ifdef _DEBUG
-	/* push time elapsed during operation as the last return value */
-	lua_pushnumber(L, (sock->tm_end - sock->tm_start)/1000.0);
+    /* push time elapsed during operation as the last return value */
+    lua_pushnumber(L, (sock->tm_end - sock->tm_start)/1000.0);
 #endif
-	return lua_gettop(L) - top;
+    return lua_gettop(L) - top;
+}
+
+/*-------------------------------------------------------------------------*\
+* Retrieves socket peer name
+* Lua Input: sock 
+*   sock: socket
+* Lua Returns
+*   On success: ip address and port of peer
+*   On error: nil
+\*-------------------------------------------------------------------------*/
+static int table_getpeername(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    struct sockaddr_in peer;
+    size_t peer_len = sizeof(peer);
+    if (getpeername(sock->sock, (SA *) &peer, &peer_len) < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_pushstring(L, inet_ntoa(peer.sin_addr));
+    lua_pushnumber(L, ntohs(peer.sin_port));
+    return 2;
+}
+
+/*-------------------------------------------------------------------------*\
+* Retrieves socket local name
+* Lua Input: sock 
+*   sock: socket
+* Lua Returns
+*   On success: local ip address and port
+*   On error: nil
+\*-------------------------------------------------------------------------*/
+static int table_getsockname(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+    struct sockaddr_in local;
+    size_t local_len = sizeof(local);
+    if (getsockname(sock->sock, (SA *) &local, &local_len) < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_pushstring(L, inet_ntoa(local.sin_addr));
+    lua_pushnumber(L, ntohs(local.sin_port));
+    return 2;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -572,25 +840,68 @@ static int table_receive(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int table_close(lua_State *L)
 {
-	/* close socket and set value to -1 so that pop_socket can later 
-	** detect the use of a closed socket */
-	p_sock sock = pop_sock(L);
-	closesocket(sock->sock);
-	sock->sock = -1;
-	return 0;
+    /* close socket and set value to INVALID_SOCKET so that 
+    ** pop_socket can later detect the use of a closed socket */
+    p_sock sock = pop_sock(L);
+    closesocket(sock->sock);
+    sock->sock = INVALID_SOCKET;
+    return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Tests if we can immediately read or write on a socket
+* Lua Input 
+*   sock: socket to be closed
+*   operation: operation to query "*r", "*s"
+* Lua Returns
+*   1 if operation will be accepted, nil otherwise
+\*-------------------------------------------------------------------------*/
+static int table_poll(lua_State *L)
+{
+    p_sock sock = pop_sock(L);
+	const char *op = luaL_check_string(L, 2);
+	int tm_block = sock->tm_block;
+	int tm_return = sock->tm_return;
+	if (!*op || *op != '*') lua_error(L, "invalid poll pattern");
+	op++;
+	tm_markstart(sock);
+	switch (*op) {
+		case 'r':
+			sock->tm_block = sock->tm_return = 0;
+			if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) 
+				lua_pushnil(L);
+			else lua_pushnumber(L, 1);
+			sock->tm_block = tm_block;
+			sock->tm_return = tm_return;
+			break;
+		case 's':
+			sock->tm_block = sock->tm_return = 0;
+			if (tm_timedout(sock, TM_SEND)) lua_pushnil(L);
+			else lua_pushnumber(L, 1);
+			sock->tm_block = tm_block;
+			sock->tm_return = tm_return;
+			break;
+		default:
+			lua_error(L, "invalid poll pattern");
+			break;
+	}
+	return 1;
 }
 
 /*-------------------------------------------------------------------------*\
 * Garbage collection fallback for the socket objects. This function 
 * makes sure that all collected sockets are closed.
 \*-------------------------------------------------------------------------*/
-static int gc_sock(lua_State *L)
+static int gc_table(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	p_sock sock = get_selfsock(L, tags);
-	/* sock might have been closed */
-	if (sock->sock >= 0) closesocket(sock->sock);
-	return 0;
+    p_tags tags = pop_tags(L);
+    p_sock sock = get_selfsock(L, tags, NULL);
+    /* sock might have been closed before */
+    if (sock->sock != INVALID_SOCKET) {
+        closesocket(sock->sock);
+        sock->sock = INVALID_SOCKET;
+    }
+    return 0;
 }
 
 /*=========================================================================*\
@@ -605,150 +916,210 @@ static int gc_sock(lua_State *L)
 static void handle_sigpipe(void);
 static void handle_sigpipe(void)
 {
-	struct sigaction new;
-	memset(&new, 0, sizeof(new));
-	new.sa_handler = SIG_IGN;
-	sigaction(SIGPIPE, &new, NULL);
+    struct sigaction new;
+    memset(&new, 0, sizeof(new));
+    new.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &new, NULL);
 }
 #endif
 
 /*-------------------------------------------------------------------------*\
-* Creates a TCP/IP socket.
+* Tries to create a TCP socket and connect to remote address (address, port)
 * Input
-*   sock: structure to receive new socket
+*   address: host name or ip address
+*   port: port number to bind to
 * Returns
-*   1 if successfull, 0 in case or error
+*   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-static int create_tcpsocket(p_sock sock)
+const char *tcp_tryconnect(p_sock sock, const char *address, 
+    unsigned short port)
 {
-	sock->sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock->sock < 0) return 0;
-#ifdef _DEBUG
-/* this allow us to re-bind onto an address even if there is still
-** a TIME_WAIT condition. debugging is much more confortable, because
-** we don't get "address already in use" errors all the time we
-** re-run the program before the OS is ready. in real life, though
-** there could be data pending on the socket and this could lead to
-** some weird errors. */
-{
-	int val = 1;
-	setsockopt(sock->sock, SOL_SOCKET, SO_REUSEADDR, (char *) &val, 
-		sizeof(val));
-}
-#endif
-	return 1;
-}
-
-/*-------------------------------------------------------------------------*\
-* Fills a sockaddr structure according to a given host name of ip
-* address and a port number.
-* Input
-*   address: pointer to sockaddr structure to be filled
-*   hostname: host name or ip address
-*   port: port number
-* Returns
-*   1 in case of success, 0 otherwise
-\*-------------------------------------------------------------------------*/
-static int fill_sockaddr(struct sockaddr_in *address, const char *hostname, 
-	unsigned short port)
-{
-	struct hostent *host = NULL;
-	unsigned long addr = inet_addr(hostname);
-	memset(address, 0, sizeof(struct sockaddr_in));
-	if (strcmp(hostname, "*")) {
-		/* BSD says we could have used gethostbyname even if the hostname is
-		** in ip address form, but WinSock2 says we can't. Therefore we
-		** choose a method that works on both plataforms */
-		if (addr == INADDR_NONE) host = gethostbyname(hostname);
-		else host = gethostbyaddr((char * ) &addr, sizeof(unsigned long), 
-				AF_INET);
-		if (!host) 
-			return 0;
-		memcpy(&(address->sin_addr), host->h_addr, (unsigned) host->h_length);
-	} else {
-		address->sin_addr.s_addr = htonl(INADDR_ANY);
-	}
-	address->sin_family = AF_INET;
-	address->sin_port = htons(port);
-	return 1;
+    struct sockaddr_in remote;
+    memset(&remote, 0, sizeof(remote));
+    if (inet_aton(address, &remote.sin_addr)) {
+        remote.sin_family = AF_INET;
+        remote.sin_port = htons(port);
+        sock->sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock->sock == INVALID_SOCKET) return socket_strerror();
+        if (connect(sock->sock, (SA *) &remote, sizeof(remote)) < 0) {
+            closesocket(sock->sock);
+            sock->sock = INVALID_SOCKET;
+            return connect_strerror();
+        }
+    /* go ahead and try by hostname resolution */
+    } else {
+        struct hostent *hp = gethostbyname(address);
+        struct in_addr **addr;
+        if (!hp) return host_strerror();
+        addr = (struct in_addr **) hp->h_addr_list;
+        for (; *addr != NULL; addr++) {
+            memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
+            remote.sin_family = AF_INET;
+            remote.sin_port = htons(port);
+            sock->sock = socket(AF_INET, SOCK_STREAM, 0);
+            if (sock->sock == INVALID_SOCKET) return socket_strerror();
+            if (connect(sock->sock, (SA *) &remote, sizeof(remote)) == 0) 
+				break;
+            closesocket(sock->sock);
+            sock->sock = INVALID_SOCKET;
+            memset(&remote, 0, sizeof(remote));
+        }
+    }
+    if (sock->sock == INVALID_SOCKET) return connect_strerror();
+    return NULL;
 }
 
 /*-------------------------------------------------------------------------*\
-* Creates a t_sock structure with default values for a client sock.
-* Pushes the Lua table with sock fields and appropriate methods
+* Sets the SO_REUSEADDR socket option
 * Input
-*   tags: tags structure
-* Returns
-*   pointer to allocated t_sock structure, NULL in case of error
+*   sock: socket to set option
 \*-------------------------------------------------------------------------*/
-static p_sock push_clienttable(lua_State *L, p_tags tags)
+void set_reuseaddr(p_sock sock)
 {
-	static struct luaL_reg funcs[] = {
-		{"send", table_send},
-		{"receive", table_receive},
-		{"close", table_close},
-		{"timeout", table_timeout},
-	};
-	int i;
-	p_sock sock;
-	lua_newtable(L); lua_settag(L, tags->table);
-	lua_pushstring(L, P_SOCK);
-	sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
-	if (!sock) lua_error(L, "out of memory");
-	lua_settag(L, tags->client);
-	lua_settable(L, -3);
-	sock->sock = -1;
-	sock->tm_block = -1;
-	sock->tm_return = -1;
-	sock->bf_first = sock->bf_last = 0;
-	for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
-		lua_pushstring(L, funcs[i].name);
-		lua_pushusertag(L, sock, tags->client);
-		lua_pushcclosure(L, funcs[i].func, 1);
-		lua_settable(L, -3);
-	}
-	return sock;
+    int val = 1;
+    setsockopt(sock->sock, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
 }
 
 /*-------------------------------------------------------------------------*\
-* Creates a t_sock structure with default values for a server sock.
-* Pushes the Lua table with sock fields and appropriate methods
+* Tries to create a TCP socket and bind it to (address, port)
 * Input
-*   tags: tags structure
+*   address: host name or ip address
+*   port: port number to bind to
+*   backlog: backlog to set
 * Returns
-*   pointer to allocated t_sock structure, NULL in case of error
+*   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-static p_sock push_servertable(lua_State *L, p_tags tags)
+const char *tcp_trybind(p_sock sock, const char *address, 
+    unsigned short port, int backlog)
 {
-	static struct luaL_reg funcs[] = {
-		{"listen", table_listen},
-		{"close", table_close},
-	};
-	int i;
-	p_sock sock;
-	lua_newtable(L); lua_settag(L, tags->table);
-	lua_pushstring(L, P_SOCK);
-	sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
-	if (!sock) lua_error(L, "out of memory");
-	lua_settag(L, tags->server);
-	lua_settable(L, -3);
-	if (!create_tcpsocket(sock)) return NULL;
-	sock->tm_block = -1;
-	sock->tm_return = -1;
-	sock->bf_first = sock->bf_last = 0;
-	for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
-		lua_pushstring(L, funcs[i].name);
-		lua_pushusertag(L, sock, tags->client);
-		lua_pushcclosure(L, funcs[i].func, 1);
-		lua_settable(L, -3);
-	}
-	/* the accept method is different, it needs the tags closure too */
-	lua_pushstring(L, "accept");
-	lua_pushuserdata(L, tags);
-	lua_pushusertag(L, sock, tags->client);
-	lua_pushcclosure(L, table_accept, 2);
-	lua_settable(L, -3);
-	return sock;
+    struct sockaddr_in local;
+    memset(&local, 0, sizeof(local));
+    local.sin_port = htons(port);
+    local.sin_family = AF_INET;
+    local.sin_addr.s_addr = htonl(INADDR_ANY);
+    sock->sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock->sock == INVALID_SOCKET) return socket_strerror();
+    set_reuseaddr(sock);
+    /* address is either wildcard or a valid ip address */
+    if (!strcmp(address, "*") || inet_aton(address, &local.sin_addr)) {
+        if (bind(sock->sock, (SA *) &local, sizeof(local)) < 0) {
+            closesocket(sock->sock);
+            sock->sock = INVALID_SOCKET;
+            return bind_strerror();
+        }
+    /* otherwise, proceed with domain name resolution */
+    } else {
+        struct hostent *hp = gethostbyname(address);
+        struct in_addr **addr;
+        if (!hp) return host_strerror();
+        addr = (struct in_addr **) hp->h_addr_list;
+        for (; *addr != NULL; addr++) {
+            memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
+            if (bind(sock->sock, (SA *) &local, sizeof(local)) < 0) {
+                closesocket(sock->sock);
+                sock->sock = socket(AF_INET, SOCK_DGRAM, 0);
+                if (sock->sock == INVALID_SOCKET) return socket_strerror();
+                set_reuseaddr(sock);
+            } else break;
+        }
+        if (*addr == NULL) return bind_strerror();
+    }
+    /* set connection queue length */
+    if (listen(sock->sock, backlog) < 0) {
+        closesocket(sock->sock);
+        sock->sock = INVALID_SOCKET;
+        return "listen error";
+    }
+    /* no errors found */
+    return NULL;
+}
+
+/*-------------------------------------------------------------------------*\
+* Tries to bind the UDP socket to (address, port)
+* Input
+*   address: host name or ip address
+*   port: port number to bind to
+* Returns
+*   NULL in case of success, error message otherwise
+\*-------------------------------------------------------------------------*/
+const char *udp_setsockname(p_sock sock, const char *address, 
+    unsigned short port)
+{
+    struct sockaddr_in local;
+    memset(&local, 0, sizeof(local));
+    local.sin_port = htons(port);
+    local.sin_family = AF_INET;
+    local.sin_addr.s_addr = htonl(INADDR_ANY);
+    set_reuseaddr(sock);
+    /* address is either wildcard or a valid ip address */
+    if (!strcmp(address, "*") || inet_aton(address, &local.sin_addr)) {
+        if (bind(sock->sock, (SA *) &local, sizeof(local)) < 0) {
+            closesocket(sock->sock);
+            sock->sock = INVALID_SOCKET;
+            return bind_strerror();
+        }
+    /* otherwise, proceed with domain name resolution */
+    } else {
+        struct hostent *hp = gethostbyname(address);
+        struct in_addr **addr;
+        if (!hp) return host_strerror();
+        addr = (struct in_addr **) hp->h_addr_list;
+        for (; *addr != NULL; addr++) {
+            memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
+            if (bind(sock->sock, (SA *) &local, sizeof(local)) < 0) {
+                closesocket(sock->sock);
+                sock->sock = socket(AF_INET, SOCK_DGRAM, 0);
+                if (sock->sock == INVALID_SOCKET) return socket_strerror();
+                set_reuseaddr(sock);
+            } else break;
+        }
+        if (*addr == NULL) return bind_strerror();
+    }
+    /* no errors found */
+    return NULL;
+}
+
+/*-------------------------------------------------------------------------*\
+* Tries to connect a UDP to remote address (address, port)
+* Input
+*   address: host name or ip address
+*   port: port number to bind to
+* Returns
+*   NULL in case of success, error message otherwise
+\*-------------------------------------------------------------------------*/
+const char *udp_setpeername(p_sock sock, const char *address, 
+    unsigned short port)
+{
+    struct sockaddr_in local;
+    memset(&local, 0, sizeof(local));
+    local.sin_port = htons(port);
+    local.sin_family = AF_INET;
+    local.sin_addr.s_addr = htonl(INADDR_ANY);
+    /* address is a valid ip address */
+    if (inet_aton(address, &local.sin_addr)) {
+        if (connect(sock->sock, (SA *) &local, sizeof(local)) < 0) {
+            closesocket(sock->sock);
+            sock->sock = INVALID_SOCKET;
+            return connect_strerror();
+        }
+    /* otherwise, proceed with domain name resolution */
+    } else {
+        struct hostent *hp = gethostbyname(address);
+        struct in_addr **addr;
+        if (!hp) return host_strerror();
+        addr = (struct in_addr **) hp->h_addr_list;
+        for (; *addr != NULL; addr++) {
+            memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
+            if (connect(sock->sock, (SA *) &local, sizeof(local)) < 0) {
+                closesocket(sock->sock);
+                sock->sock = socket(AF_INET, SOCK_DGRAM, 0);
+                if (sock->sock == INVALID_SOCKET) return socket_strerror();
+            } else break;
+        }
+        if (*addr == NULL) return connect_strerror();
+    }
+    /* no errors found */
+    return NULL;
 }
 
 /*=========================================================================*\
@@ -764,23 +1135,23 @@ static p_sock push_servertable(lua_State *L, p_tags tags)
 \*-------------------------------------------------------------------------*/
 static int tm_gettimeleft(p_sock sock)
 {
-	/* no timeout */
-	if (sock->tm_block < 0 && sock->tm_return < 0)
-		return -1;
-	/* there is no block timeout, we use the return timeout */
-	else if (sock->tm_block < 0)
-		return max(sock->tm_return - tm_gettime() + sock->tm_start, 0);
-	/* there is no return timeout, we use the block timeout */
-	else if (sock->tm_return < 0)
-		return sock->tm_block;
-	/* both timeouts are specified */
-	else return min(sock->tm_block, 
-			max(sock->tm_return - tm_gettime() + sock->tm_start, 0));
+    /* no timeout */
+    if (sock->tm_block < 0 && sock->tm_return < 0)
+        return -1;
+    /* there is no block timeout, we use the return timeout */
+    else if (sock->tm_block < 0)
+        return max(sock->tm_return - tm_gettime() + sock->tm_start, 0);
+    /* there is no return timeout, we use the block timeout */
+    else if (sock->tm_return < 0)
+        return sock->tm_block;
+    /* both timeouts are specified */
+    else return min(sock->tm_block, 
+            max(sock->tm_return - tm_gettime() + sock->tm_start, 0));
 }
 
 /*-------------------------------------------------------------------------*\
 * Determines if we have a timeout condition or if we can proceed with
-* an IO write operation.
+* an IO operation.
 * Input
 *   sock: socket structure being used in operation
 *   mode: TM_RECEIVE or TM_SEND
@@ -789,30 +1160,29 @@ static int tm_gettimeleft(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static int tm_timedout(p_sock sock, int mode)
 {
-	fd_set fds;
-	int ret, delta;
-	fd_set *preadfds = NULL, *pwritefds = NULL;
-	struct timeval tm;
-	struct timeval *ptm = NULL;
-	/* find out how much time we have left, in ms */
-	int ms = tm_gettimeleft(sock);
-	/* fill file descriptor set */
-	FD_ZERO(&fds); FD_SET(sock->sock, &fds);
-	/* fill timeval structure */
-	tm.tv_sec = ms / 1000;
-	tm.tv_usec = (ms % 1000) * 1000;
-	/* define function parameters */
-	if (ms > 0) ptm = &tm; /* ptm == NULL when we don't have timeout */
-	if (mode == TM_RECEIVE) preadfds = &fds;
-	else pwritefds = &fds;
-	delta = tm_gettime();
-	/* see if we can read or write or if we timedout */
-	ret = select(sock->sock+1, preadfds, pwritefds, NULL, ptm);
+    fd_set fds;
+    int ret;
+    fd_set *preadfds = NULL, *pwritefds = NULL;
+    struct timeval tm;
+    struct timeval *ptm = NULL;
+    /* find out how much time we have left, in ms */
+    int ms = tm_gettimeleft(sock);
+    /* fill file descriptor set */
+    FD_ZERO(&fds); FD_SET(sock->sock, &fds);
+    /* fill timeval structure */
+    tm.tv_sec = ms / 1000;
+    tm.tv_usec = (ms % 1000) * 1000;
+    /* define function parameters */
+    if (ms >= 0) ptm = &tm; /* ptm == NULL when we don't have timeout */
+    if (mode == TM_RECEIVE) preadfds = &fds;
+    else pwritefds = &fds;
+    /* see if we can read, write or if we timedout */
+    ret = select(sock->sock+1, preadfds, pwritefds, NULL, ptm);
 #ifdef _DEBUG
-	/* store end time for this operation next call to OS */
-	sock->tm_end = tm_gettime();
+    /* store end time for this operation next call to OS */
+    sock->tm_end = tm_gettime();
 #endif
-	return ret <= 0;
+    return ret <= 0;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -822,9 +1192,9 @@ static int tm_timedout(p_sock sock, int mode)
 \*-------------------------------------------------------------------------*/
 static void tm_markstart(p_sock sock)
 {
-	sock->tm_start = tm_gettime();
+    sock->tm_start = tm_gettime();
 #ifdef _DEBUG
-	sock->tm_end = sock->tm_start;
+    sock->tm_end = sock->tm_start;
 #endif
 }
 
@@ -836,10 +1206,10 @@ static void tm_markstart(p_sock sock)
 static int tm_gettime(void) 
 {
 #ifdef _WIN32
-	return GetTickCount();
+    return GetTickCount();
 #else
-	struct tms t;
-	return (times(&t)*1000)/CLK_TCK;
+    struct tms t;
+    return (times(&t)*1000)/CLK_TCK;
 #endif
 }
 
@@ -855,7 +1225,7 @@ static int tm_gettime(void)
 \*-------------------------------------------------------------------------*/
 static int bf_isempty(p_sock sock)
 {
-	return sock->bf_first >= sock->bf_last;
+    return sock->bf_first >= sock->bf_last;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -866,13 +1236,13 @@ static int bf_isempty(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static void bf_skip(p_sock sock, int length)
 {
-	sock->bf_first += length;
-	if (bf_isempty(sock)) sock->bf_first = sock->bf_last = 0;
+    sock->bf_first += length;
+    if (bf_isempty(sock)) sock->bf_first = sock->bf_last = 0;
 }
 
 /*-------------------------------------------------------------------------*\
 * Return any data avilable in buffer, or get more data from transport layer
-* if there is none.
+* if buffer is empty.
 * Input
 *   sock: socket structure being used in operation
 * Output
@@ -882,18 +1252,19 @@ static void bf_skip(p_sock sock, int length)
 \*-------------------------------------------------------------------------*/
 static const unsigned char *bf_receive(p_sock sock, int *length)
 {
-	if (bf_isempty(sock)) {
-		int got = recv(sock->sock, sock->bf_buffer, LUASOCKET_BUFFERSIZE, 0);
-		sock->bf_first = 0;
-		if (got >= 0) sock->bf_last = got;
-		else sock->bf_last = 0;
-	}
-	*length = sock->bf_last - sock->bf_first;
-	return sock->bf_buffer + sock->bf_first;
+    if (bf_isempty(sock)) {
+        int got = recv(sock->sock, sock->bf_buffer, LUASOCKET_BUFFERSIZE, 0);
+        sock->bf_first = 0;
+        if (got >= 0) sock->bf_last = got;
+        else sock->bf_last = 0;
+    }
+    *length = sock->bf_last - sock->bf_first;
+    return sock->bf_buffer + sock->bf_first;
 }
 
 /*=========================================================================*\
 * These are the function that are called for each I/O pattern
+* The read patterns leave their result on the Lua stack
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Sends a raw block of data through a socket. The operations are all
@@ -909,26 +1280,26 @@ static const unsigned char *bf_receive(p_sock sock, int *length)
 \*-------------------------------------------------------------------------*/
 static int send_raw(p_sock sock, const char *data, int wanted, int *total)
 {
-	int put = 0;
-	*total = 0;
-	while (wanted > 0) {
-		if (tm_timedout(sock, TM_SEND)) return NET_TIMEOUT;
-		put = send(sock->sock, data, wanted, 0);
-		if (put <= 0) {
+    int put = 0;
+    *total = 0;
+    while (wanted > 0) {
+        if (tm_timedout(sock, TM_SEND)) return NET_TIMEOUT;
+        put = send(sock->sock, data, wanted, 0);
+        if (put <= 0) {
 #ifdef WIN32
-			/* a bug in WinSock forces us to do a busy wait until we manage
-			** to write, because select returns immediately even though it
-			** should have blocked us */
-			if (WSAGetLastError() == WSAEWOULDBLOCK)
-				continue;
+            /* a bug in WinSock forces us to do a busy wait until we manage
+            ** to write, because select returns immediately even though it
+            ** should have blocked us until we could write... */
+            if (WSAGetLastError() == WSAEWOULDBLOCK)
+                continue;
 #endif
-			return NET_CLOSED;
-		}
-		wanted -= put;
-		data += put;
-		*total += put;
-	}
-	return NET_DONE;
+            return NET_CLOSED;
+        }
+        wanted -= put;
+        data += put;
+        *total += put;
+    }
+    return NET_DONE;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -942,27 +1313,27 @@ static int send_raw(p_sock sock, const char *data, int wanted, int *total)
 \*-------------------------------------------------------------------------*/
 static int receive_raw(lua_State *L, p_sock sock, int wanted)
 {
-	int got = 0;
-	const unsigned char *buffer = NULL;
-	luaL_Buffer b;
-	luaL_buffinit(L, &b);
-	while (wanted > 0) {
-		if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
-			luaL_pushresult(&b);
-			return NET_TIMEOUT;
-		}
-		buffer = bf_receive(sock, &got);
-		if (got <= 0) {
-			luaL_pushresult(&b);
-			return NET_CLOSED;
-		}
-		got = min(got, wanted);
-		luaL_addlstring(&b, buffer, got);
-		bf_skip(sock, got);
-		wanted -= got;
-	}
-	luaL_pushresult(&b);
-	return NET_DONE;
+    int got = 0;
+    const unsigned char *buffer = NULL;
+    luaL_Buffer b;
+    luaL_buffinit(L, &b);
+    while (wanted > 0) {
+        if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
+            luaL_pushresult(&b);
+            return NET_TIMEOUT;
+        }
+        buffer = bf_receive(sock, &got);
+        if (got <= 0) {
+            luaL_pushresult(&b);
+            return NET_CLOSED;
+        }
+        got = min(got, wanted);
+        luaL_addlstring(&b, buffer, got);
+        bf_skip(sock, got);
+        wanted -= got;
+    }
+    luaL_pushresult(&b);
+    return NET_DONE;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -970,27 +1341,27 @@ static int receive_raw(lua_State *L, p_sock sock, int wanted)
 * Input
 *   sock: socket structure being used in operation
 * Result
-*   operation error code. NET_DONE, NET_TIMEOUT or NET_CLOSED
+*   operation error code. NET_DONE, NET_TIMEOUT
 \*-------------------------------------------------------------------------*/
 static int receive_all(lua_State *L, p_sock sock)
 {
-	int got = 0;
-	const unsigned char *buffer = NULL;
-	luaL_Buffer b;
-	luaL_buffinit(L, &b);
-	for ( ;; ) {
-		if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
-			luaL_pushresult(&b);
-			return NET_TIMEOUT;
-		} 
-		buffer = bf_receive(sock, &got);
-		if (got <= 0) { 
-			luaL_pushresult(&b);
-			return NET_DONE;
-		}
-		luaL_addlstring(&b, buffer, got);
-		bf_skip(sock, got);
-	}
+    int got = 0;
+    const unsigned char *buffer = NULL;
+    luaL_Buffer b;
+    luaL_buffinit(L, &b);
+    for ( ;; ) {
+        if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
+            luaL_pushresult(&b);
+            return NET_TIMEOUT;
+        } 
+        buffer = bf_receive(sock, &got);
+        if (got <= 0) { 
+            luaL_pushresult(&b);
+            return NET_DONE;
+        }
+        luaL_addlstring(&b, buffer, got);
+        bf_skip(sock, got);
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1005,37 +1376,37 @@ static int receive_all(lua_State *L, p_sock sock)
 \*-------------------------------------------------------------------------*/
 static int receive_dosline(lua_State *L, p_sock sock)
 {
-	int got = 0;
-	const unsigned char *buffer = NULL;
-	luaL_Buffer b;
-	luaL_buffinit(L, &b);
-	for ( ;; ) {
-		if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
-			luaL_pushresult(&b);
-			return NET_TIMEOUT;
-		}
-		buffer = bf_receive(sock, &got);
-		if (got > 0) {
-			int len = 0, end = 1;
-			while (len < got) {
-				if (buffer[len] == '\n') { /* found eol */
-					if (len > 0 && buffer[len-1] == '\r') {
-						end++; len--;
-					}
-					luaL_addlstring(&b, buffer, len);
-					bf_skip(sock, len + end); /* skip '\r\n' in stream */
-					luaL_pushresult(&b);
-					return NET_DONE;
-				}
-				len++;
-			}
-			luaL_addlstring(&b, buffer, got);
-			bf_skip(sock, got);
-		} else {
-			luaL_pushresult(&b);
-			return NET_CLOSED;
-		}
-	}
+    int got = 0;
+    const unsigned char *buffer = NULL;
+    luaL_Buffer b;
+    luaL_buffinit(L, &b);
+    for ( ;; ) {
+        if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
+            luaL_pushresult(&b);
+            return NET_TIMEOUT;
+        }
+        buffer = bf_receive(sock, &got);
+        if (got > 0) {
+            int len = 0, end = 1;
+            while (len < got) {
+                if (buffer[len] == '\n') { /* found eol */
+                    if (len > 0 && buffer[len-1] == '\r') {
+                        end++; len--;
+                    }
+                    luaL_addlstring(&b, buffer, len);
+                    bf_skip(sock, len + end); /* skip '\r\n' in stream */
+                    luaL_pushresult(&b);
+                    return NET_DONE;
+                }
+                len++;
+            }
+            luaL_addlstring(&b, buffer, got);
+            bf_skip(sock, got);
+        } else {
+            luaL_pushresult(&b);
+            return NET_CLOSED;
+        }
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1049,34 +1420,34 @@ static int receive_dosline(lua_State *L, p_sock sock)
 \*-------------------------------------------------------------------------*/
 static int receive_unixline(lua_State *L, p_sock sock)
 {
-	int got = 0;
-	const unsigned char *buffer = NULL;
-	luaL_Buffer b;
-	luaL_buffinit(L, &b);
-	for ( ;; ) {
-		if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
-			luaL_pushresult(&b);
-			return NET_TIMEOUT;
-		}
-		buffer = bf_receive(sock, &got);
-		if (got > 0) {
-			int len = 0;
-			while (len < got) {
-				if (buffer[len] == '\n') { /* found eol */
-					luaL_addlstring(&b, buffer, len);
-					bf_skip(sock, len + 1); /* skip '\n' in stream */
-					luaL_pushresult(&b);
-					return NET_DONE;
-				}
-				len++;
-			}
-			luaL_addlstring(&b, buffer, got);
-			bf_skip(sock, got);
-		} else {
-			luaL_pushresult(&b);
-			return NET_CLOSED;
-		}
-	}
+    int got = 0;
+    const unsigned char *buffer = NULL;
+    luaL_Buffer b;
+    luaL_buffinit(L, &b);
+    for ( ;; ) {
+        if (bf_isempty(sock) && tm_timedout(sock, TM_RECEIVE)) {
+            luaL_pushresult(&b);
+            return NET_TIMEOUT;
+        }
+        buffer = bf_receive(sock, &got);
+        if (got > 0) {
+            int len = 0;
+            while (len < got) {
+                if (buffer[len] == '\n') { /* found eol */
+                    luaL_addlstring(&b, buffer, len);
+                    bf_skip(sock, len + 1); /* skip '\n' in stream */
+                    luaL_pushresult(&b);
+                    return NET_DONE;
+                }
+                len++;
+            }
+            luaL_addlstring(&b, buffer, got);
+            bf_skip(sock, got);
+        } else {
+            luaL_pushresult(&b);
+            return NET_CLOSED;
+        }
+    }
 }
 
 /*=========================================================================*\
@@ -1088,116 +1459,381 @@ static int receive_unixline(lua_State *L, p_sock sock)
 \*-------------------------------------------------------------------------*/
 void lua_socketlibopen(lua_State *L)
 {
-	static struct luaL_reg funcs[] = {
-		{"connect", global_connect},
-		{"bind", global_bind},
-		{"toip", global_toip},
-	};
-	int i;
-	/* declare new Lua tags for used userdata values */
-	p_tags tags = (p_tags) lua_newuserdata(L, sizeof(t_tags));
-	if (!tags) lua_error(L, "out of memory");
-	tags->client = lua_newtag(L);
-	tags->server = lua_newtag(L);
-	tags->table = lua_newtag(L);
-	/* global functions exported */
-	for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
-		lua_pushuserdata(L, tags);
-		lua_pushcclosure(L, funcs[i].func, 1);
-		lua_setglobal(L, funcs[i].name);
-	}
-	/* socket garbage collection */
-	lua_pushuserdata(L, tags);
-	lua_pushcclosure(L, gc_sock, 1);
-	lua_settagmethod(L, tags->table, "gc");
+    static struct luaL_reg funcs[] = {
+        {"connect", global_tcpconnect},
+        {"udpsocket", global_udpsocket},
+        {"bind", global_tcpbind},
+        {"toip", global_toip},
+        {"tohostname", global_tohostname},
+    };
+    unsigned int i;
+    /* declare new Lua tags for used userdata values */
+    p_tags tags = (p_tags) lua_newuserdata(L, sizeof(t_tags));
+    if (!tags) lua_error(L, "out of memory");
+    tags->client = lua_newtag(L);
+    tags->server = lua_newtag(L);
+    tags->table = lua_newtag(L);
+    tags->udp = lua_newtag(L);
+    /* global functions exported */
+    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
+        lua_pushuserdata(L, tags);
+        lua_pushcclosure(L, funcs[i].func, 1);
+        lua_setglobal(L, funcs[i].name);
+    }
+    /* socket garbage collection */
+    lua_pushuserdata(L, tags);
+    lua_pushcclosure(L, gc_table, 1);
+    lua_settagmethod(L, tags->table, "gc");
 
 #ifndef LUASOCKET_NOGLOBALS
-	/* global version of socket table functions */
-{ 	static struct luaL_reg opt_funcs[] = {
-		{"send", global_send},
-		{"receive", global_receive},
-		{"accept", global_accept},
-		{"close", global_close},
-		{"timeout", global_timeout},
-		{"listen", global_listen},
-	};
-	for (i = 0; i < sizeof(opt_funcs)/sizeof(opt_funcs[0]); i++) {
-		lua_pushuserdata(L, tags);
-		lua_pushcclosure(L, opt_funcs[i].func, 1);
-		lua_setglobal(L, opt_funcs[i].name);
-	}
+    /* global version of socket table functions */
+{     static struct luaL_reg opt_funcs[] = {
+        {"accept", global_tcpaccept},
+        {"setpeername", global_udpsetpeername},
+        {"setsockname", global_udpsetsockname},
+        {"getsockname", global_getsockname},
+        {"getpeername", global_getpeername},
+        {"sendto", global_udpsendto},
+        {"receivefrom", global_udpreceivefrom},
+        {"timeout", global_timeout},
+        {"send", global_send},
+        {"poll", global_poll},
+        {"receive", global_receive},
+        {"close", global_close},
+    };
+    for (i = 0; i < sizeof(opt_funcs)/sizeof(opt_funcs[0]); i++) {
+        lua_pushuserdata(L, tags);
+        lua_pushcclosure(L, opt_funcs[i].func, 1);
+        lua_setglobal(L, opt_funcs[i].name);
+    }
 }
 #endif
 #ifdef WIN32
-	/* WinSock needs special initialization */
-	winsock_open();
+    /* WinSock needs special initialization */
+    winsock_open();
 #else
-	/* avoid getting killed by a SIGPIPE signal thrown by send */
-	handle_sigpipe();
+    /* avoid getting killed by a SIGPIPE signal thrown by send */
+    handle_sigpipe();
 #endif
 #ifdef _DEBUG
-	/* test support functions */
-	lua_pushcfunction(L, global_sleep); lua_setglobal(L, "sleep");
-	lua_pushcfunction(L, global_time); lua_setglobal(L, "time");
+    /* test support functions */
+    lua_pushcfunction(L, global_sleep); lua_setglobal(L, "sleep");
+    lua_pushcfunction(L, global_time); lua_setglobal(L, "time");
 #endif
-	/* avoid stupid compiler warnings */
-	(void) set_blocking;
 }
 
 /*=========================================================================*\
 * Optional global version of socket table methods
+* Simply push socket object on top or stack and call the table methods.
 \*=========================================================================*/
 #ifndef LUASOCKET_NOGLOBALS
-int global_accept(lua_State *L)
+int global_tcpaccept(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	p_sock sock = get_selfserversock(L, tags);
-	lua_pushuserdata(L, tags);
-	lua_pushusertag(L, sock, tags->server);
-	return table_accept(L);
+    p_tags tags = pop_tags(L);
+    p_sock sock = get_selfserversock(L, tags);
+    lua_pushuserdata(L, tags);
+    lua_pushusertag(L, sock, tags->server);
+    return table_tcpaccept(L);
 }
 
-int global_listen(lua_State *L)
+int global_udpsendto(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	p_sock sock = get_selfserversock(L, tags);
-	lua_pushusertag(L, sock, tags->server);
-	return table_listen(L);
+    p_tags tags = pop_tags(L);
+    p_sock sock = get_selfudpsock(L, tags);
+    lua_pushusertag(L, sock, tags->udp);
+    return table_udpsendto(L);
+}
+
+int global_udpsetpeername(lua_State *L)
+{
+    p_tags tags = pop_tags(L);
+    p_sock sock = get_selfudpsock(L, tags);
+    lua_pushusertag(L, sock, tags->udp);
+    return table_udpsetpeername(L);
+}
+
+int global_udpsetsockname(lua_State *L)
+{
+    p_tags tags = pop_tags(L);
+    p_sock sock = get_selfudpsock(L, tags);
+    lua_pushusertag(L, sock, tags->udp);
+    return table_udpsetsockname(L);
+}
+
+int global_udpreceivefrom(lua_State *L)
+{
+    p_tags tags = pop_tags(L);
+    p_sock sock = get_selfudpsock(L, tags);
+    lua_pushusertag(L, sock, tags->udp);
+    return table_udpreceivefrom(L);
+}
+
+int global_poll(lua_State *L)
+{
+    p_tags tags = pop_tags(L);
+    int tag;
+    p_sock sock = get_selfsock(L, tags, &tag);
+    lua_pushusertag(L, sock, tag);
+    return table_poll(L);
 }
 
 int global_send(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	p_sock sock = get_selfclientsock(L, tags);
-	lua_pushusertag(L, sock, tags->client);
-	return table_send(L);
+    p_tags tags = pop_tags(L);
+    int tag;
+    p_sock sock = get_selfsock(L, tags, &tag);
+    if (tag == tags->udp) {
+        lua_pushusertag(L, sock, tags->udp);
+        return table_udpsend(L);
+    } else if (tag == tags->client) {
+        lua_pushusertag(L, sock, tags->client);
+        return table_tcpsend(L);
+    } else if (tag == tags->server) {
+        lua_error(L, "send on server socket");
+	} else
+        lua_error(L, "invalid socket object");
+    /* avoid compiler warnings */
+    return 0;
 }
 
 int global_receive(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	p_sock sock = get_selfclientsock(L, tags);
-	lua_pushusertag(L, sock, tags->client);
-	return table_receive(L);
+    p_tags tags = pop_tags(L);
+    int tag;
+    p_sock sock = get_selfsock(L, tags, &tag);
+    if (tag == tags->udp) {
+        lua_pushusertag(L, sock, tags->udp);
+        return table_udpreceive(L);
+    } else if (tag == tags->client) {
+        lua_pushusertag(L, sock, tags->client);
+        return table_tcpreceive(L);
+    } else if (tag == tags->server) {
+        lua_error(L, "receive on server socket");
+	} else
+        lua_error(L, "invalid socket object");
+    /* avoid compiler warnings */
+    return 0;
 }
 
 int global_timeout(lua_State *L)
 {
-	p_tags tags = pop_tags(L);
-	p_sock sock = get_selfclientsock(L, tags);
-	lua_pushusertag(L, sock, tags->client);
-	return table_timeout(L);
+    p_tags tags = pop_tags(L);
+    int tag;
+    p_sock sock = get_selfsock(L, tags, &tag);
+    lua_pushusertag(L, sock, tag);
+    return table_timeout(L);
+}
+
+int global_getpeername(lua_State *L)
+{
+    p_tags tags = pop_tags(L);
+    int tag;
+    p_sock sock = get_selfsock(L, tags, &tag);
+    if (tag == tags->server) lua_error(L, "getpeername on server socket");
+    lua_pushusertag(L, sock, tag);
+    return table_getpeername(L);
+}
+
+int global_getsockname(lua_State *L)
+{
+    p_tags tags = pop_tags(L);
+    int tag;
+    p_sock sock = get_selfsock(L, tags, &tag);
+    lua_pushusertag(L, sock, tag);
+    return table_getsockname(L);
 }
 
 int global_close(lua_State *L)
 {
-	return gc_sock(L);
+	/* just call the garbage collection tag method. it knows what to do */
+    return gc_table(L);
 }
 #endif
 
 /*=========================================================================*\
-* Parameter manipulation functions 
+* Lua Stack manipulation functions 
 \*=========================================================================*/
+/*-------------------------------------------------------------------------*\
+* Creates a t_sock structure with default values for a client sock.
+* Pushes the Lua table with sock fields and appropriate methods
+* Input
+*   tags: tags structure
+* Returns
+*   pointer to allocated t_sock structure, NULL in case of error
+\*-------------------------------------------------------------------------*/
+static p_sock push_clienttable(lua_State *L, p_tags tags)
+{
+    static struct luaL_reg funcs[] = {
+        {"close", table_close},
+        {"getsockname", table_getsockname},
+        {"getpeername", table_getpeername},
+        {"poll", table_poll},
+        {"receive", table_tcpreceive},
+        {"send", table_tcpsend},
+        {"timeout", table_timeout},
+    };
+    unsigned int i;
+    p_sock sock;
+    lua_newtable(L); lua_settag(L, tags->table);
+    lua_pushstring(L, P_SOCK);
+    sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
+    if (!sock) return NULL;
+    lua_settag(L, tags->client);
+    lua_settable(L, -3);
+    sock->sock = -1;
+    sock->is_connected = 0;
+    sock->tm_block = -1;
+    sock->tm_return = -1;
+    sock->bf_first = sock->bf_last = 0;
+    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
+        lua_pushstring(L, funcs[i].name);
+        lua_pushusertag(L, sock, tags->client);
+        lua_pushcclosure(L, funcs[i].func, 1);
+        lua_settable(L, -3);
+    }
+    return sock;
+}
+
+/*-------------------------------------------------------------------------*\
+* Creates a t_sock structure with default values for a server sock.
+* Pushes the Lua table with sock fields and appropriate methods
+* Input
+*   tags: tags structure
+* Returns
+*   pointer to allocated t_sock structure, NULL in case of error
+\*-------------------------------------------------------------------------*/
+static p_sock push_servertable(lua_State *L, p_tags tags)
+{
+    static struct luaL_reg funcs[] = {
+        {"close", table_close},
+        {"getsockname", table_getsockname},
+        {"poll", table_poll},
+        {"timeout", table_timeout},
+    };
+    unsigned int i;
+    p_sock sock;
+    lua_newtable(L); lua_settag(L, tags->table);
+    lua_pushstring(L, P_SOCK);
+    sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
+    if (!sock) return NULL;
+    lua_settag(L, tags->server);
+    lua_settable(L, -3);
+    sock->sock = INVALID_SOCKET;
+    sock->tm_block = -1;
+    sock->tm_return = -1;
+    sock->bf_first = sock->bf_last = 0;
+    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
+        lua_pushstring(L, funcs[i].name);
+        lua_pushusertag(L, sock, tags->client);
+        lua_pushcclosure(L, funcs[i].func, 1);
+        lua_settable(L, -3);
+    }
+    /* the accept method is different, it needs the tags closure too */
+    lua_pushstring(L, "accept");
+    lua_pushuserdata(L, tags);
+    lua_pushusertag(L, sock, tags->client);
+    lua_pushcclosure(L, table_tcpaccept, 2);
+    lua_settable(L, -3);
+    return sock;
+}
+
+/*-------------------------------------------------------------------------*\
+* Creates a t_sock structure with default values for a udp sock.
+* Pushes the Lua table with sock fields and appropriate methods
+* Input
+*   tags: tags structure
+* Returns
+*   pointer to allocated t_sock structure, NULL in case of error
+\*-------------------------------------------------------------------------*/
+static p_sock push_udptable(lua_State *L, p_tags tags)
+{
+    static struct luaL_reg funcs[] = {
+        {"sendto", table_udpsendto},
+        {"setpeername", table_udpsetpeername},
+        {"setsockname", table_udpsetsockname},
+        {"getpeername", table_getpeername},
+        {"getsockname", table_getsockname},
+        {"poll", table_poll},
+        {"receivefrom", table_udpreceivefrom},
+        {"receive", table_udpreceive},
+        {"send", table_udpsend},
+        {"close", table_close},
+        {"timeout", table_timeout},
+    };
+    unsigned int i;
+    p_sock sock;
+    lua_newtable(L); lua_settag(L, tags->table);
+    lua_pushstring(L, P_SOCK);
+    sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
+    if (!sock) { 
+        lua_pushnil(L);
+        lua_pushstring(L, "out of memory");
+        return NULL;
+    }
+    lua_settag(L, tags->udp);
+    lua_settable(L, -3);
+    sock->sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock->sock == INVALID_SOCKET) {
+        lua_pushnil(L);
+        lua_pushstring(L, socket_strerror());
+        return NULL;
+    }
+    sock->is_connected = 0;
+    sock->tm_block = -1;
+    sock->tm_return = -1;
+    sock->bf_first = sock->bf_last = 0;
+    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
+        lua_pushstring(L, funcs[i].name);
+        lua_pushusertag(L, sock, tags->udp);
+        lua_pushcclosure(L, funcs[i].func, 1);
+        lua_settable(L, -3);
+    }
+    return sock;
+}
+
+/*-------------------------------------------------------------------------*\
+* Passes all resolver information to Lua as a table
+* Input
+*   hp: hostent structure returned by resolver
+\*-------------------------------------------------------------------------*/
+static void push_resolved(lua_State *L, struct hostent *hp)
+{
+	char **alias;
+	struct in_addr **addr;
+	int i, resolved;
+
+    lua_newtable(L); resolved = lua_gettop(L);
+
+	lua_pushstring(L, "name");
+	lua_pushstring(L, hp->h_name);
+	lua_settable(L, resolved);
+
+    lua_pushstring(L, "ip");
+    lua_pushstring(L, "alias");
+
+	i = 1;
+	alias = hp->h_aliases;
+    lua_newtable(L);
+	while (*alias) {
+		lua_pushnumber(L, i);
+		lua_pushstring(L, *alias);
+		lua_settable(L, -3);
+		i++; alias++;
+	}
+	lua_settable(L, resolved);
+
+	i = 1;
+    lua_newtable(L);
+	addr = (struct in_addr **) hp->h_addr_list;
+    while (*addr) {
+		lua_pushnumber(L, i);
+		lua_pushstring(L, inet_ntoa(**addr));
+		lua_settable(L, -3);
+        i++; addr++;
+    }
+	lua_settable(L, resolved);
+}
+
 /*-------------------------------------------------------------------------*\
 * Passes an error code to Lua. The NET_DONE error is translated to nil.
 * Input
@@ -1205,73 +1841,78 @@ int global_close(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static void push_error(lua_State *L, int err)
 {
-	switch (err) { 
-		case NET_DONE:
-			lua_pushnil(L);
-			break;
-		case NET_TIMEOUT:	
-			lua_pushstring(L, "timeout");
-			break;
-		case NET_CLOSED:	
-			lua_pushstring(L, "closed");
-			break;
-	}
+    switch (err) { 
+        case NET_DONE:
+            lua_pushnil(L);
+            break;
+        case NET_TIMEOUT:    
+            lua_pushstring(L, "timeout");
+            break;
+        case NET_CLOSED:    
+            lua_pushstring(L, "closed");
+            break;
+        case NET_REFUSED:    
+            lua_pushstring(L, "refused");
+            break;
+    }
 }
 
 static p_tags pop_tags(lua_State *L)
 {
-	p_tags tags = (p_tags) lua_touserdata(L, -1);
-	if (!tags) lua_error(L, "invalid closure! (probably misuse of library)");
-	lua_pop(L, 1);
-	return tags;
+    p_tags tags = (p_tags) lua_touserdata(L, -1);
+    if (!tags) lua_error(L, "invalid closure! (probably misuse of library)");
+    lua_pop(L, 1);
+    return tags;
 }
 
 static p_sock pop_sock(lua_State *L)
 {
-	p_sock sock = (p_sock) lua_touserdata(L, -1);
-	if (!sock) lua_error(L, "invalid socket object");
-	if (sock->sock < 0) lua_error(L, "operation on closed socket");
-	lua_pop(L, 1);
-	return sock;
+    p_sock sock = (p_sock) lua_touserdata(L, -1);
+    if (!sock) lua_error(L, "invalid socket object");
+    if (sock->sock == INVALID_SOCKET) 
+        lua_error(L, "operation on closed socket");
+    lua_pop(L, 1);
+    return sock;
 }
 
-static p_sock get_selfsock(lua_State *L, p_tags tags)
+static p_sock get_selfsock(lua_State *L, p_tags tags, int *tag)
 {
-	p_sock sock;
-	if (lua_tag(L, 1) != tags->table) lua_error(L, "invalid socket object");
-	lua_pushstring(L, P_SOCK);
-	lua_gettable(L, 1);
-	sock = lua_touserdata(L, -1);
-	if (!sock) lua_error(L, "invalid socket object");
-	lua_pop(L, 1);
-	return sock;
+    p_sock sock;
+    if (lua_tag(L, 1) != tags->table) lua_error(L, "invalid socket object");
+    lua_pushstring(L, P_SOCK);
+    lua_gettable(L, 1);
+    sock = lua_touserdata(L, -1);
+    if (!sock) lua_error(L, "invalid socket object");
+    if (tag) *tag = lua_tag(L, -1);
+    lua_pop(L, 1);
+    return sock;
 }
 
 #ifndef LUASOCKET_NOGLOBALS
-static p_sock get_selfclientsock(lua_State *L, p_tags tags)
+static p_sock get_selfudpsock(lua_State *L, p_tags tags)
 {
-	p_sock sock;
-	if (lua_tag(L, 1) != tags->table) lua_error(L, "invalid socket object");
-	lua_pushstring(L, P_SOCK);
-	lua_gettable(L, 1);
-	sock = lua_touserdata(L, -1);
-	if (!sock || lua_tag(L, -1) != tags->client) 
-		lua_error(L, "client socket expected");
-	lua_pop(L, 1);
-	return sock;
+    p_sock sock;
+    if (lua_tag(L, 1) != tags->table) lua_error(L, "invalid socket object");
+    lua_pushstring(L, P_SOCK);
+    lua_gettable(L, 1);
+    sock = lua_touserdata(L, -1);
+    if (!sock || lua_tag(L, -1) != tags->udp) 
+        lua_error(L, "udp socket expected");
+    lua_pop(L, 1);
+    return sock;
 }
 
 static p_sock get_selfserversock(lua_State *L, p_tags tags)
 {
-	p_sock sock;
-	if (lua_tag(L, 1) != tags->table) lua_error(L, "invalid socket object");
-	lua_pushstring(L, P_SOCK);
-	lua_gettable(L, 1);
-	sock = lua_touserdata(L, -1);
-	if (!sock || lua_tag(L, -1) != tags->server) 
-		lua_error(L, "server socket expected");
-	lua_pop(L, 1);
-	return sock;
+    p_sock sock;
+    if (lua_tag(L, 1) != tags->table) lua_error(L, "invalid socket object");
+    lua_pushstring(L, P_SOCK);
+    lua_gettable(L, 1);
+    sock = lua_touserdata(L, -1);
+    if (!sock || lua_tag(L, -1) != tags->server) 
+        lua_error(L, "server socket expected");
+    lua_pop(L, 1);
+    return sock;
 }
 #endif
 
@@ -1286,18 +1927,19 @@ static p_sock get_selfserversock(lua_State *L, p_tags tags)
 \*-------------------------------------------------------------------------*/
 static int winsock_open(void)
 {
-	WORD wVersionRequested;WSADATA wsaData;int err; 
-	wVersionRequested = MAKEWORD( 2, 0 ); 
-	err	= WSAStartup( wVersionRequested, &wsaData );
-	if ( err != 0 ) {
-		return 0;
-	} 
-	if ( LOBYTE( wsaData.wVersion ) != 2 ||
-		HIBYTE( wsaData.wVersion ) != 0 ) {
-		WSACleanup( );
-		return 0; 
-	}
-	return 1;
+    WORD wVersionRequested;
+    WSADATA wsaData;
+    int err; 
+    wVersionRequested = MAKEWORD(2, 0); 
+    err = WSAStartup(wVersionRequested, &wsaData );
+    if (err != 0) {
+        return 0;
+    } 
+    if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) {
+        WSACleanup();
+        return 0; 
+    }
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1305,8 +1947,8 @@ static int winsock_open(void)
 \*-------------------------------------------------------------------------*/
 static void set_blocking(p_sock sock)
 {
-	u_long argp = 0;
-	ioctlsocket(sock->sock, FIONBIO, &argp);
+    u_long argp = 0;
+    ioctlsocket(sock->sock, FIONBIO, &argp);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1314,8 +1956,8 @@ static void set_blocking(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static void set_nonblocking(p_sock sock)
 {
-	u_long argp = 1;
-	ioctlsocket(sock->sock, FIONBIO, &argp);
+    u_long argp = 1;
+    ioctlsocket(sock->sock, FIONBIO, &argp);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1323,27 +1965,27 @@ static void set_nonblocking(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static char *host_strerror(void)
 {
-	switch (WSAGetLastError()) {
-		case HOST_NOT_FOUND: return "host not found";
-		case NO_ADDRESS: return "unable to resolve host name";
-		case NO_RECOVERY: return "name server error";
-		case TRY_AGAIN: return "name server unavailable, try again later.";
-		default: return "unknown error";
-	}
+    switch (WSAGetLastError()) {
+        case HOST_NOT_FOUND: return "host not found";
+        case NO_ADDRESS: return "unable to resolve host name";
+        case NO_RECOVERY: return "name server error";
+        case TRY_AGAIN: return "name server unavailable, try again later.";
+        default: return "unknown error";
+    }
 }
 
 /*-------------------------------------------------------------------------*\
 * Returns a string describing the last socket manipulation error.
 \*-------------------------------------------------------------------------*/
-static char *sock_strerror(void)
+static char *socket_strerror(void)
 {
-	switch (WSAGetLastError()) {
-    	case WSANOTINITIALISED: return "not initialized";
-    	case WSAENETDOWN: return "network is down";
-		case WSAEMFILE: return "descriptor table is full";
-		case WSAENOBUFS: return "insufficient buffer space";
-    	default: return "unknown error";
-	}
+    switch (WSAGetLastError()) {
+        case WSANOTINITIALISED: return "not initialized";
+        case WSAENETDOWN: return "network is down";
+        case WSAEMFILE: return "descriptor table is full";
+        case WSAENOBUFS: return "insufficient buffer space";
+        default: return "unknown error";
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1351,16 +1993,16 @@ static char *sock_strerror(void)
 \*-------------------------------------------------------------------------*/
 static char *bind_strerror(void)
 {
-	switch (WSAGetLastError()) {
-    	case WSANOTINITIALISED: return "not initialized";
-    	case WSAENETDOWN: return "network is down";
-    	case WSAEADDRINUSE: return "address already in use";
-    	case WSAEINVAL: return "socket already bound";
-    	case WSAENOBUFS: return "too many connections";
-    	case WSAEFAULT: return "invalid address";
-    	case WSAENOTSOCK: return "not a socket descriptor";
-    	default: return "unknown error";
-	}
+    switch (WSAGetLastError()) {
+        case WSANOTINITIALISED: return "not initialized";
+        case WSAENETDOWN: return "network is down";
+        case WSAEADDRINUSE: return "address already in use";
+        case WSAEINVAL: return "socket already bound";
+        case WSAENOBUFS: return "too many connections";
+        case WSAEFAULT: return "invalid address";
+        case WSAENOTSOCK: return "not a socket descriptor";
+        default: return "unknown error";
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1368,15 +2010,15 @@ static char *bind_strerror(void)
 \*-------------------------------------------------------------------------*/
 static char *connect_strerror(void)
 {
-	switch (WSAGetLastError()) {
-		case WSANOTINITIALISED: return "not initialized";
-    	case WSAENETDOWN: return "network is down";
-    	case WSAEADDRINUSE: return "address already in use";
-		case WSAEADDRNOTAVAIL: return "address unavailable";
-		case WSAECONNREFUSED: return "connection refused";
-		case WSAENETUNREACH: return "network is unreachable";
-    	default: return "unknown error";
-	}
+    switch (WSAGetLastError()) {
+        case WSANOTINITIALISED: return "not initialized";
+        case WSAENETDOWN: return "network is down";
+        case WSAEADDRINUSE: return "address already in use";
+        case WSAEADDRNOTAVAIL: return "address unavailable";
+        case WSAECONNREFUSED: return "connection refused";
+        case WSAENETUNREACH: return "network is unreachable";
+        default: return "unknown error";
+    }
 }
 #else
 
@@ -1388,9 +2030,9 @@ static char *connect_strerror(void)
 \*-------------------------------------------------------------------------*/
 static void set_blocking(p_sock sock)
 {
-	int flags = fcntl(sock->sock, F_GETFL, 0);
-	flags &= (~(O_NONBLOCK));
-	fcntl(sock->sock, F_SETFL, flags);
+    int flags = fcntl(sock->sock, F_GETFL, 0);
+    flags &= (~(O_NONBLOCK));
+    fcntl(sock->sock, F_SETFL, flags);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1398,9 +2040,9 @@ static void set_blocking(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static void set_nonblocking(p_sock sock)
 {
-	int flags = fcntl(sock->sock, F_GETFL, 0);
-	flags |= O_NONBLOCK;
-	fcntl(sock->sock, F_SETFL, flags);
+    int flags = fcntl(sock->sock, F_GETFL, 0);
+    flags |= O_NONBLOCK;
+    fcntl(sock->sock, F_SETFL, flags);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1408,27 +2050,27 @@ static void set_nonblocking(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static char *host_strerror(void)
 {
-	switch (h_errno) {
-		case HOST_NOT_FOUND: return "host not found";
-		case NO_ADDRESS: return "unable to resolve host name";
-		case NO_RECOVERY: return "name server error";
-		case TRY_AGAIN: return "name server unavailable, try again later";
-		default: return "unknown error";
-	}
+    switch (h_errno) {
+        case HOST_NOT_FOUND: return "host not found";
+        case NO_ADDRESS: return "unable to resolve host name";
+        case NO_RECOVERY: return "name server error";
+        case TRY_AGAIN: return "name server unavailable, try again later";
+        default: return "unknown error";
+    }
 }
 
 /*-------------------------------------------------------------------------*\
 * Returns a string describing the last socket manipulation error.
 \*-------------------------------------------------------------------------*/
-static char *sock_strerror(void)
+static char *socket_strerror(void)
 {
-	switch (errno) {
-		case EACCES: return "access denied";
-		case EMFILE: return "descriptor table is full";
-		case ENFILE: return "too many open files";
-		case ENOBUFS: return "insuffucient buffer space";
-		default: return "unknown error";
-	}
+    switch (errno) {
+        case EACCES: return "access denied";
+        case EMFILE: return "descriptor table is full";
+        case ENFILE: return "too many open files";
+        case ENOBUFS: return "insuffucient buffer space";
+        default: return "unknown error";
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1436,16 +2078,16 @@ static char *sock_strerror(void)
 \*-------------------------------------------------------------------------*/
 static char *bind_strerror(void)
 {
-	switch (errno) {
-    	case EBADF: return "invalid descriptor";
-		case EINVAL: return "socket already bound";
-    	case EACCES: return "access denied";
-    	case ENOTSOCK: return "not a socket descriptor";
-		case EADDRINUSE: return "address already in use";
-		case EADDRNOTAVAIL: return "address unavailable";
-    	case ENOMEM: return "out of memory";
-		default: return "unknown error";
-	}
+    switch (errno) {
+        case EBADF: return "invalid descriptor";
+        case EINVAL: return "socket already bound";
+        case EACCES: return "access denied";
+        case ENOTSOCK: return "not a socket descriptor";
+        case EADDRINUSE: return "address already in use";
+        case EADDRNOTAVAIL: return "address unavailable";
+        case ENOMEM: return "out of memory";
+        default: return "unknown error";
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -1453,16 +2095,43 @@ static char *bind_strerror(void)
 \*-------------------------------------------------------------------------*/
 static char *connect_strerror(void)
 {
-	switch (errno) {
-    	case EBADF: return "invalid descriptor";
-    	case ENOTSOCK: return "not a socket descriptor";
-		case EADDRNOTAVAIL: return "address not availabe";
-		case ETIMEDOUT: return "connection timed out";
-		case ECONNREFUSED: return "connection refused";
-		case EACCES: return "access denied";
-		case ENETUNREACH: return "network is unreachable";
-		case EADDRINUSE: return "address already in use";
-		default: return "unknown error";
-	}
+    switch (errno) {
+        case EBADF: return "invalid descriptor";
+        case ENOTSOCK: return "not a socket descriptor";
+        case EADDRNOTAVAIL: return "address not availabe";
+        case ETIMEDOUT: return "connection timed out";
+        case ECONNREFUSED: return "connection refused";
+        case EACCES: return "access denied";
+        case ENETUNREACH: return "network is unreachable";
+        case EADDRINUSE: return "address already in use";
+        default: return "unknown error";
+    }
 }
 #endif
+
+/*-------------------------------------------------------------------------*\
+* Some systems do not provide this so that we provide our own. It's not
+* marvelously fast, but it works just fine.
+\*-------------------------------------------------------------------------*/
+#ifdef LUASOCKET_ATON
+static int inet_aton(const char *cp, struct in_addr *inp)
+{
+    unsigned int a = 0, b = 0, c = 0, d = 0;
+    int n = 0, r;
+    unsigned long int addr = 0;
+    r = sscanf(cp, "%u.%u.%u.%u%n", &a, &b, &c, &d, &n);
+    if (r == 0 || n == 0) return 0;
+    cp += n; 
+    if (*cp) return 0;
+    if (a > 255 || b > 255 || c > 255 || d > 255) return 0;
+    if (inp) {
+        addr += a; addr <<= 8;
+        addr += b; addr <<= 8;
+        addr += c; addr <<= 8;
+        addr += d;
+        inp->s_addr = htonl(addr);
+    }
+    return 1;
+}
+#endif
+
