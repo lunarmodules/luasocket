@@ -379,6 +379,19 @@ function connect_timeout()
 end
 
 ------------------------------------------------------------------------
+function rebind_test()
+    local c = socket.bind("localhost", 0)
+    local i, p = c:getsockname()
+    local s, e = socket.tcp()
+    assert(s, e)
+    s:setoption("reuseaddr", false)
+    r, e = s:bind("localhost", p)
+    assert(not r, "managed to rebind!")
+    assert(e == "address already in use")
+    print("ok")
+end
+
+------------------------------------------------------------------------
 test("method registration")
 test_methods(socket.tcp(), {
     "connect",
@@ -415,6 +428,9 @@ test_selectbugs()
 
 test("empty host connect: ")
 empty_connect()
+
+test("rebinding: ")
+rebind_test()
 
 test("active close: ")
 active_close()

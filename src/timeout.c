@@ -114,9 +114,10 @@ int tm_getretry(p_tm tm)
 * Input
 *   tm: timeout control structure
 \*-------------------------------------------------------------------------*/
-void tm_markstart(p_tm tm)
+p_tm tm_markstart(p_tm tm)
 {
     tm->start = tm_gettime();
+    return tm;
 }
 
 /*-------------------------------------------------------------------------*\

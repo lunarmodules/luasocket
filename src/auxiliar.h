@@ -48,7 +48,6 @@ void *aux_checkclass(lua_State *L, const char *classname, int objidx);
 void *aux_checkgroup(lua_State *L, const char *groupname, int objidx);
 void *aux_getclassudata(lua_State *L, const char *groupname, int objidx);
 void *aux_getgroupudata(lua_State *L, const char *groupname, int objidx);
-int aux_meth_setoption(lua_State *L, luaL_reg *opt);
 int aux_checkboolean(lua_State *L, int objidx);
 
 #endif /* AUX_H */

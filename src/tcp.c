@@ -14,6 +14,7 @@
 #include "auxiliar.h"
 #include "socket.h"
 #include "inet.h"
+#include "options.h"
 #include "tcp.h"
 
 /*=========================================================================*\
@@ -33,10 +34,6 @@ static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_fd(lua_State *L);
 static int meth_dirty(lua_State *L);
-static int opt_tcp_nodelay(lua_State *L);
-static int opt_keepalive(lua_State *L);
-static int opt_linger(lua_State *L);
-static int opt_reuseaddr(lua_State *L);
 
 /* tcp object methods */
 static luaL_reg tcp[] = {
@@ -60,7 +57,7 @@ static luaL_reg tcp[] = {
 };
 
 /* socket option handlers */
-static luaL_reg opt[] = {
+static t_opt opt[] = {
     {"keepalive",   opt_keepalive},
     {"reuseaddr",   opt_reuseaddr},
     {"tcp-nodelay", opt_tcp_nodelay},
@@ -116,65 +113,12 @@ static int meth_receive(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
-* Option handlers
+* Just call option handler
 \*-------------------------------------------------------------------------*/
 static int meth_setoption(lua_State *L)
 {
-    return aux_meth_setoption(L, opt);
-}
-
-static int opt_boolean(lua_State *L, int level, int name)
-{
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
-    int val = aux_checkboolean(L, 2);
-    if (setsockopt(tcp->sock, level, name, (char *) &val, sizeof(val)) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "setsockopt failed");
-        return 2;
-    }
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
-/* enables reuse of local address */
-static int opt_reuseaddr(lua_State *L)
-{
-    return opt_boolean(L, SOL_SOCKET, SO_REUSEADDR); 
-}
-
-/* disables the Naggle algorithm */
-static int opt_tcp_nodelay(lua_State *L)
-{
-    return opt_boolean(L, IPPROTO_TCP, TCP_NODELAY); 
-}
-
-static int opt_keepalive(lua_State *L)
-{
-    return opt_boolean(L, SOL_SOCKET, SO_KEEPALIVE); 
-}
-
-static int opt_linger(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
-    struct linger li;
-    if (!lua_istable(L, 2)) 
-        luaL_typerror(L, 2, lua_typename(L, LUA_TTABLE));
-    lua_pushstring(L, "on");
-    lua_gettable(L, 2);
-    if (!lua_isboolean(L, -1)) luaL_argerror(L, 2, "invalid 'on' field");
-    li.l_onoff = lua_toboolean(L, -1);
-    lua_pushstring(L, "timeout");
-    lua_gettable(L, 2);
-    if (!lua_isnumber(L, -1)) luaL_argerror(L, 2, "invalid 'timeout' field");
-    li.l_linger = (int) lua_tonumber(L, -1);
-    if (setsockopt(tcp->sock, SOL_SOCKET, SO_LINGER, 
-                (char *) &li, sizeof(li) < 0)) {
-        lua_pushnil(L);
-        lua_pushstring(L, "setsockopt failed");
-        return 2;
-    }
-    lua_pushnumber(L, 1);
-    return 1;
+    p_tcp tcp = aux_checkgroup(L, "tcp{any}", 1);
+    return opt_meth_setoption(L, opt, &tcp->sock);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -201,13 +145,11 @@ static int meth_dirty(lua_State *L)
 static int meth_accept(lua_State *L)
 {
     p_tcp server = (p_tcp) aux_checkclass(L, "tcp{server}", 1);
-    p_tm tm = &server->tm;
+    p_tm tm = tm_markstart(&server->tm);
     t_sock sock;
-    const char *err;
-    tm_markstart(tm);
-    err = inet_tryaccept(&server->sock, tm, &sock);
+    int err = sock_accept(&server->sock, &sock, NULL, NULL, tm);
     /* if successful, push client socket */
-    if (!err) {
+    if (err == IO_DONE) {
         p_tcp clnt = lua_newuserdata(L, sizeof(t_tcp));
         aux_setclass(L, "tcp{client}", -1);
         /* initialize structure fields */
@@ -218,7 +160,7 @@ static int meth_accept(lua_State *L)
         return 1;
     } else {
         lua_pushnil(L); 
-        lua_pushstring(L, err);
+        io_pusherror(L, err);
         return 2;
     }
 }
@@ -252,10 +194,8 @@ static int meth_connect(lua_State *L)
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    p_tm tm = &tcp->tm;
-    const char *err;
-    tm_markstart(tm);
-    err = inet_tryconnect(&tcp->sock, tm, address, port);
+    p_tm tm = tm_markstart(&tcp->tm);
+    const char *err = inet_tryconnect(&tcp->sock, address, port, tm);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);

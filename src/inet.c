@@ -178,13 +178,21 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 }
 
 /*-------------------------------------------------------------------------*\
+* Tries to create a new inet socket
+\*-------------------------------------------------------------------------*/
+const char *inet_trycreate(p_sock ps, int type)
+{
+    return sock_create(ps, AF_INET, type, 0);
+}
+
+/*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_tryconnect(p_sock ps, p_tm tm, const char *address, 
-        unsigned short port)
+const char *inet_tryconnect(p_sock ps, const char *address, 
+        unsigned short port, p_tm tm)
 {
     struct sockaddr_in remote;
-    int err;
+    const char *err;
     memset(&remote, 0, sizeof(remote));
     remote.sin_family = AF_INET;
     remote.sin_port = htons(port);
@@ -197,14 +205,9 @@ const char *inet_tryconnect(p_sock ps, p_tm tm, const char *address,
             memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
         }
     } else remote.sin_family = AF_UNSPEC;
-    do err = sock_connect(ps, (SA *) &remote, sizeof(remote), tm_getretry(tm));
-    while (err == IO_RETRY && tm_getretry(tm));
-    if (err != IO_DONE) {
-        sock_destroy(ps);
-        *ps = SOCK_INVALID;
-        if (err == IO_ERROR) return sock_connectstrerror();
-        else return io_strerror(err);
-    } else return NULL;
+    err = sock_connect(ps, (SA *) &remote, sizeof(remote), tm);
+    if (err) sock_destroy(ps);
+    return err;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -214,6 +217,7 @@ const char *inet_trybind(p_sock ps, const char *address, unsigned short port,
         int backlog)
 {
     struct sockaddr_in local;
+    const char *err;
     memset(&local, 0, sizeof(local));
     /* address is either wildcard or a valid ip address */
     local.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -228,39 +232,15 @@ const char *inet_trybind(p_sock ps, const char *address, unsigned short port,
         memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
     }
     sock_setblocking(ps);
-    if (sock_bind(ps, (SA *) &local, sizeof(local)) != IO_DONE) {
+    err = sock_bind(ps, (SA *) &local, sizeof(local));
+    if (err) {
         sock_destroy(ps);
-        *ps = SOCK_INVALID;
-        return sock_bindstrerror();
+        return err; 
     } else {
         sock_setnonblocking(ps);
         if (backlog >= 0) sock_listen(ps, backlog);
         return NULL;
     }
-}
-
-/*-------------------------------------------------------------------------*\
-* Tries to create a new inet socket
-\*-------------------------------------------------------------------------*/
-const char *inet_trycreate(p_sock ps, int type)
-{
-    if (sock_create(ps, AF_INET, type, 0) == IO_DONE) return NULL;
-    else return sock_createstrerror();
-}
-
-/*-------------------------------------------------------------------------*\
-* Tries to accept an inet socket
-\*-------------------------------------------------------------------------*/
-const char *inet_tryaccept(p_sock ps, p_tm tm, p_sock pc)
-{
-    struct sockaddr_in addr;
-    socklen_t addr_len = sizeof(addr);
-    int err;
-    /* loop until connection accepted or timeout happens */
-    do err = sock_accept(ps, pc, (SA *) &addr, &addr_len, tm_getretry(tm));
-    while (err == IO_RETRY && tm_getretry(tm) != 0);
-    if (err == IO_RETRY) err = IO_TIMEOUT;
-    return io_strerror(err);
 }
 
 /*-------------------------------------------------------------------------*\

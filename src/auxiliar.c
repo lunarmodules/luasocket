@@ -66,26 +66,6 @@ int aux_checkboolean(lua_State *L, int objidx)
 }
 
 /*-------------------------------------------------------------------------*\
-* Calls appropriate option handler
-\*-------------------------------------------------------------------------*/
-int aux_meth_setoption(lua_State *L, luaL_reg *opt)
-{
-    const char *name = luaL_checkstring(L, 2);      /* obj, name, args */
-    while (opt->name && strcmp(name, opt->name))
-        opt++;
-    if (!opt->func) {
-        char msg[45];
-        sprintf(msg, "unknown option `%.35s'", name);
-        luaL_argerror(L, 2, msg);
-    }
-    lua_remove(L, 2);                              /* obj, args */
-    lua_pushcfunction(L, opt->func);               /* obj, args, func */
-    lua_insert(L, 1);                              /* func, obj, args */
-    lua_call(L, lua_gettop(L)-1, LUA_MULTRET);
-    return lua_gettop(L);
-}
-
-/*-------------------------------------------------------------------------*\
 * Return userdata pointer if object belongs to a given class, abort with 
 * error otherwise
 \*-------------------------------------------------------------------------*/

@@ -22,6 +22,14 @@
 #include "usocket.h"
 #endif
 
+/*=========================================================================*\
+* The connect and accept functions accept a timeout and their
+* implementations are somewhat complicated. We chose to move
+* the timeout control into this module for these functions in
+* order to simplify the modules that use them. 
+\*=========================================================================*/
+#include "timeout.h"
+
 /* we are lazy... */
 typedef struct sockaddr SA;
 
@@ -30,12 +38,7 @@ typedef struct sockaddr SA;
 * interface to sockets
 \*=========================================================================*/
 int sock_open(void);
-int sock_create(p_sock ps, int domain, int type, int protocol);
 void sock_destroy(p_sock ps);
-int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len, 
-        int timeout);
-int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, int timeout); 
-int sock_bind(p_sock ps, SA *addr, socklen_t addr_len); 
 void sock_listen(p_sock ps, int backlog);
 void sock_shutdown(p_sock ps, int how); 
 int sock_send(p_sock ps, const char *data, size_t count, 
@@ -48,10 +51,10 @@ int sock_recvfrom(p_sock ps, char *data, size_t count,
         size_t *got, SA *addr, socklen_t *addr_len, int timeout);
 void sock_setnonblocking(p_sock ps);
 void sock_setblocking(p_sock ps);
-
+int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len, p_tm tm);
+const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm); 
+const char *sock_create(p_sock ps, int domain, int type, int protocol);
+const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len); 
 const char *sock_hoststrerror(void);
-const char *sock_createstrerror(void);
-const char *sock_bindstrerror(void);
-const char *sock_connectstrerror(void);
 
 #endif /* SOCK_H */

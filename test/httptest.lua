@@ -49,8 +49,7 @@ local check_result = function(response, expect, ignore)
 	for i,v in response do
 		if not ignore[i] then
 			if v ~= expect[i] then 
-                v = string.sub(type(v) == "string" and v or "", 1, 70)
-                print(v)
+                print(string.sub(tostring(v), 1, 70))
                 fail(i .. " differs!") 
             end
 		end
@@ -59,7 +58,7 @@ local check_result = function(response, expect, ignore)
 		if not ignore[i] then
 			if v ~= response[i] then 
                 v = string.sub(type(v) == "string" and v or "", 1, 70)
-                print(v)
+                print(string.sub(tostring(v), 1, 70))
                 fail(i .. " differs!") 
             end
 		end

@@ -22,6 +22,7 @@ tests
 trust character constants in mime.c? noooooo.
 smtp.lua needs stuff filter
 
+add comments into each C module.
 new option.c module to put all options (TCP and UDP share...)?
 testar os options!
 add _tostring methods!

@@ -14,6 +14,7 @@
 #include "auxiliar.h"
 #include "socket.h"
 #include "inet.h"
+#include "options.h"
 #include "udp.h"
 
 /*=========================================================================*\
@@ -34,13 +35,6 @@ static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_fd(lua_State *L);
 static int meth_dirty(lua_State *L);
-static int opt_dontroute(lua_State *L);
-static int opt_broadcast(lua_State *L);
-static int opt_reuseaddr(lua_State *L);
-static int opt_ip_multicast_ttl(lua_State *L);
-static int opt_ip_multicast_loop(lua_State *L);
-static int opt_ip_add_membership(lua_State *L);
-static int opt_ip_drop_membersip(lua_State *L);
 
 /* udp object methods */
 static luaL_reg udp[] = {
@@ -63,7 +57,7 @@ static luaL_reg udp[] = {
 };
 
 /* socket options */
-static luaL_reg opt[] = {
+static t_opt opt[] = {
     {"dontroute",          opt_dontroute},
     {"broadcast",          opt_broadcast},
     {"reuseaddr",          opt_reuseaddr},
@@ -231,95 +225,12 @@ static int meth_getsockname(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
-* Option handlers
+* Just call option handler
 \*-------------------------------------------------------------------------*/
 static int meth_setoption(lua_State *L)
 {
-    return aux_meth_setoption(L, opt);
-}
-
-static int opt_boolean(lua_State *L, int level, int name)
-{
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
-    int val = aux_checkboolean(L, 2);
-    if (setsockopt(udp->sock, level, name, (char *) &val, sizeof(val)) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "setsockopt failed");
-        return 2;
-    }
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
-static int opt_dontroute(lua_State *L)
-{
-    return opt_boolean(L, SOL_SOCKET, SO_DONTROUTE);
-}
-
-static int opt_reuseaddr(lua_State *L)
-{
-    return opt_boolean(L, SOL_SOCKET, SO_REUSEADDR); 
-}
-
-static int opt_broadcast(lua_State *L)
-{
-    return opt_boolean(L, SOL_SOCKET, SO_BROADCAST);
-}
-
-static int opt_ip_multicast_loop(lua_State *L)
-{
-    return opt_boolean(L, IPPROTO_IP, IP_MULTICAST_LOOP);
-}
-
-static int opt_ip_multicast_ttl(lua_State *L)
-{
-    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
-    int val = (int) luaL_checknumber(L, 2);
-    if (setsockopt(udp->sock, IPPROTO_IP, IP_MULTICAST_TTL, 
-                (char *) &val, sizeof(val)) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "setsockopt failed");
-        return 2;
-    }
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
-static int opt_membership(lua_State *L, int level, int name)
-{
-    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
-    struct ip_mreq val;
-    if (!lua_istable(L, 2))
-        luaL_typerror(L, 2, lua_typename(L, LUA_TTABLE));
-    lua_pushstring(L, "multiaddr");
-    lua_gettable(L, 2);
-    if (!lua_isstring(L, -1)) luaL_argerror(L, 2, "invalid 'group' field");
-    if (!inet_aton(lua_tostring(L, -1), &val.imr_multiaddr)) 
-        luaL_argerror(L, 3, "invalid 'multiaddr' ip address");
-    lua_pushstring(L, "interface");
-    lua_gettable(L, 2);
-    if (!lua_isstring(L, -1)) luaL_argerror(L, 2, "invalid 'interface' field");
-    val.imr_interface.s_addr = htonl(INADDR_ANY);
-    if (strcmp(lua_tostring(L, -1), "*") &&
-            !inet_aton(lua_tostring(L, -1), &val.imr_interface)) 
-        luaL_argerror(L, 3, "invalid 'interface' ip address");
-    if (setsockopt(udp->sock, level, name, (char *) &val, sizeof(val)) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "setsockopt failed");
-        return 2;
-    }
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
-static int opt_ip_add_membership(lua_State *L)
-{
-    return opt_membership(L, IPPROTO_IP, IP_ADD_MEMBERSHIP);
-}
-
-static int opt_ip_drop_membersip(lua_State *L)
-{
-    return opt_membership(L, IPPROTO_IP, IP_DROP_MEMBERSHIP);
+    return opt_meth_setoption(L, opt, &udp->sock);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -343,7 +254,7 @@ static int meth_setpeername(lua_State *L)
     unsigned short port = connecting ? 
         (unsigned short) luaL_checknumber(L, 3) : 
         (unsigned short) luaL_optnumber(L, 3, 0);
-    const char *err = inet_tryconnect(&udp->sock, tm, address, port);
+    const char *err = inet_tryconnect(&udp->sock, address, port, tm);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);

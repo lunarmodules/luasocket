@@ -20,6 +20,10 @@
 
 #include "socket.h"
 
+static const char *sock_createstrerror(void);
+static const char *sock_bindstrerror(void);
+static const char *sock_connectstrerror(void);
+
 /*-------------------------------------------------------------------------*\
 * Initializes module 
 \*-------------------------------------------------------------------------*/
@@ -50,31 +54,37 @@ void sock_destroy(p_sock ps)
 /*-------------------------------------------------------------------------*\
 * Creates and sets up a socket
 \*-------------------------------------------------------------------------*/
-int sock_create(p_sock ps, int domain, int type, int protocol)
+const char *sock_create(p_sock ps, int domain, int type, int protocol)
 {
     int val = 1;
     t_sock sock = socket(domain, type, protocol);
-    if (sock == SOCK_INVALID) return IO_ERROR; 
+    if (sock == SOCK_INVALID) return sock_createstrerror();
     *ps = sock;
     sock_setnonblocking(ps);
     setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(val));
-    return IO_DONE;
+    return NULL;
 }
 
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, int timeout)
+const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm)
 {
     t_sock sock = *ps;
-    if (sock == SOCK_INVALID) return IO_CLOSED;
-    /* if connect fails, we have to find out why */
-    if (connect(sock, addr, addr_len) < 0) {
+    int err;
+    /* don't call on closed socket */
+    if (sock == SOCK_INVALID) return io_strerror(IO_CLOSED);
+    /* ask system to connect */
+    err = connect(sock, addr, addr_len);
+    /* if no error, we're done */
+    if (err == 0) return NULL; 
+    /* make sure the system is trying to connect */
+    if (errno != EINPROGRESS) return io_strerror(IO_ERROR);
+    /* wait for a timeout or for the system's answer */
+    for ( ;; ) {
         struct timeval tv;
-        fd_set rfds, efds, wfds;
-        int err;
-        /* make sure the system is trying to connect */
-        if (errno != EINPROGRESS) return IO_ERROR;
+        fd_set rfds, wfds, efds;
+        int timeout = tm_getretry(tm);
         tv.tv_sec = timeout / 1000;
         tv.tv_usec = (timeout % 1000) * 1000;
         FD_ZERO(&rfds); FD_SET(sock, &rfds);
@@ -82,28 +92,29 @@ int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, int timeout)
         FD_ZERO(&efds); FD_SET(sock, &efds);
         /* we run select to avoid busy waiting */
         err = select(sock+1, &rfds, &wfds, &efds, timeout >= 0? &tv: NULL);
-        /* if select was interrupted, ask the user to retry */
-        if (err < 0 && errno == EINTR) return IO_RETRY;
+        /* if select was interrupted, try again */
+        if (err < 0 && errno == EINTR) continue;
         /* if selects readable, try reading */
         if (err > 0) {
             char dummy;
-            /* try reading so that errno is set */
+            /* recv will set errno to the value a blocking connect would set */
             if (recv(sock, &dummy, 0, 0) < 0 && errno != EAGAIN)
-                return IO_ERROR;
-            else return IO_DONE;
+                return sock_connectstrerror();
+            else 
+                return NULL;
         /* if no event happened, there was a timeout */
-        } else return IO_TIMEOUT;
-    /* otherwise connection succeeded */
-    } else return IO_DONE;
+        } else return io_strerror(IO_TIMEOUT);
+    } 
+    return io_strerror(IO_TIMEOUT); /* can't get here */
 }
 
 /*-------------------------------------------------------------------------*\
 * Binds or returns error message
 \*-------------------------------------------------------------------------*/
-int sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
+const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
 {
-    if (bind(*ps, addr, addr_len) < 0) return IO_ERROR;
-    else return IO_DONE;
+    if (bind(*ps, addr, addr_len) < 0) return sock_bindstrerror();
+    else return NULL;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -125,8 +136,7 @@ void sock_shutdown(p_sock ps, int how)
 /*-------------------------------------------------------------------------*\
 * Accept with timeout
 \*-------------------------------------------------------------------------*/
-int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len, 
-        int timeout)
+int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len, p_tm tm)
 {
     t_sock sock = *ps;
     SA dummy_addr;
@@ -134,19 +144,21 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len,
     if (sock == SOCK_INVALID) return IO_CLOSED;
     if (!addr) addr = &dummy_addr;
     if (!addr_len) addr_len = &dummy_len;
-    *pa = accept(sock, addr, addr_len);
-    if (*pa == SOCK_INVALID) {
+    for (;;) {
+        int timeout = tm_getretry(tm);
         struct timeval tv;
         fd_set fds;
+        *pa = accept(sock, addr, addr_len);
+        if (*pa != SOCK_INVALID) return IO_DONE;
+        if (timeout == 0) return IO_TIMEOUT;
         tv.tv_sec = timeout / 1000;
         tv.tv_usec = (timeout % 1000) * 1000;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        /* just call select to avoid busy-wait. doesn't really matter
-         * what happens. the caller will choose to retry or not */
+        /* call select just to avoid busy-wait. */
         select(sock+1, &fds, NULL, NULL, timeout >= 0? &tv: NULL);
-        return IO_RETRY;
-    } else return IO_DONE;
+    } 
+    return IO_TIMEOUT; /* can't get here */
 }
 
 /*-------------------------------------------------------------------------*\
@@ -314,7 +326,7 @@ const char *sock_hoststrerror(void)
     }
 }
 
-const char *sock_createstrerror(void)
+static const char *sock_createstrerror(void)
 {
     switch (errno) {
         case EACCES: return "access denied";
@@ -325,7 +337,7 @@ const char *sock_createstrerror(void)
     }
 }
 
-const char *sock_bindstrerror(void)
+static const char *sock_bindstrerror(void)
 {
     switch (errno) {
         case EBADF: return "invalid descriptor";
@@ -339,7 +351,7 @@ const char *sock_bindstrerror(void)
     }
 }
 
-const char *sock_connectstrerror(void)
+static const char *sock_connectstrerror(void)
 {
     switch (errno) {
         case EBADF: return "invalid descriptor";
