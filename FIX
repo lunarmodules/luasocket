@@ -1,0 +1,6 @@
+accept/connect interrupt safe
+accepted sockets are nonblocking
+new timming functions. better sleep/gettime
+bug fixes in the manual
+getfd missing cast
+added unix domain support example
