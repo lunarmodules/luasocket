@@ -4,7 +4,7 @@ if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
 local socket = _G[LUASOCKET_LIBNAME] 
 if not socket then error('module requires LuaSocket') end
 -- create smtp namespace inside LuaSocket namespace
-local smtp = {}
+local smtp = socket.smtp or {}
 socket.smtp = smtp
 -- make all module globals fall into smtp namespace
 setmetatable(smtp, { __index = _G })
@@ -17,6 +17,10 @@ PORT = 25
 DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default server used to send e-mails
 SERVER = "localhost"
+
+function stuff()
+    return socket.cicle(dot, 2)
+end
 
 -- tries to get a pattern from the server and closes socket on error
 local function try_receiving(connection, pattern)

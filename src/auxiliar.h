@@ -40,7 +40,7 @@
 #define MAX(x, y) ((x) > (y) ? x : y)
 #endif
 
-void aux_open(lua_State *L);
+int aux_open(lua_State *L);
 void aux_newclass(lua_State *L, const char *classname, luaL_reg *func);
 void aux_add2group(lua_State *L, const char *classname, const char *group);
 void aux_setclass(lua_State *L, const char *classname, int objidx);
@@ -49,5 +49,6 @@ void *aux_checkgroup(lua_State *L, const char *groupname, int objidx);
 void *aux_getclassudata(lua_State *L, const char *groupname, int objidx);
 void *aux_getgroupudata(lua_State *L, const char *groupname, int objidx);
 int aux_checkboolean(lua_State *L, int objidx);
+const char *aux_optlstring(lua_State *L, int n, const char *v, size_t *l);
 
 #endif /* AUX_H */

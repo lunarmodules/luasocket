@@ -241,6 +241,50 @@ returning a list with all the parsed segments, the function unescapes all
 of them. 
 </p>
 
+<!-- escape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="escape">
+socket.url.<b>escape(</b>content<b>)</b>
+</p>
+
+<p class=description>
+Applies the URL escaping content coding to a string
+Each byte is encoded as a percent character followed
+by the two byte hexadecimal representation of its integer 
+value.
+</p>
+
+<p class=parameters>
+<tt>Content</tt> is the string to be encoded.
+</p>
+
+<p class=result>
+The function returns the encoded string.
+</p>
+
+<pre class=example>
+code = socket.url.escape("/#?;")
+-- code = "%2f%23%3f%3b"
+</pre>
+
+<!-- unescape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="unescape">
+socket.url.<b>unescape(</b>content<b>)</b>
+</p>
+
+<p class=description>
+Removes  the   URL   escaping    content   coding   from   a string.
+</p>
+
+<p class=parameters>
+<tt>Content</tt> is the string to be decoded.
+</p>
+
+<p class=return>
+The function returns the decoded string. 
+</p>
+
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <div class=footer>

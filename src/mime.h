@@ -12,6 +12,6 @@
 \*=========================================================================*/
 #include <lua.h>
 
-void mime_open(lua_State *L);
+int mime_open(lua_State *L);
 
 #endif /* MIME_H */

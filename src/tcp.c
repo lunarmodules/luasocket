@@ -39,25 +39,26 @@ static int meth_dirty(lua_State *L);
 
 /* tcp object methods */
 static luaL_reg tcp[] = {
-    {"connect",     meth_connect},
-    {"send",        meth_send},
-    {"receive",     meth_receive},
-    {"bind",        meth_bind},
-    {"listen",      meth_listen},
+    {"__gc",        meth_close},
     {"accept",      meth_accept},
-    {"setpeername", meth_connect},
-    {"setsockname", meth_bind},
+    {"bind",        meth_bind},
+    {"close",       meth_close},
+    {"connect",     meth_connect},
+    {"dirty",       meth_dirty},
+    {"getfd",       meth_getfd},
     {"getpeername", meth_getpeername},
     {"getsockname", meth_getsockname},
-    {"settimeout",  meth_settimeout},
-    {"close",       meth_close},
-    {"shutdown",    meth_shutdown},
-    {"setoption",   meth_setoption},
-    {"__gc",        meth_close},
-    {"getfd",       meth_getfd},
+    {"listen",      meth_listen},
+    {"receive",     meth_receive},
+    {"send",        meth_send},
     {"setfd",       meth_setfd},
-    {"dirty",       meth_dirty},
+    {"setoption",   meth_setoption},
+    {"setpeername", meth_connect},
+    {"setsockname", meth_bind},
+    {"settimeout",  meth_settimeout},
+    {"shutdown",    meth_shutdown},
     {NULL,          NULL}
+
 };
 
 /* socket option handlers */
@@ -78,7 +79,7 @@ static luaL_reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-void tcp_open(lua_State *L)
+int tcp_open(lua_State *L)
 {
     /* create classes */
     aux_newclass(L, "tcp{master}", tcp);
@@ -96,6 +97,7 @@ void tcp_open(lua_State *L)
     /* define library functions */
     luaL_openlib(L, LUASOCKET_LIBNAME, func, 0); 
     lua_pop(L, 1);
+    return 0;
 }
 
 /*=========================================================================*\
@@ -250,7 +252,7 @@ static int meth_listen(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_shutdown(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client}", 1);
     const char *how = luaL_optstring(L, 2, "both");
     switch (how[0]) {
         case 'b':
@@ -266,7 +268,8 @@ static int meth_shutdown(lua_State *L)
             sock_shutdown(&tcp->sock, 0);
             break;
     }
-    return 0;
+    lua_pushnumber(L, 1);
+    return 1;
 error:
     luaL_argerror(L, 2, "invalid shutdown method");
     return 0;

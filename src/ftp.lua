@@ -649,3 +649,5 @@ function Public.get(url_or_request)
 	local err = Public.get_cb(request)
 	return concat:getresult(), err
 end
+
+return ftp

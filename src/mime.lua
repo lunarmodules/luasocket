@@ -15,70 +15,57 @@ local et = {}
 local dt = {}
 local wt = {}
 
--- creates a function that chooses an algorithm from a given table 
+-- creates a function that chooses a filter from a given table 
 local function choose(table)
-    return function(method, ...)
-        local f = table[method or "nil"]
-        if not f then error("unknown method (" .. tostring(method) .. ")", 3)
+    return function(filter, ...)
+        local f = table[filter or "nil"]
+        if not f then error("unknown filter (" .. tostring(filter) .. ")", 3)
         else return f(unpack(arg)) end
     end
 end
 
--- creates a function that cicles a filter with a given initial
--- context and extra arguments
-local function cicle(f, ctx, ...)
-    return function(chunk)
-        local ret
-        ret, ctx = f(ctx, chunk, unpack(arg))
-        return ret
-    end
+-- define the encoding filters
+et['base64'] = function()
+    return socket.cicle(b64, "")
+end
+
+et['quoted-printable'] = function(mode)
+    return socket.cicle(qp, "", (mode == "binary") and "=0D=0A" or "\13\10")
+end
+
+-- define the decoding filters
+dt['base64'] = function()
+    return socket.cicle(unb64, "")
+end
+
+dt['quoted-printable'] = function()
+    return socket.cicle(unqp, "")
+end
+
+-- define the line-wrap filters
+wt['text'] = function(length)
+    length = length or 76
+    return socket.cicle(wrp, length, length) 
+end
+wt['base64'] = wt['text']
+
+wt['quoted-printable'] = function()
+    return socket.cicle(qpwrp, 76, 76) 
 end
 
 -- function that choose the encoding, decoding or wrap algorithm
 encode = choose(et) 
 decode = choose(dt)
-
--- the wrap filter has default parameters
+-- there is a default wrap filter
 local cwt = choose(wt)
 function wrap(...)
-    if not arg[1] or type(arg[1]) ~= "string" then 
-        table.insert(arg, 1, "base64")
-    end
+    if type(arg[1]) ~= "string" then table.insert(arg, 1, "text") end
     return cwt(unpack(arg))
 end
 
--- define the encoding algorithms
-et['base64'] = function()
-    return cicle(b64, "")
-end
-
-et['quoted-printable'] = function(mode)
-    return cicle(qp, "", (mode == "binary") and "=0D=0A" or "\13\10")
-end
-
--- define the decoding algorithms
-dt['base64'] = function()
-    return cicle(unb64, "")
-end
-
-dt['quoted-printable'] = function()
-    return cicle(unqp, "")
-end
-
--- define the wrap algorithms
-wt['base64'] = function(length, marker)
-    length = length or 76
-    return cicle(wrp, length, length, marker) 
-end
-
-wt['quoted-printable'] = function(length)
-    length = length or 76
-    return cicle(qpwrp, length, length) 
-end
-
--- define the end-of-line translation function
+-- define the end-of-line translation filter
 function canonic(marker)
-    return cicle(eol, "", marker)
+    return socket.cicle(eol, "", marker)
 end
 
 -- chains several filters together
@@ -104,4 +91,4 @@ function chain(...)
     end
 end
 
-return code
+return mime

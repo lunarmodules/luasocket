@@ -12,7 +12,7 @@ if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
 local socket = _G[LUASOCKET_LIBNAME]
 if not socket then error('module requires LuaSocket') end
 -- create smtp namespace inside LuaSocket namespace
-local url = {}
+local url = socket.url or {}
 socket.url = url
 -- make all module globals fall into smtp namespace
 setmetatable(url, { __index = _G })

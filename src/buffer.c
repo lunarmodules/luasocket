@@ -26,9 +26,10 @@ static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent);
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-void buf_open(lua_State *L)
+int buf_open(lua_State *L)
 {
     (void) L;
+    return 0;
 }
 
 /*-------------------------------------------------------------------------*\

@@ -15,6 +15,6 @@
 * RCS ID: $Id$
 \*=========================================================================*/
 
-void select_open(lua_State *L);
+int select_open(lua_State *L);
 
 #endif /* SELECT_H */

@@ -34,7 +34,7 @@ typedef struct t_buf_ {
 } t_buf;
 typedef t_buf *p_buf;
 
-void buf_open(lua_State *L);
+int buf_open(lua_State *L);
 void buf_init(p_buf buf, p_io io, p_tm tm);
 int buf_meth_send(lua_State *L, p_buf buf);
 int buf_meth_receive(lua_State *L, p_buf buf);

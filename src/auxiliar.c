@@ -37,9 +37,9 @@ error:
 /*-------------------------------------------------------------------------*\
 * Initializes the module
 \*-------------------------------------------------------------------------*/
-void aux_open(lua_State *L)
+int aux_open(lua_State *L)
 {
-    ;
+    return 0;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -159,3 +159,13 @@ void *aux_getclassudata(lua_State *L, const char *classname, int objidx)
     return luaL_checkudata(L, objidx, classname);
 }
 
+/*-------------------------------------------------------------------------*\
+* Accept "false" as nil
+\*-------------------------------------------------------------------------*/
+const char *aux_optlstring(lua_State *L, int n, const char *v, size_t *l)
+{
+    if (lua_isnil(L, n) || (lua_isboolean(L, n) && !lua_toboolean(L, n))) {
+        *l = 0;
+        return NULL;
+    } else return luaL_optlstring(L, n, v, l);
+}

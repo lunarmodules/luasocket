@@ -1,7 +1,36 @@
+* should be interrupt-safe
+* notice the change in callback conventions
+* new mime module replacing old code module (faster, more functionality)
+* new socket options (many)
+* only allocate in case of success
+* optimize for success (only call select if fails) 
+* add proxy support to http
+* add gethostname 
+* local connect 
+* connect with timeout
+* change code to mime
+* change stay to redirect 
+* add shutdown
+* change send/recv to avoid using select
+* O location do "redirect" pode ser relativo ao servidor atual (não pode,
+  mas os servidores fazem merda...)
+* Ajeitar para Lua 5.0
+* Padronizar os retornos de funccao
+* Separar as classes em arquivos
+* Retorno de sendto em datagram sockets pode ser refused
+
+
+check garbage collection in test*.lua
+pop3???
+
+add socket.TIMEOUT to be default timeout? 
+
 manual
+    add socket.connect and socket.bind to the manual
+    say what a nil callback does for http
     check all occurences of it's
-    add shutdown
-    add gethostname
+    - add shutdown
+    - add gethostname
     the need of a content-length header in the post method...
     notice the change in callback conventions
     the callback.lua module and the new mime module.
@@ -9,11 +38,11 @@ manual
     add timeout and proxy to request table
     change stay to redirect 
     socket.time and socket.sleep
-    connect with timeout
+    - connect with timeout
     local connect 
     add thanks to 'carlos cassino' and 'david burgess'
     add new ip- options and reuseaddr option
-    add listen to manual
+    - add listen to manual
     bind method doesn't do listen anymore
     bind doesn't turn an object into a server object: listen does.
 
@@ -23,6 +52,9 @@ tests
     checar garbage collection
     check for interrupts
 
+wrp can't break lines in the middle of a line break.
+call select before accept, not after, dumbass!
+get rid of setnonblocking/setblocking in the bind function
 close has to block...
 fmt is not a good name
 change wrap() to accept a number and default to "character"
@@ -76,30 +108,10 @@ Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
 
 - adicionar exemplos de expansão: pipe, local, named pipe
 
-* should be interrupt-safe
-* notice the change in callback conventions
-* new mime module replacing old code module (faster, more functionality)
-* new socket options (many)
-* only allocate in case of success
-* optimize for success (only call select if fails) 
-* add proxy support to http
-* add gethostname 
-* local connect 
-* connect with timeout
-* change code to mime
-* change stay to redirect 
-* add shutdown
-* change send/recv to avoid using select
-* O location do "redirect" pode ser relativo ao servidor atual (não pode,
-  mas os servidores fazem merda...)
-* Ajeitar para Lua 5.0
-* Padronizar os retornos de funccao
-* Separar as classes em arquivos
-* Retorno de sendto em datagram sockets pode ser refused
 
 - Fazer compilar com g++
 - Thread-safe
-  - proteger gethostby*.* com um mutex GLOBAL!
+  - proteger get*by*.* com um mutex GLOBAL!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 - SSL

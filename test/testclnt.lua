@@ -3,18 +3,18 @@ port = port or "8080"
 
 function pass(...)
     local s = string.format(unpack(arg))
-    io.write(s, "\n")
+    io.stderr:write(s, "\n")
 end
 
 function fail(...)
     local s = string.format(unpack(arg))
-    io.write("ERROR: ", s, "!\n")
+    io.stderr:write("ERROR: ", s, "!\n")
     os.exit()
 end
 
 function warn(...)
     local s = string.format(unpack(arg))
-    io.write("WARNING: ", s, "\n")
+    io.stderr:write("WARNING: ", s, "\n")
 end
 
 pad = string.rep(" ", 8192)
@@ -29,7 +29,7 @@ function remote(...)
 end
 
 function test(test)
-    io.write("----------------------------------------------\n",
+    io.stderr:write("----------------------------------------------\n",
         "testing: ", test, "\n",
         "----------------------------------------------\n")
 end
@@ -72,14 +72,14 @@ if not socket.debug then
     fail("Please define LUASOCKET_DEBUG and recompile LuaSocket")
 end
 
-io.write("----------------------------------------------\n",
+io.stderr:write("----------------------------------------------\n",
 "LuaSocket Test Procedures\n",
 "----------------------------------------------\n")
 
 start = socket.time()
 
 function reconnect()
-    io.write("attempting data connection... ")
+    io.stderr:write("attempting data connection... ")
     if data then data:close() end
     remote [[
         if data then data:close() data = nil end
@@ -348,7 +348,7 @@ end
 
 ------------------------------------------------------------------------
 function accept_timeout()
-    io.write("accept with timeout (if it hangs, it failed): ")
+    io.stderr:write("accept with timeout (if it hangs, it failed): ")
     local s, e = socket.bind("*", 0, 0)
     assert(s, e)
     local t = socket.time()
@@ -364,7 +364,8 @@ end
 
 ------------------------------------------------------------------------
 function connect_timeout()
-    io.write("connect with timeout (if it hangs, it failed): ")
+    io.stderr:write("connect with timeout (if it hangs, it failed): ")
+    local t = socket.time()
     local c, e = socket.tcp()
     assert(c, e)
     c:settimeout(0.1)
@@ -380,16 +381,17 @@ end
 
 ------------------------------------------------------------------------
 function accept_errors()
-    io.write("not listening: ")
+    io.stderr:write("not listening: ")
     local d, e = socket.bind("*", 0)
     assert(d, e);
     local c, e = socket.tcp();
     assert(c, e);
     d:setfd(c:getfd())
+    d:settimeout(2)
     local r, e = d:accept()
     assert(not r and e == "not listening", e)
     print("ok")
-    io.write("not supported: ")
+    io.stderr:write("not supported: ")
     local c, e = socket.udp()
     assert(c, e);
     d:setfd(c:getfd())
@@ -400,11 +402,11 @@ end
 
 ------------------------------------------------------------------------
 function connect_errors()
-    io.write("connection refused: ")
+    io.stderr:write("connection refused: ")
     local c, e = socket.connect("localhost", 1);
     assert(not c and e == "connection refused", e)
     print("ok")
-    io.write("host not found: ")
+    io.stderr:write("host not found: ")
     local c, e = socket.connect("not.exist.com", 1);
     assert(not c and e == "host not found", e)
     print("ok")
@@ -534,7 +536,7 @@ test_raw(1)
 test("non-blocking transfer")
 reconnect()
 -- the value is not important, we only want 
--- to test non-blockin I/O anyways
+-- to test non-blocking I/O anyways
 data:settimeout(200)
 test_raw(1)
 test_raw(17)

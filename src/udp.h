@@ -27,6 +27,6 @@ typedef struct t_udp_ {
 } t_udp;
 typedef t_udp *p_udp;
 
-void udp_open(lua_State *L);
+int udp_open(lua_State *L);
 
 #endif /* UDP_H */

@@ -75,12 +75,10 @@ void sock_shutdown(p_sock ps, int how)
 \*-------------------------------------------------------------------------*/
 const char *sock_create(p_sock ps, int domain, int type, int protocol)
 {
-    int val = 1;
     t_sock sock = socket(domain, type, protocol);
     if (sock == SOCK_INVALID) 
         return sock_createstrerror(WSAGetLastError());
     *ps = sock;
-    setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(val));
     sock_setnonblocking(ps);
     return NULL;
 }
@@ -112,8 +110,12 @@ const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm)
         /* if was in efds, we failed */
         if (FD_ISSET(sock, &efds)) {
             int why, len = sizeof(why);
+            /* give windows time to set the error (disgusting) */
+            Sleep(0);
             /* find out why we failed */
             getsockopt(sock, SOL_SOCKET, SO_ERROR, (char *)&why, &len); 
+            /* we KNOW there was an error. if why is 0, we will return
+             * "unknown error", but it's not really our fault */
             return sock_connectstrerror(why); 
         /* otherwise it must be in wfds, so we succeeded */
         } else return NULL;

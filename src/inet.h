@@ -24,7 +24,7 @@
 #define INET_ATON
 #endif
 
-void inet_open(lua_State *L);
+int inet_open(lua_State *L);
 
 const char *inet_trycreate(p_sock ps, int type);
 const char *inet_tryconnect(p_sock ps, const char *address, 

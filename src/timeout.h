@@ -16,7 +16,7 @@ typedef struct t_tm_ {
 } t_tm;
 typedef t_tm *p_tm;
 
-void tm_open(lua_State *L);
+int tm_open(lua_State *L);
 void tm_init(p_tm tm, int block, int total);
 int tm_get(p_tm tm);
 int tm_getretry(p_tm tm);

@@ -31,6 +31,6 @@ typedef struct t_tcp_ {
 
 typedef t_tcp *p_tcp;
 
-void tcp_open(lua_State *L);
+int tcp_open(lua_State *L);
 
 #endif /* TCP_H */

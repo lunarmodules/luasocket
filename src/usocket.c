@@ -70,12 +70,10 @@ int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, int timeout)
 \*-------------------------------------------------------------------------*/
 const char *sock_create(p_sock ps, int domain, int type, int protocol)
 {
-    int val = 1;
     t_sock sock = socket(domain, type, protocol);
     if (sock == SOCK_INVALID) return sock_createstrerror(errno);
     *ps = sock;
     sock_setnonblocking(ps);
-    setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(val));
     return NULL;
 }
 
@@ -167,13 +165,14 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
     for (;;) {
         int err;
         fd_set fds;
+        /* try to accept */
         *pa = accept(sock, addr, addr_len);
         /* if result is valid, we are done */
         if (*pa != SOCK_INVALID) return NULL;
         /* find out if we failed for a fatal reason */
         if (errno != EWOULDBLOCK && errno != ECONNABORTED)
             return sock_acceptstrerror(errno);
-        /* call select just to avoid busy-wait. */
+        /* call select to avoid busy-wait. */
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         do err = sock_select(sock+1, &fds, NULL, NULL, tm_getretry(tm));

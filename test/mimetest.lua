@@ -181,6 +181,19 @@ local function compare_b64test()
     compare(b64test, db64test)
 end
 
+local function identity_test()
+    local chain = socket.mime.chain(
+        socket.mime.encode("quoted-printable"),
+        socket.mime.encode("base64"),
+        socket.mime.decode("base64"),
+        socket.mime.decode("quoted-printable")
+    )
+    transform(b64test, eb64test, chain)
+    compare(b64test, eb64test)
+    os.remove(eb64test)
+end
+
+
 local function padcheck(original, encoded)
     local e = (socket.mime.b64(original))
     local d = (socket.mime.unb64(encoded))
@@ -232,5 +245,7 @@ decode_b64test()
 compare_b64test()
 cleanup_b64test()
 padding_b64test()
+
+identity_test()
 
 print(string.format("done in %.2fs", socket.time() - t))

@@ -33,12 +33,14 @@
 #include "tcp.h"
 #include "udp.h"
 #include "select.h"
+#include "smtp.h"
 #include "mime.h"
 
 /*=========================================================================*\
 * Declarations
 \*=========================================================================*/
 static int base_open(lua_State *L);
+static int mod_open(lua_State *L, const luaL_reg *mod);
 
 /*-------------------------------------------------------------------------*\
 * Setup basic stuff.
@@ -66,22 +68,9 @@ static int base_open(lua_State *L)
     return 0;
 }
 
-/*-------------------------------------------------------------------------*\
-* Initializes all library modules.
-\*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_socket(lua_State *L)
+static int mod_open(lua_State *L, const luaL_reg *mod)
 {
-    if (!sock_open()) return 0;
-    /* initialize all modules */
-    base_open(L);
-    aux_open(L);
-    tm_open(L);
-    buf_open(L);
-    inet_open(L); 
-    tcp_open(L);
-    udp_open(L);
-    select_open(L);
-    mime_open(L);
+    for (; mod->name; mod++) mod->func(L);
 #ifdef LUASOCKET_COMPILED
 #include "auxiliar.lch"
 #include "concat.lch"
@@ -101,5 +90,36 @@ LUASOCKET_API int luaopen_socket(lua_State *L)
     lua_dofile(L, "ftp.lua");
     lua_dofile(L, "http.lua");
 #endif
+    return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Modules
+\*-------------------------------------------------------------------------*/
+static const luaL_reg mod[] = {
+    {"base", base_open},
+    {"aux", aux_open},
+    {"tm", tm_open},
+    {"buf", buf_open},
+    {"inet", inet_open},
+    {"tcp", tcp_open},
+    {"udp", udp_open},
+    {"select", select_open},
+    {"mime", mime_open},
+    {"smtp", smtp_open},
+    {NULL, NULL}
+};
+
+/*-------------------------------------------------------------------------*\
+* Initializes all library modules.
+\*-------------------------------------------------------------------------*/
+LUASOCKET_API int luaopen_socket(lua_State *L)
+{
+    if (!sock_open()) {
+        lua_pushnil(L);
+        lua_pushstring(L, "unable to initialize library");
+        return 2;
+    }
+    mod_open(L, mod);
     return 1;
 }

@@ -31,16 +31,16 @@
 <hr>
 </div>
 
-<!-- stream ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- stream ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<h2 id=stream>Streaming with Callbacks</h2> 
+<h2 id=stream>Callbacks</h2> 
 
 <p>
 HTTP, FTP, and SMTP transfers sometimes involve large  amounts of
 information.  Sometimes an application  needs to generate outgoing data 
 in real time, or needs  to process incoming  information as  it is being
 received. To address these  problems, LuaSocket allows HTTP and SMTP message
-bodies  and FTP file  contents to  be received  or sent  through the
+bodies  and FTP file  contents to  be streamed through the
 callback mechanism outlined below.  
 </p>
 
@@ -52,7 +52,7 @@ chunks of data, as the data becomes available. Conversely, the <em>send
 callback</em> mechanism can be used when the application wants to incrementally provide LuaSocket with the data to be sent. 
 </p>
 
-<!-- tohostname +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- receive +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=receive> 
 <b>receive_cb(</b>chunk, err<b>)</b>
@@ -60,7 +60,7 @@ callback</em> mechanism can be used when the application wants to incrementally 
 
 <p class=description>
 A receive callback will  be repeatedly  called by
-LuaSocket wheneve  new data  is available.  Each time  it is  called, the
+LuaSocket whenever  new data  is available.  Each time  it is  called, the
 callback receives successive chunks of downloaded data. 
 </p>
 
@@ -113,10 +113,129 @@ Together, these two modules provide a powerful interface to send and
 receive information.
 </p>
 
+<!-- done +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=done> 
+socket.callback.<b>done()</b>
+</p>
+
+<p class=description>
+This function creates and returns a callback that successfully terminates 
+the transmission.
+</p>
+
+<!-- fail +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=fail> 
+socket.callback.<b>fail(</b>message<b>)</b>
+</p>
+
+<p class=description>
+This function creates and returns a callback that aborts the
+transmission with a given error <tt>message</tt>. 
+</p>
+
+<!-- receive.concat +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=receive.concat> 
+socket.callback.<b>receive.concat(</b>cat<b>)</b>
+</p>
+
+<p class=description>
+This function creates a receive callback that stores whatever it receives
+into a concat object. When done, the application can get the contents 
+received as a single string, directly from the concat object. 
+</p>
+
+<p class=parameters>
+<tt>Cat</tt> is the target concat object, or <b><tt>nil</tt></b>. 
+If <tt>cat</tt> is <b><tt>nil</tt></b>, the function creates its own
+concat object. 
+</p>
+
+<p class=return>
+The function returns a receive callback for the file, and the concat object
+that will be used to store the received contents. 
+</p>
+
+<!-- receive.file +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=receive.file> 
+socket.callback.<b>receive.file(</b>file, io_err<b>)</b>
+</p>
+
+<p class=description>
+This function creates a receive callback that stores whatever it receives
+into a file. When done, the callback closes the file. 
+</p>
+
+<p class=parameters>
+<tt>File</tt> is a file handle opened for writing. If <tt>file</tt> is 
+<b><tt>nil</tt></b>, <tt>io_err</tt> can contain an error message. In this
+case, the function returns a callback that just aborts 
+transmission with the error message.
+</p>
+
+<p class=return>
+The function returns a receive callback for the file. 
+</p>
+
+<p class=note>
+Note: This function is designed so that it directly accepts the return 
+values of Lua's IO <tt>io.open</tt> library function.
+</p>
+
+<!-- receive.chain ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=receive.chain> 
+socket.callback.<b>receive.chain(</b>filter, receive_cb<b>)</b>
+</p>
+
+<p class=description>
+This function creates a receive callback that passes all received data
+through a filter, before handing it to a given receive callback. 
+</p>
+
+<p class=parameters>
+<tt>Cat</tt> is the target concat object, or <b><tt>nil</tt></b>. 
+If <tt>cat</tt> is <b><tt>nil</tt></b>, the function creates its own
+concat object. 
+</p>
+
+<p class=return>
+The function returns a receive callback for the file, and the concat object
+that will be used to store the received contents. 
+</p>
+
+<p class=note>
+Note: Several filters are defined in the <a href=mime.html>MIME</a> 
+module. Below is an example that creates a receive callback that 
+creates a string from the received contents, after decoding the
+Quoted-Printable transfer content encoding.
+</p>
+
+<pre class=example>
+string_cb, concat = socket.callback.receive.concat()
+receive_cb = socket.callback.receive.chain(
+   socket.mime.decode("quoted-printable"),
+   string_cb
+)
+</pre>
+
+<p class=note>
+The call to <tt>callback.chain</tt> creates a chained
+receive callback that decodes data using the 
+<tt><a href=mime.html#decode>mime.decode</a></tt> 
+Quoted-Printable MIME filter and 
+hands the decoded data to a concat receive callback. 
+The concatenated decoded data can be retrieved later 
+from the associated concat object.
+</p>
+
 <!-- send.file ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=send.file> 
-<b>send.file</b>(file, io_err<b>)</b>
+socket.callback.<b>send.file(</b>file, io_err<b>)</b>
 </p>
 
 <p class=description>
@@ -126,25 +245,25 @@ When done, the callback closes the file.
 </p>
 
 <p class=parameters>
-<tt>File</tt> is a file opened for reading. If <tt>file</tt> is 
+<tt>File</tt> is a file handle opened for reading. If <tt>file</tt> is 
 <b><tt>nil</tt></b>, <tt>io_err</tt> can contain an error message. In this
 case, the function returns a callback that just aborts 
 transmission with the error message.
 </p>
 
 <p class=return>
-Returns a send callback for the file. 
+The function returns a send callback for the file. 
 </p>
 
 <p class=note>
 Note: This function is designed so that it directly accepts the return 
-values of the <tt>io.open</tt> function.
+values of Lua's IO <tt>io.open</tt> library function.
 </p>
 
 <!-- send.string ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=send.string> 
-<b>send.string(</b>str, err<b>)</b>
+socket.callback.<b>send.string(</b>str, err<b>)</b>
 </p>
 
 <p class=description>
@@ -154,26 +273,17 @@ the contents of a string.
 
 <p class=parameters>
 <tt>Str</tt> is the string to be sent. 
-<!--
-If <tt>str</tt> is
-<b><tt>nil</tt></b>, <tt>err</tt> can optionally contain an error message.
--->
 </p>
 
 <p class=return>
-Returns a send callback for the string, or <b><tt>nil</tt></b> if the string is
-<b><tt>nil</tt></b>.
-</p>
-
-<p class=note>
-Note: A <tt>nil</tt></b> 
-send callback is equivalent to a callback that returns the empty string. 
+It returns a send callback for the string, 
+or <b><tt>nil</tt></b> if <tt>str</tt> is <b><tt>nil</tt></b>.
 </p>
 
 <!-- send.chain ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=send.chain> 
-<b>send.chain(</b>send_cb, filter<b>)</b>
+socket.callback.<b>send.chain(</b>send_cb, filter<b>)</b>
 </p>
 
 <p class=description>
@@ -207,9 +317,9 @@ send_cb = socket.callback.send.chain(
 </pre>
 
 <p class=note>
-The call to <a href=mime.html#chain><tt>socket.mime.chain</tt></a> 
+The call to <a href=mime.html#chain><tt>mime.chain</tt></a> 
 creates a chained filter that encodes it's input and then breaks it
-into lines. The call to <tt>socket.callback.chain</tt> creates a chained
+into lines.  The call to <tt>callback.chain</tt> creates a chained
 send callback that reads the file from disk and passes it through the
 filter before sending it.
 </p>

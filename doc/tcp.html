@@ -44,10 +44,11 @@ socket.<b>tcp()</b>
 <p class=description> 
 Creates and returns a TCP master object. A master object can
 be transformed into a server object with the method 
-<a href=#bind><tt>bind</tt></a> or into a client object with the method 
-<a href=#connect><tt>connect</tt></a>. The only other method
-supported by a master object is the <a href=#close><tt>close</tt></a>
-method.</p>
+<a href=#listen><tt>listen</tt></a> (after a call to <a
+href=#bind><tt>bind</tt></a>) or into a client object with 
+the method <a href=#connect><tt>connect</tt></a>. The only other 
+method supported by a master object is the 
+<a href=#close><tt>close</tt></a> method.</p>
 
 <p class=return>
 In case of success, a new master object is returned. In case of error,
@@ -67,8 +68,9 @@ object and returns a client object representing that connection.
 
 <p class=return>
 If a connection is successfully initiated, a client object is returned.  
-If a  timeout condition  is  met,  the method  returns <b><tt>nil</tt></b> followed
-by the error string '<tt>timeout</tt>'. 
+If a  timeout condition  is  met,  the method  returns <b><tt>nil</tt></b>
+followed by the error string '<tt>timeout</tt>'. Other errors are 
+reported by <b><tt>nil</tt></b> followed by a message describing the error.
 </p>
 
 <p class=note>
@@ -77,25 +79,18 @@ with   a  server   object   in
 the <tt>receive</tt>  parameter  before  a   call  to  <tt>accept</tt> does
 <em>not</em> guarantee  <tt>accept</tt> will  return immediately.  Use the <a
 href=#settimeout><tt>settimeout</tt></a> method or <tt>accept</tt>
-might block until <em>another</em> client shows up.
+might block until <em>another</em> client shows up. 
 </p>
 
 <!-- bind +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=bind> 
-master:<b>bind(</b>address, port [, backlog]<b>)</b>
+master:<b>bind(</b>address, port<b>)</b>
 </p>
 
 <p class=description>
 Binds a master object to <tt>address</tt> and <tt>port</tt> on the
-local host, transforming it into a server object.  Server
-objects support the 
-<a href=#accept><tt>accept</tt></a>,  
-<a href=#getsockname><tt>getsockname</tt></a>, 
-<a href=#setoption><tt>setoption</tt></a>, 
-<a href=#settimeout><tt>settimeout</tt></a>, 
-and <a href=#close><tt>close</tt></a> methods.  
-</p>
+local host. 
 
 <p class=parameters>
 <tt>Address</tt> can be an IP address or a host name. 
@@ -103,10 +98,7 @@ and <a href=#close><tt>close</tt></a> methods.
 If <tt>address</tt>
 is '<tt>*</tt>', the system binds to all local interfaces
 using the <tt>INADDR_ANY</tt> constant. If <tt>port</tt> is 0, the system automatically
-chooses an ephemeral port.  The optional parameter <tt>backlog</tt>, which
-defaults to 1, specifies the  number  of  client connections that can
-be queued waiting for service. If the queue is full and another  client
-attempts connection,  the connection is  refused.
+chooses an ephemeral port.  
 </p>
 
 <p class=return>
@@ -115,8 +107,8 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 </p>
 
 <p class=note>
-Note: The function <tt>socket.bind</tt> is available and is a short
-for <a href=#socket.tcp><tt>socket.tcp</tt></a> followed by the <tt>bind</tt> method.
+Note: The function <a href=#socket.bind><tt>socket.bind</tt></a> 
+is available and is a shortcut for the creation server sockets.
 </p>
 
 <!-- close ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -150,7 +142,8 @@ master:<b>connect(</b>address, port<b>)</b>
 
 <p class=description>
 Attempts to connect a master object to a remote host, transforming it into a
-client object. Client objects support methods 
+client object. 
+Client objects support methods 
 <a href=#send><tt>send</tt></a>,
 <a href=#receive><tt>receive</tt></a>, 
 <a href=#getsockname><tt>getsockname</tt></a>, 
@@ -170,8 +163,15 @@ describing the error. In case of success, the method returns 1.
 </p>
 
 <p class=note>
-Note: The function <tt>socket.connect</tt> is available and is a short
-for <a href=#socket.tcp><tt>socket.tcp</tt></a> followed by the <tt>connect</tt> method.
+Note: The function <a href=#socket.connect><tt>socket.connect</tt></a> 
+is available and is a shortcut for the creation of client sockets.
+</p>
+
+<p class=note>
+Note: Starting with LuaSocket 2.0, 
+the <a href=#settimeout><tt>settimeout</tt></a>
+function affects the behavior of connect, causing it to return in case of
+a timeout error.
 </p>
 
 <!-- getpeername ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -210,12 +210,32 @@ The method returns a string with local IP address and a number with
 the port. In case of error, the method returns <b><tt>nil</tt></b>.
 </p>
 
-<p class=note>
-Note: Naturally, for a server object, the address and port returned are
-those passed to the <a href=#bind>bind</a> method. If the port value
-passed to bind was 0, the OS assigned ephemeral port is returned. For
-client objects, both the address and port are ephemeral and these are the
-values returned.  
+<!-- listen ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=listen> 
+master:<b>listen(</b>backlog<b>)</b>
+</p>
+
+<p class=description>
+Specifies the socket is willing to receive connections, transforming the
+object into a server object.  Server objects support the 
+<a href=#accept><tt>accept</tt></a>,  
+<a href=#getsockname><tt>getsockname</tt></a>, 
+<a href=#setoption><tt>setoption</tt></a>, 
+<a href=#settimeout><tt>settimeout</tt></a>, 
+and <a href=#close><tt>close</tt></a> methods.  
+</p>
+
+<p class=parameters>
+The parameter <tt>backlog</tt> specifies the  number  of  client 
+connections that can
+be queued waiting for service. If the queue is full and another  client
+attempts connection,  the connection is  refused.
+</p>
+
+<p class=return>
+In case of  success, the  method returns  1. In case of error, the
+method returns <b><tt>nil</tt></b> followed by an error message.
 </p>
 
 <!-- receive ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -242,8 +262,8 @@ closed. No end-of-line translation is performed;
 terminated by a  LF character (ASCII&nbsp;10), optionally  preceded by a
 CR character (ASCII&nbsp;13). The CR and LF characters are not included in
 the returned line. This is the default pattern;
-<li> <tt>number</tt>:  causes the  method to read  <tt>number</tt> raw
-bytes from the socket.
+<li> <tt>number</tt>:  causes the  method to read  a specified <tt>number</tt> 
+of bytes from the socket.
 </ul>
 
 <p class=return>
@@ -311,22 +331,30 @@ are sure you need it.
 depends on the option being set:
 
 <ul>
-<li> '<tt>tcp-nodelay</tt>': Setting this option to <tt>true</tt> disables the
-Nagle's algorithm for the connection;
+
+<li> '<tt>keepalive</tt>':  Setting this option to <tt>true</tt> enables
+the periodic transmission of messages on a connected socket. Should the
+connected party fail to respond to these messages, the connection is
+considered broken and processes using the socket are notified; 
+
 <li> '<tt>linger</tt>': Controls the action taken when unsent data are
 queued on a socket and a close is performed.  The value is a table with a
 boolean entry '<tt>on</tt>' and a numeric entry for the time interval
-'<tt>timeout</tt>' in seconds.
- If the '<tt>on</tt>' field is set to <tt>true</tt>,
-the system will block the process on the close attempt until it is able to
-transmit the data or until '<tt>timeout</tt>' has passed. If '<tt>on</tt>'
-is <tt>false</tt> and a close is issued, the system will process the close
-in a manner that allows the process to continue as quickly as possible. I
-do not advise you to set this to anything other than zero. 
-<li> '<tt>keepalive</tt>':  Setting this option to <tt>true</tt> enables
-the periodic transmission of messages on a connected socket. Should the
-     connected party fail to respond to these messages, the connection is
-considered broken and processes using the socket are notified. 
+'<tt>timeout</tt>' in seconds. If the '<tt>on</tt>' field is set to
+<tt>true</tt>, the system will block the process on the close attempt until
+it is able to transmit the data or until '<tt>timeout</tt>' has passed. If
+'<tt>on</tt>' is <tt>false</tt> and a close is issued, the system will
+process the close in a manner that allows the process to continue as
+quickly as possible. I do not advise you to set this to anything other than
+zero; 
+
+<li> '<tt>reuseaddr</tt>': Setting this option indicates that the rules
+used in validating addresses supplied in a call to 
+<a href=#bind><tt>bind</tt></a> should allow reuse of local addresses;
+
+<li> '<tt>tcp-nodelay</tt>': Setting this option to <tt>true</tt> 
+disables the Nagle's algorithm for the connection.
+
 </ul>
 
 <p class=return>
@@ -382,13 +410,39 @@ indefinitely. Negative timeout values have the same effect.
 Note: although  timeout values  have millisecond  precision in LuaSocket,
 large  blocks can cause I/O functions not to  respect timeout values due
 to the time the library takes to  transfer blocks to and from the  OS
-and to and from the Lua interpreter. 
+and to and from the Lua interpreter. Also, function that accept host names
+and perform automatic name resolution might be blocked by the resolver for
+longer than the specified timeout value.
 </p>
 
 <p class=note>
 Note: The old <tt>timeout</tt> method is deprecated. The name has been
 changed for sake of uniformity, since all other method names already
 contained verbs making their imperative nature obvious.
+</p>
+
+<!-- shutdown +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=shutdown>
+client:<b>shutdown(</b>mode<b>)</b><br>
+</p>
+
+<p class=description>
+Shuts down part of a full duplex connection. 
+</p>
+
+<p class=parameters>
+Mode tells which way of the connection should be shut down and can
+take the value:
+<ul>
+<li>"<tt>both</tt>": disallow further sends and receives on the object.
+This is the default mode;
+<li>"<tt>send</tt>": disallow further sends on the object;
+<li>"<tt>receive</tt>": disallow further receives on the object.
+</ul>
+
+<p class=return>
+This function returns 1.
 </p>
 
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

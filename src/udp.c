@@ -30,7 +30,6 @@ static int meth_getpeername(lua_State *L);
 static int meth_setsockname(lua_State *L);
 static int meth_setpeername(lua_State *L);
 static int meth_close(lua_State *L);
-static int meth_shutdown(lua_State *L);
 static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
@@ -49,7 +48,6 @@ static luaL_reg udp[] = {
     {"receivefrom", meth_receivefrom},
     {"settimeout",  meth_settimeout},
     {"close",       meth_close},
-    {"shutdown",    meth_shutdown},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
     {"getfd",       meth_getfd},
@@ -79,7 +77,7 @@ static luaL_reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-void udp_open(lua_State *L)
+int udp_open(lua_State *L)
 {
     /* create classes */
     aux_newclass(L, "udp{connected}", udp);
@@ -92,6 +90,7 @@ void udp_open(lua_State *L)
     /* define library functions */
     luaL_openlib(L, LUASOCKET_LIBNAME, func, 0); 
     lua_pop(L, 1);
+    return 0;
 }
 
 /*=========================================================================*\
@@ -284,33 +283,6 @@ static int meth_close(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     sock_destroy(&udp->sock);
-    return 0;
-}
-
-/*-------------------------------------------------------------------------*\
-* Shuts the connection down partially
-\*-------------------------------------------------------------------------*/
-static int meth_shutdown(lua_State *L)
-{
-    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
-    const char *how = luaL_optstring(L, 2, "both");
-    switch (how[0]) {
-        case 'b':
-            if (strcmp(how, "both")) goto error;
-            sock_shutdown(&udp->sock, 2);
-            break;
-        case 's':
-            if (strcmp(how, "send")) goto error;
-            sock_shutdown(&udp->sock, 1);
-            break;
-        case 'r':
-            if (strcmp(how, "receive")) goto error;
-            sock_shutdown(&udp->sock, 0);
-            break;
-    }
-    return 0;
-error:
-    luaL_argerror(L, 2, "invalid shutdown method");
     return 0;
 }
 
