@@ -213,8 +213,7 @@ const char *inet_tryconnect(p_sock ps, const char *address,
 /*-------------------------------------------------------------------------*\
 * Tries to bind socket to (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_trybind(p_sock ps, const char *address, unsigned short port, 
-        int backlog)
+const char *inet_trybind(p_sock ps, const char *address, unsigned short port)
 {
     struct sockaddr_in local;
     const char *err;
@@ -231,16 +230,9 @@ const char *inet_trybind(p_sock ps, const char *address, unsigned short port,
         addr = (struct in_addr **) hp->h_addr_list;
         memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
     }
-    sock_setblocking(ps);
     err = sock_bind(ps, (SA *) &local, sizeof(local));
-    if (err) {
-        sock_destroy(ps);
-        return err; 
-    } else {
-        sock_setnonblocking(ps);
-        if (backlog >= 0) sock_listen(ps, backlog);
-        return NULL;
-    }
+    if (err) sock_destroy(ps);
+    return err; 
 }
 
 /*-------------------------------------------------------------------------*\

@@ -30,7 +30,7 @@ const char *inet_trycreate(p_sock ps, int type);
 const char *inet_tryconnect(p_sock ps, const char *address, 
         unsigned short port, p_tm tm);
 const char *inet_trybind(p_sock ps, const char *address, 
-        unsigned short port, int backlog);
+        unsigned short port);
 
 int inet_meth_getpeername(lua_State *L, p_sock ps);
 int inet_meth_getsockname(lua_State *L, p_sock ps);

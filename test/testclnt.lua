@@ -117,7 +117,6 @@ function test_mixed(len)
     local p3 = "raw " .. string.rep("z", inter) .. "bytes"
     local p4 = "end" .. string.rep("w", inter) .. "bytes"
     local bp1, bp2, bp3, bp4
-    pass(len .. " byte(s) patterns")
 remote (string.format("str = data:receive(%d)", 
             string.len(p1)+string.len(p2)+string.len(p3)+string.len(p4)))
     sent, err = data:send(p1, p2, p3, p4)
@@ -137,7 +136,6 @@ function test_asciiline(len)
     str = string.rep("x", math.mod(len, 10))
     str10 = string.rep("aZb.c#dAe?", math.floor(len/10))
     str = str .. str10
-    pass(len .. " byte(s) line")
 remote "str = data:receive()"
     sent, err = data:send(str, "\n")
     if err then fail(err) end
@@ -156,7 +154,6 @@ function test_rawline(len)
     str10 = string.rep(string.char(120,21,77,4,5,0,7,36,44,100), 
             math.floor(len/10))
     str = str .. str10
-    pass(len .. " byte(s) line")
 remote "str = data:receive()"
     sent, err = data:send(str, "\n")
     if err then fail(err) end
@@ -174,7 +171,6 @@ function test_raw(len)
     local s1, s2, back, err
     s1 = string.rep("x", half)
     s2 = string.rep("y", len-half)
-    pass(len .. " byte(s) block")
 remote (string.format("str = data:receive(%d)", len))
     sent, err = data:send(s1)
     if err then fail(err) end
@@ -271,12 +267,10 @@ end
 function empty_connect()
     reconnect()
     if data then data:close() data = nil end
-print("before remote")
     remote [[
         if data then data:close() data = nil end
         data = server:accept()
     ]]
-print("after remote")
     data, err = socket.connect("", port)
     if not data then 
         pass("ok")
@@ -286,7 +280,7 @@ end
 
 ------------------------------------------------------------------------
 function isclosed(c)
-    return c:fd() == -1 or c:fd() == (2^32-1)
+    return c:getfd() == -1 or c:getfd() == (2^32-1)
 end
 
 function active_close()
@@ -354,13 +348,14 @@ end
 
 ------------------------------------------------------------------------
 function accept_timeout()
+    io.write("accept with timeout (if it hangs, it failed): ")
     local s, e = socket.bind("*", 0, 0)
     assert(s, e)
     local t = socket.time()
     s:settimeout(1)
     local c, e = s:accept()
     assert(not c, "should not accept") 
-    assert(e == "timeout", "wrong error message")
+    assert(e == "timeout", string.format("wrong error message (%s)", e))
     t = socket.time() - t
     assert(t < 2, string.format("took to long to give up (%gs)", t))
     s:close()
@@ -369,19 +364,48 @@ end
 
 ------------------------------------------------------------------------
 function connect_timeout()
+    io.write("connect with timeout (if it hangs, it failed): ")
     local t = socket.time()
     local c, e = socket.tcp()
     assert(c, e)
     c:settimeout(0.1)
     local r, e = c:connect("ibere.tecgraf.puc-rio.br", 80)
-    if r or e ~= "timeout" then 
-        print("wrong error message (this test is flaky anyways)") 
-    end
-    if socket.time() - t > 1 then 
-        print("took to long to give up")
-    end
-    print("whatever")
+    assert(not r, "should not connect")
+    assert(e == "timeout", e)
+    assert(socket.time() - t < 2, "took to long to give up")
     c:close()
+end
+
+------------------------------------------------------------------------
+function accept_errors()
+    io.write("not listenning: ")
+    local d, e = socket.bind("*", 0)
+    assert(d, e);
+    local c, e = socket.tcp();
+    assert(c, e);
+    d:setfd(c:getfd())
+    local r, e = d:accept()
+    assert(not r and e == "not listening", e)
+    print("ok")
+    io.write("not supported: ")
+    local c, e = socket.udp()
+    assert(c, e);
+    d:setfd(c:getfd())
+    local r, e = d:accept()
+    assert(not r and e == "not supported", e)
+    print("ok")
+end
+
+------------------------------------------------------------------------
+function connect_errors()
+    io.write("connection refused: ")
+    local c, e = socket.connect("localhost", 1);
+    assert(not c and e == "connection refused", e)
+    print("ok")
+    io.write("host not found: ")
+    local c, e = socket.connect("not.exist.com", 1);
+    assert(not c and e == "host not found", e)
+    print("ok")
 end
 
 ------------------------------------------------------------------------
@@ -400,40 +424,44 @@ end
 ------------------------------------------------------------------------
 test("method registration")
 test_methods(socket.tcp(), {
-    "connect",
-    "send",
-    "receive",
+   "accept",
     "bind",
-    "accept",
-    "setpeername",
-    "setsockname",
+    "close",
+    "connect",
     "getpeername",
     "getsockname",
+    "listen",
+    "receive",
+    "send",
     "setoption",
+    "setpeername",
+    "setsockname",
     "settimeout",
     "shutdown",
-    "close",
 })
+
 test_methods(socket.udp(), {
+    "close", 
     "getpeername",
     "getsockname",
-    "setsockname",
-    "setpeername",
-    "send", 
-    "sendto", 
     "receive", 
     "receivefrom", 
+    "send", 
+    "sendto", 
     "setoption",
+    "setpeername",
+    "setsockname",
     "settimeout", 
     "shutdown",
-    "close", 
 })
 
 test("select function")
 test_selectbugs()
 
-test("empty host connect: ")
+test("connect function")
+connect_timeout()
 empty_connect()
+connect_errors()
 
 test("rebinding: ")
 rebind_test()
@@ -444,11 +472,10 @@ active_close()
 test("closed connection detection: ")
 test_closed()
 
-test("accept with timeout (if it hangs, it failed:)")
+test("accept function: ")
 accept_timeout()
+accept_errors()
 
-test("connect with timeout (if it hangs, it failed:)")
-connect_timeout()
 
 test("mixed patterns")
 test_mixed(1)

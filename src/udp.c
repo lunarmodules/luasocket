@@ -33,7 +33,8 @@ static int meth_close(lua_State *L);
 static int meth_shutdown(lua_State *L);
 static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
-static int meth_fd(lua_State *L);
+static int meth_getfd(lua_State *L);
+static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
 
 /* udp object methods */
@@ -51,7 +52,8 @@ static luaL_reg udp[] = {
     {"shutdown",    meth_shutdown},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
-    {"fd",          meth_fd},
+    {"getfd",       meth_getfd},
+    {"setfd",       meth_setfd},
     {"dirty",       meth_dirty},
     {NULL,          NULL}
 };
@@ -194,11 +196,19 @@ static int meth_receivefrom(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Select support methods
 \*-------------------------------------------------------------------------*/
-static int meth_fd(lua_State *L)
+static int meth_getfd(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     lua_pushnumber(L, udp->sock);
     return 1;
+}
+
+/* this is very dangerous, but can be handy for those that are brave enough */
+static int meth_setfd(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
+    udp->sock = (t_sock) luaL_checknumber(L, 2);
+    return 0;
 }
 
 static int meth_dirty(lua_State *L)
@@ -312,7 +322,7 @@ static int meth_setsockname(lua_State *L)
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    const char *err = inet_trybind(&udp->sock, address, port, -1);
+    const char *err = inet_trybind(&udp->sock, address, port);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);

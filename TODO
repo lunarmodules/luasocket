@@ -12,6 +12,9 @@ manual
     local connect 
     add thanks to 'carlos cassino' and 'david burgess'
     add new ip- options and reuseaddr option
+    add listen to manual
+    bind method doesn't do listen anymore
+    bind doesn't turn an object into a server object: listen does.
 
 tests
     checar todos os metodos

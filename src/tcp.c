@@ -22,6 +22,7 @@
 \*=========================================================================*/
 static int global_create(lua_State *L);
 static int meth_connect(lua_State *L);
+static int meth_listen(lua_State *L);
 static int meth_bind(lua_State *L);
 static int meth_send(lua_State *L);
 static int meth_getsockname(lua_State *L);
@@ -32,7 +33,8 @@ static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
-static int meth_fd(lua_State *L);
+static int meth_getfd(lua_State *L);
+static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
 
 /* tcp object methods */
@@ -41,6 +43,7 @@ static luaL_reg tcp[] = {
     {"send",        meth_send},
     {"receive",     meth_receive},
     {"bind",        meth_bind},
+    {"listen",      meth_listen},
     {"accept",      meth_accept},
     {"setpeername", meth_connect},
     {"setsockname", meth_bind},
@@ -51,7 +54,8 @@ static luaL_reg tcp[] = {
     {"shutdown",    meth_shutdown},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
-    {"fd",          meth_fd},
+    {"getfd",       meth_getfd},
+    {"setfd",       meth_setfd},
     {"dirty",       meth_dirty},
     {NULL,          NULL}
 };
@@ -124,16 +128,24 @@ static int meth_setoption(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Select support methods
 \*-------------------------------------------------------------------------*/
-static int meth_fd(lua_State *L)
+static int meth_getfd(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     lua_pushnumber(L, tcp->sock);
     return 1;
 }
 
+/* this is very dangerous, but can be handy for those that are brave enough */
+static int meth_setfd(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    tcp->sock = (t_sock) luaL_checknumber(L, 2); 
+    return 0;
+}
+
 static int meth_dirty(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     lua_pushboolean(L, !buf_isempty(&tcp->buf));
     return 1;
 }
@@ -147,9 +159,9 @@ static int meth_accept(lua_State *L)
     p_tcp server = (p_tcp) aux_checkclass(L, "tcp{server}", 1);
     p_tm tm = tm_markstart(&server->tm);
     t_sock sock;
-    int err = sock_accept(&server->sock, &sock, NULL, NULL, tm);
+    const char *err = sock_accept(&server->sock, &sock, NULL, NULL, tm);
     /* if successful, push client socket */
-    if (err == IO_DONE) {
+    if (!err) {
         p_tcp clnt = lua_newuserdata(L, sizeof(t_tcp));
         aux_setclass(L, "tcp{client}", -1);
         /* initialize structure fields */
@@ -160,28 +172,25 @@ static int meth_accept(lua_State *L)
         return 1;
     } else {
         lua_pushnil(L); 
-        io_pusherror(L, err);
+        lua_pushstring(L, err);
         return 2;
     }
 }
 
 /*-------------------------------------------------------------------------*\
-* Turns a master object into a server object
+* Binds an object to an address 
 \*-------------------------------------------------------------------------*/
 static int meth_bind(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    int backlog = (int) luaL_optnumber(L, 4, 1);
-    const char *err = inet_trybind(&tcp->sock, address, port, backlog);
+    const char *err = inet_trybind(&tcp->sock, address, port);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
         return 2;
     }
-    /* turn master object into a server object if there was a listen */
-    if (backlog >= 0) aux_setclass(L, "tcp{server}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -215,6 +224,25 @@ static int meth_close(lua_State *L)
     p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     sock_destroy(&tcp->sock);
     return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Puts the sockt in listen mode
+\*-------------------------------------------------------------------------*/
+static int meth_listen(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
+    int backlog = (int) luaL_checknumber(L, 2);
+    const char *err = sock_listen(&tcp->sock, backlog);
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    /* turn master object into a server object */
+    aux_setclass(L, "tcp{server}", 1);
+    lua_pushnumber(L, 1);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
