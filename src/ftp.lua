@@ -15,6 +15,8 @@ local PORT = 21
 -- this is the default anonymous password. used when no password is
 -- provided in url. should be changed for your e-mail.
 local EMAIL = "anonymous@anonymous.org"
+-- block size used in transfers
+local BLOCKSIZE = 4096
 
 -----------------------------------------------------------------------------
 -- Parses a url and returns its scheme, user, password, host, port 
@@ -68,7 +70,7 @@ local get_pasv = function(pasv)
 	local ip, port
 	_,_, a, b, c, d, p1, p2 =
 		strfind(pasv, "(%d*),(%d*),(%d*),(%d*),(%d*),(%d*)")
-	if not a or not b or not c or not d or not p1 or not p2 then
+	if not (a and b and c and d and p1 and p2) then
 		return nil, nil
 	end
 	ip = format("%d.%d.%d.%d", a, b, c, d)
@@ -82,6 +84,8 @@ end
 --   control: control connection socket
 --   cmd: command
 --   arg: command argument if any
+-- Returns
+--   error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
 local send_command = function(control, cmd, arg)
 	local line, err
@@ -284,35 +288,84 @@ local logout = function(control)
 end
 
 -----------------------------------------------------------------------------
+-- Receives data and send it to a callback
+-- Input
+--   data: data connection
+--   callback: callback to return file contents
+-- Returns
+--   nil if successfull, or an error message in case of error
+-----------------------------------------------------------------------------
+local receive_indirect = function(data, callback)
+	local chunk, err, res
+	while not err do
+		chunk, err = data:receive(%BLOCKSIZE)
+		if err == "closed" then err = "done" end
+		res = callback(chunk, err)
+		if not res then break end
+	end
+end
+
+-----------------------------------------------------------------------------
 -- Retrieves file or directory listing
 -- Input
 --   control: control connection with server
 --   server: server socket bound to local address
 --   file: file name under current directory
 --   isdir: is file a directory name?
+--   callback: callback to receive file contents
 -- Returns
---   file: string with file contents, nil if error
---   answer: server answer or error message
+--   err: error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
-local retrieve_file = function(control, server, file, isdir)
+local retrieve = function(control, server, file, isdir, callback)
+	local code, answer
 	local data
 	-- ask server for file or directory listing accordingly
 	if isdir then code, answer = %try_command(control, "nlst", file, {150, 125})
 	else code, answer = %try_command(control, "retr", file, {150, 125}) end
 	data, answer = server:accept()
 	server:close()
-	if not data then return nil, answer end
-	-- download whole file
-	file, err = data:receive("*a")
-	data:close()
-	if err then 
+	if not data then 
 		control:close()
-		return nil, err
+		return answer 
 	end
+	answer = %receive_indirect(data, callback)
+	if answer then 
+		control:close()
+		return answer
+	end
+	data:close()
 	-- make sure file transfered ok
 	code, answer = %check_answer(control, {226, 250})
-	if not code then return nil, answer 
-	else return file, answer end
+	if not code then return answer end
+end
+
+-----------------------------------------------------------------------------
+-- Sends data comming from a callback
+-- Input
+--   data: data connection
+--   send_cb: callback to produce file contents
+--   chunk, size: first callback results
+-- Returns
+--   nil if successfull, or an error message in case of error
+-----------------------------------------------------------------------------
+local try_sendindirect = function(data, send_cb, chunk, size)
+    local sent, err
+    sent = 0
+    while 1 do
+        if type(chunk) ~= "string" or type(size) ~= "number" then
+            data:close()
+            if not chunk and type(size) == "string" then return size
+            else return "invalid callback return" end
+        end
+        err = data:send(chunk)
+        if err then 
+            data:close() 
+            return err 
+        end
+        sent = sent + strlen(chunk)
+        if sent >= size then break end
+        chunk, size = send_cb()
+    end
 end
 
 -----------------------------------------------------------------------------
@@ -321,29 +374,34 @@ end
 --   control: control connection with server
 --   server: server socket bound to local address
 --   file: file name under current directory
---   bytes: file contents in string 
+--   send_cb: callback to produce the file contents
 -- Returns
 --   code: return code, nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local store_file = function (control, server, file, bytes)
+local store = function(control, server, file, send_cb)
 	local data
 	local code, answer = %try_command(control, "stor", file, {150, 125})
 	if not code then 
-		data:close()
+		control:close()
 		return nil, answer 
 	end
+	-- start data connection
 	data, answer = server:accept()
 	server:close()
-	if not data then return nil, answer end
-	-- send whole file and close connection to mark file end
-	answer = data:send(bytes)
-	data:close()
-	if answer then 
+	if not data then 
 		control:close()
-		return nil, answer
+		return nil, answer 
 	end
-	-- check if file was received right
+	-- send whole file 
+	err = %try_sendindirect(data, send_cb, send_cb())
+	if err then 
+		control:close()
+		return nil, err
+	end
+	-- close connection to inform that file transmission is complete
+	data:close()
+	-- check if file was received correctly
 	return %check_answer(control, {226, 250})
 end
 
@@ -365,55 +423,53 @@ end
 -- Retrieve a file from a ftp server
 -- Input
 --   url: file location
+--   receive_cb: callback to receive file contents
 --   type: "binary" or "ascii"
 -- Returns
---   file: downloaded file or nil in case of error
 --   err: error message if any
 -----------------------------------------------------------------------------
-function ftp_get(url, type)
+function ftp_getindirect(url, receive_cb, type)
 	local control, server, data, err
 	local answer, code, server, pfile, file
 	parsed = %split_url(url, {user = "anonymous", port = 21, pass = %EMAIL})
 	-- start control connection
 	control, err = connect(parsed.host, parsed.port)
-	if not control then return nil, err end
+	if not control then return err end
 	control:timeout(%TIMEOUT)
 	-- get and check greeting
 	code, answer = %check_greeting(control)
-	if not code then return nil, answer end
+	if not code then return answer end
 	-- try to log in
 	code, answer = %login(control, parsed.user, parsed.pass)
-	if not code then return nil, answer end
+	if not code then return answer end
 	-- go to directory
 	pfile = %split_path(parsed.path)
-	if not pfile then return nil, "invalid path" end
+	if not pfile then return "invalid path" end
 	code, answer = %cwd(control, pfile.path)
-	if not code then return nil, answer end
+	if not code then return answer end
 	-- change to binary type?
 	code, answer = %change_type(control, type)
-	if not code then return nil, answer end
+	if not code then return answer end
 	-- setup passive connection
 	server, answer = %port(control)
-	if not server then return nil, answer end
+	if not server then return answer end
 	-- ask server to send file or directory listing
-	file, answer = %retrieve_file(control, server, pfile.name, pfile.isdir)
-	if not file then return nil, answer end
+	err = %retrieve(control, server, pfile.name, pfile.isdir, receive_cb)
+	if err then return err end
 	-- disconnect
 	%logout(control)
-	-- return whatever file we received plus a possible error message
-	return file, answer
 end
 
 -----------------------------------------------------------------------------
 -- Uploads a file to a FTP server
 -- Input
 --   url: file location
---   bytes: file contents
+--   send_cb: callback to produce the file contents
 --   type: "binary" or "ascii"
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
-function ftp_put(url, bytes, type)
+function ftp_putindirect(url, send_cb, type)
 	local control, data
 	local answer, code, server, file, pfile
 	parsed = %split_url(url, {user = "anonymous", port = 21, pass = %EMAIL})
@@ -439,10 +495,51 @@ function ftp_put(url, bytes, type)
 	server, answer = %port(control)
 	if not server then return answer end
 	-- ask server to send file
-	code, answer = %store_file(control, server, pfile.name, bytes)
+	code, answer = %store(control, server, pfile.name, send_cb)
 	if not code then return answer end
 	-- disconnect
 	%logout(control)
 	-- no errors
 	return nil
+end
+
+-----------------------------------------------------------------------------
+-- Uploads a file to a FTP server
+-- Input
+--   url: file location
+--   bytes: file contents
+--   type: "binary" or "ascii"
+-- Returns
+--   err: error message if any
+-----------------------------------------------------------------------------
+function ftp_put(url, bytes, type)
+	local send_cb = function()
+		return %bytes, strlen(%bytes)
+	end
+	return ftp_putindirect(url, send_cb, type)
+end
+
+-----------------------------------------------------------------------------
+-- We need fast concatenation routines for direct requests
+-----------------------------------------------------------------------------
+dofile("buffer.lua")
+
+-----------------------------------------------------------------------------
+-- Retrieve a file from a ftp server
+-- Input
+--   url: file location
+--   type: "binary" or "ascii"
+-- Returns
+--   data: file contents as a string
+--   err: error message in case of error, nil otherwise
+-----------------------------------------------------------------------------
+function ftp_get(url, type)
+	local bytes = { buf = buf_create() }
+	local receive_cb = function(chunk, err)
+		if not chunk then %bytes.buf = nil end
+		buf_addstring(%bytes.buf, chunk)
+		return 1
+	end
+	err = ftp_getindirect(url, receive_cb, type)
+	return buf_getresult(bytes.buf), err
 end
