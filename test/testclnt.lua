@@ -25,7 +25,7 @@ function remote(...)
     s = string.gsub(s, "\n", ";")
     s = string.gsub(s, "%s+", " ")
     s = string.gsub(s, "^%s*", "")
-    control:send(s, "\n")
+    control:send(s .. "\n")
     control:receive()
 end
 
@@ -120,7 +120,7 @@ function test_mixed(len)
     local bp1, bp2, bp3, bp4
 remote (string.format("str = data:receive(%d)", 
             string.len(p1)+string.len(p2)+string.len(p3)+string.len(p4)))
-    sent, err = data:send(p1, p2, p3, p4)
+    sent, err = data:send(p1..p2..p3..p4)
     if err then fail(err) end
 remote "data:send(str); data:close()"
     bp1, err = data:receive()
@@ -144,9 +144,9 @@ function test_asciiline(len)
     str10 = string.rep("aZb.c#dAe?", math.floor(len/10))
     str = str .. str10
 remote "str = data:receive()"
-    sent, err = data:send(str, "\n")
+    sent, err = data:send(str.."\n")
     if err then fail(err) end
-remote "data:send(str, '\\n')"
+remote "data:send(str ..'\\n')"
     back, err = data:receive()
     if err then fail(err) end
     if back == str then pass("lines match")
@@ -162,9 +162,9 @@ function test_rawline(len)
             math.floor(len/10))
     str = str .. str10
 remote "str = data:receive()"
-    sent, err = data:send(str, "\n")
+    sent, err = data:send(str.."\n")
     if err then fail(err) end
-remote "data:send(str, '\\n')"
+remote "data:send(str..'\\n')"
     back, err = data:receive()
     if err then fail(err) end
     if back == str then pass("lines match")
@@ -457,7 +457,62 @@ function getstats_test()
     print("ok")
 end
 
+
 ------------------------------------------------------------------------
+function test_nonblocking(size) 
+    reconnect()
+remote(string.format([[
+    data:send(string.rep("a", %d))
+    socket.sleep(0.5)
+    data:send(string.rep("b", %d))
+]], size, size))
+    local err = "timeout"
+    local part = ""
+    local str
+    data:settimeout(0)
+    while 1 do
+        str, err, part = data:receive(2*size - string.len(part), part)
+        if err ~= "timeout" then break end
+    end
+    assert(str == (string.rep("a", size) .. string.rep("b", size)))
+    reconnect()
+remote(string.format([[
+    str = data:receive(%d)
+    socket.sleep(0.5)
+    str = data:receive(%d, str)
+    str = data:receive("*l", str)
+    data:send(str)
+    data:send("\n")
+]], size, size))
+    data:settimeout(0)
+    local sofar = 1
+    while 1 do
+        _, err, part = data:send(str, sofar)
+        if err ~= "timeout" then break end
+        sofar = sofar + part
+    end
+    data:send("\n")
+    data:settimeout(-1)
+    local back = data:receive()
+    assert(back == str)
+    print("ok")
+end
+
+
+------------------------------------------------------------------------
+test("non-blocking transfer")
+test_nonblocking(1)
+test_nonblocking(17)
+test_nonblocking(200)
+test_nonblocking(4091)
+test_nonblocking(80199)
+test_nonblocking(8000000)
+test_nonblocking(80199)
+test_nonblocking(4091)
+test_nonblocking(200)
+test_nonblocking(17)
+test_nonblocking(1)
+
 test("method registration")
 test_methods(socket.tcp(), {
     "accept",
@@ -548,7 +603,6 @@ test_mixed(1)
 
 
 test("binary line")
-reconnect()
 test_rawline(1)
 test_rawline(17)
 test_rawline(200)
@@ -562,24 +616,6 @@ test_rawline(17)
 test_rawline(1)
 
 test("raw transfer")
-reconnect()
-test_raw(1)
-test_raw(17)
-test_raw(200)
-test_raw(4091)
-test_raw(80199)
-test_raw(8000000)
-test_raw(80199)
-test_raw(4091)
-test_raw(200)
-test_raw(17)
-test_raw(1)
-
-test("non-blocking transfer")
-reconnect()
--- the value is not important, we only want 
--- to test non-blocking I/O anyways
-data:settimeout(200)
 test_raw(1)
 test_raw(17)
 test_raw(200)

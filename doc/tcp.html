@@ -260,7 +260,7 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 <!-- receive ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=receive>
-client:<b>receive(</b>[pattern]<b>)</b>
+client:<b>receive(</b>[pattern [, prefix]]<b>)</b>
 </p>
 
 <p class=description>
@@ -282,6 +282,11 @@ the returned line. This is the default pattern;
 <li> <tt>number</tt>:  causes the  method to read  a specified <tt>number</tt> 
 of bytes from the socket.
 </ul>
+
+<p class=parameters>
+<tt>Prefix</tt> is an optional string to be concatenated to the beginning
+of any received data before return.
+</p>
 
 <p class=return>
 If successful, the method returns the received pattern. In case of error,
@@ -305,18 +310,18 @@ too.
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=send>
-client:<b>send(</b>string<sub>1</sub> [,
-string<sub>2</sub>, ... string<sub>N</sub>]<b>)</b>
+client:<b>send(</b>data [, i [, j]]<b>)</b>
 </p>
 
 <p class=description>
-Sends data through client object.
+Sends <tt>data</tt> through client object.
 </p>
 
 <p class=parameters>
-All parameters should be strings. For small strings, it is always better to
-concatenate them in Lua (with the '<tt>..</tt>' operator) and pass the 
-result to LuaSocket instead of passing several independent strings.
+<tt>Data</tt> is the string to be sent. The optional arguments
+<tt>i</tt> and <tt>j</tt> work exactly like the standard
+<tt>string.sub</tt> Lua function to allow the selection of a 
+substring to be sent.
 </p>
 
 <p class=return>
@@ -339,6 +344,22 @@ error message. Since returning <b><tt>nil</tt></b> in case of success was
 nonsense, in alpha the first return value became the number of bytes sent.
 Alas, it wasn't returning <tt><b>nil</b></tt> in case of
 error. So it was changed again in beta. 
+</p>
+
+<p class=note>
+<b>Also important</b>: 
+In order to better support non-blocking I/O and to discourage
+bad practice, the <tt>send</tt> method now only sends one string
+per call. The other optional arguments allow the user to select 
+a substring to be sent in a much more efficient way than 
+using <tt>string.sub</tt>.
+</p>
+
+<p class=note>
+Note: Output is <em>not</em> buffered. For small strings, 
+it is always better to concatenate them in Lua 
+(with the '<tt>..</tt>' operator) and send the result in one call 
+instead of calling the method several times. 
 </p>
 
 <!-- setoption ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

@@ -64,23 +64,24 @@ int buf_meth_getstats(lua_State *L, p_buf buf) {
 \*-------------------------------------------------------------------------*/
 int buf_meth_send(lua_State *L, p_buf buf) {
     int top = lua_gettop(L);
-    size_t total = 0;
-    int arg, err = IO_DONE;
     p_tm tm = tm_markstart(buf->tm);
-    for (arg = 2; arg <= top; arg++) { /* first arg is socket object */
-        size_t sent, count;
-        const char *data = luaL_optlstring(L, arg, NULL, &count);
-        if (!data || err != IO_DONE) break;
-        err = sendraw(buf, data, count, &sent);
-        total += sent;
-    }
+    int err = IO_DONE;
+    size_t size, sent;
+    const char *data = luaL_checklstring(L, 2, &size);
+    ssize_t start = (ssize_t) luaL_optnumber(L, 3, 1);
+    ssize_t end = (ssize_t) luaL_optnumber(L, 4, -1);
+    if (start < 0) start = size+start+1;
+    if (end < 0) end = size+end+1;
+    if (start < 1) start = 1;
+    if (end > size) end = size;
+    if (start <= end) err = sendraw(buf, data+start-1, end-start+1, &sent);
     /* check if there was an error */
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, buf->io->error(buf->io->ctx, err)); 
-        lua_pushnumber(L, total);
+        lua_pushnumber(L, sent);
     } else {
-        lua_pushnumber(L, total);
+        lua_pushnumber(L, sent);
         lua_pushnil(L);
         lua_pushnil(L);
     }

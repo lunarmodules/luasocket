@@ -373,12 +373,10 @@ static const char *wstrerror(int err) {
         case WSANOTINITIALISED: 
             return "Successful WSAStartup not yet performed";
         case WSAEDISCON: return "Graceful shutdown in progress";
-        case WSATYPE_NOT_FOUND: return "Class type not found";
         case WSAHOST_NOT_FOUND: return "Host not found";
         case WSATRY_AGAIN: return "Nonauthoritative host not found";
         case WSANO_RECOVERY: return "Nonrecoverable name lookup error"; 
         case WSANO_DATA: return "Valid name, no data record of requested type";
-        case WSASYSCALLFAILURE: return "System call failure";
         default: return "Unknown error";
     }
 }
