@@ -652,7 +652,7 @@ int global_select(lua_State *L)
     /* see if we can read, write or if we timedout */
     ret = select(max, prfds, pwfds, NULL, ptm);
     /* did we timeout? */
-    if (ret <= 0 && ms > 0) { 
+    if (ret <= 0 && ms >= 0) { 
         push_error(L, NET_TIMEOUT);
         return 3;
     }
