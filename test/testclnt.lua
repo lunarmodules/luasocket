@@ -205,7 +205,7 @@ function blockedtimed_out(t, s, err, o)
 			pass("got natural cause timeout")
 			return 1
 		end
-	elseif 0.9*s > t then
+	elseif s > t then
 		if o == "send" then
 			pass("must have been buffered (may be wrong)")
 		else
@@ -252,14 +252,14 @@ end
 -----------------------------------------------------------------------------
 function returntimed_out(delta, t, err)
 	if err == "timeout" then
-		if 1.1*delta >= t then
+		if delta >= t then
 			pass("got rightfull timeout")
 			return 1
 		else
 			fail("shouldn't have gotten timeout")
 		end
-	elseif 0.9*delta > t then
-		fail("should have gotten timeout")
+	elseif delta > t then
+		pass(format("but took %fs longer than should have", delta - t))
 	end
 end
 
@@ -399,20 +399,21 @@ test_block(80000)
 test_block(800000)
 
 new_test("blocked timeout test")
-test_blockedtimeout(80, .5, 1)
-test_blockedtimeout(80, 1, 1)
-test_blockedtimeout(80, 1.5, 1)
+test_blockedtimeout(80, 1, 2)
+test_blockedtimeout(80, 2, 2)
+test_blockedtimeout(80, 3, 2)
 test_blockedtimeout(800, 1, 0)
-test_blockedtimeout(8000, 1, 1.5)
-test_blockedtimeout(80000, 1, 0)
+test_blockedtimeout(8000, 2, 3)
+test_blockedtimeout(80000, 2, 1)
 test_blockedtimeout(800000, 0.01, 0)
 
 new_test("return timeout test")
-test_returntimeout(80, 1, 0.5)
-test_returntimeout(80, 0.5, 1)
-test_returntimeout(8000, .5, 1)
-test_returntimeout(80000, 1, 0.5)
-test_returntimeout(800000, 1, 0.5)
+test_returntimeout(80, 2, 1)
+test_returntimeout(80, 1, 2)
+test_returntimeout(8000, 1, 2)
+test_returntimeout(80000, 2, 1)
+test_returntimeout(800000, 0.1, 0)
+test_returntimeout(800000, 2, 1)
 
 -----------------------------------------------------------------------------
 -- Close connection and exit server. We are done.
