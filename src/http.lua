@@ -1,9 +1,10 @@
 -----------------------------------------------------------------------------
--- Full HTTP/1.1 client support for the Lua language using the 
+-- HTTP/1.1 client support for the Lua language.
 -- LuaSocket 1.4a toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
--- Conforming to: RFC 2068
+-- Conforming to: RFC 2616, LTN7
+-- RCS ID: $Id$
 -----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
@@ -13,27 +14,27 @@ HTTP = Public
 -- Program constants
 -----------------------------------------------------------------------------
 -- connection timeout in seconds
-Private.TIMEOUT = 60 
+Public.TIMEOUT = 60 
 -- default port for document retrieval
-Private.PORT = 80
+Public.PORT = 80
 -- user agent field sent in request
-Private.USERAGENT = "LuaSocket 1.4a"
+Public.USERAGENT = "LuaSocket 1.4a"
 -- block size used in transfers
-Private.BLOCKSIZE = 8192
+Public.BLOCKSIZE = 8192
 
 -----------------------------------------------------------------------------
 -- Required libraries
 -----------------------------------------------------------------------------
 dofile "buffer.lua"
 dofile "url.lua"
-dofile "encode.lua"
+dofile "code.lua"
 
 -----------------------------------------------------------------------------
 -- Tries to get a pattern from the server and closes socket on error
 --   sock: socket connected to the server
---   pattern: pattern to receive
+--   ...: patterns to receive
 -- Returns
---   data: line received or nil in case of error
+--   ...: received patterns
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Private.try_receive(...)
@@ -60,11 +61,11 @@ function Private.try_send(sock, data)
 end
 
 -----------------------------------------------------------------------------
--- Retrieves status code from http status line
+-- Computes status code from HTTP status line
 -- Input
---   line: http status line
+--   line: HTTP status line
 -- Returns
---   code: integer with status code
+--   code: integer with status code, or nil if malformed line
 -----------------------------------------------------------------------------
 function Private.get_statuscode(line)
     local code, _
@@ -73,12 +74,12 @@ function Private.get_statuscode(line)
 end
 
 -----------------------------------------------------------------------------
--- Receive server reply messages, parsing status code
+-- Receive server reply messages, parsing for status code
 -- Input
 --   sock: socket connected to the server
 -- Returns
 --   code: server status code or nil if error
---   line: full http status line
+--   line: full HTTP status line
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Private.receive_status(sock)
@@ -108,7 +109,7 @@ function Private.receive_headers(sock, headers)
     -- headers go until a blank line is found
     while line ~= "" do
         -- get field-name and value
-        _,_, name, value = strfind(line, "(.-):%s*(.*)")
+        _,_, name, value = strfind(line, "^(.-):%s*(.*)")
         if not name or not value then 
             sock:close()
             return nil, "malformed reponse headers" 
@@ -145,14 +146,14 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
         -- get chunk size, skip extention
         line, err = %Private.try_receive(sock)
         if err then 
-            local _, uerr = receive_cb(nil, err)
+            local go, uerr = receive_cb(nil, err)
             return uerr or err
         end
         size = tonumber(gsub(line, ";.*", ""), 16)
         if not size then 
             err = "invalid chunk size"
             sock:close()
-            _, uerr = receive_cb(nil, err)
+            go, uerr = receive_cb(nil, err)
             return uerr or err
         end
 		-- was it the last chunk?
@@ -160,7 +161,7 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
         -- get chunk
         chunk, err = %Private.try_receive(sock, size) 
         if err then 
-            _, uerr = receive_cb(nil, err)
+            go, uerr = receive_cb(nil, err)
             return uerr or err
         end
         -- pass chunk to callback
@@ -172,7 +173,7 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
         -- skip CRLF on end of chunk
         _, err = %Private.try_receive(sock)
         if err then 
-            _, uerr = receive_cb(nil, err)
+            go, uerr = receive_cb(nil, err)
             return uerr or err
         end
     end
@@ -181,11 +182,11 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
 	-- being caught unprepaired.
 	headers, err = %Private.receive_headers(sock, headers)
 	if err then
-        _, uerr = receive_cb(nil, err)
+        go, uerr = receive_cb(nil, err)
         return uerr or err
 	end
     -- let callback know we are done
-    _, uerr = receive_cb("")
+    go, uerr = receive_cb("")
     return uerr
 end
 
@@ -193,6 +194,7 @@ end
 -- Receives a message body by content-length
 -- Input
 --   sock: socket connected to the server
+--   length: message body length
 --   receive_cb: function to receive chunks
 -- Returns
 --   nil if successfull or an error message in case of error
@@ -200,7 +202,7 @@ end
 function Private.receivebody_bylength(sock, length, receive_cb)
     local uerr, go
     while length > 0 do
-        local size = min(%Private.BLOCKSIZE, length)
+        local size = min(%Public.BLOCKSIZE, length)
         local chunk, err = sock:receive(size)
         if err then 
             go, uerr = receive_cb(nil, err)
@@ -228,14 +230,14 @@ end
 function Private.receivebody_untilclosed(sock, receive_cb)
     local err, go, uerr
     while 1 do
-        local chunk, err = sock:receive(%Private.BLOCKSIZE)
+        local chunk, err = sock:receive(%Public.BLOCKSIZE)
         if err == "closed" or not err then 
             go, uerr = receive_cb(chunk)
             if not go then
                 sock:close()
                 return uerr or "aborted by callback"
             end
-            if err then break end
+            if err == "closed" then break end
         else 
             go, uerr = callback(nil, err)
             return uerr or err
@@ -246,7 +248,7 @@ function Private.receivebody_untilclosed(sock, receive_cb)
 end
 
 -----------------------------------------------------------------------------
--- Receives http response body
+-- Receives HTTP response body
 -- Input
 --   sock: socket connected to the server
 --   headers: response header fields
@@ -270,7 +272,7 @@ function Private.receive_body(sock, headers, receive_cb)
 end
 
 -----------------------------------------------------------------------------
--- Drop http response body
+-- Drop HTTP response body
 -- Input
 --   sock: socket connected to the server
 --   headers: response header fields
@@ -286,7 +288,7 @@ end
 -- Input
 --   data: data connection
 --   send_cb: callback to produce file contents
---   chunk, size: first callback results
+--   chunk, size: first callback return values
 -- Returns
 --   nil if successfull, or an error message in case of error
 -----------------------------------------------------------------------------
@@ -311,20 +313,20 @@ function Private.send_indirect(data, send_cb, chunk, size)
 end
 
 -----------------------------------------------------------------------------
--- Sends a http request message through socket
+-- Sends a HTTP request message through socket
 -- Input
 --   sock: socket connected to the server
 --   method: request method to  be used
---   path: url path
+--   uri: request uri
 --   headers: request headers to be sent
 --   body_cb: callback to send request message body
 -- Returns
 --   err: nil in case of success, error message otherwise
 -----------------------------------------------------------------------------
-function Private.send_request(sock, method, path, headers, body_cb)
+function Private.send_request(sock, method, uri, headers, body_cb)
     local chunk, size, done, err
     -- send request line
-    err = %Private.try_send(sock, method .. " " .. path .. " HTTP/1.1\r\n")
+    err = %Private.try_send(sock, method .. " " .. uri .. " HTTP/1.1\r\n")
     if err then return err end
     -- if there is a request message body, add content-length header
     if body_cb then
@@ -370,7 +372,7 @@ end
 -- Converts field names to lowercase and adds a few needed headers
 -- Input
 --   headers: request header fields
---   parsed: parsed url components
+--   parsed: parsed request URL
 -- Returns
 --   lower: a table with the same headers, but with lowercase field names
 -----------------------------------------------------------------------------
@@ -378,7 +380,7 @@ function Private.fill_headers(headers, parsed)
     local lower = {}
     headers = headers or {}
     -- set default headers
-    lower["user-agent"] = %Private.USERAGENT
+    lower["user-agent"] = %Public.USERAGENT
     lower["host"] = parsed.host
     -- override with user values
     for i,v in headers do
@@ -393,7 +395,7 @@ end
 -- Decides wether we should follow retry with authorization formation
 -- Input
 --   request: a table with the original request information
---   parsed: parsed request url
+--   parsed: parsed request URL
 --   response: a table with the server response information
 -- Returns
 --   1 if we should retry, nil otherwise
@@ -410,14 +412,14 @@ end
 -- Returns the result of retrying a request with authorization information
 -- Input
 --   request: a table with the original request information
---   parsed: parsed request url
+--   parsed: parsed request URL
 --   response: a table with the server response information
 -- Returns
 --   response: result of target redirection
 -----------------------------------------------------------------------------
 function Private.authorize(request, parsed, response)
     request.headers["authorization"] = "Basic " .. 
-        base64(parsed.user .. ":" .. parsed.password)
+        Code.base64(parsed.user .. ":" .. parsed.password)
     local authorize = {
 		redirects = request.redirects,
         method = request.method,
@@ -459,9 +461,9 @@ function Private.redirect(request, response)
     local redirect = {
         redirects = redirects,
         method = request.method,
-        -- the RFC says the redirect url has to be absolute, but some
+        -- the RFC says the redirect URL has to be absolute, but some
         -- servers do not respect that 
-        url = URL.build_absolute(request.url,response.headers["location"]),
+        url = URL.absolute_url(request.url, response.headers["location"]),
         body_cb = request.body_cb,
         headers = request.headers
     }
@@ -469,9 +471,9 @@ function Private.redirect(request, response)
 end
 
 -----------------------------------------------------------------------------
--- Computes the request URI from the given URL
+-- Computes the request URI from the parsed request URL
 -- Input
---   parsed: parsed url
+--   parsed: parsed URL
 -- Returns
 --   uri: request URI for parsed URL
 -----------------------------------------------------------------------------
@@ -505,9 +507,8 @@ end
 --     error: error message, or nil if successfull
 -----------------------------------------------------------------------------
 function Public.request_indirect(request, response)
-    -- get url components
-    local parsed = URL.parse(request.url, {port = %Private.PORT, path ="/"})
-    -- explicit authentication info overrides that given by the url
+    local parsed = URL.parse_url(request.url, {port = %Public.PORT, path ="/"})
+    -- explicit authentication info overrides that given by the URL
     parsed.user = request.user or parsed.user
     parsed.password = request.password or parsed.password
     -- default method
@@ -519,7 +520,7 @@ function Public.request_indirect(request, response)
     sock, response.error = connect(parsed.host, parsed.port)
     if not sock then return response end
     -- set connection timeout so that we do not hang forever
-    sock:timeout(%Private.TIMEOUT)
+    sock:timeout(%Public.TIMEOUT)
     -- send request message
     response.error = %Private.send_request(sock, request.method, 
         %Private.request_uri(parsed), request.headers, request.body_cb)
@@ -555,7 +556,7 @@ end
 -- Input
 --   request: a table with the following fields
 --     method: "GET", "PUT", "POST" etc (defaults to "GET")
---     url: target url, i.e. the document to be retrieved
+--     url: request URL, i.e. the document to be retrieved
 --     user, password: authentication information
 --     headers: request header fields, or nil if none
 --     body: request message body as a string, or nil if none
@@ -572,17 +573,16 @@ function Public.request(request)
     local response = {}
     if request.body then 
         request.body_cb = function() 
-               return %request.body, strlen(%request.body) 
+            return %request.body, strlen(%request.body) 
         end
     end
-    local auxiliar = { buf = buf_create() }
+    local cat = Concat.create()
     response.body_cb = function(chunk, err)
-        if not chunk then %auxiliar.buf = nil end
-        buf_addstring(%auxiliar.buf, chunk)
+        %cat:addstring(chunk)
         return 1
     end
     %Public.request_indirect(request, response)
-    response.body = buf_getresult(auxiliar.buf)
+    response.body = cat:getresult()
     response.body_cb = nil
     return response
 end
@@ -590,7 +590,7 @@ end
 -----------------------------------------------------------------------------
 -- Retrieves a URL by the method "GET"
 -- Input
---   url: target url, i.e. the document to be retrieved
+--   url: request URL, i.e. the document to be retrieved
 -- Returns
 --   body: response message body, or nil if failed
 --   headers: response header fields received, or nil if failed
@@ -609,7 +609,7 @@ end
 -----------------------------------------------------------------------------
 -- Retrieves a URL by the method "POST"
 -- Input
---   url: target url, i.e. the document to be retrieved
+--   url: request URL, i.e. the document to be retrieved
 --   body: request message body, or nil if none
 -- Returns
 --   body: response message body, or nil if failed
