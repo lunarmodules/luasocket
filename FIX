@@ -1,3 +1,4 @@
+ltn12 avoids coroutines (so you can go wild on the C side)
 automated tests for ftp now in use
 new compat-5.1 distribution
     instalation should use new directory structure

@@ -47,42 +47,6 @@ local function random(handle, io_err)
     else return ltn12.source.empty(io_err or "unable to open file") end
 end
 
-local function format(chunk)
-    if chunk then
-        if chunk == "" then return "''"
-        else return string.len(chunk) end
-    else return "nil" end
-end
-
-local function show(name, input, output)
-    local sin = format(input)
-    local sout = format(output)
-    io.write(name, ": ", sin, " -> ", sout, "\n")
-end
-
-local function chunked(length)
-    local tmp
-    return function(chunk)
-        local ret
-        if chunk and chunk ~= "" then
-            tmp = chunk
-        end
-        ret = string.sub(tmp, 1, length)
-        tmp = string.sub(tmp, length+1)
-        if not chunk and ret == "" then ret = nil end
-        return ret
-    end
-end
-
---[[
-local function named(f, name)
-    return function(chunk)
-        local ret = f(chunk)
-        show(name, chunk, ret)
-        return ret
-    end
-end
-]]
 
 local function named(f)
     return f

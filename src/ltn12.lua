@@ -35,62 +35,38 @@ function filter.cycle(low, ctx, extra)
     end
 end
 
---[[
-local function chain2(f1, f2)
-    local ff1, ff2 = "", ""
+-- chains a bunch of filters together
+-- (thanks to Wim Couwenberg)
+function filter.chain(...) 
+    local n = table.getn(arg)
+    local top, index = 1, 1
     return function(chunk)
-        local rf1 = chunk and ""
-        local rf2 = ff1 and ""
-        -- if f2 still has pending data, get it and return it
-        if ff2 ~= rf2 then
-            ff2 = f2(rf2)
-            if ff2 ~= "" then return ff2 end
-        end
-        -- here we know f2 needs more data
-        -- we try to get it from f1
-        ff1 = f1(chunk)
-        while 1 do
-            -- if f1 can't produce data, we need more data from the user
-            if ff1 == "" then return "" end
-            -- otherwise we pass new data to f2 until it produces something
-            -- or f1 runs out of data too
-            ff2 = f2(ff1) 
-            if ff2 ~= "" then return ff2 end
-            ff1 = f1(rf1)
-        end
-    end
-end
-]]
-
-local function chain2(f1, f2)
-    local co = coroutine.create(function(chunk)
-        while true do
-            local filtered1 = f1(chunk)
-            local filtered2 = f2(filtered1)
-            local done2 = filtered1 and ""
-            while true do
-                if filtered2 == "" or filtered2 == nil then break end
-                coroutine.yield(filtered2)
-                filtered2 = f2(done2)
+        while true do 
+            if index == top then
+                chunk = arg[index](chunk)
+                if chunk == "" or top == n then 
+                    return chunk
+                elseif chunk then 
+                    index = index + 1
+                else 
+                    top = top+1 
+                    index = top
+                end
+            else
+                local original = chunk
+                chunk = arg[index](original or "")
+                if chunk == "" then
+                    index = index - 1
+                    chunk = original and chunk
+                elseif chunk then
+                    if index == n then return chunk
+                    else index = index + 1 end
+                else 
+                    base.error("filter returned inappropriate nil")
+                end
             end
-            if filtered1 == "" then chunk = coroutine.yield(filtered1)
-            elseif filtered1 == nil then return nil
-            else chunk = chunk and "" end
         end
-    end)
-    return function(chunk)
-        local _, res = coroutine.resume(co, chunk)
-        return res
     end
-end
-
--- chains a bunch of filters together 
-function filter.chain(...)
-     local f = arg[1]
-     for i = 2, table.getn(arg) do
-         f = chain2(f, arg[i])
-     end
-     return f
 end
 
 -----------------------------------------------------------------------------
@@ -165,23 +141,28 @@ end
 -- chains a source with a filter
 function source.chain(src, f)
     base.assert(src and f)
-    local co = coroutine.create(function()
-        while true do 
-            local chunk, err = src()
-            if err then return nil, err end
-            local filtered = f(chunk)
-            local done = chunk and ""
-            while true do
-                coroutine.yield(filtered)
-                if filtered == done then break end
-                filtered = f(done)
-            end
-        end
-    end)
+    local last_in, last_out = "", ""
     return function()
-        local ret, a, b  = coroutine.resume(co)
-        if ret then return a, b
-        else return nil, a end
+        if last_out == "" then
+            while true do
+                local err
+                last_in, err = src()
+                if err then return nil, err end
+                last_out = f(last_in)
+                if last_out ~= "" then return last_out end
+                if not last_in then 
+                    error('filter returned inappropriate ""') 
+                end
+            end
+        elseif last_out then
+            last_out = f(last_in and "")
+            if last_in and not last_out then
+                error('filter returned inappropriate nil') 
+            end
+            return last_out
+        else
+            base.error("source is empty", 2)
+        end
     end
 end
 
@@ -260,14 +241,16 @@ end
 function sink.chain(f, snk)
     base.assert(f and snk)
     return function(chunk, err)
-        local filtered = f(chunk)
-        local done = chunk and ""
-        while true do
-            local ret, snkerr = snk(filtered, err)
-            if not ret then return nil, snkerr end
-            if filtered == done then return 1 end
-            filtered = f(done)
-        end
+        if chunk ~= "" then
+            local filtered = f(chunk)
+            local done = chunk and ""
+            while true do
+                local ret, snkerr = snk(filtered, err)
+                if not ret then return nil, snkerr end
+                if filtered == done then return 1 end
+                filtered = f(done)
+            end
+        else return 1 end
     end
 end
 

@@ -193,7 +193,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
     *sent = 0;
     for ( ;; ) {
         /* try to send something */
-		int put = send(*ps, data, count, 0);
+		int put = send(*ps, data, (int) count, 0);
         /* if we sent something, we are done */
         if (put > 0) {
             *sent = put;
