@@ -107,7 +107,6 @@ dist:
 	mkdir -p $(DIST)/lua
 	mkdir -p $(DIST)/manual
 	cp -vfr $(COMPAT) $(DIST)
-	cp -vf TODO $(DIST)
 	cp -vf $(CORE) $(DIST)
 	cp -vf README $(DIST)
 	cp -vf NEW $(DIST)
