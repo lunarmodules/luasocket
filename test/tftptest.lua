@@ -1,16 +1,25 @@
 -- load tftpclng.lua
 assert(dofile("../examples/tftpclnt.lua"))
-assert(dofile("auxiliar.lua"))
 
 -- needs tftp server running on localhost, with root pointing to
 -- /home/i/diego/public/html/luasocket/test
 
-host = host or "localhost"
+function readfile(file)
+	local f = openfile("file", "rb")
+	local a 
+	if f then 
+		a = read(f, "*a")
+		closefile(f)
+	end
+	return a
+end
+
+host = host or "goya"
 print("downloading")
-err = tftp_get(host, 69, "test/index.html")
+err = tftp_get(host, 69, "index.html", "index.got")
 assert(not err, err)
-original = readfile("/home/i/diego/public/html/luasocket/test/index.html")
-retrieved = readfile("index.html")
-remove("index.html")
+original = readfile("index.index")
+retrieved = readfile("index.got")
+remove("index.got")
 assert(original == retrieved, "files differ!")
 print("passed")
