@@ -19,10 +19,6 @@ static int inet_global_tohostname(lua_State *L);
 
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
 
-#ifdef INET_ATON
-static int inet_aton(const char *cp, struct in_addr *inp);
-#endif
-
 static luaL_reg func[] = {
     { "toip", inet_global_toip },
     { "tohostname", inet_global_tohostname },
@@ -196,9 +192,11 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-const char *inet_tryconnect(p_sock ps, const char *address, ushort port)
+const char *inet_tryconnect(p_sock ps, const char *address, 
+        unsigned short port)
 {
     struct sockaddr_in remote;
+    const char *err;
     memset(&remote, 0, sizeof(remote));
     remote.sin_family = AF_INET;
     remote.sin_port = htons(port);
@@ -213,7 +211,7 @@ const char *inet_tryconnect(p_sock ps, const char *address, ushort port)
         }
     } else remote.sin_family = AF_UNSPEC;
     sock_setblocking(ps);
-    const char *err = sock_connect(ps, (SA *) &remote, sizeof(remote));
+    err = sock_connect(ps, (SA *) &remote, sizeof(remote));
     if (err) {
         sock_destroy(ps);
         *ps = SOCK_INVALID;
@@ -233,10 +231,11 @@ const char *inet_tryconnect(p_sock ps, const char *address, ushort port)
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-const char *inet_trybind(p_sock ps, const char *address, ushort port, 
+const char *inet_trybind(p_sock ps, const char *address, unsigned short port, 
         int backlog)
 {
     struct sockaddr_in local;
+    const char *err;
     memset(&local, 0, sizeof(local));
     /* address is either wildcard or a valid ip address */
     local.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -251,7 +250,7 @@ const char *inet_trybind(p_sock ps, const char *address, ushort port,
         memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
     }
     sock_setblocking(ps);
-    const char *err = sock_bind(ps, (SA *) &local, sizeof(local));
+    err = sock_bind(ps, (SA *) &local, sizeof(local));
     if (err) {
         sock_destroy(ps);
         *ps = SOCK_INVALID;
@@ -279,8 +278,8 @@ const char *inet_trycreate(p_sock ps, int type)
 * Some systems do not provide this so that we provide our own. It's not
 * marvelously fast, but it works just fine.
 \*-------------------------------------------------------------------------*/
-#ifdef COMPAT_INETATON
-static int inet_aton(const char *cp, struct in_addr *inp)
+#ifdef INET_ATON
+int inet_aton(const char *cp, struct in_addr *inp)
 {
     unsigned int a = 0, b = 0, c = 0, d = 0;
     int n = 0, r;

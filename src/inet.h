@@ -23,4 +23,8 @@ const char *inet_trycreate(p_sock ps, int type);
 int inet_meth_getpeername(lua_State *L, p_sock ps);
 int inet_meth_getsockname(lua_State *L, p_sock ps);
 
+#ifdef INET_ATON
+int inet_aton(const char *cp, struct in_addr *inp);
+#endif
+
 #endif /* INET_H_ */

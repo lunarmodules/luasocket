@@ -104,7 +104,7 @@ static int meth_sendto(lua_State *L)
     size_t count, sent = 0;
     const char *data = luaL_checklstring(L, 2, &count);
     const char *ip = luaL_checkstring(L, 3);
-    ushort port = (ushort) luaL_checknumber(L, 4);
+    unsigned short port = (unsigned short) luaL_checknumber(L, 4);
     p_tm tm = &udp->tm;
     struct sockaddr_in addr;
     int err;
@@ -220,7 +220,8 @@ static int meth_setpeername(lua_State *L)
     const char *address =  luaL_checkstring(L, 2);
     int connecting = strcmp(address, "*");
     unsigned short port = connecting ? 
-        (ushort) luaL_checknumber(L, 3) : (ushort) luaL_optnumber(L, 3, 0);
+        (unsigned short) luaL_checknumber(L, 3) : 
+        (unsigned short) luaL_optnumber(L, 3, 0);
     const char *err = inet_tryconnect(&udp->sock, address, port);
     if (err) {
         lua_pushnil(L);
@@ -251,7 +252,7 @@ static int meth_setsockname(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
-    unsigned short port = (ushort) luaL_checknumber(L, 3);
+    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
     const char *err = inet_trybind(&udp->sock, address, port, -1);
     if (err) {
         lua_pushnil(L);
@@ -270,12 +271,13 @@ static int meth_setsockname(lua_State *L)
 \*-------------------------------------------------------------------------*/
 int global_create(lua_State *L)
 {
+    const char *err;
     /* allocate udp object */
     p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
     /* set its type as master object */
     aux_setclass(L, "udp{unconnected}", -1);
     /* try to allocate a system socket */
-    const char *err = inet_trycreate(&udp->sock, SOCK_DGRAM);
+    err = inet_trycreate(&udp->sock, SOCK_DGRAM);
     if (err) {
         /* get rid of object on stack and push error */
         lua_pop(L, 1);

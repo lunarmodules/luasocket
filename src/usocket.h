@@ -3,8 +3,8 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef UNIX_H
-#define UNIX_H
+#ifndef USOCKET_H
+#define USOCKET_H
 
 /*=========================================================================*\
 * BSD include files
@@ -41,4 +41,4 @@ typedef t_sock *p_sock;
 
 #define SOCK_INVALID (-1)
 
-#endif /* UNIX_H */
+#endif /* USOCKET_H */

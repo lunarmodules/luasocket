@@ -154,7 +154,7 @@ static int meth_connect(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
-    unsigned short port = (ushort) luaL_checknumber(L, 3);
+    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
     const char *err = inet_tryconnect(&tcp->sock, address, port);
     if (err) {
         lua_pushnil(L);
@@ -174,7 +174,7 @@ static int meth_bind(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
-    unsigned short port = (ushort) luaL_checknumber(L, 3);
+    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
     int backlog = (int) luaL_optnumber(L, 4, 1);
     const char *err = inet_trybind(&tcp->sock, address, port, backlog);
     if (err) {
@@ -227,12 +227,13 @@ static int meth_accept(lua_State *L)
 \*-------------------------------------------------------------------------*/
 int global_create(lua_State *L)
 {
+    const char *err;
     /* allocate tcp object */
     p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
     /* set its type as master object */
     aux_setclass(L, "tcp{master}", -1);
     /* try to allocate a system socket */
-    const char *err = inet_trycreate(&tcp->sock, SOCK_STREAM);
+    err = inet_trycreate(&tcp->sock, SOCK_STREAM);
     if (err) { /* get rid of object on stack and push error */
         lua_pop(L, 1);
         lua_pushnil(L);
