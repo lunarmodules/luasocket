@@ -1,0 +1,24 @@
+This directory contains the implementation of the protocols FTP, HTTP and
+SMTP. The files provided are:
+
+	http.lua				-- HTTP protocol implementation
+	base64.lua				-- base64 encoding implementation
+
+The module  http.lua provides  functionality to download  an URL  from a
+HTTP server. The  implementation conforms to the  HTTP/1.1 standard, RFC
+2068. The base64.lua  module provides base64 encoding  and decoding. The
+module is used for the HTTP Basic Authentication Scheme, and conforms to
+RFC 1521.
+
+	smtp.lua				-- SMTP protocol implementation
+	
+The module smtp.lua provides functionality  to send e-mail messages to a
+SMTP mail server. The implementation conforms to RFC 821.
+
+	ftp.lua					-- FTP protocol implementation
+
+The module ftp.lua provides functions  to download and upload files from
+and to FTP servers. The implementation conforms to RFC 959.
+
+These implementations are supported. Please send any comments do
+diego@tecgraf.puc-rio.br.

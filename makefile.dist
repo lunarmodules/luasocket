@@ -1,0 +1,81 @@
+#--------------------------------------------------------------------------
+# LuaSocket makefile
+# Test executable for socklib
+# Diego Nehab, 29/8/1999
+#--------------------------------------------------------------------------
+
+# don't echo commands
+# .SILENT:
+
+CXX = g++
+CC = gcc
+
+DIST = luasocket-1.1
+
+WARNINGS = -Wall -Wshadow -Wpointer-arith -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs
+
+CFLAGS = $(WARNINGS) -D_DEBUG -O2 
+
+LUA = /home/diego/lib/lua
+LUALIB = $(LUA)/lib
+LUAINC = $(LUA)/include
+
+INC = -I$(LUAINC)
+# LIB = $(LUA_LIB)/liblualib.a $(LUA_LIB)/liblua.a -lm -lsocket -lnsl
+# LIB = $(LUA_LIB)/liblualib.a $(LUA_LIB)/liblua.a -lm -lnsl
+LIB = $(LUALIB)/liblualib.a $(LUALIB)/liblua.a -lm
+
+SRC = ~diego/tec/luasocket
+OBJ = /tmp
+DEP = /tmp
+
+# list of .cpp files 
+c_sources = luasocket.c lua.c
+
+# corresponding .o files
+c_objects = $(addprefix $(OBJ)/, $(addsuffix .o, $(basename $(c_sources))))
+
+# binary depends on objects
+luasocket: $(c_objects)
+	$(CC) $(CPPFLAGS) -o $@ $(c_objects) $(LIB)
+
+# rule to create them
+$(c_objects): $(OBJ)/%.o: $(SRC)/%.c
+	$(CC) -c $(CFLAGS) $(INC) -o $@ $<
+
+# corresponding .d files
+c_deps = $(addprefix $(DEP)/, $(addsuffix .d, $(basename $(c_sources))))
+
+# makefile depend on them...
+makefile : $(c_deps)
+
+# ... since it includes them
+-include $(c_deps) 
+
+# rule to create them
+$(c_deps) : $(DEP)/%.d : $(SRC)/%.c
+	$(SHELL) -ec '$(CC) -MM $(CFLAGS)  $(INC) $< \
+	| sed '\''s%\($*\.o\)%$@ $(OBJ)/\1%'\'' > $@; \
+	[ -s $@ ] || rm -f $@'
+
+# clean all trash
+clean:
+	rm -f $(OBJ)/*.o
+	rm -f $(DEP)/*.d
+	rm -f luasocket core
+
+dist:
+	mkdir -p $(DIST)/lua
+	mkdir -p $(DIST)/examples
+	mkdir -p $(DIST)/html
+	cp -vf *.c $(DIST)
+	cp -vf *.h $(DIST)
+	cp -vf makefile $(DIST)
+	cp -vf README $(DIST)
+	cp -vf lua/*.lua $(DIST)/lua
+	cp -vf lua/README $(DIST)/lua
+	cp -vf examples/*.lua $(DIST)/examples
+	cp -vf examples/README $(DIST)/examples
+	cp -vf html/manual.html $(DIST)/html
+	tar -zcvf $(DIST).tar.gz $(DIST)
+	zip -r $(DIST).zip $(DIST)
