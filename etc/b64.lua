@@ -10,5 +10,5 @@ else
     local wrap = mime.wrap()
     convert = ltn12.filter.chain(base64, wrap)
 end
-source = ltn12.source.chain(source, convert)
-repeat until not ltn12.pump(source, sink)
+sink = ltn12.sink.chain(convert, sink)
+ltn12.pump.all(source, sink)

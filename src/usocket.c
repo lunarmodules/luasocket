@@ -211,7 +211,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
             /* here there was no data before timeout */
             else return IO_TIMEOUT;
             /* here we didn't send anything, but now we can */
-        } else return IO_DONE;
+        } else return IO_RETRY;
     /* here we successfully sent something */
     } else {
         *sent = put;
@@ -239,7 +239,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         if (sock_select(sock+1, NULL, &fds, NULL, timeout) <= 0) {
             if (errno == EINTR) return IO_RETRY;
             else return IO_TIMEOUT;
-        } else return IO_DONE;
+        } else return IO_RETRY;
     } else {
         *sent = put;
         return IO_DONE;
@@ -266,7 +266,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
         ret = sock_select(sock+1, &fds, NULL, NULL, timeout);
         if (ret < 0 && errno == EINTR) return IO_RETRY;
         if (ret == 0) return IO_TIMEOUT;
-        else return IO_DONE;
+        return IO_RETRY;
     } else {
         *got = taken;
         return IO_DONE;
@@ -294,7 +294,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         ret = sock_select(sock+1, &fds, NULL, NULL, timeout);
         if (ret < 0 && errno == EINTR) return IO_RETRY;
         if (ret == 0) return IO_TIMEOUT;
-        else return IO_DONE;
+        return IO_RETRY;
     } else {
         *got = taken;
         return IO_DONE;

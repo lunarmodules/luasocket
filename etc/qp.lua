@@ -1,3 +1,5 @@
+require("ltn12")
+require("mime")
 local convert
 arg = arg or {}
 local mode = arg and arg[1] or "-et"
@@ -13,4 +15,4 @@ elseif mode == "-eb" then
 else convert = mime.decode("quoted-printable") end
 local source = ltn12.source.chain(ltn12.source.file(io.stdin), convert)
 local sink = ltn12.sink.file(io.stdout)
-ltn12.pump(source, sink)
+ltn12.pump.all(source, sink)

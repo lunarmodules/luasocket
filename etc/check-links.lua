@@ -4,6 +4,10 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
+
+require"luasocket"
+require"http"
+
 socket.http.TIMEOUT = 10
 
 cache = {}

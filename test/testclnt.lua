@@ -1,3 +1,5 @@
+require "luasocket"
+
 host = host or "localhost"
 port = port or "8080"
 

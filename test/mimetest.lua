@@ -1,3 +1,7 @@
+require "luasocket"
+require "ltn12"
+require "mime"
+
 dofile("testsupport.lua")
 
 local qptest = "qptest.bin"
@@ -92,7 +96,7 @@ local function transform(input, output, filter)
         source = ltn12.source.chain(source, filter)
     end
     --what = not what
-    ltn12.pump(source, sink)
+    ltn12.pump.all(source, sink)
 end
 
 local function encode_qptest(mode)

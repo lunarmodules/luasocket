@@ -4,6 +4,8 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
+require"luasocket"
+
 function get_status(sock, valid)
 	local line, err = sock:receive()
 	local code, par
@@ -12,7 +14,7 @@ function get_status(sock, valid)
 	code = tonumber(code)
 	if code ~= valid then return code end
 	if code == 150 then
-		par = tonumber(socket.skip(2, string.find(line, "^%d%d%d (%d*)"))
+		par = tonumber(socket.skip(2, string.find(line, "^%d%d%d (%d*)")))
 	end
 	return nil, par
 end

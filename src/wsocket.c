@@ -207,9 +207,9 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
             FD_ZERO(&fds);
             FD_SET(sock, &fds);
             ret = sock_select(0, NULL, &fds, NULL, timeout);
-            /* tell the caller to call us again because there is more data */
-            if (ret > 0) return IO_DONE;
-            /* tell the caller there was no data before timeout */
+            /* tell the caller to call us again because now we can send */
+            if (ret > 0) return IO_RETRY;
+            /* tell the caller we can't send anything before timint out */
             else return IO_TIMEOUT;
         /* here we know the connection has been closed */
         } else return IO_CLOSED;
@@ -229,27 +229,18 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
     t_sock sock = *ps;
     int put;
     int ret;
-    /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    /* try to send something */
     put = sendto(sock, data, (int) count, 0, addr, addr_len);
-    /* deal with failure */
     if (put <= 0) {
-        /* in any case, nothing has been sent */
         *sent = 0;
-        /* run select to avoid busy wait */
         if (WSAGetLastError() == WSAEWOULDBLOCK) {
             fd_set fds;
             FD_ZERO(&fds);
             FD_SET(sock, &fds);
             ret = sock_select(0, NULL, &fds, NULL, timeout);
-            /* tell the caller to call us again because there is more data */
-            if (ret > 0) return IO_DONE;
-            /* tell the caller there was no data before timeout */
+            if (ret > 0) return IO_RETRY;
             else return IO_TIMEOUT;
-        /* here we know the connection has been closed */
         } else return IO_CLOSED;
-    /* here we successfully sent something */
     } else {
         *sent = put;
         return IO_DONE;
@@ -273,7 +264,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(0, &fds, NULL, NULL, timeout);
-        if (ret > 0) return IO_DONE;
+        if (ret > 0) return IO_RETRY;
         else return IO_TIMEOUT;
     } else {
         *got = taken;
@@ -299,7 +290,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
         ret = sock_select(0, &fds, NULL, NULL, timeout);
-        if (ret > 0) return IO_DONE;
+        if (ret > 0) return IO_RETRY;
         else return IO_TIMEOUT;
     } else {
         *got = taken;

@@ -109,7 +109,8 @@ static int meth_send(lua_State *L)
     int err;
     const char *data = luaL_checklstring(L, 2, &count);
     tm_markstart(tm);
-    err = sock_send(&udp->sock, data, count, &sent, tm_get(tm));
+    do err = sock_send(&udp->sock, data, count, &sent, tm_getretry(tm));
+    while (err == IO_RETRY);
     if (err == IO_DONE) lua_pushnumber(L, sent);
     else lua_pushnil(L);
     /* a 'closed' error on an unconnected means the target address was not
@@ -137,8 +138,9 @@ static int meth_sendto(lua_State *L)
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     tm_markstart(tm);
-    err = sock_sendto(&udp->sock, data, count, &sent, 
+    do err = sock_sendto(&udp->sock, data, count, &sent, 
             (SA *) &addr, sizeof(addr), tm_get(tm));
+    while (err == IO_RETRY);
     if (err == IO_DONE) lua_pushnumber(L, sent);
     else lua_pushnil(L);
     /* a 'closed' error on an unconnected means the target address was not
@@ -159,7 +161,8 @@ static int meth_receive(lua_State *L)
     p_tm tm = &udp->tm;
     count = MIN(count, sizeof(buffer));
     tm_markstart(tm);
-    err = sock_recv(&udp->sock, buffer, count, &got, tm_get(tm));
+    do err = sock_recv(&udp->sock, buffer, count, &got, tm_get(tm));
+    while (err == IO_RETRY);
     if (err == IO_DONE) lua_pushlstring(L, buffer, got);
     else lua_pushnil(L);
     io_pusherror(L, err);
@@ -180,8 +183,9 @@ static int meth_receivefrom(lua_State *L)
     p_tm tm = &udp->tm;
     tm_markstart(tm);
     count = MIN(count, sizeof(buffer));
-    err = sock_recvfrom(&udp->sock, buffer, count, &got, 
+    do err = sock_recvfrom(&udp->sock, buffer, count, &got, 
             (SA *) &addr, &addr_len, tm_get(tm));
+    while (err == IO_RETRY);
     if (err == IO_DONE) {
         lua_pushlstring(L, buffer, got);
         lua_pushstring(L, inet_ntoa(addr.sin_addr));
