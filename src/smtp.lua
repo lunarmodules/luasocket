@@ -17,7 +17,7 @@ local socket = require("socket")
 local tp = require("socket.tp")
 local ltn12 = require("ltn12")
 local mime = require("mime")
-local smtp = module("socket.smtp")
+module("socket.smtp")
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -245,4 +245,4 @@ send = socket.protect(function(mailt)
     return s:close()
 end)
 
-base.setmetatable(smtp, nil)
+base.getmetatable(_M).__index = nil

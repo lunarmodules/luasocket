@@ -15,7 +15,7 @@ local mime = require("mime")
 local string = require("string")
 local base = require("base")
 local table = require("table")
-local http = module("socket.http")
+module("socket.http")
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -259,4 +259,4 @@ request = socket.protect(function(reqt, body)
     else return trequest(reqt) end
 end)
 
-base.setmetatable(http, nil)
+base.getmetatable(_M).__index = nil

@@ -12,7 +12,7 @@ local string = require("string")
 local table = require("table")
 local base = require("base")
 local coroutine = require("coroutine")
-local ltn12 = module("ltn12")
+module("ltn12")
 
 filter = {}
 source = {}
@@ -276,4 +276,4 @@ function pump.all(src, snk, step)
     end
 end
 
-base.setmetatable(ltn12, nil)
+base.getmetatable(_M).__index = nil

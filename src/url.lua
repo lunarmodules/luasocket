@@ -11,7 +11,7 @@
 local string = require("string")
 local base = require("base")
 local table = require("table")
-local url = module("socket.url")
+module("socket.url")
 
 -----------------------------------------------------------------------------
 -- Encodes a string into its escaped hexadecimal representation
@@ -273,4 +273,4 @@ function build_path(parsed, unsafe)
 	return path
 end
 
-base.setmetatable(url, nil)
+base.getmetatable(_M).__index = nil

@@ -12,8 +12,7 @@ local base = require("base")
 local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
-
-local tp = module("socket.tp")
+module("socket.tp")
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -121,4 +120,4 @@ function connect(host, port, timeout)
     return base.setmetatable({c = c}, metat)
 end
 
-base.setmetatable(tp, nil)
+base.getmetatable(_M).__index

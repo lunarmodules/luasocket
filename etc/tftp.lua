@@ -15,7 +15,7 @@ local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
 local url = require("socket.url")
-local tftp = module("socket.tftp")
+module("socket.tftp")
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -153,4 +153,4 @@ get = socket.protect(function(gett)
     else return tget(gett) end
 end)
 
-base.setmetatable(tftp, nil)
+base.getmetatable(_M).__index = nil

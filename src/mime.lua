@@ -85,4 +85,4 @@ function mime.stuff()
     return ltn12.filter.cycle(dot, 2)
 end
 
-base.setmetatable(mime, nil)
+base.getmetatable(_M).__index = nil

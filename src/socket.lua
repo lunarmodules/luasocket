@@ -172,4 +172,4 @@ socket.sourcet["default"] = socket.sourcet["until-closed"]
 
 socket.source = socket.choose(socket.sourcet)
 
-base.setmetatable(socket, nil)
+base.getmetatable(_M).__index = nil

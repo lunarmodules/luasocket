@@ -14,7 +14,7 @@ local base = require("base")
 local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
-local lp = module("socket.lp")
+module("socket.lp")
 
 -- default port
 PORT = 515
@@ -318,4 +318,4 @@ query = socket.protect(function(p)
   return data
 end)
 
-base.setmetatable(lp, nil)
+base.getmetatable(_M).__index = nil
