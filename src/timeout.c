@@ -199,7 +199,10 @@ int tm_lua_sleep(lua_State *L)
     n -= t.tv_sec;
     t.tv_nsec = (int) (n * 1000000000);
     if (t.tv_nsec >= 1000000000) t.tv_nsec = 999999999;
-    nanosleep(&t, &r);
+    while (nanosleep(&t, &r) != 0) {
+        t.tv_sec = r.tv_sec;
+        t.tv_nsec = r.tv_nsec;
+    }
 #endif
     return 0;
 }
