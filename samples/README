@@ -7,7 +7,7 @@ is not supported.
 listener.lua and talker.lua are about  the simplest applications you can
 write  using  LuaSocket.  Run   
 
-	'luasocket listen.lua'  and  'luasocket talk.lua'
+	'lua -l luasocket listen.lua'  and  'lua -l luasocket talk.lua'
 
 on different terminals. Whatever  you type on talk.lua will be
 printed by listen.lua.
@@ -31,41 +31,14 @@ any server running an UDP daytime daemon.
 These are a UDP echo client/server pair. They work with other client and
 servers as well.
 
-    tftpclnt.lua            -- Trivial FTP client
-
-This module implements file retrieval by the TFTP protocol. Its main use
-is to test the UDP code, but someone might find it usefull.
-
     tinyirc.lua             -- irc like broadcast server
 
 This is a simple server that  waits simultaneously on two server sockets
 for telnet connections.  Everything it receives from  the telnet clients
 is  broadcasted to  every other  connected client.  It tests  the select
 function and shows  how to create a simple server  whith LuaSocket. Just
-run broadcast.lua and  then open as many telnet connections  as you want
+run tinyirc.lua and  then open as many telnet connections  as you want
 to ports 8080 and 8081.
-
-    get.lua                 -- file retriever
-
-This little  program is  a client  that uses  the FTP  and HTTP  code to
-implement a  command line  file graber. Just  run 
-
-	luasocket -f get.lua <remote-file> [<local-file>]
-
-to download  a remote file (either  ftp:// or http://) to  the specified
-local file.  The program  also prints  the download  throughput, elapsed
-time, bytes already downloaded etc during download.
-
-	check-links.lua			-- HTML link checker program
-
-This little program scans a HTML file and checks for broken links. It is
-similar to check-links.pl by Jamie  Zawinski, but uses all facilities of
-the LuaSocket library and the Lua language. It has not been thoroughly
-tested, but it should work. Just run
-
-	luasocket -f check-links.lua {<url>} > output
-
-and open the result to see a list of broken links. 
 
 Good luck,
 Diego.
