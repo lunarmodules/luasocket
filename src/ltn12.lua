@@ -31,6 +31,7 @@ function filter.cycle(low, ctx, extra)
     end
 end
 
+--[[
 local function chain2(f1, f2)
     local ff1, ff2 = "", ""
     return function(chunk)
@@ -53,6 +54,29 @@ local function chain2(f1, f2)
             if ff2 ~= "" then return ff2 end
             ff1 = f1(rf1)
         end
+    end
+end
+]]
+
+local function chain2(f1, f2)
+    local co = coroutine.create(function(chunk)
+        while true do
+            local filtered1 = f1(chunk)
+            local filtered2 = f2(filtered1)
+            local done2 = filtered1 and ""
+            while true do
+                if filtered2 == "" or filtered2 == nil then break end
+                coroutine.yield(filtered2)
+                filtered2 = f2(done2)
+            end
+            if filtered1 == "" then chunk = coroutine.yield(filtered1)
+            elseif filtered1 == nil then return nil
+            else chunk = chunk and "" end
+        end
+    end)
+    return function(chunk)
+        local _, res = coroutine.resume(co, chunk)
+        return res
     end
 end
 

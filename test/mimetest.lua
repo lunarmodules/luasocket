@@ -187,7 +187,7 @@ local function cleanup_qptest()
 end
 
 -- create test file 
-function create_b64test()
+local function create_b64test()
     local f = assert(io.open(b64test, "wb"))
     local t = {}
     for j = 1, 100 do
@@ -282,8 +282,8 @@ end
 
 local t = socket.gettime()
 
-identity_test()
 create_b64test()
+identity_test()
 encode_b64test()
 decode_b64test()
 compare_b64test()
