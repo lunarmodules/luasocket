@@ -1205,7 +1205,7 @@ static void tm_markstart(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static int tm_gettime(void) 
 {
-#ifdef _WIN32
+#ifdef WIN32
     return GetTickCount();
 #else
     struct tms t;
@@ -1290,13 +1290,19 @@ static int send_raw(p_sock sock, const char *data, int wanted, int *total)
             /* a bug in WinSock forces us to do a busy wait until we manage
             ** to write, because select returns immediately even though it
             ** should have blocked us until we could write... */
-            if (WSAGetLastError() == WSAEWOULDBLOCK)
+            if (put < 0 && WSAGetLastError() == WSAEWOULDBLOCK)
                 continue;
 #endif
+#ifdef __CYGWIN__
+			/* this is for CYGWIN, which is like Unix but with Win32 Bugs */
+			if (put < 0 && errno == EWOULDBLOCK)
+				continue;
+#endif
+			
             return NET_CLOSED;
         }
         wanted -= put;
-        data += put;
+       data += put;
         *total += put;
     }
     return NET_DONE;
