@@ -80,7 +80,7 @@ function execute_command(cmd, par)
 		send_command(SYNC)
 	elseif cmd == SLEEP then
 		print("server: sleeping for " .. par .. " seconds...")
-		sleep(par)
+		_sleep(par)
 		print("server: woke up!")
 	end
 end
