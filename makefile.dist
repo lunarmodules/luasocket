@@ -2,7 +2,7 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-2.0-beta
+DIST = luasocket-2.0-beta2
 
 LUA = \
 	ftp.lua \
@@ -104,7 +104,6 @@ dist:
 	mkdir -p $(DIST)/etc
 	mkdir -p $(DIST)/lua
 	mkdir -p $(DIST)/manual
-	cp -vf FIX $(DIST)
 	cp -vf TODO $(DIST)
 	cp -vf $(CORE) $(DIST)
 	cp -vf README $(DIST)

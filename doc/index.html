@@ -169,10 +169,11 @@ Changes in the 2.0-beta2 were mostly bug-fixes.
 </p>
 
 <ul>
-<li> Fixed silly last minute bugs in HTTP/SMTP that prevented them from
-running;
+<li> Fixed silly last-minute-change bug in HTTP/SMTP running;
 <li> <tt>usocket.c</tt>/<tt>wsocket.c</tt> look nicer thanks to Mike;
-<li> UDP has a reasonable maximum datagram size;
+<li> Finally total timeout is reliable on Windows! (found a pretty 
+simple work around);
+<li> UDP has a reasonable maximum datagram size (8k);
 <li> <tt>Receive</tt> accepts the prefix optional argument (good for
 non-blocking);
 <li> <b><tt>Send</tt> doesn't support multiple arguments anymore</b>;

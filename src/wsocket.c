@@ -181,6 +181,8 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
 /*-------------------------------------------------------------------------*\
 * Send with timeout
 \*-------------------------------------------------------------------------*/
+/* has to be larger than UDP_DATAGRAMSIZE !!!*/
+#define MAXCHUNK (64*1024)
 int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
 {
     int err;
@@ -190,7 +192,9 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
     *sent = 0;
     for ( ;; ) {
         /* try to send something */
-        int put = send(*ps, data, (int) count, 0);
+		/* on windows, if you try to send 10MB, the OS will buffer EVERYTHING 
+		 * this can take an awful lot of time and we will end up blocked. */
+		int put = send(*ps, data, (count < MAXCHUNK)? (int)count: MAXCHUNK, 0);
         /* if we sent something, we are done */
         if (put > 0) {
             *sent = put;

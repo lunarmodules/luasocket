@@ -81,10 +81,10 @@ int buf_meth_send(lua_State *L, p_buf buf) {
     const char *data = luaL_checklstring(L, 2, &size);
     long start = (long) luaL_optnumber(L, 3, 1);
     long end = (long) luaL_optnumber(L, 4, -1);
-    if (start < 0) start = size+start+1;
-    if (end < 0) end = size+end+1;
-    if (start < 1) start = 1;
-    if (end > (long) size) end = size;
+    if (start < 0) start = (long) (size+start+1);
+    if (end < 0) end = (long) (size+end+1);
+    if (start < 1) start = (long) 1;
+    if (end > (long) size) end = (long) size;
     if (start <= end) err = sendraw(buf, data+start-1, end-start+1, &sent);
     /* check if there was an error */
     if (err != IO_DONE) {

@@ -1,86 +1,31 @@
 What's New
 
-Everything is new! Many changes for  2.0 happened in the C layer, 
-which has been almost completely rewritten. The code has been ported to 
-Lua 5.0 and greatly improved.  There have also been some API changes
-that made  the interface simpler and  more consistent. Here are  some of
-the changes that made it into version 2.0: 
+Changes in the 2.0-beta2 were mostly bug-fixes.
 
-<> Major C code rewrite. Code is modular and extensible. Hopefully, other
-   developers will be motivated to provide code for SSL, local domain 
-   sockets, file descriptors, pipes (on Unix) and named pipes etc;
-
-<> Everything that is exported by the library is exported inside 
-   namespaces. These should be obtained with calls to the
-   'require' function; 
-
-<> Functions such as
-   send/receive/timeout/close etc do not exist anymore as stand-alone
-   functions. They are now only available as methods of the appropriate
-   objects;
-
-<> All functions return a non-nil value as first return value if successful.
-   All functions return 'nil' followed by error message
-   in case of error. This made the library much easier to use; 
-
-<> Greatly reduced the number of times the C select is called 
-   during data transfers, by calling only on failure. This might 
-   improve a lot the maximum throughput;
-
-<> TCP has been changed to become more uniform.  It's possible to first
-   create a TCP object,
-   then connect or bind if needed, and finally use I/O functions. 
-   'socket.connect' and 'socket.bind' functions are still
-   provided for simplicity; 
-
-<> This allows for setting a timeout value before connecting;
-
-<> And also allows binding to a local address before connecting; 
-
-<> New 'socket.dns.gethostname' function and 'shutdown'
-   method;
-
-<> Better error messages and parameter checking;
-
-<> Should be interrupt safe; 
-
-<> UDP connected sockets can break association with peer by calling
-   'setpeername' with address ''*'';
-
-<> Sets returned by 'socket.select' are associative;
-
-<> Select checks if sockets have buffered data and returns immediately; 
-
-<> 'socket.sleep' and 'socket.time' are now part of the
-   library and are supported. They used to be available only when
-   LUASOCKET_DEBUG was defined, but it turns out they might be useful for
-   applications;
-
-<> 'socket.newtry' and 'socket.protect' provide a simple
-   interface to exceptions that proved very in the implementation of
-   high-level modules; 
-
-<> Socket options interface has been improved. TCP objects also 
-   support socket options and many new options were added.
-
-
-Lots of changes in the Lua modules, too! 
-
-<> Every module loads only the modules that it needs. There is no waste
-   of memory. LuaSocket core takes only 20k of memory;
-
-<> New MIME and LTN12 modules make all other modules much more powerful; 
-
-<> Support for multipart messages in the SMTP module;
-
-<> The old callback mechanism of FTP and HTTP has been replaced with LTN12 
-   sources and sinks, with advantage; 
-
-<> Common implementation for low-level FTP and SMTP;
-
-<> FTP, HTTP, and SMTP are implemented in multiple levels in such a way 
-   that users will have no problems extending the functionality to satisfy
-   personal needs; 
-
-<> SMTP knows how to perform LOGIN and PLAIN authentication. 
+<> Fixed silly last-minute-change bug in HTTP/SMTP running;
+<> usocket.c/wsocket.c look nicer thanks to Mike;
+<> Finally total timeout is reliable on Windows! (found a pretty
+   simple work around);
+<> UDP has a reasonable maximum datagram size (8k);
+<> Receive accepts the prefix optional argument (good for
+    non-blocking);
+<> <b>Send doesn't support multiple arguments anymore</b>;
+<> Instead, send allows the selection of the substring
+   to be sent (good for non-blocking);
+<> Fixed bug that caused select return tables not to be associative
+   on windows;
+<> Should compiles with g++;
+<> New sample unix domain support;
+<> New sample LPD support;
+<> Comprehensive error messages;
+<> New getstats and setstats methods to help
+   throttling;
+<> Listen defaults to 32 backlog;
+<> SMTP/FTP/HTTP fail gracefully;
+<> accept/connect/select interrupt safe
+<> Fixed bug that didn't set accepted sockets as non-blocking
+<> <b>New timming functions sleep and gettime have 
+   higher resolution and no wrap around problems</b>;
+<> Bug fixes in the manual;
+<> Fixed bug of missing cast in getfd.
 

@@ -116,6 +116,16 @@ ignore = {
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
+io.write("testing invalid url: ")
+local c, e = socket.connect("", 80)
+local r, re = http.request{url = host .. prefix}
+assert(r == nil and e == re) 
+r, re = http.request(host .. prefix)
+assert(r == nil and e == re, tostring(r) ..", " .. tostring(re) .. 
+    " vs " .. tostring(e)) 
+print("ok")
+
+------------------------------------------------------------------------
 io.write("testing post method: ")
 -- wanted to test chunked post, but apache doesn't support it...
 request = {
@@ -403,15 +413,6 @@ local c, e = socket.connect("wronghost", 80)
 local r, re = http.request{url = "http://wronghost/does/not/exist"}
 assert(r == nil and e == re) 
 r, re = http.request("http://wronghost/does/not/exist")
-assert(r == nil and e == re) 
-print("ok")
-
-------------------------------------------------------------------------
-io.write("testing invalid url: ")
-local c, e = socket.connect("", 80)
-local r, re = http.request{url = host .. prefix}
-assert(r == nil and e == re) 
-r, re = http.request(host .. prefix)
 assert(r == nil and e == re) 
 print("ok")
 

@@ -1,8 +1,5 @@
+change sendraw to send by chunks
 
-fix manual for send and receive
-add thanks to mike
-
-change sock:send to use indices just like string.sub?
 use mike's "don't set to blocking before closing unless needed" patch?
 take a look at DB's smtp patch
 
@@ -32,3 +29,6 @@ testar os options!
 *add getstats to the manual
 *Fazer compilar com g++
 *test associativity of socket.select
+* fix manual for send and receive
+* add thanks to mike
+* change sock:send to use indices just like string.sub?

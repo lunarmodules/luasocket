@@ -461,6 +461,7 @@ end
 ------------------------------------------------------------------------
 function test_nonblocking(size) 
     reconnect()
+print("Testing "  .. 2*size .. " bytes")
 remote(string.format([[
     data:send(string.rep("a", %d))
     socket.sleep(0.5)
@@ -471,7 +472,9 @@ remote(string.format([[
     local str
     data:settimeout(0)
     while 1 do
-        str, err, part = data:receive(2*size - string.len(part), part)
+        local needed = 2*size - string.len(part)
+        assert(needed > 0, "weird")
+        str, err, part = data:receive(needed, part)
         if err ~= "timeout" then break end
     end
     assert(str == (string.rep("a", size) .. string.rep("b", size)))
@@ -480,9 +483,7 @@ remote(string.format([[
     str = data:receive(%d)
     socket.sleep(0.5)
     str = data:receive(%d, str)
-    str = data:receive("*l", str)
     data:send(str)
-    data:send("\n")
 ]], size, size))
     data:settimeout(0)
     local sofar = 1
@@ -493,25 +494,12 @@ remote(string.format([[
     end
     data:send("\n")
     data:settimeout(-1)
-    local back = data:receive()
-    assert(back == str)
+    local back = data:receive(2*size)
+    assert(back == str, "'" .. back .. "' vs '" .. str .. "'")
     print("ok")
 end
 
-
 ------------------------------------------------------------------------
-test("non-blocking transfer")
-test_nonblocking(1)
-test_nonblocking(17)
-test_nonblocking(200)
-test_nonblocking(4091)
-test_nonblocking(80199)
-test_nonblocking(8000000)
-test_nonblocking(80199)
-test_nonblocking(4091)
-test_nonblocking(200)
-test_nonblocking(17)
-test_nonblocking(1)
 
 test("method registration")
 test_methods(socket.tcp(), {
@@ -524,6 +512,7 @@ test_methods(socket.tcp(), {
     "getpeername",
     "getsockname",
     "getstats",
+    "setstats",
     "listen",
     "receive",
     "send",
@@ -627,6 +616,20 @@ test_raw(4091)
 test_raw(200)
 test_raw(17)
 test_raw(1)
+
+test("non-blocking transfer")
+test_nonblocking(1)
+test_nonblocking(17)
+test_nonblocking(200)
+test_nonblocking(4091)
+test_nonblocking(80199)
+test_nonblocking(8000000)
+test_nonblocking(80199)
+test_nonblocking(4091)
+test_nonblocking(200)
+test_nonblocking(17)
+test_nonblocking(1)
+
 
 test("total timeout on send")
 test_totaltimeoutsend(800091, 1, 3)

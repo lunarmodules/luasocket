@@ -19,6 +19,7 @@
 #include "timeout.h"
 #include "socket.h"
 
+/* can't be larger than wsocket.c MAXCHUNK!!! */
 #define UDP_DATAGRAMSIZE 8192
 
 typedef struct t_udp_ {
