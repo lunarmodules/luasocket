@@ -1,7 +1,10 @@
 -- load http
 assert(dofile("../lua/http.lua"))
 assert(dofile("../lua/base64.lua"))
+assert(dofile("../lua/buffer.lua"))
 assert(dofile("auxiliar.lua"))
+
+t = _time()
 
 -- needs Alias from /home/i/diego/public/html/luasocket/test to 
 -- /luasocket-test
@@ -83,3 +86,5 @@ assert(f and m and s and not e, join(s, e))
 assert(compare(pdir .. "auth/index.html", f), "documents differ")
 
 print("passed all tests")
+
+print(format("done in %.2fs", _time() - t))
