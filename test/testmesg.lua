@@ -1,5 +1,5 @@
 -- load the smtp support and its friends
-local smtp = require("smtp")
+local smtp = require("socket.smtp")
 local mime = require("mime")
 local ltn12 = require("ltn12")
 
@@ -47,6 +47,11 @@ source = smtp.message{
     epilogue = "This might also show up, but after the attachments"
   }
 }
+
+--[[
+sink = ltn12.sink.file(io.stdout)
+ltn12.pump.all(source, sink)
+]]
 
 -- finally send it
 r, e = smtp.send{

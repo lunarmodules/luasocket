@@ -8,11 +8,14 @@
 -----------------------------------------------------------------------------
 -- Load required files
 -----------------------------------------------------------------------------
+local base = require("base")
+local table = require("table")
+local math = require("math")
+local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
 local url = require("socket.url")
-
-module("socket.tftp")
+local tftp = module("socket.tftp")
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -73,16 +76,18 @@ end
 local function tget(gett)
     local retries, dgram, sent, datahost, dataport, code
     local last = 0
+    socket.try(gett.host, "missing host")
 	local con = socket.try(socket.udp())
     local try = socket.newtry(function() con:close() end)
     -- convert from name to ip if needed
 	gett.host = try(socket.dns.toip(gett.host))
 	con:settimeout(1)
     -- first packet gives data host/port to be used for data transfers
+    local path = string.gsub(gett.path or "", "^/", "") 
+    path = url.unescape(path)
     retries = 0
 	repeat 
-		sent = try(con:sendto(RRQ(gett.path, "octet"), 
-            gett.host, gett.port))
+		sent = try(con:sendto(RRQ(path, "octet"), gett.host, gett.port))
 		dgram, datahost, dataport = con:receivefrom()
         retries = retries + 1
 	until dgram or datahost ~= "timeout" or retries > 5
@@ -144,6 +149,8 @@ local function sget(u)
 end
 
 get = socket.protect(function(gett)
-    if type(gett) == "string" then return sget(gett)
+    if base.type(gett) == "string" then return sget(gett)
     else return tget(gett) end
 end)
+
+base.setmetatable(tftp, nil)

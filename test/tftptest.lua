@@ -12,7 +12,7 @@ function readfile(file)
     return a
 end
 
-host = host or "localhost"
+host = host or "diego.student.princeton.edu"
 retrieved, err = tftp.get("tftp://" .. host .."/index.html")
 assert(not err, err)
 original = readfile("test/index.html")

@@ -1,14 +1,12 @@
-
+use wim's filter.chain or something better
 make sure standard libraries are "required" by modules before use.
 eliminate globals from namespaces created by module().
 ftp.send/recv return bytes transfered?
 new scheme to choose family/protocol of object to create
 change ltn13 to make sure drawbacks are obvious
     - check discussion
-make sure errors not thrown by try() are not caught by protect()
 use mike's "don't set to blocking before closing unless needed" patch?
 take a look at DB's smtp patch (add "extra argument" table)
-move wsocket.c:sock_send kludge to buffer.c:sendraw (probably)?
 
 optmize aux_getgroupudata (Mike idea)
     make aux_newclass receive upvalues
@@ -25,7 +23,10 @@ testar os options!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 
-*use wim's filter.chain or something better
+*close wasn't returning 1
+*make sure errors not thrown by try() are not caught by protect()
+*move wsocket.c:sock_send kludge to buffer.c:sendraw?
+*bug on UDP sendto.
 *fix PROXY in http.lua
 *use new distribution scheme
 *create the getstats method. 

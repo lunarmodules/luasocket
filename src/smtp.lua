@@ -8,13 +8,16 @@
 -----------------------------------------------------------------------------
 -- Declare module and import dependencies
 -----------------------------------------------------------------------------
+local base = require("base")
+local coroutine = require("coroutine")
+local string = require("string")
+local math = require("math")
+local os = require("os")
 local socket = require("socket")
 local tp = require("socket.tp")
-
 local ltn12 = require("ltn12")
 local mime = require("mime")
-
-module("socket.smtp")
+local smtp = module("socket.smtp")
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -98,8 +101,8 @@ end
 -- send message or throw an exception
 function metat.__index:send(mailt) 
     self:mail(mailt.from)
-    if type(mailt.rcpt) == "table" then
-        for i,v in ipairs(mailt.rcpt) do
+    if base.type(mailt.rcpt) == "table" then
+        for i,v in base.ipairs(mailt.rcpt) do
             self:rcpt(v)
         end
     else
@@ -110,7 +113,7 @@ end
 
 function open(server, port)
     local tp = socket.try(tp.connect(server or SERVER, port or PORT, TIMEOUT))
-    local s = setmetatable({tp = tp}, metat)
+    local s = base.setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
     s.try = socket.newtry(function() 
         if s.tp:command("QUIT") then s.tp:check("2..") end
@@ -145,7 +148,7 @@ local function send_multipart(mesgt)
         coroutine.yield("\r\n") 
     end
     -- send each part separated by a boundary
-    for i, m in ipairs(mesgt.body) do
+    for i, m in base.ipairs(mesgt.body) do
         coroutine.yield("\r\n--" .. bd .. "\r\n")
         send_message(m)
     end
@@ -191,7 +194,7 @@ end
 -- yield the headers one by one
 local function send_headers(mesgt)
     if mesgt.headers then
-        for i,v in pairs(mesgt.headers) do
+        for i,v in base.pairs(mesgt.headers) do
             coroutine.yield(i .. ':' .. v .. "\r\n")
         end
     end
@@ -200,8 +203,8 @@ end
 -- message source
 function send_message(mesgt)
     send_headers(mesgt)
-    if type(mesgt.body) == "table" then send_multipart(mesgt)
-    elseif type(mesgt.body) == "function" then send_source(mesgt)
+    if base.type(mesgt.body) == "table" then send_multipart(mesgt)
+    elseif base.type(mesgt.body) == "function" then send_source(mesgt)
     else send_string(mesgt) end
 end
 
@@ -241,3 +244,5 @@ send = socket.protect(function(mailt)
     s:quit()
     return s:close()
 end)
+
+base.setmetatable(smtp, nil)

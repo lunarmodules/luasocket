@@ -12,17 +12,18 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory=".\"
+			IntermediateDirectory=".\"
 			ConfigurationType="2"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS"
+				AdditionalIncludeDirectories="h:\include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport)"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="5"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -31,6 +32,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="ws2_32.lib"
 				OutputFile="$(OutDir)/lsocket.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
@@ -69,7 +71,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport);  LUASOCKET_DEBUG"
-				RuntimeLibrary="0"
+				RuntimeLibrary="4"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -209,10 +211,10 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
 		<File
-			RelativePath="..\..\lib\lua.lib">
+			RelativePath="..\..\lib\liblua.lib">
 		</File>
 		<File
-			RelativePath="..\..\lib\lualib.lib">
+			RelativePath="..\..\lib\liblualib.lib">
 		</File>
 	</Files>
 	<Globals>

@@ -180,9 +180,10 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
 
 /*-------------------------------------------------------------------------*\
 * Send with timeout
+* On windows, if you try to send 10MB, the OS will buffer EVERYTHING 
+* this can take an awful lot of time and we will end up blocked. 
+* Therefore, whoever calls this function should not pass a huge buffer.
 \*-------------------------------------------------------------------------*/
-/* has to be larger than UDP_DATAGRAMSIZE !!!*/
-#define MAXCHUNK (64*1024)
 int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
 {
     int err;
@@ -192,9 +193,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
     *sent = 0;
     for ( ;; ) {
         /* try to send something */
-		/* on windows, if you try to send 10MB, the OS will buffer EVERYTHING 
-		 * this can take an awful lot of time and we will end up blocked. */
-		int put = send(*ps, data, (count < MAXCHUNK)? (int)count: MAXCHUNK, 0);
+		int put = send(*ps, data, count, 0);
         /* if we sent something, we are done */
         if (put > 0) {
             *sent = put;
@@ -221,7 +220,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
     if (*ps == SOCK_INVALID) return IO_CLOSED;
     *sent = 0;
     for ( ;; ) {
-        int put = send(*ps, data, (int) count, 0);
+        int put = sendto(*ps, data, (int) count, 0, addr, len);
         if (put > 0) {
             *sent = put;
             return IO_DONE;
@@ -298,13 +297,13 @@ void sock_setnonblocking(p_sock ps) {
 int sock_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
     *hp = gethostbyaddr(addr, len, AF_INET);
     if (*hp) return IO_DONE;
-    else return h_errno;
+    else return WSAGetLastError();
 }
 
 int sock_gethostbyname(const char *addr, struct hostent **hp) {
     *hp = gethostbyname(addr);
     if (*hp) return IO_DONE;
-    else return h_errno;
+    else return  WSAGetLastError();
 }
 
 /*-------------------------------------------------------------------------*\

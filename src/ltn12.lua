@@ -8,7 +8,11 @@
 -----------------------------------------------------------------------------
 -- Declare module
 -----------------------------------------------------------------------------
-module("ltn12")
+local string = require("string")
+local table = require("table")
+local base = require("base")
+local coroutine = require("coroutine")
+local ltn12 = module("ltn12")
 
 filter = {}
 source = {}
@@ -23,7 +27,7 @@ BLOCKSIZE = 2048
 -----------------------------------------------------------------------------
 -- returns a high level filter that cycles a low-level filter
 function filter.cycle(low, ctx, extra)
-    assert(low)
+    base.assert(low)
     return function(chunk)
         local ret
         ret, ctx = low(ctx, chunk, extra)
@@ -121,7 +125,7 @@ end
 
 -- turns a fancy source into a simple source
 function source.simplify(src)
-    assert(src)
+    base.assert(src)
     return function()
         local chunk, err_or_new = src()
         src = err_or_new or src
@@ -145,7 +149,7 @@ end
 
 -- creates rewindable source
 function source.rewind(src)
-    assert(src)
+    base.assert(src)
     local t = {}
     return function(chunk)
         if not chunk then
@@ -160,7 +164,7 @@ end
 
 -- chains a source with a filter
 function source.chain(src, f)
-    assert(src and f)
+    base.assert(src and f)
     local co = coroutine.create(function()
         while true do 
             local chunk, err = src()
@@ -215,7 +219,7 @@ end
 
 -- turns a fancy sink into a simple sink
 function sink.simplify(snk)
-    assert(snk)
+    base.assert(snk)
     return function(chunk, err)
         local ret, err_or_new = snk(chunk, err)
         if not ret then return nil, err_or_new end
@@ -254,7 +258,7 @@ end
 
 -- chains a sink with a filter 
 function sink.chain(f, snk)
-    assert(f and snk)
+    base.assert(f and snk)
     return function(chunk, err)
         local filtered = f(chunk)
         local done = chunk and ""
@@ -279,10 +283,12 @@ end
 
 -- pumps all data from a source to a sink, using a step function
 function pump.all(src, snk, step)
-    assert(src and snk)
+    base.assert(src and snk)
     step = step or pump.step
     while true do
         local ret, err = step(src, snk)
         if not ret then return not err, err end
     end
 end
+
+base.setmetatable(ltn12, nil)

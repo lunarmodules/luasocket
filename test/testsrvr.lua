@@ -1,6 +1,6 @@
 socket = require("socket");
 host = host or "localhost";
-port = port or "8080";
+port = port or "8383";
 server = assert(socket.bind(host, port));
 ack = "\n";
 while 1 do

@@ -1,7 +1,7 @@
 local socket = require"socket"
 
 host = host or "localhost"
-port = port or "8080"
+port = port or "8383"
 
 function pass(...)
     local s = string.format(unpack(arg))
@@ -590,7 +590,6 @@ test_mixed(200)
 test_mixed(17)
 test_mixed(1)
 
-
 test("binary line")
 test_rawline(1)
 test_rawline(17)
@@ -630,13 +629,11 @@ test_nonblocking(200)
 test_nonblocking(17)
 test_nonblocking(1)
 
-
 test("total timeout on send")
 test_totaltimeoutsend(800091, 1, 3)
 test_totaltimeoutsend(800091, 2, 3)
 test_totaltimeoutsend(800091, 5, 2)
 test_totaltimeoutsend(800091, 3, 1)
-
 
 test("total timeout on receive")
 test_totaltimeoutreceive(800091, 1, 3)

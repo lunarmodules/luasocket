@@ -233,7 +233,8 @@ static int meth_close(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     sock_destroy(&tcp->sock);
-    return 0;
+    lua_pushnumber(L, 1);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\

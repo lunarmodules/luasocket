@@ -1,103 +1,110 @@
-local similar = function(s1, s2)
-    return 
-    string.lower(string.gsub(s1, "%s", "")) == 
-    string.lower(string.gsub(s2, "%s", ""))
+local socket = require("socket")
+local ftp = require("socket.ftp")
+local url = require("socket.url")
+local ltn12 = require("ltn12")
+
+-- override protection to make sure we see all errors
+--socket.protect = function(s) return s end
+
+dofile("testsupport.lua")
+
+local host, port, index_file, index, back, err, ret
+
+local t = socket.gettime()
+
+host = host or "diego.student.princeton.edu"
+index_file = "test/index.html"
+
+
+-- a function that returns a directory listing
+local function nlst(u)
+    local t = {}
+    local p = url.parse(u)
+    p.command = "nlst"
+    p.sink = ltn12.sink.table(t)
+    local r, e = ftp.get(p)
+    return r and table.concat(t), e
 end
 
-local readfile = function(name)
-	local f = io.open(name, "r")
-	if not f then return nil end
-	local s = f:read("*a")
-	f:close()
-	return s
+-- function that removes a remote file
+local function dele(u)
+    local p = url.parse(u)
+    p.command = "dele"
+    p.argument = string.gsub(p.path, "^/", "")
+    if p.argumet == "" then p.argument = nil end
+    p.check = 250
+    return ftp.command(p)
 end
 
-local capture = function(cmd)
-	local f = io.popen(cmd)
-	if not f then return nil end
-	local s = f:read("*a")
-	f:close()
-	return s
-end
-
-local check = function(v, e, o)
-	e = e or "failed!"
-	o = o or "ok"
-	if v then print(o)
-	else print(e) os.exit() end
-end
-
--- needs an account luasocket:password
--- and some directories and files in ~ftp
-
-local index, err, saved, back, expected
-
-local t = socket.time()
-
-index = readfile("test/index.html")
+-- read index with CRLF convention
+index = readfile(index_file)
 
 io.write("testing wrong scheme: ")
-back, err = socket.ftp.get("wrong://banana.com/lixo")
-check(not back and err == "unknown scheme 'wrong'", err)
+back, err = ftp.get("wrong://banana.com/lixo")
+assert(not back and err == "wrong scheme 'wrong'", err)
+print("ok")
 
 io.write("testing invalid url: ")
-back, err = socket.ftp.get("localhost/dir1/index.html;type=i")
-local c, e = socket.connect("", 21)
-check(not back and err == e, err)
-
-io.write("testing anonymous file upload: ")
-os.remove("/var/ftp/pub/index.up.html")
-ret, err = socket.ftp.put("ftp://localhost/pub/index.up.html;type=i", index)
-saved = readfile("/var/ftp/pub/index.up.html")
-check(ret and not err and saved == index, err)
+back, err = ftp.get("localhost/dir1/index.html;type=i")
+assert(not back and err)
+print("ok")
 
 io.write("testing anonymous file download: ")
-back, err = socket.ftp.get("ftp://localhost/pub/index.up.html;type=i")
-check(not err and back == index, err)
+back, err = socket.ftp.get("ftp://" .. host .. "/pub/index.html;type=i")
+assert(not err and back == index, err)
+print("ok")
 
-io.write("testing no directory changes: ")
-back, err = socket.ftp.get("ftp://localhost/index.html;type=i")
-check(not err and back == index, err)
+io.write("erasing before upload: ")
+ret, err = dele("ftp://luasocket:password@" .. host .. "/index.up.html")
+if not ret then print(err) 
+else print("ok") end
 
-io.write("testing multiple directory changes: ")
-back, err = socket.ftp.get("ftp://localhost/pub/dir1/dir2/dir3/dir4/dir5/index.html;type=i")
-check(not err and back == index, err)
+io.write("testing upload: ")
+ret, err = ftp.put("ftp://luasocket:password@" .. host .. "/index.up.html;type=i", index)
+assert(ret and not err, err)
+print("ok")
 
-io.write("testing authenticated upload: ")
-os.remove("/home/luasocket/index.up.html")
-ret, err = socket.ftp.put("ftp://luasocket:password@localhost/index.up.html;type=i", index)
-saved = readfile("/home/luasocket/index.up.html")
-check(ret and not err and saved == index, err)
+io.write("downloading uploaded file: ")
+back, err = ftp.get("ftp://luasocket:password@" .. host .. "/index.up.html;type=i")
+assert(ret and not err and index == back, err)
+print("ok")
 
-io.write("testing authenticated download: ")
-back, err = socket.ftp.get("ftp://luasocket:password@localhost/index.up.html;type=i")
-check(not err and back == index, err)
+io.write("erasing after upload/download: ")
+ret, err = dele("ftp://luasocket:password@" .. host .. "/index.up.html")
+assert(ret and not err, err) 
+print("ok")
 
 io.write("testing weird-character translation: ")
-back, err = socket.ftp.get("ftp://luasocket:password@localhost/%2fvar/ftp/pub/index.html;type=i")
-check(not err and back == index, err)
+back, err = ftp.get("ftp://luasocket:password@" .. host .. "/%23%3f;type=i")
+assert(not err and back == index, err)
+print("ok")
 
 io.write("testing parameter overriding: ")
-back, err = socket.ftp.get {
-	url = "//stupid:mistake@localhost/index.html",
+local back = {}
+ret, err = ftp.get{
+	url = "//stupid:mistake@" .. host .. "/index.html",
 	user = "luasocket",
 	password = "password",
-	type = "i"
+	type = "i",
+    sink = ltn12.sink.table(back)
 }
-check(not err and back == index, err)
+assert(ret and not err and table.concat(back) == index, err)
+print("ok")
 
 io.write("testing upload denial: ")
-ret, err = socket.ftp.put("ftp://localhost/index.up.html;type=a", index)
-check(err, err)
+ret, err = ftp.put("ftp://" .. host .. "/index.up.html;type=a", index)
+assert(not ret and err, "should have failed")
+print(err)
 
 io.write("testing authentication failure: ")
-ret, err = socket.ftp.put("ftp://luasocket:wrong@localhost/index.html;type=a", index)
+ret, err = ftp.get("ftp://luasocket:wrong@".. host .. "/index.html;type=a")
+assert(not ret and err, "should have failed")
 print(err)
-check(not ret and err, err)
 
 io.write("testing wrong file: ")
-back, err = socket.ftp.get("ftp://localhost/index.wrong.html;type=a")
-check(err, err)
+back, err = ftp.get("ftp://".. host .. "/index.wrong.html;type=a")
+assert(not back and err, "should have failed")
+print(err)
 
 print("passed all tests")
-print(string.format("done in %.2fs", socket.time() - t))
+print(string.format("done in %.2fs", socket.gettime() - t))

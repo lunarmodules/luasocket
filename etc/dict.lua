@@ -8,11 +8,14 @@
 -----------------------------------------------------------------------------
 -- Load required modules
 -----------------------------------------------------------------------------
+local base = require("base")
+local string = require("string")
+local table = require("table")
 local socket = require("socket")
 local url = require("socket.url")
 local tp = require("socket.tp")
 
-module("socket.dict")
+local dict = module("socket.dict")
 
 -----------------------------------------------------------------------------
 -- Globals 
@@ -28,7 +31,7 @@ local metat = { __index = {} }
 
 function open(host, port)
     local tp = socket.try(tp.connect(host or HOST, port or PORT, TIMEOUT))
-    return setmetatable({tp = tp}, metat)
+    return base.setmetatable({tp = tp}, metat)
 end
 
 function metat.__index:greet()
@@ -37,7 +40,8 @@ end
 
 function metat.__index:check(ok)
     local code, status = socket.try(self.tp:check(ok))
-    return code, tonumber(socket.skip(2, string.find(status, "^%d%d%d (%d*)")))
+    return code, 
+        base.tonumber(socket.skip(2, string.find(status, "^%d%d%d (%d*)")))
 end
 
 function metat.__index:getdef()
@@ -116,7 +120,7 @@ local function parse(u)
     if cmd == "m" then 
         arg = string.gsub(arg, "^:([^:]*)", function(f) t.strat = there(f) end)
     end
-    string.gsub(arg, ":([^:]*)$", function(f) t.n = tonumber(f) end)
+    string.gsub(arg, ":([^:]*)$", function(f) t.n = base.tonumber(f) end)
     return t
 end
 
@@ -143,6 +147,8 @@ local function sget(u)
 end
 
 get = socket.protect(function(gett)
-    if type(gett) == "string" then return sget(gett)
+    if base.type(gett) == "string" then return sget(gett)
     else return tget(gett) end
 end)
+
+base.setmetatable(dict, nil)

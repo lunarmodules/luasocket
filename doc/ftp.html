@@ -163,7 +163,7 @@ local ltn12 = require("ltn12")
 local url = require("url")
 
 -- a function that returns a directory listing
-function ls(u)
+function nlst(u)
     local t = {}
     local p = url.parse(u)
     p.command = "nlst"

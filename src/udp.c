@@ -288,7 +288,8 @@ static int meth_setpeername(lua_State *L) {
 static int meth_close(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     sock_destroy(&udp->sock);
-    return 0;
+    lua_pushnumber(L, 1);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\

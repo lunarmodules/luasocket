@@ -12,8 +12,10 @@ local socket = require("socket")
 local url = require("socket.url")
 local ltn12 = require("ltn12")
 local mime = require("mime")
-
-module("socket.http")
+local string = require("string")
+local base = require("base")
+local table = require("table")
+local http = module("socket.http")
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -32,7 +34,7 @@ local metat = { __index = {} }
 
 function open(host, port)
     local c = socket.try(socket.tcp()) 
-    local h = setmetatable({ c = c }, metat)
+    local h = base.setmetatable({ c = c }, metat)
     -- make sure the connection gets closed on exception
     h.try = socket.newtry(function() h:close() end)
     h.try(c:settimeout(TIMEOUT))
@@ -46,7 +48,7 @@ function metat.__index:sendrequestline(method, uri)
 end
 
 function metat.__index:sendheaders(headers)
-    for i, v in pairs(headers) do
+    for i, v in base.pairs(headers) do
         self.try(self.c:send(i .. ": " .. v .. "\r\n"))
     end
     -- mark end of request headers
@@ -66,7 +68,7 @@ end
 function metat.__index:receivestatusline()
     local status = self.try(self.c:receive())
     local code = socket.skip(2, string.find(status, "HTTP/%d*%.%d* (%d%d%d)"))
-    return self.try(tonumber(code), status)
+    return self.try(base.tonumber(code), status)
 end
 
 function metat.__index:receiveheaders()
@@ -97,11 +99,11 @@ end
 function metat.__index:receivebody(headers, sink, step)
     sink = sink or ltn12.sink.null()
     step = step or ltn12.pump.step
-    local length = tonumber(headers["content-length"])
+    local length = base.tonumber(headers["content-length"])
     local TE = headers["transfer-encoding"]
     local mode = "default" -- connection close
     if TE and TE ~= "identity" then mode = "http-chunked"
-    elseif tonumber(headers["content-length"]) then mode = "by-length" end
+    elseif base.tonumber(headers["content-length"]) then mode = "by-length" end
     return self.try(ltn12.pump.all(socket.source(mode, self.c, length), 
         sink, step))
 end
@@ -159,9 +161,10 @@ local default = {
 local function adjustrequest(reqt)
     -- parse url if provided
     local nreqt = reqt.url and url.parse(reqt.url, default) or {}
+    local t = url.parse(reqt.url, default)
     -- explicit components override url
     for i,v in reqt do nreqt[i] = reqt[i] end
-    socket.try(nreqt.host, "invalid host '" .. tostring(nreqt.host) .. "'")
+    socket.try(nreqt.host, "invalid host '" .. base.tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)
     -- ajust host and port if there is a proxy
@@ -253,6 +256,8 @@ local function srequest(u, body)
 end
 
 request = socket.protect(function(reqt, body)
-    if type(reqt) == "string" then return srequest(reqt, body)
+    if base.type(reqt) == "string" then return srequest(reqt, body)
     else return trequest(reqt) end
 end)
+
+base.setmetatable(http, nil)
