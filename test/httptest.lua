@@ -390,7 +390,7 @@ local r, c, h = http.request {
   method = "HEAD",
   url = "http://www.cs.princeton.edu/~diego/"
 }
-assert(r and h and c == 200)
+assert(r and h and (c == 200), c)
 print("ok")
 
 ------------------------------------------------------------------------

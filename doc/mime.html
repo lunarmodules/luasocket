@@ -230,6 +230,35 @@ print((mime.b64("diego:password")))
 --&gt; ZGllZ286cGFzc3dvcmQ=
 </pre>
 
+<!-- dot +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<p class=name id="dot">
+A, B = mime.<b>dot(</b>C [, D]<b>)</b>
+</p>
+
+<p class=description>
+Low-level filter to perform Base64 encoding. 
+</p>
+
+<p class=description>
+<tt>A</tt> is the encoded version of the largest prefix of 
+<tt>C..D</tt> 
+that can be encoded unambiguously. <tt>B</tt> has the remaining bytes of 
+<tt>C..D</tt>, <em>before</em> encoding. 
+If <tt>D</tt> is <tt><b>nil</b></tt>, <tt>A</tt> is padded with 
+the encoding of the remaining bytes of <tt>C</tt>. 
+</p>
+
+<p class=note>
+Note: The simplest use of this function is to encode a string into it's
+Base64 transfer content encoding. Notice the extra parenthesis around the
+call to <tt>mime.b64</tt>, to discard the second return value.
+</p>
+
+<pre class=example>
+print((mime.b64("diego:password")))
+--&gt; ZGllZ286cGFzc3dvcmQ=
+</pre>
+
 <!-- eol ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id="eol">

@@ -1,3 +1,9 @@
+-----------------------------------------------------------------------------
+-- Little program to adjust end of line markers. 
+-- LuaSocket sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 local mime = require("mime")
 local ltn12 = require("ltn12")
 local marker = '\n'

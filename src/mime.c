@@ -28,7 +28,9 @@ static int mime_global_qp(lua_State *L);
 static int mime_global_unqp(lua_State *L);
 static int mime_global_qpwrp(lua_State *L);
 static int mime_global_eol(lua_State *L);
+static int mime_global_dot(lua_State *L);
 
+static size_t dot(int c, size_t state, luaL_Buffer *buffer);
 static void b64setup(UC *b64unbase);
 static size_t b64encode(UC c, UC *input, size_t size, luaL_Buffer *buffer);
 static size_t b64pad(const UC *input, size_t size, luaL_Buffer *buffer);
@@ -43,6 +45,7 @@ static size_t qppad(UC *input, size_t size, luaL_Buffer *buffer);
 
 /* code support functions */
 static luaL_reg func[] = {
+    { "dot", mime_global_dot },
     { "b64", mime_global_b64 },
     { "eol", mime_global_eol },
     { "qp", mime_global_qp },
@@ -659,3 +662,48 @@ static int mime_global_eol(lua_State *L)
     lua_pushnumber(L, ctx);
     return 2;
 }
+
+/*-------------------------------------------------------------------------*\
+* Takes one byte and stuff it if needed. 
+\*-------------------------------------------------------------------------*/
+static size_t dot(int c, size_t state, luaL_Buffer *buffer)
+{
+    luaL_putchar(buffer, c);
+    switch (c) {
+        case '\r': 
+            return 1;
+        case '\n': 
+            return (state == 1)? 2: 0; 
+        case '.':  
+            if (state == 2) 
+                luaL_putchar(buffer, '.');
+        default:
+            return 0;
+    }
+}
+
+/*-------------------------------------------------------------------------*\
+* Incrementally applies smtp stuffing to a string
+* A, n = dot(l, D)
+\*-------------------------------------------------------------------------*/
+static int mime_global_dot(lua_State *L)
+{
+    size_t isize = 0, state = (size_t) luaL_checknumber(L, 1);
+    const char *input = luaL_optlstring(L, 2, NULL, &isize);
+    const char *last = input + isize;
+    luaL_Buffer buffer;
+    /* end-of-input blackhole */
+    if (!input) {
+        lua_pushnil(L);
+        lua_pushnumber(L, 2);
+        return 2;
+    }
+    /* process all input */
+    luaL_buffinit(L, &buffer);
+    while (input < last) 
+        state = dot(*input++, state, &buffer);
+    luaL_pushresult(&buffer);
+    lua_pushnumber(L, state);
+    return 2;
+}
+

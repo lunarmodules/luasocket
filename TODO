@@ -1,6 +1,8 @@
+
 ajeitar os README.*
 ajeitar as referencias a RFCS e LTNS em todos os arquivos.
 
+smtp.o goes to mime.dll
 make sure sockets are closed when exceptions are raised
 
 check garbage collection in test*.lua

@@ -11,11 +11,6 @@
 local mime = requirelib("mime", "luaopen_mime", getfenv(1))
 local ltn12 = require("ltn12")
 
------------------------------------------------------------------------------
--- Setup namespace 
------------------------------------------------------------------------------
-_LOADED["mime"] = mime
-
 -- encode, decode and wrap algorithm tables
 encodet = {}
 decodet = {}
@@ -72,4 +67,9 @@ wrap = choose(wrapt)
 -- define the end-of-line normalization filter
 function normalize(marker)
     return ltn12.filter.cycle(eol, 0, marker)
+end
+
+-- high level stuffing filter
+function stuff()
+    return ltn12.filter.cycle(dot, 2)
 end

@@ -8,16 +8,10 @@
 -----------------------------------------------------------------------------
 -- Load required modules
 -----------------------------------------------------------------------------
-local smtp = requirelib("smtp", "luaopen_smtp", getfenv(1))
 local socket = require("socket")
 local ltn12 = require("ltn12")
 local mime = require("mime")
 local tp = require("tp")
-
------------------------------------------------------------------------------
--- Setup namespace 
------------------------------------------------------------------------------
-_LOADED["smtp"] = smtp
 
 -- timeout for connection
 TIMEOUT = 60
@@ -30,11 +24,6 @@ PORT = 25
 DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default time zone (means we don't know)
 ZONE = "-0000"
-
--- high level stuffing filter
-function stuff()
-    return ltn12.filter.cycle(dot, 2)
-end
 
 ---------------------------------------------------------------------------
 -- Low level SMTP API
@@ -110,7 +99,7 @@ function metat.__index:send(mailt)
     else
         self:rcpt(mailt.rcpt)
     end
-    self:data(ltn12.source.chain(mailt.source, stuff()), mailt.step)
+    self:data(ltn12.source.chain(mailt.source, mime.stuff()), mailt.step)
 end
 
 function open(server, port)
