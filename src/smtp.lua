@@ -27,56 +27,69 @@ end
 -- Returns
 --   err: message in case of error, nil if successfull
 -----------------------------------------------------------------------------
-local puts = function(sock, line)
+local try_send = function(sock, line)
     local err = sock:send(line .. "\r\n")
-	if err then sock:close() end
-	return err
+print(line)
+    if err then sock:close() end
+    return err
 end
 
 -----------------------------------------------------------------------------
--- Tries to receive DOS mode lines. Closes socket on error.
+-- Gets command reply, (accepts multiple-line replies)
 -- Input
---   sock: server socket
+--   control: control connection socket
 -- Returns
---   line: received string if successfull, nil in case of error
---   err: error message if any
+--   answer: whole server reply, nil if error
+--   code: reply status code or error message
 -----------------------------------------------------------------------------
-local gets = function(sock)
-	local line, err = sock:receive("*l")
-	if err then 
-		sock:close() 
-		return nil, err
-	end
-	return line
+local get_answer = function(control)
+    local code, lastcode, sep
+    local line, err = control:receive()
+    local answer = line
+    if err then return nil, err end
+print(line)
+    _,_, code, sep = strfind(line, "^(%d%d%d)(.)")
+    if not code or not sep then return nil, answer end
+    if sep == "-" then -- answer is multiline
+        repeat 
+            line, err = control:receive()
+            if err then return nil, err end
+print(line)
+            _,_, lastcode, sep = strfind(line, "^(%d%d%d)(.)")
+            answer = answer .. "\n" .. line
+        until code == lastcode and sep == " " -- answer ends with same code
+    end
+    return answer, tonumber(code)
 end
 
 -----------------------------------------------------------------------------
--- Gets a reply from the server and close connection if it is wrong
+-- Checks if a message reply code is correct. Closes control connection 
+-- if not.
 -- Input
---   sock: server socket
---   accept: acceptable errorcodes
+--   control: control connection socket
+--   success: table with successfull reply status code
 -- Returns
---   code: server reply code. nil if error
---   line: complete server reply message or error message
+--   code: reply code or nil in case of error
+--   answer: complete server answer or system error message
 -----------------------------------------------------------------------------
-local get_reply = function(sock, accept)
-    local line, err = %gets(sock) 
-    if line then
-		if type(accept) ~= "table" then accept = {accept} end
-        local _,_, code = strfind(line, "^(%d%d%d)")
-		if not code then return nil, line end
-		code = tonumber(code)
-		for i = 1, getn(accept) do
-			if code == accept[i] then return code, line end
-		end
-		sock:close()
-		return nil, line
-	end
-    return nil, err
+local check_answer = function(control, success)
+    local answer, code = %get_answer(control)
+    if not answer then 
+        control:close()
+        return nil, code
+    end
+    if type(success) ~= "table" then success = {success} end
+    for i = 1, getn(success) do
+        if code == success[i] then
+            return code, answer
+        end
+    end
+    control:close()
+    return nil, answer
 end
 
 -----------------------------------------------------------------------------
--- Sends a command to the server
+-- Sends a command to the server (closes sock on error)
 -- Input
 --   sock: server socket
 --   command: command to be sent
@@ -88,19 +101,7 @@ local send_command = function(sock, command, param)
     local line
     if param then line = command .. " " .. param
     else line = command end
-    return %puts(sock, line)
-end
-
------------------------------------------------------------------------------
--- Gets the initial server greeting
--- Input
---   sock: server socket
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply
------------------------------------------------------------------------------
-local get_helo = function(sock)
-    return %get_reply(sock, 220)
+    return %try_send(sock, line)
 end
 
 -----------------------------------------------------------------------------
@@ -108,14 +109,13 @@ end
 -- Input
 --   sock: server socket
 -- Returns
---   code: server status code, nil if error
+--   code: server code if ok, nil if error
 --   answer: complete server reply
 -----------------------------------------------------------------------------
 local send_helo = function(sock)
     local err = %send_command(sock, "HELO", %DOMAIN)
-    if not err then
-        return %get_reply(sock, 250)
-	else return nil, err end
+    if err then return nil, err end
+    return %check_answer(sock, 250)
 end
 
 -----------------------------------------------------------------------------
@@ -127,20 +127,20 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 local send_mime = function(sock, mime)
-	local err
-	mime = mime or {}
-	-- send all headers
-	for name,value in mime do
-		err = sock:send(name .. ": " .. value .. "\r\n")
-		if err then 
-			sock:close()
-			return err 
-		end
-	end
-	-- end mime part
-	err = sock:send("\r\n")
-	if err then sock:close() end
-	return err
+    local err
+    mime = mime or {}
+    -- send all headers
+    for name,value in mime do
+        err = sock:send(name .. ": " .. value .. "\r\n")
+        if err then 
+            sock:close()
+            return err 
+        end
+    end
+    -- end mime part
+    err = sock:send("\r\n")
+    if err then sock:close() end
+    return err
 end
 
 -----------------------------------------------------------------------------
@@ -149,16 +149,14 @@ end
 --   sock: server socket
 -- Returns
 --   code: server status code, nil if error
---   answer: complete server reply
+--   answer: complete server reply or error message
 -----------------------------------------------------------------------------
 local send_quit = function(sock)
-	local code, answer
     local err = %send_command(sock, "QUIT")
-    if not err then
-        code, answer = %get_reply(sock, 221)
-		sock:close()
-		return code, answer
-    else return nil, err end
+    if err then return nil, err end
+    local code, answer = %check_answer(sock, 221)
+    sock:close()
+    return code, answer
 end
 
 -----------------------------------------------------------------------------
@@ -168,14 +166,13 @@ end
 --   sender: e-mail of sender
 -- Returns
 --   code: server status code, nil if error
---   answer: complete server reply
+--   answer: complete server reply or error message
 -----------------------------------------------------------------------------
 local send_mail = function(sock, sender)
     local param = format("FROM:<%s>", sender)
     local err = %send_command(sock, "MAIL", param)
-    if not err then
-        return %get_reply(sock, 250)
-	else return nil, err end
+    if err then return nil, err end
+    return %check_answer(sock, 250)
 end
 
 -----------------------------------------------------------------------------
@@ -186,22 +183,21 @@ end
 --   body: message body
 -- Returns
 --   code: server status code, nil if error
---   answer: complete server reply
+--   answer: complete server reply or error message
 -----------------------------------------------------------------------------
 local send_data = function (sock, mime, body)
-	local err = %send_command(sock, "DATA")
-    if not err then
-		local code, answer = %get_reply(sock, 354)
-		if not code then return nil, answer end
-		-- avoid premature end in message body
-    	body = gsub(body or "", "\n%.", "\n%.%.")
-		-- mark end of message body
-    	body = body .. "\r\n."
-       	err = %send_mime(sock, mime)
-		if err then return nil, err end
-        err = %puts(sock, body)
-        return %get_reply(sock, 250)
-    else return nil, err end
+    local err = %send_command(sock, "DATA")
+    if err then return nil, err end
+    local code, answer = %check_answer(sock, 354)
+    if not code then return nil, answer end
+    -- avoid premature end in message body
+    body = gsub(body or "", "\n%.", "\n%.%.")
+    -- mark end of message body
+    body = body .. "\r\n."
+    err = %send_mime(sock, mime)
+    if err then return nil, err end
+    err = %try_send(sock, body)
+    return %check_answer(sock, 250)
 end
 
 -----------------------------------------------------------------------------
@@ -215,53 +211,36 @@ end
 -----------------------------------------------------------------------------
 local send_rcpt = function(sock, rcpt)
     local err, code, answer
-	if type(rcpt) ~= "table" then rcpt = {rcpt} end
+    if type(rcpt) ~= "table" then rcpt = {rcpt} end
     for i = 1, getn(rcpt) do
         err = %send_command(sock, "RCPT", format("TO:<%s>", rcpt[i]))
-        if not err then
-            code, answer = %get_reply(sock, {250, 251})
-			if not code then return code, answer end
-        else return nil, err end
+        if err then return nil, err end
+        code, answer = %check_answer(sock, {250, 251})
+        if not code then return code, answer end
     end
     return code, answer
-end
-
------------------------------------------------------------------------------
--- Sends verify recipient command
--- Input
---   sock: server socket
---   user: user to be verified
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply
------------------------------------------------------------------------------
-local send_vrfy = function (sock, user)
-    local err = %send_command(sock, "VRFY", format("<%s>", user))
-    if not err then
-        return %get_reply(sock, {250, 251})
-	else return nil, err end
 end
 
 -----------------------------------------------------------------------------
 -- Connection oriented mail functions
 -----------------------------------------------------------------------------
 function smtp_connect(server)
-	local code, answer
+    local code, answer
     -- connect to server
     local sock, err = connect(server, %PORT)
     if not sock then return nil, err end
     sock:timeout(%TIMEOUT)
     -- initial server greeting
-    code, answer = %get_helo(sock)
+    code, answer = %check_answer(sock, 220)
     if not code then return nil, answer end
     -- HELO
     code, answer = %send_helo(sock)
     if not code then return nil, answer end
-	return sock
+    return sock
 end
 
 function smtp_send(sock, from, rcpt, mime, body)
-	local code, answer
+    local code, answer
     -- MAIL
     code, answer = %send_mail(sock, from)
     if not code then return nil, answer end
@@ -289,13 +268,13 @@ end
 --   nil if successfull, error message in case of error
 -----------------------------------------------------------------------------
 function smtp_mail(from, rcpt, mime, body, server)
-	local sock, err = smtp_connect(server)
-	if not sock then return err end
-	local code, answer = smtp_send(sock, from, rcpt, mime, body)
-	if not code then return answer end
-	code, answer = smtp_close(sock)
-	if not code then return answer
-	else return nil end
+    local sock, err = smtp_connect(server)
+    if not sock then return err end
+    local code, answer = smtp_send(sock, from, rcpt, mime, body)
+    if not code then return answer end
+    code, answer = smtp_close(sock)
+    if code then return nil end
+    return answer
 end
 
 --===========================================================================
@@ -312,27 +291,25 @@ end
 --   for each element
 -----------------------------------------------------------------------------
 local fill = function(str, tab)
-	gsub(str, "([^%s,]+)", function (w) tinsert(%tab, w) end)
-	return tab
+    gsub(str, "([^%s,]+)", function (w) tinsert(%tab, w) end)
+    return tab
 end
 
 -----------------------------------------------------------------------------
 -- Client mail function, implementing CGILUA 3.2 interface
 -----------------------------------------------------------------------------
 function mail(msg)
-  local rcpt = {}
-  local mime = {}
-  mime["Subject"] = msg.subject
-  mime["To"] = msg.to
-  mime["From"] = msg.from
-  %fill(msg.to, rcpt)
-  if msg.cc then 
-    %fill(msg.cc, rcpt) 
-    mime["Cc"] = msg.cc
-  end
-  if msg.bcc then
-    %fill(msg.bcc, rcpt)
-  end
-  rcpt.n = nil
-  return %smtp_mail(msg.from, rcpt, mime, msg.message, msg.mailserver)
+    local rcpt = {}
+    local mime = {}
+    mime["Subject"] = msg.subject
+    mime["To"] = msg.to
+    mime["From"] = msg.from
+    %fill(msg.to, rcpt)
+    if msg.cc then 
+        %fill(msg.cc, rcpt) 
+        mime["Cc"] = msg.cc
+    end
+    if msg.bcc then %fill(msg.bcc, rcpt) end
+    rcpt.n = nil
+    return %smtp_mail(msg.from, rcpt, mime, msg.message, msg.mailserver)
 end
