@@ -76,7 +76,7 @@ RFC 1179
 -- gets server acknowledement
 local function recv_ack(con)
   local ack = con.skt:receive(1)
-  con.try(string.char(0) == ack, "failed to receive server acknowledement")
+  con.try(string.char(0) == ack, "failed to receive server acknowledgement")
 end
 
 -- sends client acknowledement
@@ -166,7 +166,7 @@ local function send_hdr(con, control)
 end
 
 local function send_control(con, control)
-  local sent = con:send(control)
+  local sent = con.skt:send(control)
   con.try(sent and sent >= 1, "failed to send control file")
   send_ack(con)
 end
@@ -176,7 +176,7 @@ local function send_data(con,fh,size)
   while size > 0 do
     buf,message = fh:read(8192)
     if buf then
-      st = con.try(con:send(buf))
+      st = con.try(con.skt:send(buf))
       size = size - st
     else
       con.try(size == 0, "file size mismatch")
@@ -303,7 +303,7 @@ query = socket.protect(function(p)
   if string.sub(p.format or 's',1,1) == 's' then fmt = 3 else fmt = 4 end
   con.try(con.skt:send(string.format("%c%s %s\n", fmt, p.queue or "*", 
     p.list or "")))
-  local data = ltry(connection:receive("*a"))
+  local data = con.try(con.skt:receive("*a"))
   con.skt:close()
   return data
 end)

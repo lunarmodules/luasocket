@@ -347,5 +347,7 @@ const char *sock_strerror(void) {
 }
 
 const char *sock_geterr(p_sock ps, int code) {
+    (void) ps;
+    (void) code;
     return sock_strerror();
 }

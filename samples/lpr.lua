@@ -1,7 +1,7 @@
 local lp = require("lp")
 
 local function usage()
-  print('\nUsage: lp filename [keyword=val...]\n')
+  print('\nUsage: lua lptest.lua [filename] [keyword=val...]\n')
   print('Valid keywords are :')
   print(
      '  host=remote host or IP address (default "localhost")\n' ..
@@ -36,12 +36,13 @@ do
     if not arg[2] then
       return usage()
     end
+
     if arg[1] ~= "query" then
         r,e=lp.send(arg[1],opt)
-        io.stderr:write(tostring(r or e),'\n')
+        io.stdout:write(tostring(r or e),'\n')
     else
         r,e=lp.query(opt)
-        io.stderr:write(tostring(r or e), '\n')
+        io.stdout:write(tostring(r or e), '\n')
     end
 end
 
