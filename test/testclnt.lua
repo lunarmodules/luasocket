@@ -359,6 +359,7 @@ test_methods(socket.tcp(), {
     "getsockname",
     "setoption",
     "settimeout",
+    "shutdown",
     "close",
 })
 test_methods(socket.udp(), {
@@ -372,6 +373,7 @@ test_methods(socket.udp(), {
     "receivefrom", 
     "setoption",
     "settimeout", 
+    "shutdown",
     "close", 
 })
 
@@ -483,7 +485,5 @@ test_blockingtimeoutreceive(800091, 2, 3)
 test_blockingtimeoutreceive(800091, 3, 2)
 test_blockingtimeoutreceive(800091, 3, 1)
 ]]
-
-socket.done()
 
 test(string.format("done in %.2fs", socket.time() - start))

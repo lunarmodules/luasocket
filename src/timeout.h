@@ -18,8 +18,8 @@ typedef t_tm *p_tm;
 
 void tm_open(lua_State *L);
 void tm_init(p_tm tm, int block, int total);
-int tm_getsuccess(p_tm tm);
-int tm_getfailure(p_tm tm);
+int tm_get(p_tm tm);
+int tm_getretry(p_tm tm);
 void tm_markstart(p_tm tm);
 int tm_getstart(p_tm tm);
 int tm_gettime(void);

@@ -63,7 +63,7 @@ static luaL_reg tcp[] = {
 static luaL_reg opt[] = {
     {"keepalive",   opt_keepalive},
     {"reuseaddr",   opt_reuseaddr},
-    {"tcp-nodelay",     opt_tcp_nodelay},
+    {"tcp-nodelay", opt_tcp_nodelay},
     {"linger",      opt_linger},
     {NULL,          NULL}
 };
@@ -200,32 +200,26 @@ static int meth_dirty(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_accept(lua_State *L)
 {
-    struct sockaddr_in addr;
-    socklen_t addr_len = sizeof(addr);
-    int err = IO_ERROR;
     p_tcp server = (p_tcp) aux_checkclass(L, "tcp{server}", 1);
     p_tm tm = &server->tm;
-    p_tcp client;
     t_sock sock;
     tm_markstart(tm);
-    /* loop until connection accepted or timeout happens */
-    while (err != IO_DONE) { 
-        err = sock_accept(&server->sock, &sock, 
-            (SA *) &addr, &addr_len, tm_getfailure(tm));
-        if (err == IO_CLOSED || (err == IO_TIMEOUT && !tm_getfailure(tm))) {
-            lua_pushnil(L); 
-            io_pusherror(L, err);
-            return 2;
-        }
+    const char *err = inet_tryaccept(&server->sock, tm, &sock);
+    /* if successful, push client socket */
+    if (!err) {
+        p_tcp clnt = lua_newuserdata(L, sizeof(t_tcp));
+        aux_setclass(L, "tcp{client}", -1);
+        /* initialize structure fields */
+        clnt->sock = sock;
+        io_init(&clnt->io, (p_send)sock_send, (p_recv)sock_recv, &clnt->sock);
+        tm_init(&clnt->tm, -1, -1);
+        buf_init(&clnt->buf, &clnt->io, &clnt->tm);
+        return 1;
+    } else {
+        lua_pushnil(L); 
+        lua_pushstring(L, err);
+        return 2;
     }
-    client = lua_newuserdata(L, sizeof(t_tcp));
-    aux_setclass(L, "tcp{client}", -1);
-    client->sock = sock;
-    /* initialize remaining structure fields */
-    io_init(&client->io, (p_send) sock_send, (p_recv) sock_recv, &client->sock);
-    tm_init(&client->tm, -1, -1);
-    buf_init(&client->buf, &client->io, &client->tm);
-    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -260,7 +254,7 @@ static int meth_connect(lua_State *L)
     p_tm tm = &tcp->tm;
     const char *err;
     tm_markstart(tm);
-    err = inet_tryconnect(&tcp->sock, address, port, tm_getfailure(tm));
+    err = inet_tryconnect(&tcp->sock, tm, address, port);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -283,7 +277,7 @@ static int meth_close(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
-* Shuts the connection down
+* Shuts the connection down partially
 \*-------------------------------------------------------------------------*/
 static int meth_shutdown(lua_State *L)
 {
@@ -341,22 +335,23 @@ static int meth_settimeout(lua_State *L)
 \*-------------------------------------------------------------------------*/
 int global_create(lua_State *L)
 {
-    const char *err;
-    /* allocate tcp object */
-    p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
-    /* set its type as master object */
-    aux_setclass(L, "tcp{master}", -1);
+    t_sock sock;
+    const char *err = inet_trycreate(&sock, SOCK_STREAM);
     /* try to allocate a system socket */
-    err = inet_trycreate(&tcp->sock, SOCK_STREAM);
-    if (err) { /* get rid of object on stack and push error */
-        lua_pop(L, 1);
+    if (!err) { 
+        /* allocate tcp object */
+        p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
+        tcp->sock = sock;
+        /* set its type as master object */
+        aux_setclass(L, "tcp{master}", -1);
+        /* initialize remaining structure fields */
+        io_init(&tcp->io, (p_send) sock_send, (p_recv) sock_recv, &tcp->sock);
+        tm_init(&tcp->tm, -1, -1);
+        buf_init(&tcp->buf, &tcp->io, &tcp->tm);
+        return 1;
+    } else {
         lua_pushnil(L);
         lua_pushstring(L, err);
         return 2;
     }
-    /* initialize remaining structure fields */
-    io_init(&tcp->io, (p_send) sock_send, (p_recv) sock_recv, &tcp->sock);
-    tm_init(&tcp->tm, -1, -1);
-    buf_init(&tcp->buf, &tcp->io, &tcp->tm);
-    return 1;
 }

@@ -549,10 +549,16 @@ function request_cb(reqt, respt)
     reqt.headers = fill_headers(reqt.headers, parsed)
     -- try to connect to server
     local sock
-    sock, respt.error = socket.connect(parsed.host, parsed.port)
+    sock, respt.error = socket.tcp()
     if not sock then return respt end
     -- set connection timeout so that we do not hang forever
     sock:settimeout(TIMEOUT)
+    local ret
+    ret, respt.error = sock:connect(parsed.host, parsed.port)
+    if not ret then 
+        sock:close()
+        return respt 
+    end
     -- send request message
     respt.error = send_request(sock, reqt.method, 
         request_uri(parsed), reqt.headers, reqt.body_cb)

@@ -29,6 +29,7 @@ static int meth_getpeername(lua_State *L);
 static int meth_setsockname(lua_State *L);
 static int meth_setpeername(lua_State *L);
 static int meth_close(lua_State *L);
+static int meth_shutdown(lua_State *L);
 static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_fd(lua_State *L);
@@ -53,6 +54,7 @@ static luaL_reg udp[] = {
     {"receivefrom", meth_receivefrom},
     {"settimeout",  meth_settimeout},
     {"close",       meth_close},
+    {"shutdown",    meth_shutdown},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
     {"fd",          meth_fd},
@@ -110,7 +112,7 @@ static int meth_send(lua_State *L)
     int err;
     const char *data = luaL_checklstring(L, 2, &count);
     tm_markstart(tm);
-    err = sock_send(&udp->sock, data, count, &sent, tm_getsuccess(tm));
+    err = sock_send(&udp->sock, data, count, &sent, tm_get(tm));
     if (err == IO_DONE) lua_pushnumber(L, sent);
     else lua_pushnil(L);
     /* a 'closed' error on an unconnected means the target address was not
@@ -139,7 +141,7 @@ static int meth_sendto(lua_State *L)
     addr.sin_port = htons(port);
     tm_markstart(tm);
     err = sock_sendto(&udp->sock, data, count, &sent, 
-            (SA *) &addr, sizeof(addr), tm_getsuccess(tm));
+            (SA *) &addr, sizeof(addr), tm_get(tm));
     if (err == IO_DONE) lua_pushnumber(L, sent);
     else lua_pushnil(L);
     /* a 'closed' error on an unconnected means the target address was not
@@ -160,7 +162,7 @@ static int meth_receive(lua_State *L)
     p_tm tm = &udp->tm;
     count = MIN(count, sizeof(buffer));
     tm_markstart(tm);
-    err = sock_recv(&udp->sock, buffer, count, &got, tm_getsuccess(tm));
+    err = sock_recv(&udp->sock, buffer, count, &got, tm_get(tm));
     if (err == IO_DONE) lua_pushlstring(L, buffer, got);
     else lua_pushnil(L);
     io_pusherror(L, err);
@@ -182,7 +184,7 @@ static int meth_receivefrom(lua_State *L)
     tm_markstart(tm);
     count = MIN(count, sizeof(buffer));
     err = sock_recvfrom(&udp->sock, buffer, count, &got, 
-            (SA *) &addr, &addr_len, tm_getsuccess(tm));
+            (SA *) &addr, &addr_len, tm_get(tm));
     if (err == IO_DONE) {
         lua_pushlstring(L, buffer, got);
         lua_pushstring(L, inet_ntoa(addr.sin_addr));
@@ -341,8 +343,7 @@ static int meth_setpeername(lua_State *L)
     unsigned short port = connecting ? 
         (unsigned short) luaL_checknumber(L, 3) : 
         (unsigned short) luaL_optnumber(L, 3, 0);
-    const char *err;
-    err = inet_tryconnect(&udp->sock, address, port, tm_getfailure(tm));
+    const char *err = inet_tryconnect(&udp->sock, tm, address, port);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -362,6 +363,33 @@ static int meth_close(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     sock_destroy(&udp->sock);
+    return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Shuts the connection down partially
+\*-------------------------------------------------------------------------*/
+static int meth_shutdown(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
+    const char *how = luaL_optstring(L, 2, "both");
+    switch (how[0]) {
+        case 'b':
+            if (strcmp(how, "both")) goto error;
+            sock_shutdown(&udp->sock, 2);
+            break;
+        case 's':
+            if (strcmp(how, "send")) goto error;
+            sock_shutdown(&udp->sock, 1);
+            break;
+        case 'r':
+            if (strcmp(how, "receive")) goto error;
+            sock_shutdown(&udp->sock, 0);
+            break;
+    }
+    return 0;
+error:
+    luaL_argerror(L, 2, "invalid shutdown method");
     return 0;
 }
 
@@ -391,21 +419,21 @@ static int meth_setsockname(lua_State *L)
 \*-------------------------------------------------------------------------*/
 int global_create(lua_State *L)
 {
-    const char *err;
-    /* allocate udp object */
-    p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
-    /* set its type as master object */
-    aux_setclass(L, "udp{unconnected}", -1);
+    t_sock sock;
+    const char *err = inet_trycreate(&sock, SOCK_DGRAM);
     /* try to allocate a system socket */
-    err = inet_trycreate(&udp->sock, SOCK_DGRAM);
-    if (err) {
-        /* get rid of object on stack and push error */
-        lua_pop(L, 1);
+    if (!err) { 
+        /* allocate tcp object */
+        p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
+        udp->sock = sock;
+        /* set its type as master object */
+        aux_setclass(L, "udp{unconnected}", -1);
+        /* initialize remaining structure fields */
+        tm_init(&udp->tm, -1, -1);
+        return 1;
+    } else {
         lua_pushnil(L);
         lua_pushstring(L, err);
         return 2;
     }
-    /* initialize timeout management */
-    tm_init(&udp->tm, -1, -1);
-    return 1;
 }

@@ -314,9 +314,10 @@ body = socket.http.get {
 check(body == index)
 
 io.write("testing HEAD method: ")
+socket.http.TIMEOUT = 1
 response = socket.http.request {
   method = "HEAD",
-  url = "http://www.tecgraf.puc-rio.br/~diego/"
+  url = "http://www.cs.princeton.edu/~diego/"
 }
 check(response and response.headers)
 

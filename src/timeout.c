@@ -54,7 +54,7 @@ void tm_init(p_tm tm, int block, int total)
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-int tm_getsuccess(p_tm tm)
+int tm_get(p_tm tm)
 {
     if (tm->block < 0 && tm->total < 0) {
         return -1;
@@ -89,7 +89,7 @@ int tm_getstart(p_tm tm)
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-int tm_getfailure(p_tm tm)
+int tm_getretry(p_tm tm)
 {
     if (tm->block < 0 && tm->total < 0) {
         return -1;

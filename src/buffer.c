@@ -138,8 +138,7 @@ int sendraw(p_buf buf, const char *data, size_t count, size_t *sent)
     int err = IO_DONE;
     while (total < count && err == IO_DONE) {
         size_t done;
-        err = io->send(io->ctx, data+total, count-total, &done, 
-                tm_getsuccess(tm));
+        err = io->send(io->ctx, data+total, count-total, &done, tm_get(tm));
         total += done;
     }
     *sent = total;
@@ -156,7 +155,7 @@ int recvraw(lua_State *L, p_buf buf, size_t wanted)
     size_t total = 0;
     luaL_Buffer b;
     luaL_buffinit(L, &b);
-    while (total < wanted && err == IO_DONE) {
+    while (total < wanted && (err == IO_DONE || err == IO_RETRY)) {
         size_t count; const char *data;
         err = buf_get(buf, &data, &count);
         count = MIN(count, wanted - total);
@@ -177,7 +176,7 @@ int recvall(lua_State *L, p_buf buf)
     int err = IO_DONE;
     luaL_Buffer b;
     luaL_buffinit(L, &b);
-    while (err == IO_DONE) {
+    while (err == IO_DONE || err == IO_RETRY) {
         const char *data; size_t count;
         err = buf_get(buf, &data, &count);
         luaL_addlstring(&b, data, count);
@@ -197,7 +196,7 @@ int recvline(lua_State *L, p_buf buf)
     int err = IO_DONE;
     luaL_Buffer b;
     luaL_buffinit(L, &b);
-    while (err == IO_DONE) {
+    while (err == IO_DONE || err == IO_RETRY) {
         size_t count, pos; const char *data;
         err = buf_get(buf, &data, &count);
         pos = 0;
@@ -240,8 +239,7 @@ int buf_get(p_buf buf, const char **data, size_t *count)
     p_tm tm = buf->tm;
     if (buf_isempty(buf)) {
         size_t got;
-        err = io->recv(io->ctx, buf->data, BUF_SIZE, &got, 
-                tm_getsuccess(tm));
+        err = io->recv(io->ctx, buf->data, BUF_SIZE, &got, tm_get(tm));
         buf->first = 0;
         buf->last = got;
     }
