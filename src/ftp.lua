@@ -98,13 +98,13 @@ function metat.__index:send(sendt)
     socket.try(self.pasvt or self.portt, "need port or pasv first")
     if self.pasvt then data = socket.try(pasv(self.pasvt)) end
     socket.try(self.tp:command(sendt.command, sendt.argument))
+    local code, reply = socket.try(self.tp:check{"2..", "1.."})
     if self.portt then data = socket.try(port(self.portt)) end
     local step = sendt.step or ltn12.pump.step
-    local code, reply
     local checkstep = function(src, snk)
         local readyt = socket.select(readt, nil, 0)
         if readyt[tp] then
-            code, reply = self.tp:check{"2..", "1.."}
+            code, reply = self.tp:check("2..")
             if not code then 
                 data:close()
                 return nil, reply 
@@ -116,7 +116,6 @@ function metat.__index:send(sendt)
     end
     local sink = socket.sink("close-when-empty", data)
     socket.try(ltn12.pump.all(sendt.source, sink, checkstep))
-    if not code then code = socket.try(self.tp:check{"1..", "2.."}) end
     if string.find(code, "1..") then socket.try(self.tp:check("2..")) end
     return 1
 end
@@ -126,6 +125,7 @@ function metat.__index:receive(recvt)
     socket.try(self.pasvt or self.portt, "need port or pasv first")
     if self.pasvt then data = socket.try(pasv(self.pasvt)) end
     socket.try(self.tp:command(recvt.command, recvt.argument))
+    local code = socket.try(self.tp:check{"1..", "2.."})
     if self.portt then data = socket.try(port(self.portt)) end
     local source = socket.source("until-closed", data)
     local step = recvt.step or ltn12.pump.step
@@ -135,7 +135,6 @@ function metat.__index:receive(recvt)
         return ret, err
     end
     socket.try(ltn12.pump.all(source, recvt.sink, checkstep))
-    local code = socket.try(self.tp:check{"1..", "2.."})
     if string.find(code, "1..") then socket.try(self.tp:check("2..")) end
     return 1
 end
