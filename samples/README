@@ -11,9 +11,11 @@ printed by listen.lua.
 
     dict.lua                -- dict client
 
-The  dict.lua module  is a  cool simple  client for  the DICT  protocol,
-written by Luiz  Henrique Figueiredo. Just run it and  enter a few words
-to see it working.
+The dict.lua  module was  a cool  simple client  for the  DICT protocol,
+written by Luiz Henrique Figueiredo. This new version has been converted
+into a library, similar to the HTTP  and FTP libraries, that can be used
+from within  any luasocket application. Take  a look on the  source code
+and you will be able to figure out how to use it.
 
     daytimeclnt.lua         -- day time client
 
