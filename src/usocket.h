@@ -16,14 +16,12 @@
 #include <unistd.h>
 /* fnctnl function and associated constants */
 #include <fcntl.h>
-/* struct timeval and CLK_TCK */
-#include <sys/time.h>
-/* times function and struct tms */
-#include <sys/times.h>
 /* struct sockaddr */
 #include <sys/types.h>
 /* socket function */
 #include <sys/socket.h>
+/* struct timeval */
+#include <sys/time.h>
 /* gethostbyname and gethostbyaddr functions */
 #include <netdb.h>
 /* sigpipe handling */

@@ -228,6 +228,7 @@ function test_totaltimeoutsend(len, tm, sl)
     data:settimeout(tm, "total")
     str = string.rep("a", 2*len)
     total, err, partial, elapsed = data:send(str)
+print(elapsed, "!")
     check_timeout(tm, sl, elapsed, err, "send", "total", 
         total == 2*len)
 end
@@ -400,27 +401,27 @@ function accept_errors()
     d:setfd(c:getfd())
     d:settimeout(2)
     local r, e = d:accept()
-    assert(not r and e == "not listening", e)
-    print("ok")
+    assert(not r and e)
+    print("ok: ", e)
     io.stderr:write("not supported: ")
     local c, e = socket.udp()
     assert(c, e);
     d:setfd(c:getfd())
     local r, e = d:accept()
-    assert(not r and e == "not supported" or e == "not listening", e)
-    print("ok")
+    assert(not r and e)
+    print("ok: ", e)
 end
 
 ------------------------------------------------------------------------
 function connect_errors()
     io.stderr:write("connection refused: ")
     local c, e = socket.connect("localhost", 1);
-    assert(not c and e == "connection refused", e)
-    print("ok")
+    assert(not c and e)
+    print("ok: ", e)
     io.stderr:write("host not found: ")
     local c, e = socket.connect("host.is.invalid", 1);
-    assert(not c and e == "host not found", e)
-    print("ok")
+    assert(not c and e, e)
+    print("ok: ", e)
 end
 
 ------------------------------------------------------------------------
@@ -432,36 +433,25 @@ function rebind_test()
     s:setoption("reuseaddr", false)
     r, e = s:bind("localhost", p)
     assert(not r, "managed to rebind!")
-    assert(e == "address already in use")
-    print("ok")
+    assert(e)
+    print("ok: ", e)
 end
 
 ------------------------------------------------------------------------
-
-test("character line")
-test_asciiline(1)
-test_asciiline(17)
-test_asciiline(200)
-test_asciiline(4091)
-test_asciiline(80199)
-test_asciiline(8000000)
-test_asciiline(80199)
-test_asciiline(4091)
-test_asciiline(200)
-test_asciiline(17)
-test_asciiline(1)
-
 test("method registration")
 test_methods(socket.tcp(), {
-   "accept",
+    "accept",
     "bind",
     "close",
     "connect",
+    "dirty",
+    "getfd",
     "getpeername",
     "getsockname",
     "listen",
     "receive",
     "send",
+    "setfd",
     "setoption",
     "setpeername",
     "setsockname",
@@ -472,15 +462,19 @@ test_methods(socket.tcp(), {
 test_methods(socket.udp(), {
     "close", 
     "getpeername",
+    "dirty",
+    "getfd",
+    "getpeername",
     "getsockname",
     "receive", 
     "receivefrom", 
     "send", 
     "sendto", 
+    "setfd", 
     "setoption",
     "setpeername",
     "setsockname",
-    "settimeout", 
+    "settimeout"
 })
 
 test("select function")
@@ -504,7 +498,18 @@ test("accept function: ")
 accept_timeout()
 accept_errors()
 
-
+test("character line")
+test_asciiline(1)
+test_asciiline(17)
+test_asciiline(200)
+test_asciiline(4091)
+test_asciiline(80199)
+test_asciiline(8000000)
+test_asciiline(80199)
+test_asciiline(4091)
+test_asciiline(200)
+test_asciiline(17)
+test_asciiline(1)
 
 test("mixed patterns")
 test_mixed(1)
@@ -566,8 +571,9 @@ test_raw(1)
 test("total timeout on send")
 test_totaltimeoutsend(800091, 1, 3)
 test_totaltimeoutsend(800091, 2, 3)
-test_totaltimeoutsend(800091, 3, 2)
+test_totaltimeoutsend(800091, 5, 2)
 test_totaltimeoutsend(800091, 3, 1)
+
 
 test("total timeout on receive")
 test_totaltimeoutreceive(800091, 1, 3)

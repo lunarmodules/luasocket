@@ -10,6 +10,7 @@
 #include <lauxlib.h>
 
 #include "socket.h"
+#include "timeout.h"
 #include "select.h"
 
 /*=========================================================================*\
@@ -48,19 +49,21 @@ int select_open(lua_State *L) {
 * Waits for a set of sockets until a condition is met or timeout.
 \*-------------------------------------------------------------------------*/
 static int global_select(lua_State *L) {
-    int timeout, rtab, wtab, itab, max_fd, ret, ndirty;
+    int rtab, wtab, itab, max_fd, ret, ndirty;
     fd_set rset, wset;
+    t_tm tm;
+    double t = luaL_optnumber(L, 3, -1);
     FD_ZERO(&rset); FD_ZERO(&wset);
     lua_settop(L, 3);
-    timeout = lua_isnil(L, 3) ? -1 : (int)(luaL_checknumber(L, 3) * 1000);
     lua_newtable(L); itab = lua_gettop(L);
     lua_newtable(L); rtab = lua_gettop(L);
     lua_newtable(L); wtab = lua_gettop(L);
     max_fd = collect_fd(L, 1, -1, itab, &rset);
     ndirty = check_dirty(L, 1, rtab, &rset);
-    timeout = ndirty > 0? 0: timeout;
+    t = ndirty > 0? 0.0: t;
+    tm_init(&tm, t, -1);
     max_fd = collect_fd(L, 2, max_fd, itab, &wset);
-    ret = sock_select(max_fd+1, &rset, &wset, NULL, timeout);
+    ret = sock_select(max_fd+1, &rset, &wset, NULL, &tm);
     if (ret > 0 || (ret == 0 && ndirty > 0)) {
         return_fd(L, &rset, max_fd+1, itab, rtab, ndirty);
         return_fd(L, &wset, max_fd+1, itab, wtab, 0);

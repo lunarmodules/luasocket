@@ -1,8 +1,9 @@
+setup error messages in the default case.
 listen defaults to 32 backlog
-smtp sends quit on exceptions
-accept/connect interrupt safe
+smtp/ftp/http fail gracefully 
+accept/connect/select interrupt safe
 accepted sockets are nonblocking
-new timming functions. better sleep/gettime
+new timming functions. higher resolution, no wrap around
 bug fixes in the manual
 getfd missing cast
 added unix domain support example

@@ -41,17 +41,15 @@ int sock_open(void);
 int sock_close(void);
 void sock_destroy(p_sock ps);
 void sock_shutdown(p_sock ps, int how); 
-int sock_send(p_sock ps, const char *data, size_t count, 
-        size_t *sent, int timeout);
-int sock_recv(p_sock ps, char *data, size_t count, 
-        size_t *got, int timeout);
+int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm);
+int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm);
 int sock_sendto(p_sock ps, const char *data, size_t count, 
-        size_t *sent, SA *addr, socklen_t addr_len, int timeout);
+        size_t *sent, SA *addr, socklen_t addr_len, p_tm tm);
 int sock_recvfrom(p_sock ps, char *data, size_t count, 
-        size_t *got, SA *addr, socklen_t *addr_len, int timeout);
+        size_t *got, SA *addr, socklen_t *addr_len, p_tm tm);
 void sock_setnonblocking(p_sock ps);
 void sock_setblocking(p_sock ps);
-int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, int timeout);
+int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm);
 
 const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm); 
 const char *sock_create(p_sock ps, int domain, int type, int protocol);
@@ -60,6 +58,8 @@ const char *sock_listen(p_sock ps, int backlog);
 const char *sock_accept(p_sock ps, p_sock pa, SA *addr, 
         socklen_t *addr_len, p_tm tm);
 
+const char *sock_geterr(p_sock ps, int code);
 const char *sock_hoststrerror(void);
+const char *sock_strerror(void);
 
 #endif /* SOCK_H */

@@ -20,17 +20,10 @@
 
 #include "socket.h"
 
-static const char *sock_createstrerror(int err);
-static const char *sock_bindstrerror(int err);
-static const char *sock_connectstrerror(int err);
-static const char *sock_acceptstrerror(int err);
-static const char *sock_listenstrerror(int err);
-
 /*-------------------------------------------------------------------------*\
 * Initializes module 
 \*-------------------------------------------------------------------------*/
-int sock_open(void)
-{
+int sock_open(void) {
 #if DOESNT_COMPILE_TRY_THIS
     struct sigaction ignore;
     memset(&ignore, 0, sizeof(ignore));
@@ -45,16 +38,14 @@ int sock_open(void)
 /*-------------------------------------------------------------------------*\
 * Close module 
 \*-------------------------------------------------------------------------*/
-int sock_close(void)
-{
+int sock_close(void) {
     return 1;
 }
 
 /*-------------------------------------------------------------------------*\
 * Close and inutilize socket
 \*-------------------------------------------------------------------------*/
-void sock_destroy(p_sock ps)
-{
+void sock_destroy(p_sock ps) {
     if (*ps != SOCK_INVALID) {
         sock_setblocking(ps);
         close(*ps);
@@ -63,23 +54,26 @@ void sock_destroy(p_sock ps)
 }
 
 /*-------------------------------------------------------------------------*\
-* Select with int timeout in ms
+* Select with timeout control
 \*-------------------------------------------------------------------------*/
-int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, int timeout)
-{
-    struct timeval tv;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    return select(n, rfds, wfds, efds, timeout >= 0? &tv: NULL);
+int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm) {
+    int ret;
+    do {
+        struct timeval tv;
+        double t = tm_getretry(tm);
+        tv.tv_sec = (int) t;
+        tv.tv_usec = (int) ((t - tv.tv_sec) * 1.0e6);
+        ret = select(n, rfds, wfds, efds, t >= 0.0? &tv: NULL);
+    } while (ret < 0 && errno == EINTR);
+    return ret;
 }
 
 /*-------------------------------------------------------------------------*\
 * Creates and sets up a socket
 \*-------------------------------------------------------------------------*/
-const char *sock_create(p_sock ps, int domain, int type, int protocol)
-{
+const char *sock_create(p_sock ps, int domain, int type, int protocol) {
     t_sock sock = socket(domain, type, protocol);
-    if (sock == SOCK_INVALID) return sock_createstrerror(errno);
+    if (sock == SOCK_INVALID) return sock_strerror();
     *ps = sock;
     return NULL;
 }
@@ -87,50 +81,49 @@ const char *sock_create(p_sock ps, int domain, int type, int protocol)
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm)
-{
+const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm) {
     t_sock sock = *ps;
     int err;
     /* don't call on closed socket */
-    if (sock == SOCK_INVALID) return io_strerror(IO_CLOSED);
+    if (sock == SOCK_INVALID) return io_strerror(IO_CLOSED); 
     /* ask system to connect */
     do err = connect(sock, addr, addr_len);
     while (err < 0 && errno == EINTR);
     /* if no error, we're done */
     if (err == 0) return NULL; 
     /* make sure the system is trying to connect */
-    if (errno != EINPROGRESS) return sock_connectstrerror(errno);
+    if (errno != EINPROGRESS) return sock_strerror();
+    /* optimize for timeout = 0 */
+    if (tm_get(tm) == 0.0) return io_strerror(IO_TIMEOUT);
     /* wait for a timeout or for the system's answer */
     for ( ;; ) {
-        fd_set rfds, wfds, efds;
+        fd_set rfds, wfds;
         FD_ZERO(&rfds); FD_SET(sock, &rfds);
         FD_ZERO(&wfds); FD_SET(sock, &wfds);
-        FD_ZERO(&efds); FD_SET(sock, &efds);
         /* we run select to avoid busy waiting */
-        do err = sock_select(sock+1, &rfds, &wfds, &efds, tm_getretry(tm));
-        while (err < 0 && errno == EINTR); 
-        /* if selects readable, try reading */
+        err = sock_select(sock+1, &rfds, &wfds, NULL, tm);
+        /* if there was an event, check what happened */
         if (err > 0) {
             char dummy;
             /* recv will set errno to the value a blocking connect would set */
-            if (recv(sock, &dummy, 0, 0) < 0 && errno != EAGAIN)
-                return sock_connectstrerror(errno);
+            if (err > 1 && FD_ISSET(sock, &rfds) && 
+                    recv(sock, &dummy, 0, 0) < 0 && errno != EAGAIN)
+                return sock_strerror();
             else 
                 return NULL;
         /* if no event happened, there was a timeout */
-        } else return io_strerror(IO_TIMEOUT);
+        } else if (err == 0) return io_strerror(IO_TIMEOUT);
     } 
-    return io_strerror(IO_TIMEOUT); /* can't get here */
+    return sock_strerror();
 }
 
 /*-------------------------------------------------------------------------*\
 * Binds or returns error message
 \*-------------------------------------------------------------------------*/
-const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
-{
+const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len) {
     const char *err = NULL;
     sock_setblocking(ps);
-    if (bind(*ps, addr, addr_len) < 0) err = sock_bindstrerror(errno);
+    if (bind(*ps, addr, addr_len) < 0) err = sock_strerror();
     sock_setnonblocking(ps);
     return err;
 }
@@ -138,12 +131,10 @@ const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
 /*-------------------------------------------------------------------------*\
 * 
 \*-------------------------------------------------------------------------*/
-const char* sock_listen(p_sock ps, int backlog)
-{
+const char* sock_listen(p_sock ps, int backlog) {
     const char *err = NULL;
     sock_setblocking(ps);
-    if (listen(*ps, backlog))
-        err = sock_listenstrerror(errno);
+    if (listen(*ps, backlog)) err = sock_strerror();
     sock_setnonblocking(ps);
     return err;
 }
@@ -151,8 +142,7 @@ const char* sock_listen(p_sock ps, int backlog)
 /*-------------------------------------------------------------------------*\
 * 
 \*-------------------------------------------------------------------------*/
-void sock_shutdown(p_sock ps, int how)
-{
+void sock_shutdown(p_sock ps, int how) {
     sock_setblocking(ps);
     shutdown(*ps, how);
     sock_setnonblocking(ps);
@@ -162,12 +152,11 @@ void sock_shutdown(p_sock ps, int how)
 * Accept with timeout
 \*-------------------------------------------------------------------------*/
 const char *sock_accept(p_sock ps, p_sock pa, SA *addr, 
-        socklen_t *addr_len, p_tm tm)
-{
+        socklen_t *addr_len, p_tm tm) {
     t_sock sock = *ps;
     SA dummy_addr;
     socklen_t dummy_len = sizeof(dummy_addr);
-    if (sock == SOCK_INVALID) return io_strerror(IO_CLOSED);
+    if (sock == SOCK_INVALID) return io_strerror(IO_CLOSED); 
     if (!addr) addr = &dummy_addr;
     if (!addr_len) addr_len = &dummy_len;
     for (;;) {
@@ -179,14 +168,16 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
         /* if result is valid, we are done */
         if (*pa != SOCK_INVALID) return NULL;
         /* find out if we failed for a fatal reason */
-        if (errno != EAGAIN && errno != ECONNABORTED)
-            return sock_acceptstrerror(errno);
+        /* if connection was aborted, we can try again if we have time */
+        if (errno != EAGAIN && errno != ECONNABORTED) return sock_strerror();
+        /* optimize for timeout = 0 case */
+        if (tm_get(tm) == 0.0) return io_strerror(IO_TIMEOUT);
         /* call select to avoid busy-wait. */
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        do err = sock_select(sock+1, &fds, NULL, NULL, tm_getretry(tm));
-        while (err < 0 && errno == EINTR);
+        err = sock_select(sock+1, &fds, NULL, NULL, tm);
         if (err == 0) return io_strerror(IO_TIMEOUT);
+        else if (err < 0) return sock_strerror();
     } 
     return io_strerror(IO_TIMEOUT); /* can't get here */
 }
@@ -194,136 +185,136 @@ const char *sock_accept(p_sock ps, p_sock pa, SA *addr,
 /*-------------------------------------------------------------------------*\
 * Send with timeout
 \*-------------------------------------------------------------------------*/
-int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, 
-        int timeout)
+int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
 {
     t_sock sock = *ps;
-    ssize_t put;
     /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    /* make sure we repeat in case the call was interrupted */
-    do put = send(sock, data, count, 0);  
-    while (put < 0 && errno == EINTR);
-    /* deal with failure */
-    if (put <= 0) {
+    /* loop until we send something or we give up on error */
+    for ( ;; ) {
         int ret;
         fd_set fds;
-        /* in any case, nothing has been sent */
+        ssize_t put;
+        /* make sure we repeat in case the call was interrupted */
+        do put = send(sock, data, count, 0);  
+        while (put < 0 && errno == EINTR);
+        /* if we sent something, get out */ 
+        if (put > 0) { 
+            *sent = put;
+            return IO_DONE;
+        }
+        /* deal with failure */
         *sent = 0;
-        /* only proceed to select if no error happened */
-        if (errno != EAGAIN) return IO_ERROR;
-        /* optimize for the timeout = 0 case */
-        if (timeout == 0) return IO_TIMEOUT;
         /* here we know the connection has been closed */
-        if (errno == EPIPE) return IO_CLOSED;
+        if (put < 0 && errno == EPIPE) return IO_CLOSED;
+        /* send shouldn't return zero and we can only proceed if
+         * there was no serious error */
+        if (put == 0 || errno != EAGAIN) return IO_USER;
+        /* optimize for the timeout = 0 case */
+        if (tm_get(tm) == 0.0) return IO_TIMEOUT;
         /* run select to avoid busy wait */
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        ret = sock_select(sock+1, NULL, &fds, NULL, timeout);
+        ret = sock_select(sock+1, NULL, &fds, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        else if (ret > 0 || errno == EINTR) return IO_RETRY;
-        else return IO_ERROR;
-    /* here we successfully sent something */
-    } else {
-        *sent = put;
-        return IO_DONE;
-    }
+        if (ret < 0) return IO_USER;
+        /* otherwise, try sending again */
+    } 
 }
 
 /*-------------------------------------------------------------------------*\
 * Sendto with timeout
 \*-------------------------------------------------------------------------*/
 int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent, 
-        SA *addr, socklen_t addr_len, int timeout)
+        SA *addr, socklen_t addr_len, p_tm tm)
 {
     t_sock sock = *ps;
-    ssize_t put;
+    /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    do put = sendto(sock, data, count, 0, addr, addr_len);  
-    while (put < 0 && errno == EINTR);
-    if (put <= 0) {
+    /* loop until we send something or we give up on error */
+    for ( ;; ) {
         int ret;
         fd_set fds;
+        ssize_t put;
+        do put = sendto(sock, data, count, 0, addr, addr_len);  
+        while (put < 0 && errno == EINTR);
+        if (put > 0) { 
+            *sent = put;
+            return IO_DONE;
+        }
         *sent = 0;
-        if (errno != EAGAIN) return IO_ERROR;
-        if (timeout == 0) return IO_TIMEOUT;
-        if (errno == EPIPE) return IO_CLOSED;
+        if (put < 0 && errno == EPIPE) return IO_CLOSED;
+        if (put == 0 || errno != EAGAIN) return IO_USER;
+        if (tm_get(tm) == 0.0) return IO_TIMEOUT;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        ret = sock_select(sock+1, NULL, &fds, NULL, timeout);
+        ret = sock_select(sock+1, NULL, &fds, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        else if (ret > 0 || errno == EINTR) return IO_RETRY;
-        else return IO_ERROR;
-    } else {
-        *sent = put;
-        return IO_DONE;
-    }
+        if (ret < 0) return IO_USER;
+    } 
 }
 
 /*-------------------------------------------------------------------------*\
 * Receive with timeout
 \*-------------------------------------------------------------------------*/
-int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
-{
+int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
     t_sock sock = *ps;
-    ssize_t taken;
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    do taken = read(sock, data, count);  
-    while (taken < 0 && errno == EINTR);
-    if (taken <= 0) {
+    for ( ;; ) {
         fd_set fds;
         int ret;
+        ssize_t taken;
+        do taken = read(sock, data, count);  
+        while (taken < 0 && errno == EINTR);
+        if (taken > 0) {
+            *got = taken;
+            return IO_DONE;
+        }
         *got = 0;
         if (taken == 0) return IO_CLOSED;
-        if (errno != EAGAIN) return IO_ERROR;
-        if (timeout == 0) return IO_TIMEOUT;
+        if (errno != EAGAIN) return IO_USER;
+        if (tm_get(tm) == 0.0) return IO_TIMEOUT;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        ret = sock_select(sock+1, &fds, NULL, NULL, timeout);
+        ret = sock_select(sock+1, &fds, NULL, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        else if (ret > 0 || errno == EINTR) return IO_RETRY;
-        else return IO_ERROR;
-    } else {
-        *got = taken;
-        return IO_DONE;
-    }
+        if (ret < 0) return IO_USER;
+    } 
 }
 
 /*-------------------------------------------------------------------------*\
 * Recvfrom with timeout
 \*-------------------------------------------------------------------------*/
 int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got, 
-        SA *addr, socklen_t *addr_len, int timeout)
-{
+        SA *addr, socklen_t *addr_len, p_tm tm) {
     t_sock sock = *ps;
-    ssize_t taken;
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    do taken = recvfrom(sock, data, count, 0, addr, addr_len);  
-    while (taken < 0 && errno == EINTR);
-    if (taken <= 0) {
+    for ( ;; ) {
         fd_set fds;
         int ret;
+        ssize_t taken;
+        do taken = recvfrom(sock, data, count, 0, addr, addr_len);  
+        while (taken < 0 && errno == EINTR);
+        if (taken > 0) {
+            *got = taken;
+            return IO_DONE;
+        }
         *got = 0;
         if (taken == 0) return IO_CLOSED;
-        if (errno != EAGAIN) return IO_ERROR;
-        if (timeout == 0) return IO_TIMEOUT;
+        if (errno != EAGAIN) return IO_USER;
+        if (tm_get(tm) == 0.0) return IO_TIMEOUT;
         FD_ZERO(&fds);
         FD_SET(sock, &fds);
-        ret = sock_select(sock+1, &fds, NULL, NULL, timeout);
+        ret = sock_select(sock+1, &fds, NULL, NULL, tm);
         if (ret == 0) return IO_TIMEOUT;
-        else if (ret > 0 || errno == EINTR) return IO_RETRY;
-        else return IO_ERROR;
-    } else {
-        *got = taken;
-        return IO_DONE;
-    }
+        if (ret < 0) return IO_USER;
+    } 
 }
 
 /*-------------------------------------------------------------------------*\
 * Put socket into blocking mode
 \*-------------------------------------------------------------------------*/
-void sock_setblocking(p_sock ps)
-{
+void sock_setblocking(p_sock ps) {
     int flags = fcntl(*ps, F_GETFL, 0);
     flags &= (~(O_NONBLOCK));
     fcntl(*ps, F_SETFL, flags);
@@ -332,8 +323,7 @@ void sock_setblocking(p_sock ps)
 /*-------------------------------------------------------------------------*\
 * Put socket into non-blocking mode
 \*-------------------------------------------------------------------------*/
-void sock_setnonblocking(p_sock ps)
-{
+void sock_setnonblocking(p_sock ps) {
     int flags = fcntl(*ps, F_GETFL, 0);
     flags |= O_NONBLOCK;
     fcntl(*ps, F_SETFL, flags);
@@ -342,98 +332,20 @@ void sock_setnonblocking(p_sock ps)
 /*-------------------------------------------------------------------------*\
 * Error translation functions
 \*-------------------------------------------------------------------------*/
-/* return error messages for the known errors reported by gethostbyname */
-const char *sock_hoststrerror(void)
-{
-    switch (h_errno) {
-        case HOST_NOT_FOUND: return "host not found";
-        case NO_ADDRESS: return "valid host but no ip found";
-        case NO_RECOVERY: return "name server error";
-        case TRY_AGAIN: return "name server unavailable, try again later";
-        default: return "unknown error";
+const char *sock_hoststrerror(void) {
+    return hstrerror(h_errno);
+}
+
+/* make sure important error messages are standard */
+const char *sock_strerror(void) {
+    switch (errno) {
+        case EADDRINUSE:
+            return "address already in use";
+        default:
+            return strerror(errno);
     }
 }
 
-/* return error messages for the known errors reported by socket */
-static const char *sock_createstrerror(int err)
-{
-    switch (err) {
-        case EPROTONOSUPPORT: return "protocol not supported";
-        case EACCES: return "access denied";
-        case EMFILE: return "process file table is full";
-        case ENFILE: return "kernel file table is full";
-        case EINVAL: return "unknown protocol or family";
-        case ENOBUFS: return "insuffucient buffer space";
-        default: return "unknown error";
-    }
-}
-
-/* return error messages for the known errors reported by accept */
-static const char *sock_acceptstrerror(int err)
-{
-    switch (err) {
-        case EAGAIN: return io_strerror(IO_RETRY);
-        case EBADF: return "invalid descriptor";
-        case ENOBUFS: case ENOMEM: return "insuffucient buffer space";
-        case ENOTSOCK: return "descriptor not a socket";
-        case EOPNOTSUPP: return "not supported";
-        case EINTR: return "call interrupted";
-        case ECONNABORTED: return "connection aborted";
-        case EINVAL: return "not listening";
-        case EMFILE: return "process file table is full";
-        case ENFILE: return "kernel file table is full";
-        case EFAULT: return "invalid memory address";
-        default: return "unknown error";
-    }
-}
-
-
-/* return error messages for the known errors reported by bind */
-static const char *sock_bindstrerror(int err)
-{
-    switch (err) {
-        case EBADF: return "invalid descriptor";
-        case ENOTSOCK: return "descriptor not a socket";
-        case EADDRNOTAVAIL: return "address unavailable in local host";
-        case EADDRINUSE: return "address already in use";
-        case EINVAL: return "already bound";
-        case EACCES: return "access denied";
-        case EFAULT: return "invalid memory address";
-        case ENOMEM: return "out of memory";
-        default: return "unknown error";
-    }
-}
-
-/* return error messages for the known errors reported by listen */
-static const char *sock_listenstrerror(int err)
-{
-    switch (err) {
-        case EADDRINUSE: return "local address already in use";
-        case EBADF: return "invalid descriptor";
-        case ENOTSOCK: return "descriptor not a socket";
-        case EOPNOTSUPP: return "not supported";
-        default: return "unknown error";
-    }
-}
-
-/* return error messages for the known errors reported by connect */
-static const char *sock_connectstrerror(int err)
-{
-    switch (err) {
-        case EBADF: return "invalid descriptor";
-        case EFAULT: return "invalid memory address";
-        case ENOTSOCK: return "descriptor not a socket";
-        case EADDRNOTAVAIL: return "address not available in local host";
-        case EISCONN: return "already connected";
-        case ECONNREFUSED: return "connection refused";
-        case ETIMEDOUT: return io_strerror(IO_TIMEOUT);
-        case ENETUNREACH: return "network is unreachable";
-        case EADDRINUSE: return "local address already in use";
-        case EINPROGRESS: return "would block";
-        case EALREADY: return "connect already in progress";
-        case EAGAIN: return "not enough free ports";
-        case EAFNOSUPPORT: return "address family not supported";
-        case EPERM: return "broadcast not enabled or firewall block";
-        default: return "unknown error";
-    }
+const char *sock_geterr(p_sock ps, int code) {
+    return sock_strerror();
 }

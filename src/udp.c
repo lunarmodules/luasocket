@@ -41,25 +41,26 @@ static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
+static void pusherror(lua_State *L, int code);
 
 /* udp object methods */
 static luaL_reg udp[] = {
-    {"setpeername", meth_setpeername},
-    {"setsockname", meth_setsockname},
-    {"getsockname", meth_getsockname},
-    {"getpeername", meth_getpeername},
-    {"send",        meth_send},
-    {"sendto",      meth_sendto},
-    {"receive",     meth_receive},
-    {"receivefrom", meth_receivefrom},
-    {"settimeout",  meth_settimeout},
-    {"close",       meth_close},
-    {"setoption",   meth_setoption},
     {"__gc",        meth_close},
     {"__tostring",  aux_tostring},
-    {"getfd",       meth_getfd},
-    {"setfd",       meth_setfd},
+    {"close",       meth_close},
     {"dirty",       meth_dirty},
+    {"getfd",       meth_getfd},
+    {"getpeername", meth_getpeername},
+    {"getsockname", meth_getsockname},
+    {"receive",     meth_receive},
+    {"receivefrom", meth_receivefrom},
+    {"send",        meth_send},
+    {"sendto",      meth_sendto},
+    {"setfd",       meth_setfd},
+    {"setoption",   meth_setoption},
+    {"setpeername", meth_setpeername},
+    {"setsockname", meth_setsockname},
+    {"settimeout",  meth_settimeout},
     {NULL,          NULL}
 };
 
@@ -99,35 +100,43 @@ int udp_open(lua_State *L)
     return 0;
 }
 
+
 /*=========================================================================*\
 * Lua methods
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
+* Pushes the error message
+\*-------------------------------------------------------------------------*/
+void pusherror(lua_State *L, int code) {
+    const char *err = code != IO_USER? io_strerror(code): "refused";
+    err = err? err: sock_strerror();
+    if (err) lua_pushstring(L, err);
+    else lua_pushnil(L);
+}
+
+/*-------------------------------------------------------------------------*\
 * Send data through connected udp socket
 \*-------------------------------------------------------------------------*/
-static int meth_send(lua_State *L)
-{
+static int meth_send(lua_State *L) {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{connected}", 1);
     p_tm tm = &udp->tm;
     size_t count, sent = 0;
     int err;
     const char *data = luaL_checklstring(L, 2, &count);
     tm_markstart(tm);
-    do err = sock_send(&udp->sock, data, count, &sent, tm_getretry(tm));
-    while (err == IO_RETRY);
+    err = sock_send(&udp->sock, data, count, &sent, tm);
     if (err == IO_DONE) lua_pushnumber(L, sent);
     else lua_pushnil(L);
     /* a 'closed' error on an unconnected means the target address was not
      * accepted by the transport layer */
-    io_pusherror(L, err == IO_CLOSED ? IO_REFUSED : err);
+    pusherror(L, err == IO_CLOSED ? IO_USER : err);
     return 2;
 }
 
 /*-------------------------------------------------------------------------*\
 * Send data through unconnected udp socket
 \*-------------------------------------------------------------------------*/
-static int meth_sendto(lua_State *L)
-{
+static int meth_sendto(lua_State *L) {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     size_t count, sent = 0;
     const char *data = luaL_checklstring(L, 2, &count);
@@ -142,22 +151,20 @@ static int meth_sendto(lua_State *L)
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     tm_markstart(tm);
-    do err = sock_sendto(&udp->sock, data, count, &sent, 
-            (SA *) &addr, sizeof(addr), tm_get(tm));
-    while (err == IO_RETRY);
+    err = sock_sendto(&udp->sock, data, count, &sent, 
+            (SA *) &addr, sizeof(addr), tm);
     if (err == IO_DONE) lua_pushnumber(L, sent);
     else lua_pushnil(L);
     /* a 'closed' error on an unconnected means the target address was not
      * accepted by the transport layer */
-    io_pusherror(L, err == IO_CLOSED ? IO_REFUSED : err);
+    pusherror(L, err == IO_CLOSED ? IO_USER : err);
     return 2;
 }
 
 /*-------------------------------------------------------------------------*\
 * Receives data from a UDP socket
 \*-------------------------------------------------------------------------*/
-static int meth_receive(lua_State *L)
-{
+static int meth_receive(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     char buffer[UDP_DATAGRAMSIZE];
     size_t got, count = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
@@ -165,19 +172,17 @@ static int meth_receive(lua_State *L)
     p_tm tm = &udp->tm;
     count = MIN(count, sizeof(buffer));
     tm_markstart(tm);
-    do err = sock_recv(&udp->sock, buffer, count, &got, tm_get(tm));
-    while (err == IO_RETRY);
+    err = sock_recv(&udp->sock, buffer, count, &got, tm);
     if (err == IO_DONE) lua_pushlstring(L, buffer, got);
     else lua_pushnil(L);
-    io_pusherror(L, err);
+    pusherror(L, err);
     return 2;
 }
 
 /*-------------------------------------------------------------------------*\
 * Receives data and sender from a UDP socket
 \*-------------------------------------------------------------------------*/
-static int meth_receivefrom(lua_State *L)
-{
+static int meth_receivefrom(lua_State *L) {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     struct sockaddr_in addr;
     socklen_t addr_len = sizeof(addr);
@@ -187,9 +192,8 @@ static int meth_receivefrom(lua_State *L)
     p_tm tm = &udp->tm;
     tm_markstart(tm);
     count = MIN(count, sizeof(buffer));
-    do err = sock_recvfrom(&udp->sock, buffer, count, &got, 
-            (SA *) &addr, &addr_len, tm_get(tm));
-    while (err == IO_RETRY);
+    err = sock_recvfrom(&udp->sock, buffer, count, &got, 
+            (SA *) &addr, &addr_len, tm);
     if (err == IO_DONE) {
         lua_pushlstring(L, buffer, got);
         lua_pushstring(L, inet_ntoa(addr.sin_addr));
@@ -197,7 +201,7 @@ static int meth_receivefrom(lua_State *L)
         return 3;
     } else {
         lua_pushnil(L);
-        io_pusherror(L, err);
+        pusherror(L, err);
         return 2;
     }
 }
@@ -205,23 +209,20 @@ static int meth_receivefrom(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Select support methods
 \*-------------------------------------------------------------------------*/
-static int meth_getfd(lua_State *L)
-{
+static int meth_getfd(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     lua_pushnumber(L, (int) udp->sock);
     return 1;
 }
 
 /* this is very dangerous, but can be handy for those that are brave enough */
-static int meth_setfd(lua_State *L)
-{
+static int meth_setfd(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     udp->sock = (t_sock) luaL_checknumber(L, 2);
     return 0;
 }
 
-static int meth_dirty(lua_State *L)
-{
+static int meth_dirty(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     (void) udp;
     lua_pushboolean(L, 0);
@@ -231,14 +232,12 @@ static int meth_dirty(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Just call inet methods
 \*-------------------------------------------------------------------------*/
-static int meth_getpeername(lua_State *L)
-{
+static int meth_getpeername(lua_State *L) {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{connected}", 1);
     return inet_meth_getpeername(L, &udp->sock);
 }
 
-static int meth_getsockname(lua_State *L)
-{
+static int meth_getsockname(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     return inet_meth_getsockname(L, &udp->sock);
 }
@@ -246,8 +245,7 @@ static int meth_getsockname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Just call option handler
 \*-------------------------------------------------------------------------*/
-static int meth_setoption(lua_State *L)
-{
+static int meth_setoption(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     return opt_meth_setoption(L, opt, &udp->sock);
 }
@@ -255,8 +253,7 @@ static int meth_setoption(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Just call tm methods
 \*-------------------------------------------------------------------------*/
-static int meth_settimeout(lua_State *L)
-{
+static int meth_settimeout(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     return tm_meth_settimeout(L, &udp->tm);
 }
@@ -264,8 +261,7 @@ static int meth_settimeout(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Turns a master udp object into a client object.
 \*-------------------------------------------------------------------------*/
-static int meth_setpeername(lua_State *L)
-{
+static int meth_setpeername(lua_State *L) {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     p_tm tm = &udp->tm;
     const char *address =  luaL_checkstring(L, 2);
@@ -289,8 +285,7 @@ static int meth_setpeername(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Closes socket used by object 
 \*-------------------------------------------------------------------------*/
-static int meth_close(lua_State *L)
-{
+static int meth_close(lua_State *L) {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     sock_destroy(&udp->sock);
     return 0;
@@ -299,8 +294,7 @@ static int meth_close(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Turns a master object into a server object
 \*-------------------------------------------------------------------------*/
-static int meth_setsockname(lua_State *L)
-{
+static int meth_setsockname(lua_State *L) {
     p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
@@ -320,8 +314,7 @@ static int meth_setsockname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Creates a master udp object 
 \*-------------------------------------------------------------------------*/
-static int global_create(lua_State *L)
-{
+static int global_create(lua_State *L) {
     t_sock sock;
     const char *err = inet_trycreate(&sock, SOCK_DGRAM);
     /* try to allocate a system socket */

@@ -72,50 +72,51 @@ local function tget(gett)
     local retries, dgram, sent, datahost, dataport, code
     local last = 0
 	local con = socket.try(socket.udp())
+    local try = socket.newtry(function() con:close() end)
     -- convert from name to ip if needed
-	gett.host = socket.try(socket.dns.toip(gett.host))
+	gett.host = try(socket.dns.toip(gett.host))
 	con:settimeout(1)
     -- first packet gives data host/port to be used for data transfers
     retries = 0
 	repeat 
-		sent = socket.try(con:sendto(RRQ(gett.path, "octet"), 
+		sent = try(con:sendto(RRQ(gett.path, "octet"), 
             gett.host, gett.port))
 		dgram, datahost, dataport = con:receivefrom()
         retries = retries + 1
 	until dgram or datahost ~= "timeout" or retries > 5
-	socket.try(dgram, datahost) 
+	try(dgram, datahost) 
     -- associate socket with data host/port
-	socket.try(con:setpeername(datahost, dataport))
+	try(con:setpeername(datahost, dataport))
     -- default sink
     local sink = gett.sink or ltn12.sink.null()
     -- process all data packets
 	while 1 do
         -- decode packet
 		code = get_OP(dgram)
-		socket.try(code ~= OP_ERROR, get_ERROR(dgram))
-        socket.try(code == OP_DATA, "unhandled opcode " .. code)
+		try(code ~= OP_ERROR, get_ERROR(dgram))
+        try(code == OP_DATA, "unhandled opcode " .. code)
         -- get data packet parts
 		local block, data = split_DATA(dgram)
         -- if not repeated, write
         if block == last+1 then
-		    socket.try(sink(data))
+		    try(sink(data))
             last = block
         end
         -- last packet brings less than 512 bytes of data
 		if string.len(data) < 512 then 
-            socket.try(con:send(ACK(block)))
-            socket.try(con:close())
-            socket.try(sink(nil))
+            try(con:send(ACK(block)))
+            try(con:close())
+            try(sink(nil))
             return 1
         end
         -- get the next packet
         retries = 0
 		repeat 
-			sent = socket.try(con:send(ACK(last)))
+			sent = try(con:send(ACK(last)))
 			dgram, err = con:receive()
             retries = retries + 1
 		until dgram or err ~= "timeout" or retries > 5
-		socket.try(dgram, err)
+		try(dgram, err)
 	end
 end
 

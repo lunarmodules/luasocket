@@ -163,7 +163,8 @@ static int meth_accept(lua_State *L)
         /* initialize structure fields */
         sock_setnonblocking(&sock);
         clnt->sock = sock;
-        io_init(&clnt->io, (p_send)sock_send, (p_recv)sock_recv, &clnt->sock);
+        io_init(&clnt->io, (p_send) sock_send, (p_recv) sock_recv, 
+                (p_geterr) sock_geterr, &clnt->sock);
         tm_init(&clnt->tm, -1, -1);
         buf_init(&clnt->buf, &clnt->io, &clnt->tm);
         return 1;
@@ -313,7 +314,8 @@ static int global_create(lua_State *L)
         /* initialize remaining structure fields */
         sock_setnonblocking(&sock);
         tcp->sock = sock;
-        io_init(&tcp->io, (p_send) sock_send, (p_recv) sock_recv, &tcp->sock);
+        io_init(&tcp->io, (p_send) sock_send, (p_recv) sock_recv, 
+                (p_geterr) sock_geterr, &tcp->sock);
         tm_init(&tcp->tm, -1, -1);
         buf_init(&tcp->buf, &tcp->io, &tcp->tm);
         return 1;

@@ -46,8 +46,7 @@ static luaL_reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initialize structure
 \*-------------------------------------------------------------------------*/
-void tm_init(p_tm tm, int block, int total)
-{
+void tm_init(p_tm tm, double block, double total) {
     tm->block = block;
     tm->total = total;
 }
@@ -60,18 +59,17 @@ void tm_init(p_tm tm, int block, int total)
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-int tm_get(p_tm tm)
-{
-    if (tm->block < 0 && tm->total < 0) {
+double tm_get(p_tm tm) {
+    if (tm->block < 0.0 && tm->total < 0.0) {
         return -1;
-    } else if (tm->block < 0) {
-        int t = tm->total - tm_gettime() + tm->start;
-        return MAX(t, 0);
-    } else if (tm->total < 0) {
+    } else if (tm->block < 0.0) {
+        double t = tm->total - tm_gettime() + tm->start;
+        return MAX(t, 0.0);
+    } else if (tm->total < 0.0) {
         return tm->block;
     } else {
-        int t = tm->total - tm_gettime() + tm->start;
-        return MIN(tm->block, MAX(t, 0));
+        double t = tm->total - tm_gettime() + tm->start;
+        return MIN(tm->block, MAX(t, 0.0));
     }
 }
 
@@ -82,8 +80,7 @@ int tm_get(p_tm tm)
 * Returns
 *   start field of structure
 \*-------------------------------------------------------------------------*/
-int tm_getstart(p_tm tm)
-{
+double tm_getstart(p_tm tm) {
     return tm->start;
 }
 
@@ -95,19 +92,18 @@ int tm_getstart(p_tm tm)
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-int tm_getretry(p_tm tm)
-{
-    if (tm->block < 0 && tm->total < 0) {
+double tm_getretry(p_tm tm) {
+    if (tm->block < 0.0 && tm->total < 0.0) {
         return -1;
-    } else if (tm->block < 0) {
-        int t = tm->total - tm_gettime() + tm->start;
-        return MAX(t, 0);
-    } else if (tm->total < 0) {
-        int t = tm->block - tm_gettime() + tm->start;
-        return MAX(t, 0);
+    } else if (tm->block < 0.0) {
+        double t = tm->total - tm_gettime() + tm->start;
+        return MAX(t, 0.0);
+    } else if (tm->total < 0.0) {
+        double t = tm->block - tm_gettime() + tm->start;
+        return MAX(t, 0.0);
     } else {
-        int t = tm->total - tm_gettime() + tm->start;
-        return MIN(tm->block, MAX(t, 0));
+        double t = tm->total - tm_gettime() + tm->start;
+        return MIN(tm->block, MAX(t, 0.0));
     }
 }
 
@@ -116,8 +112,7 @@ int tm_getretry(p_tm tm)
 * Input
 *   tm: timeout control structure
 \*-------------------------------------------------------------------------*/
-p_tm tm_markstart(p_tm tm)
-{
+p_tm tm_markstart(p_tm tm) {
     tm->start = tm_gettime();
     return tm;
 }
@@ -128,24 +123,23 @@ p_tm tm_markstart(p_tm tm)
 *   time in ms.
 \*-------------------------------------------------------------------------*/
 #ifdef _WIN32
-int tm_gettime(void) 
-{
-    return GetTickCount();
+double tm_gettime(void) {
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    return ft.dwLowDateTime/1.0e7 + ft.dwHighDateTime*(4294967296.0/1.0e7);
 }
 #else
-int tm_gettime(void) 
-{
+double tm_gettime(void) {
     struct timeval v;
     gettimeofday(&v, (struct timezone *) NULL);
-    return v.tv_sec * 1000 + v.tv_usec/1000;
+    return v.tv_sec + v.tv_usec/1.0e6;
 }
 #endif
 
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int tm_open(lua_State *L)
-{
+int tm_open(lua_State *L) {
     luaL_openlib(L, NULL, func, 0);
     return 0;
 }
@@ -156,16 +150,15 @@ int tm_open(lua_State *L)
 *   time: time out value in seconds
 *   mode: "b" for block timeout, "t" for total timeout. (default: b)
 \*-------------------------------------------------------------------------*/
-int tm_meth_settimeout(lua_State *L, p_tm tm)
-{
-    int ms = lua_isnil(L, 2) ? -1 : (int) (luaL_checknumber(L, 2)*1000.0);
+int tm_meth_settimeout(lua_State *L, p_tm tm) {
+    double t = luaL_optnumber(L, 2, -1);
     const char *mode = luaL_optstring(L, 3, "b");
     switch (*mode) {
         case 'b':
-            tm->block = ms; 
+            tm->block = t; 
             break;
         case 'r': case 't':
-            tm->total = ms;
+            tm->total = t;
             break;
         default:
             luaL_argcheck(L, 0, 3, "invalid timeout mode");
@@ -183,7 +176,7 @@ int tm_meth_settimeout(lua_State *L, p_tm tm)
 \*-------------------------------------------------------------------------*/
 static int tm_lua_gettime(lua_State *L)
 {
-    lua_pushnumber(L, tm_gettime()/1000.0);
+    lua_pushnumber(L, tm_gettime());
     return 1;
 }
 

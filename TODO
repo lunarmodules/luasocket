@@ -1,8 +1,8 @@
-setup error messages in the default case.
+create the getstats method. 
 
-ajeitar o connect com a dica do mike
-    if ((err > 1 || !FD_ISSET(sock, &wfds)) &&
-    recv(sock, &dummy, 0, 0) < 0 && errno != EWOULDBLOCK) ...
+    sent, received, age = sock:getstats()
+
+take a look at DB's smtp patch
 
 sort out the wrap around of gettime...
     use doubles all over
