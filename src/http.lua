@@ -39,10 +39,10 @@ local function third(a, b, c)
     return c
 end
 
-local function receive_headers(reqt, respt)
-    local headers = {}
-    local sock = respt.tmp.sock
+local function receive_headers(reqt, respt, tmp)
+    local sock = tmp.sock
     local line, name, value, _
+    local headers = {}
     -- store results
     respt.headers = headers
     -- get first line
@@ -132,10 +132,10 @@ local function receive_body_untilclosed(sock, sink)
     hand(sink, nil)
 end
 
-local function receive_body(reqt, respt)
+local function receive_body(reqt, respt, tmp)
     local sink = reqt.sink or ltn12.sink.null()
     local headers = respt.headers
-    local sock = respt.tmp.sock
+    local sock = tmp.sock
     local te = headers["transfer-encoding"]
     if te and te ~= "identity" then 
         -- get by chunked transfer-coding of message body
@@ -174,47 +174,50 @@ local function send_headers(sock, headers)
     -- send request headers 
     for i, v in pairs(headers) do
         socket.try(sock:send(i .. ": " .. v .. "\r\n"))
+--io.write(i .. ": " .. v .. "\r\n")
     end
     -- mark end of request headers
     socket.try(sock:send("\r\n"))
+--io.write("\r\n")
 end
 
-local function should_receive_body(reqt, respt)
+local function should_receive_body(reqt, respt, tmp)
     if reqt.method == "HEAD" then return nil end
     if respt.code == 204 or respt.code == 304 then return nil end
     if respt.code >= 100 and respt.code < 200 then return nil end
     return 1
 end
 
-local function receive_status(reqt, respt)
-    local sock = respt.tmp.sock
-    local status = socket.try(sock:receive())
+local function receive_status(reqt, respt, tmp)
+    local status = socket.try(tmp.sock:receive())
     local code = third(string.find(status, "HTTP/%d*%.%d* (%d%d%d)"))
     -- store results
     respt.code, respt.status = tonumber(code), status
 end
 
-local function request_uri(reqt, respt)
-    local url
-    local parsed = respt.tmp.parsed
+local function request_uri(reqt, respt, tmp)
+    local url = tmp.parsed
     if not reqt.proxy then
+        local parsed = tmp.parsed
         url = { 
            path = parsed.path, 
            params = parsed.params, 
            query = parsed.query, 
            fragment = parsed.fragment
         }
-    else url = respt.tmp.parsed end
+    end
     return socket.url.build(url)
 end
 
-local function send_request(reqt, respt)
-    local uri = request_uri(reqt, respt)
-    local sock = respt.tmp.sock
-    local headers = respt.tmp.headers
+local function send_request(reqt, respt, tmp)
+    local uri = request_uri(reqt, respt, tmp)
+    local sock = tmp.sock
+    local headers = tmp.headers
     -- send request line
     socket.try(sock:send((reqt.method or "GET") 
         .. " " .. uri .. " HTTP/1.1\r\n"))
+--io.write((reqt.method or "GET") 
+    --.. " " .. uri .. " HTTP/1.1\r\n")
     -- send request headers headeres
     if reqt.source and not headers["content-length"] then
         headers["transfer-encoding"] = "chunked"   
@@ -227,8 +230,7 @@ local function send_request(reqt, respt)
     end
 end
 
-local function open(reqt, respt)
-    local parsed = respt.tmp.parsed
+local function open(reqt, respt, tmp)
     local proxy = reqt.proxy or PROXY
     local host, port
     if proxy then 
@@ -236,16 +238,15 @@ local function open(reqt, respt)
         assert(pproxy.port and pproxy.host, "invalid proxy")
         host, port = pproxy.host, pproxy.port
     else 
-        host, port = parsed.host, parsed.port 
+        host, port = tmp.parsed.host, tmp.parsed.port 
     end
-    local sock = socket.try(socket.tcp())
     -- store results
-    respt.tmp.sock = sock
-    sock:settimeout(reqt.timeout or TIMEOUT)
-    socket.try(sock:connect(host, port))
+    tmp.sock = socket.try(socket.tcp())
+    socket.try(tmp.sock:settimeout(reqt.timeout or TIMEOUT))
+    socket.try(tmp.sock:connect(host, port))
 end
 
-local function adjust_headers(reqt, respt)
+local function adjust_headers(reqt, respt, tmp)
     local lower = {}
     local headers = reqt.headers or {}
     -- set default headers
@@ -254,14 +255,14 @@ local function adjust_headers(reqt, respt)
     for i,v in headers do
         lower[string.lower(i)] = v
     end
-    lower["host"] = respt.tmp.parsed.host
+    lower["host"] = tmp.parsed.host
     -- this cannot be overriden
     lower["connection"] = "close"
     -- store results
-    respt.tmp.headers = lower
+    tmp.headers = lower
 end
 
-local function parse_url(reqt, respt)
+local function parse_url(reqt, respt, tmp)
     -- parse url with default fields
     local parsed = socket.url.parse(reqt.url, {
         host = "",
@@ -277,19 +278,18 @@ local function parse_url(reqt, respt)
     parsed.user = reqt.user or parsed.user
     parsed.password = reqt.password or parsed.password
     -- store results
-    respt.tmp.parsed = parsed
+    tmp.parsed = parsed
 end
 
 -- forward declaration
 local request_p
 
-local function should_authorize(reqt, respt)
+local function should_authorize(reqt, respt, tmp)
     -- if there has been an authorization attempt, it must have failed
     if reqt.headers and reqt.headers["authorization"] then return nil end
     -- if last attempt didn't fail due to lack of authentication,
     -- or we don't have authorization information, we can't retry
-    return respt.code == 401 and 
-        respt.tmp.parsed.user and respt.tmp.parsed.password 
+    return respt.code == 401 and tmp.parsed.user and tmp.parsed.password 
 end
 
 local function clone(headers)
@@ -301,11 +301,10 @@ local function clone(headers)
     return copy
 end
 
-local function authorize(reqt, respt)
+local function authorize(reqt, respt, tmp)
     local headers = clone(reqt.headers) or {}
-    local parsed = respt.tmp.parsed
     headers["authorization"] = "Basic " ..
-        (mime.b64(parsed.user .. ":" .. parsed.password))
+        (mime.b64(tmp.parsed.user .. ":" .. tmp.parsed.password))
     local autht = {
         method = reqt.method,
         url = reqt.url,
@@ -315,18 +314,18 @@ local function authorize(reqt, respt)
         timeout = reqt.timeout,
         proxy = reqt.proxy,
     }
-    request_p(autht, respt)
+    request_p(autht, respt, tmp)
 end
 
-local function should_redirect(reqt, respt)
+local function should_redirect(reqt, respt, tmp)
     return (reqt.redirect ~= false) and
            (respt.code == 301 or respt.code == 302) and
            (not reqt.method or reqt.method == "GET" or reqt.method == "HEAD") 
-           and (not respt.tmp.nredirects or respt.tmp.nredirects < 5)
+           and (not tmp.nredirects or tmp.nredirects < 5)
 end
 
-local function redirect(reqt, respt)
-    respt.tmp.nredirects = (respt.tmp.nredirects or 0) + 1
+local function redirect(reqt, respt, tmp)
+    tmp.nredirects = (tmp.nredirects or 0) + 1
     local redirt = {
         method = reqt.method,
         -- the RFC says the redirect URL has to be absolute, but some
@@ -338,36 +337,35 @@ local function redirect(reqt, respt)
         timeout = reqt.timeout,
         proxy = reqt.proxy
     }
-    request_p(redirt, respt)
+    request_p(redirt, respt, tmp)
     -- we pass the location header as a clue we redirected
     if respt.headers then respt.headers.location = redirt.url end
 end
 
 -- execute a request of through an exception
-function request_p(reqt, respt)
-    parse_url(reqt, respt)
-    adjust_headers(reqt, respt)
-    open(reqt, respt)
-    send_request(reqt, respt)
-    receive_status(reqt, respt)
-    receive_headers(reqt, respt)
-    if should_redirect(reqt, respt) then
-        respt.tmp.sock:close()
-        redirect(reqt, respt)
-    elseif should_authorize(reqt, respt) then
-        respt.tmp.sock:close()
-        authorize(reqt, respt)
-    elseif should_receive_body(reqt, respt) then
-        receive_body(reqt, respt)
+function request_p(reqt, respt, tmp)
+    parse_url(reqt, respt, tmp)
+    adjust_headers(reqt, respt, tmp)
+    open(reqt, respt, tmp)
+    send_request(reqt, respt, tmp)
+    receive_status(reqt, respt, tmp)
+    receive_headers(reqt, respt, tmp)
+    if should_redirect(reqt, respt, tmp) then
+        tmp.sock:close()
+        redirect(reqt, respt, tmp)
+    elseif should_authorize(reqt, respt, tmp) then
+        tmp.sock:close()
+        authorize(reqt, respt, tmp)
+    elseif should_receive_body(reqt, respt, tmp) then
+        receive_body(reqt, respt, tmp)
     end
 end
 
 function request(reqt)
-    local respt = { tmp = {} }
-    local s, e = pcall(request_p, reqt, respt)
+    local respt, tmp = {}, {}
+    local s, e = pcall(request_p, reqt, respt, tmp)
     if not s then respt.error = e end
-    if respt.tmp.sock then respt.tmp.sock:close() end
-    respt.tmp = nil
+    if tmp.sock then tmp.sock:close() end
     return respt
 end
 
@@ -377,7 +375,7 @@ function get(url)
         url = url, 
         sink = ltn12.sink.table(t) 
     }
-    return table.getn(t) > 0 and table.concat(t), respt.headers, 
+    return (table.getn(t) > 0 or nil) and table.concat(t), respt.headers, 
         respt.code, respt.error
 end
 
@@ -390,6 +388,6 @@ function post(url, body)
         sink = ltn12.sink.table(t),
         headers = { ["content-length"] = string.len(body) } 
     }
-    return table.getn(t) > 0 and table.concat(t), 
+    return (table.getn(t) > 0 or nil) and table.concat(t), 
         respt.headers, respt.code, respt.error
 end

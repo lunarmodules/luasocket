@@ -169,7 +169,8 @@ int tm_meth_settimeout(lua_State *L, p_tm tm)
             luaL_argcheck(L, 0, 3, "invalid timeout mode");
             break;
     }
-    return 0;
+    lua_pushnumber(L, 1);
+    return 1;
 }
 
 /*=========================================================================*\

@@ -19,6 +19,8 @@
 * Separar as classes em arquivos
 * Retorno de sendto em datagram sockets pode ser refused
 
+break smtp.send into c = smtp.open, c:send() c:close()
+
 falar sobre encodet/wrapt/decodet no manual sobre mime
 
 
