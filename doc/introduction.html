@@ -58,7 +58,7 @@ interface to I/O across different domains and operating systems.
 </p>
 
 <p>
-The LuaSocket API was designed with two goals in mind. First, users
+The API design had two goals in mind. First, users
 experienced with the C API to sockets should feel comfortable using LuaSocket.
 Second, the simplicity and the feel of the Lua language should be
 preserved. To achieve these goals, the LuaSocket API keeps the function names and semantics the C API whenever possible, but their usage in Lua has been greatly simplified.  
@@ -94,7 +94,7 @@ call might perform several OS calls, so that the two timeout values are
 Finally,  the host  name  resolution   is  transparent,  meaning  that  most
 functions and methods accept both  IP addresses and host names. In  case a
 host name is given, the  library  queries the  system's  resolver  and
-tries  the main returned IP address. Note that direct use of IP addresses
+tries  the main IP address returned. Note that direct use of IP addresses
 is more efficient, of course. The 
 <a href=dns.html#toip><tt>toip</tt></a> 
 and <a href=dns.html#tohostname><tt>tohostname</tt></a> 
@@ -299,14 +299,14 @@ io.write(socket.try((udp:receive())))
 
 <!-- More +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<h3 id=more>Much more</h3>
+<h3 id=more>Support modules</h3>
 
-<p> LuaSocket offers much more than TCP and UDP support. As the library
+<p> Although not covered in the introduction, LuaSocket offers 
+much more than TCP and UDP functionality. As the library
 evolved, support for <a href=http.html>HTTP</a>, <a href=ftp.html>FTP</a>,
-<a href=smtp.html>SMTP</a>, <a href=mime.html>MIME</a>, <a
-href=url.html>URLs</a> and much more was made available.</a> These are
-mostly implemented in Lua itself, with critical parts implemented in C for
-efficiency</p>
+and <a href=smtp.html>SMTP</a> were built on top of these. These modules
+and many others are covered by the <a href=reference.html>reference manual</a>. 
+</p>
 
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 

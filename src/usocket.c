@@ -16,7 +16,7 @@
 /*-------------------------------------------------------------------------*\
 * Wait for readable/writable/connected socket with timeout
 \*-------------------------------------------------------------------------*/
-#ifndef SOCK_SELECT
+#ifdef SOCK_POLL
 #include <sys/poll.h>
 
 #define WAITFD_R        POLLIN
@@ -29,8 +29,10 @@ static int sock_waitfd(int fd, int sw, p_tm tm) {
     pfd.events = sw;
     pfd.revents = 0;
     if (tm_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
-    do ret = poll(&pfd, 1, (int)(tm_getretry(tm)*1e3));
-    while (ret == -1 && errno == EINTR);
+    do {
+		int t = (int)(tm_getretry(tm)*1e3);
+		ret = poll(&pfd, 1, t >= 0? t: -1);
+	} while (ret == -1 && errno == EINTR);
     if (ret == -1) return errno;
     if (ret == 0) return IO_TIMEOUT;
     if (sw == WAITFD_C && (pfd.revents & (POLLIN|POLLERR))) return IO_CLOSED;

@@ -47,22 +47,20 @@ functionality commonly needed by applications that deal with the Internet.
 
 <p>
 The core support has been  implemented so that it  is both efficient and
-simple to use.  The core can be used by any Lua application once it has
-been properly initialized by the interpreter running the
-Lua application.  The code has been tested and runs well on several Windows
-and Unix platforms. 
-</p>
+simple to use.  It is available to any Lua application once it has been
+properly initialized by the interpreter in use. The code has been tested
+and runs well on several Windows and Unix platforms. </p>
 
 <p>
-The most used modules implement the 
+Among the support modules, the most commonly used implement the 
 <a href=smtp.html>SMTP</a>
 (sending  e-mails),  
 <a href=http.html>HTTP</a>
 (WWW access)  and  
 <a href=ftp.html>FTP</a>  
 (uploading  and downloading files) client
-protocols. These provide a very natural and generic interface to the e
-functionality covered by the protocols. 
+protocols. These provide a very natural and generic interface to the
+functionality defined by each protocol. 
 In addition, you will find that the 
 <a href=mime.html>MIME</a> (common encodings), 
 <a href=url.html>URL</a> 
@@ -107,12 +105,12 @@ The library can be downloaded in source code from the following links:
 
 <p>
 Besides the full C and Lua source code for the library, the distribution
-contains several examples, this user's manual and the test procedures.
+contains several examples, this user's manual and basic test procedures.
 </p>
 
 <p>
 I  am also  providing  PC Win32  binaries  for those  that  want to  give
-LuaSocket a quick try: 
+LuaSocket a try (Those on Unix or Mac OS X can just type <tt>make</tt>): 
 </p>
 
 <blockquote>
@@ -126,12 +124,12 @@ The quick and dirty way to use these binaries is to unpack everything into a
 directory, say <tt>c:\luasocket</tt> (include all Lua files from the 
 LuaSocket distrbitution in the same directory too!). 
 Then set <tt>LUA_INIT</tt> to load the <tt>compat-5.1.lua</tt> and set
-<tt>LUA_PATH</tt> and <tt>LUA_CPATH</tt> to look for files in that
+<tt>LUA_PATH</tt> and <tt>LUA_CPATH</tt> to look for files in the current
 directory: 
 </p>
 
 <pre class=example>
-c:\luasocket\&gt; set LUA_INIT=@compat-5.1.lua
+c:\luasocket\&gt; set LUA_INIT=@c:\luasocket\compat-5.1.lua
 c:\luasocket\&gt; set LUA_CPATH=?.dll
 c:\luasocket\&gt; set LUA_PATH=?.lua
 </pre>
@@ -147,12 +145,12 @@ c:\luasocket\&gt; lua
 Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
 &gt; http = require"http"
 &gt; print(http.request"http://www.tecgraf.puc-rio.br/luasocket/")
---&gt; this gets dumped to terminal
+--&gt; the source to this webpage gets dumped to terminal
 </pre>
 
-<p> Take a look at the <a href=instalation.html>installation</a> section of
-the manual to find out how to properly install the library after you are
-done playing with it.  </p>
+<p> When you are done playing, take a look at the 
+<a href=instalation.html>installation</a> section of the manual to find out
+how to properly install the library.  </p>
 
 <!-- thanks +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -175,7 +173,7 @@ has been helping a lot too! Thanks to you all!
 
 <p>
 The big change for the 2.0 (beta3) release was the adoption of the Lua 5.1
-package proposal. There were several bug fixes too (a beta is a
+package proposal. Naturally, there were a few bug fixes (a beta is a
 beta, is a beta).
 </p>
 
@@ -195,7 +193,7 @@ beta, is a beta).
 <li> Fixed <tt>udp:sendto</tt> to call <tt>sock_sendto</tt> instead of
     <tt>sock_send</tt>;
 <li> <tt>close</tt> wasn't returning 1!
-<li> <tt>socket.gettime</tt> returns time since Unix Epoch 1/1/1970 (UTC)
+<li> <tt>socket.gettime</tt> returns time since Unix Epoch 1/1/1970 (UTC);
 <li> <tt>socket.sleep</tt> is robust to interrupts;
 <li> <tt>socket.select</tt> wasn't calling <tt>tm_markstart</tt>;
 <li> <tt>http.PROXY</tt> wasn't working.
@@ -206,8 +204,8 @@ beta, is a beta).
 <h3 id=incompatible>Incompatibilities with previous versions</h3>
 
 <ul>
-<li> Namespaces are hierarchical again. This means that whoever called
-<tt>require("url")</tt> should update their code to
+<li> Namespaces are hierarchical again. This means that whoever used to 
+call <tt>require("url")</tt> should update their code to
 <tt>require("socket.url")</tt>.
 </ul>
 

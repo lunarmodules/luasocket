@@ -39,24 +39,32 @@ Installation">
 
 <h2>Instalation</h2>
 
-<p> LuaSocket 2.0 uses the new package proposal for Lua 5.1, throught the
-compatibility module <a href=http://www.keplerproject.org/compat/>
-Compat-5.1</a> released in conjunction with Roberto Ierusalimschy and <a
-href=http://www.keplerproject.org/">The Kepler project</a>.  The proposal
-was considered important enough by the community to justify early adoption.
-All Lua library developers are encouraged to change their libraries in
-preparation for the release of Lua 5.1. </p>
+<p> LuaSocket 2.0 uses the new package proposal for Lua 5.1.  
+All Lua library developers are encouraged to update their libraries so that
+all libraries can coexist peacefully and users can benefit from the
+standardization and flexibility of the standard.
+</p>
+
+<p> 
+The proposal was considered important enough by some of us to justify 
+early adoption, even before release of Lua 5.1.
+Thus, a compability module 
+<a href=http://www.keplerproject.org/compat/>compat-5.1</a> 
+has been released in conjunction with Roberto Ierusalimschy and <a
+href=http://www.keplerproject.org/">The Kepler Project</a> team. 
+It implements the Lua 5.1 package proposal on top of Lua 5.0. </p>
 
 <p> As far as LuaSocket is concerned, this means that whoever is 
-deploying a solution that uses LuaSocket has a lot of freedom. Here we
-describe only the standard distribution. If the standard doesn't meet your
-needs, we refer you to the Lua discussion list, where any quesetion about
-the package scheme will likely be answered promptly.
+deploying a non-standard distribution of LuaSocket will probably
+have no problems customizing it. Here we will only describe the standard distribution. If the standard doesn't meet your
+needs, we refer you to the Lua discussion list, where any question about
+the package scheme will likely already have been answered. 
 </p>
 
 <h3>Directory structure</h3>
 
-<p> The new package scheme has a root directory for the libraries installed
+<p> The standard distribution reserves a directory to be the root of
+the libraries installed
 on a given system. Let's call this directory <tt>&lt;ROOT&gt;</tt>. 
 On my system, this is the <tt>/usr/local/share/lua/5.0</tt> directory.
 Here is the standard LuaSocket distribution directory structure:</p>
@@ -82,7 +90,7 @@ X, they would be replaced by <tt>lsocket.dylib</tt> and
 
 <p> In order for the interpreter to find all LuaSocket components, three
 environment variables need to be set. The first environment variable tells
-the interpreter to load the <tt>compat-5.1.lua</tt> module. </p>
+the interpreter to load the <tt>compat-5.1.lua</tt> module at startup: </p>
 
 <pre class=example>
 LUA_INIT=@&lt;ROOT&gt;/compat-5.1.lua
@@ -98,7 +106,7 @@ LUA_CPATH=&lt;ROOT&gt;/?.dll;?.dll
 </pre>
 
 <p> Again, naturally, in Unix the shared library extension would be
-<tt>.so</tt> instead of <tt>.dll</tt> and on Mac OS X they would be
+<tt>.so</tt> instead of <tt>.dll</tt> and on Mac OS X it would be
 <tt>.dylib</tt></p>
 
 <h3>Using LuaSocket</h3>
@@ -115,7 +123,7 @@ Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
 </pre>
 
 <p> Each module loads their dependencies automatically, so you only need to
-load the modues you are directly dependent upon. <p>
+load the modues you directly depend upon: <p>
 
 <pre class=example>
 Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
