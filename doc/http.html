@@ -48,11 +48,9 @@ implementation    conforms     to    the    HTTP/1.1     standard,
 
 <p>
 The module exports functions that provide HTTP functionality in different
-levels of abstraction, from the simple 
-<a href="#get"><tt>get</tt></a> function, through the generic
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> based 
-<a href="#request"><tt>request</tt></a> function, down to
-even lower-level if you bother to look through the source code.
+levels of abstraction. From the simple 
+string oriented requests, through generic
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> based, down to even lower-level if you bother to look through the source code.
 </p>
 
 <p> 
@@ -118,72 +116,10 @@ the HTTP module:
 <li> <tt>USERAGENT</tt>: default user agent reported to server.
 </ul>
 
-<!-- http.get +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<p class=name id=get>
-http.<b>get(</b>url<b>)</b><br>
-</p>
-
-<p class=description>
-Performs the HTTP method <tt>GET</tt>. 
-</p>
-
-<p class=parameters>
-<tt>Url</tt> identifies the entity to retrieve. 
-</p>
-
-<p class=return>
-If successful, the function  returns the response  message body, the mime
-headers, and the status  code. In  case  of failure,  the
-function returns <tt><b>nil</b></tt> followed by an error message. 
-</p>
-
-<p class=note>
-Note: The function is trivially implemented with the use of the 
-<a href="#request"><tt>request</tt></a> function. 
-</p>
-
-<pre class=example>
--- load the http module
-http = require("http")
-
--- connect to server "www.tecgraf.puc-rio.br" and retrieves this manual
--- file from "/luasocket/http.html"
-b, h, c = http.get("http://www.tecgraf.puc-rio.br/luasocket/http.html")
-
--- connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
--- "~diego/auth/index.html". Fails because authentication is needed.
-b, h, c = http.get("http://www.tecgraf.puc-rio.br/~diego/auth/index.html")
--- b returns some useless page telling about the denied access, 
--- h returns authentication information
--- and c returns with value 401 (Authentication Required)
-
--- tries to connect to server "wrong.host" to retrieve "/"
--- and fails because the host does not exist.
-r, e = http.get("http://wrong.host/")
--- r is nil, and e returns with value "host not found"
-</pre>
-
-<!-- http.post ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<p class=name id=post>
-http.<b>post(</b>url, body<b>)</b><br>
-</p>
-
-<p class=description>
-Same  as <a  href="#get"><tt>get</tt></a>,  except
-that the <tt>POST</tt> method is used and the  request 
-message <tt>body</tt>  is sent along with the request.
-</p>
-
-<p class=note>
-Note: This function is also trivially implemented with the use of the 
-<a href="#request"><tt>request</tt></a> function. 
-</p>
-
 <!-- http.request ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=request>
+http.<b>request(</b>url [, body]<b>)</b><br>
 http.<b>request{</b><br>
 &nbsp;&nbsp;url = <i>string</i>,<br>
 &nbsp;&nbsp;[sink = <i>LTN12 sink</i>,]<br>
@@ -197,11 +133,23 @@ http.<b>request{</b><br>
 </p>
 
 <p class=description>
-Performs the generic HTTP request, controlled by a request table.
+The request function has two forms. The simple form downloads 
+a URL using the <tt>GET</tt> or <tt>POST</tt> method and is based 
+on strings. The generic form performs any HTTP method and is 
+<a href=http://lua-users.org/wiki/FiltersSourcesAndSinks>LTN12</a> based.
 </p>
 
 <p class=parameters>
-The most important parameters are the <tt>url</tt> and the <em>simple</em>
+If the first argument of the <tt>request</tt> function is a string, it
+should be an <tt>url</tt>. In that case, if a <tt>body</tt>
+is provided as a string, the function will perform a <tt>POST</tt> method
+in the <tt>url</tt>. Otherwise, it performs a <tt>GET</tt> in the
+<tt>url</tt> 
+</p>
+
+<p class=parameters>
+If the first argument is instead a table, the most important fields are 
+the <tt>url</tt> and the <em>simple</em>
 <a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
 <tt>sink</tt> that will receive the downloaded content.  
 Any part of the <tt>url</tt> can be overridden by including
@@ -232,26 +180,50 @@ function from  automatically following 301 or 302 server redirect messages.
 
 <p class=return>
 In case of failure, the function returns <tt><b>nil</b></tt> followed by an
-error message. If successful, the function returns a table 
-with all components of the response message. The response table has the following form:
+error message. If successful, the simple form returns the response 
+body as a string, followed by the response status code, the response
+headers and the response status line. The complex function returns the same
+information, except the first return value is just the number 1 (the body
+goes to the <tt>sink</tt>).
 </p>
 
-<blockquote><tt>
-respt = {<br>
-&nbsp;&nbsp;headers = <i>header-table</i>,<br>
-&nbsp;&nbsp;status = <i>string</i>,<br>
-&nbsp;&nbsp;code = <i>number</i>,<br>
-}
-</tt></blockquote>
-
 <p class=return>
-Even  when the server fails to provide the contents of the requested URL (URL not  found, for  example), the
+Even  when the server fails to provide the contents of the requested URL (URL not  found, for  example), 
 it usually returns a message body (a web page informing the
 URL  was  not found  or  some  other useless  page).  To  make sure  the
 operation was successful, check  the returned status <tt>code</tt>. For
 a  list  of  the  possible  values  and  their  meanings,  refer  to  <a
 href="http://www.cs.princeton.edu/~diego/rfc/rfc2616.txt">RFC
 2616</a>. 
+</p>
+
+<p class=description>
+Here are a few examples with the simple interface:
+</p>
+
+<pre class=example>
+-- load the http module
+http = require("http")
+
+-- connect to server "www.tecgraf.puc-rio.br" and retrieves this manual
+-- file from "/luasocket/http.html"
+b = http.request("http://www.tecgraf.puc-rio.br/luasocket/http.html")
+
+-- connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
+-- "~diego/auth/index.html". Fails because authentication is needed.
+b, c, h = http.request("http://www.tecgraf.puc-rio.br/~diego/auth/index.html")
+-- b returns some useless page telling about the denied access, 
+-- h returns authentication information
+-- and c returns with value 401 (Authentication Required)
+
+-- tries to connect to server "wrong.host" to retrieve "/"
+-- and fails because the host does not exist.
+r, e = http.request("http://wrong.host/")
+-- r is nil, and e returns with value "host not found"
+</pre>
+
+<p class=description>
+And here is an example using the generic interface:
 </p>
 
 <pre class=example>
@@ -261,12 +233,12 @@ http = require("http")
 -- Requests information about a document, without downloading it.
 -- Useful, for example, if you want to display a download gauge and need
 -- to know the size of the document in advance
-respt = http.request {
+r, c, h = http.request {
   method = "HEAD",
   url = "http://www.tecgraf.puc-rio.br/~diego"
 }
--- Would return the following headers:
--- respt.headers = {
+-- r is 1, c is 200, and h would return the following headers:
+-- h = {
 --   date = "Tue, 18 Sep 2001 20:42:21 GMT",
 --   server = "Apache/1.3.12 (Unix)  (Red Hat/Linux)",
 --   ["last-modified"] = "Wed, 05 Sep 2001 06:11:20 GMT",
@@ -307,15 +279,11 @@ mime = require("mime")
 -- Connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
 -- "~diego/auth/index.html", using the provided name and password to
 -- authenticate the request
-respt = http.request{
-  url = "http://www.tecgraf.puc-rio.br/~diego/auth/index.html",
-  user = "diego",
-  password = "password"
-}
+b, c, h = http.request("http://diego:password@www.tecgraf.puc-rio.br/~diego/auth/index.html")
 
 -- Alternatively, one could fill the appropriate header and authenticate
 -- the request directly.
-respt = http.request {
+r, c = http.request {
   url = "http://www.tecgraf.puc-rio.br/~diego/auth/index.html",
   headers = { authentication = "Basic " .. (mime.b64("diego:password")) }
 }
