@@ -7,8 +7,8 @@ end
 host = toip(host)
 udp = udpsocket()
 print("Using host '" ..host.. "' and port " ..port.. "...")
-err = sendto(udp, "anything", host, port)
+err = udp:sendto("anything", host, port)
 if err then print(err) exit() end
-dgram, err = receive(udp)
+dgram, err = udp:receive()
 if not dgram then print(err) exit() end
 write(dgram)
