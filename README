@@ -1,11 +1,7 @@
 This release is a "beta" version. It has been tested on WinXP, Mac OS X,
-SunOS and Linux. Although no major API changes should happen before the
+and Linux. Although no major API changes should happen before the
 final version is released, please look for and report any bugs (or
 "features") you encounter. 
-
-For this version, all modules should be loaded with the provided "require"
-function, and the binaries should be compliled as shared libraries. Check
-the makefiles in the distribution and the readme in the 'etc' directory.
 
 Have fun,
 Diego Nehab.

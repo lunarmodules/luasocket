@@ -183,19 +183,18 @@ beta, is a beta).
 <li> Installation uses new directory structure;
 <li> Namespace hierarchy is in now back in use (ex. <tt>socket.url</tt> 
     instead of <tt>url</tt>);
-<li> Globals not visible from inside namespaces;
 <li> All modules call <tt>require</tt> even for standard libraries;
 </ul>
+<li> <tt>socket.select</tt> wasn't calling <tt>tm_markstart</tt>;
 <li> LTN12 avoids coroutines (so you can go wild on the C side);
 <li> Kludge on wsocket.c:sock_send for windows timeout issue
-    moved to buffer.c:sendraw;
+    moved to buffer.c:sendraw so it's not a kludge anymore;
 <li> <tt>socket.protect </tt>only catches errors thrown by <tt>socket.try</tt>;
 <li> Fixed <tt>udp:sendto</tt> to call <tt>sock_sendto</tt> instead of
     <tt>sock_send</tt>;
 <li> <tt>close</tt> wasn't returning 1!
 <li> <tt>socket.gettime</tt> returns time since Unix Epoch 1/1/1970 (UTC);
 <li> <tt>socket.sleep</tt> is robust to interrupts;
-<li> <tt>socket.select</tt> wasn't calling <tt>tm_markstart</tt>;
 <li> <tt>http.PROXY</tt> wasn't working;
 <li> <tt>url.escape</tt> escapes only dangerous characters. 
 </ul>
