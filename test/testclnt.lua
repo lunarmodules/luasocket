@@ -283,7 +283,9 @@ function empty_connect()
     if not data then 
         pass("ok")
         data = socket.connect(host, port)
-    else fail("should not have connected!") end
+    else 
+		pass("gethostbyname returns localhost on empty string...")
+    end
 end
 
 ------------------------------------------------------------------------
@@ -374,19 +376,17 @@ end
 
 ------------------------------------------------------------------------
 function connect_timeout()
-    io.stderr:write("connect with timeout (if it hangs, it failed): ")
+    io.stderr:write("connect with timeout (if it hangs, it failed!): ")
     local t = socket.gettime()
     local c, e = socket.tcp()
     assert(c, e)
     c:settimeout(0.1)
-    ip = socket.dns.toip("ibere.tecgraf.puc-rio.br")
-    if not ip then return end
     local t = socket.gettime()
-    local r, e = c:connect(ip, 80)
+    local r, e = c:connect("127.0.0.2", 80)
     assert(not r, "should not connect")
-    --assert(e == "timeout", e)
     assert(socket.gettime() - t < 2, "took too long to give up.") 
     c:close()
+    print("ok") 
 end
 
 ------------------------------------------------------------------------

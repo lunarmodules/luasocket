@@ -179,11 +179,11 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
 int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
     SA daddr;
     socklen_t dlen = sizeof(daddr);
-    int err;
     if (*ps == SOCK_INVALID) return IO_CLOSED; 
     if (!addr) addr = &daddr;
     if (!len) len = &dlen;
     for ( ;; ) {
+        int err;
         if ((*pa = accept(*ps, addr, len)) != SOCK_INVALID) return IO_DONE;
         err = errno;
         if (err == EINTR) continue;
@@ -191,7 +191,7 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
         if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
     /* can't reach here */
-    return err;
+    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -223,7 +223,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
         if ((err = sock_waitfd(*ps, WAITFD_W, tm)) != IO_DONE) return err;
     }
     /* can't reach here */
-    return err;
+    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -247,7 +247,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         if (err != EAGAIN) return err;
         if ((err = sock_waitfd(*ps, WAITFD_W, tm)) != IO_DONE) return err;
     }
-    return err;
+    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -269,7 +269,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
         if (err != EAGAIN) return err; 
         if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err; 
     }
-    return err;
+    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -292,7 +292,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         if (err != EAGAIN) return err; 
         if ((err = sock_waitfd(*ps, WAITFD_R, tm)) != IO_DONE) return err; 
     }
-    return err;
+    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -345,10 +345,10 @@ const char *sock_strerror(int err) {
     switch (err) {
         case EADDRINUSE: return "eaddrinuse";
         case EACCES: return "eaccess";
-        case ECONNABORTED: return "econnaborted";
         case ECONNREFUSED: return "econnrefused";
-        case ECONNRESET: return "econnreset";
-        case ETIMEDOUT: return "etimedout";
+        case ECONNABORTED: return "closed";
+        case ECONNRESET: return "closed";
+        case ETIMEDOUT: return "timedout";
         default: return strerror(errno);
     }
 }

@@ -24,18 +24,19 @@ enum {
     IO_DONE = 0,        /* operation completed successfully */
     IO_TIMEOUT = -1,    /* operation timed out */
     IO_CLOSED = -2,     /* the connection has been closed */
-    IO_CLIPPED = -3     /* maxium bytes count reached */
+    IO_CLIPPED = -3,    /* maxium bytes count reached */
+	IO_UNKNOWN = -4
 };
 
 /* interface to error message function */
 typedef const char *(*p_error) (
-    void *ctx,          /* context needed by send */ 
+    void *ctx,          /* context needed by send */
     int err             /* error code */
 );
 
 /* interface to send function */
 typedef int (*p_send) (
-    void *ctx,          /* context needed by send */ 
+    void *ctx,          /* context needed by send */
     const char *data,   /* pointer to buffer with data to send */
     size_t count,       /* number of bytes to send from buffer */
     size_t *sent,       /* number of bytes sent uppon return */
@@ -44,7 +45,7 @@ typedef int (*p_send) (
 
 /* interface to recv function */
 typedef int (*p_recv) (
-    void *ctx,          /* context needed by recv */ 
+    void *ctx,          /* context needed by recv */
     char *data,         /* pointer to buffer where data will be writen */
     size_t count,       /* number of bytes to receive into buffer */
     size_t *got,        /* number of bytes received uppon return */
@@ -61,6 +62,6 @@ typedef struct t_io_ {
 typedef t_io *p_io;
 
 void io_init(p_io io, p_send send, p_recv recv, p_error error, void *ctx);
-const char *io_strerror(int err); 
+const char *io_strerror(int err);
 
 #endif /* IO_H */

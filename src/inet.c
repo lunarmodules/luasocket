@@ -209,8 +209,8 @@ const char *inet_tryconnect(p_sock ps, const char *address,
     memset(&remote, 0, sizeof(remote));
     remote.sin_family = AF_INET;
     remote.sin_port = htons(port);
-    if (strcmp(address, "*")) {
-        if (!strlen(address) || !inet_aton(address, &remote.sin_addr)) {
+	if (strcmp(address, "*")) {
+        if (!inet_aton(address, &remote.sin_addr)) {
             struct hostent *hp = NULL;
             struct in_addr **addr;
             err = sock_gethostbyname(address, &hp);
@@ -236,8 +236,7 @@ const char *inet_trybind(p_sock ps, const char *address, unsigned short port)
     local.sin_addr.s_addr = htonl(INADDR_ANY);
     local.sin_port = htons(port);
     local.sin_family = AF_INET;
-    if (strcmp(address, "*") && 
-            (!strlen(address) || !inet_aton(address, &local.sin_addr))) {
+    if (strcmp(address, "*") && !inet_aton(address, &local.sin_addr)) {
         struct hostent *hp = NULL;
         struct in_addr **addr;
         err = sock_gethostbyname(address, &hp);

@@ -192,7 +192,8 @@ int tm_lua_sleep(lua_State *L)
     struct timespec t, r;
     t.tv_sec = (int) n;
     n -= t.tv_sec;
-    t.tv_nsec = (int) (n * 1000000000) % 1000000000;
+    t.tv_nsec = (int) (n * 1000000000);
+    if (t.tv_nsec >= 1000000000) t.tv_nsec = 999999999;
     nanosleep(&t, &r);
 #endif
     return 0;

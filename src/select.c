@@ -64,7 +64,7 @@ static int global_select(lua_State *L) {
     tm_init(&tm, t, -1);
     max_fd = collect_fd(L, 2, max_fd, itab, &wset);
     ret = sock_select(max_fd+1, &rset, &wset, NULL, &tm);
-    if (ret > 0 || (ret == 0 && ndirty > 0)) {
+    if (ret > 0 || ndirty > 0) {
         return_fd(L, &rset, max_fd+1, itab, rtab, ndirty);
         return_fd(L, &wset, max_fd+1, itab, wtab, 0);
         make_assoc(L, rtab);

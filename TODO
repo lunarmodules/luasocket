@@ -1,6 +1,6 @@
-test associativity of socket.select
-    probably if is dirty, no assoc is created. wonder why...
 
+change sock:send to use indices just like string.sub?
+use mike's "don't set to blocking before closing unless needed" patch?
 take a look at DB's smtp patch
 
 optmize aux_getgroupudata (Mike idea)
@@ -12,7 +12,6 @@ add error message stuff to the manual
 
 make sure all modules that can use it actually use socket.newtry
 adicionar exemplos de expansão: pipe, local, named pipe
-Add service name translation.
 testar os options!
 - Thread-safe
   - proteger get*by*.* com um mutex GLOBAL!
@@ -29,3 +28,4 @@ testar os options!
  *use GetSystemTimeAsFileTime in windows (WinCE will suffer document)
 *add getstats to the manual
 *Fazer compilar com g++
+*test associativity of socket.select
