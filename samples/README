@@ -1,32 +1,35 @@
-This directory  contains some  sample programs using  LuaSocket as
-well  as the  automatic tests  used to  make sure  the library  is
-working properly.
+This directory contains some sample  programs using LuaSocket. This code
+is not supported.
 
-The files provided are:
+    listener.lua            -- socket to stdout
+    talker.lua              -- stdin to socket
 
-	testsrvr.lua			-- test server
-	testclnt.lua			-- test client
-	testcmd.lua				-- test command definitions
+listener.lua and talker.lua are about  the simplest applications you can
+write  using  LuaSocket.  Run   'luasocket  listen.lua'  and  'luasocket
+talk.lua' on different terminals. Whatever  you type on talk.lua will be
+printed by listen.lua.
 
-To run  the automatic tests on  your system, make sure  to compile
-the library with _DEBUG defined (check makefile) and then open two
-terminals.  Run  'luasocket  testsrvr.lua'  on  one  of  them  and
-'luasocket testclnt.lua'  on the other. The  programs should start
-talking to each other.
+    dict.lua                -- dict client
 
-	listener.lua			-- echo server
-	talker.lua				-- echo tester
+The  dict.lua module  is a  cool simple  client for  the DICT  protocol,
+written by Luiz  Henrique Figueiredo. Just run it and  enter a few words
+to see it working.
 
-listener.lua and  talker.lua are  about the  simplest applications
-you  can write  using  LuaSocket. Run  'luasocket listen.lua'  and
-'luasocket talk.lua' on different  terminals. Whatever you type on
-talk.lua will be printed by listen.lua.
+    daytimeclnt.lua         -- day time client
 
-	dict.lua				-- dict client
+Just run the program to retrieve the hour and date in readable form from
+any server running an UDP daytime daemon.
 
-The dict.lua module is a cool simple client for the DICT protocol,
-written by Luiz  Henrique Figueiredo. Just run it and  enter a few
-words to see it working.
+    echoclnt.lua            -- UDP echo client
+    echosrvr.lua            -- UDP echo server
+
+These are a UDP echo client/server pair. They work with other client and
+servers as well.
+
+    tftpclnt.lua            -- Trivial FTP client
+
+This module implements file retrieval by the TFTP protocol. Its main use
+is to test the UDP code, but someone might find it usefull.
 
 Good luck,
 Diego.
