@@ -1,3 +1,5 @@
+listen defaults to 32 backlog
+smtp sends quit on exceptions
 accept/connect interrupt safe
 accepted sockets are nonblocking
 new timming functions. better sleep/gettime
