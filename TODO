@@ -1,3 +1,4 @@
+use wim's filter.chain
 use mike's "don't set to blocking before closing unless needed" patch?
 take a look at DB's smtp patch (add "extra argument" table)
 move wsocket.c:sock_send kludge to buffer.c:sendraw (probably)?
