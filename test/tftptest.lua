@@ -1,5 +1,5 @@
 -- load tftpclnt.lua
-dofile("tftpclnt.lua")
+dofile("tftp.lua")
 
 -- needs tftp server running on localhost, with root pointing to
 -- a directory with index.html in it
@@ -13,11 +13,8 @@ function readfile(file)
 end
 
 host = host or "localhost"
-print("downloading")
-err = tftp_get(host, 69, "index.html", "index.got")
+retrieved, err = socket.tftp.get("tftp://" .. host .."/index.html")
 assert(not err, err)
 original = readfile("test/index.html")
-retrieved = readfile("index.got")
-os.remove("index.got")
 assert(original == retrieved, "files differ!")
 print("passed")

@@ -1,18 +1,19 @@
 /*=========================================================================*\
 * Timeout management functions
 * Global Lua functions:
-*   _sleep: (debug mode only)
-*   _time: (debug mode only)
+*   _sleep 
+*   _time 
 *
 * RCS ID: $Id$
 \*=========================================================================*/
+#include <stdio.h>
+
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "lspriv.h"
-#include "lstm.h"
-
-#include <stdio.h>
+#include "luasocket.h"
+#include "aux.h"
+#include "tm.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -28,78 +29,69 @@
 static int tm_lua_time(lua_State *L);
 static int tm_lua_sleep(lua_State *L);
 
+static luaL_reg func[] = {
+    { "time", tm_lua_time },
+    { "sleep", tm_lua_sleep },
+    { NULL, NULL }
+};
+
 /*=========================================================================*\
 * Exported functions.
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
-* Sets timeout limits
-* Input
-*   tm: timeout control structure
-*   mode: block or return timeout
-*   value: timeout value in miliseconds
+* Initialize structure
 \*-------------------------------------------------------------------------*/
-void tm_set(p_tm tm, int tm_block, int tm_return)
+void tm_init(p_tm tm, int block, int total)
 {
-    tm->tm_block = tm_block;
-    tm->tm_return = tm_return;
+    tm->block = block;
+    tm->total = total;
 }
 
 /*-------------------------------------------------------------------------*\
-* Returns timeout limits
-* Input
-*   tm: timeout control structure
-*   mode: block or return timeout
-*   value: timeout value in miliseconds
+* Set and get timeout limits
 \*-------------------------------------------------------------------------*/
-void tm_get(p_tm tm, int *tm_block, int *tm_return)
-{
-    if (tm_block) *tm_block = tm->tm_block;
-    if (tm_return) *tm_return = tm->tm_return;
-}
+void tm_setblock(p_tm tm, int block)
+{ tm->block = block; }
+void tm_settotal(p_tm tm, int total)
+{ tm->total = total; }
+int tm_getblock(p_tm tm)
+{ return tm->block; }
+int tm_gettotal(p_tm tm)
+{ return tm->total; }
+int tm_getstart(p_tm tm)
+{ return tm->start; }
 
 /*-------------------------------------------------------------------------*\
-* Determines how much time we have left for the current io operation
-* an IO write operation.
+* Determines how much time we have left for the current operation
 * Input
 *   tm: timeout control structure
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-int tm_getremaining(p_tm tm)
+int tm_get(p_tm tm)
 {
     /* no timeout */
-    if (tm->tm_block < 0 && tm->tm_return < 0)
+    if (tm->block < 0 && tm->total < 0)
         return -1;
     /* there is no block timeout, we use the return timeout */
-    else if (tm->tm_block < 0)
-        return MAX(tm->tm_return - tm_gettime() + tm->tm_start, 0);
+    else if (tm->block < 0)
+        return MAX(tm->total - tm_gettime() + tm->start, 0);
     /* there is no return timeout, we use the block timeout */
-    else if (tm->tm_return < 0) 
-        return tm->tm_block;
+    else if (tm->total < 0) 
+        return tm->block;
     /* both timeouts are specified */
-    else return MIN(tm->tm_block, 
-            MAX(tm->tm_return - tm_gettime() + tm->tm_start, 0));
+    else return MIN(tm->block, 
+            MAX(tm->total - tm_gettime() + tm->start, 0));
 }
 
 /*-------------------------------------------------------------------------*\
-* Marks the operation start time in sock structure
+* Marks the operation start time in structure 
 * Input
 *   tm: timeout control structure
 \*-------------------------------------------------------------------------*/
 void tm_markstart(p_tm tm)
 {
-    tm->tm_start = tm_gettime();
-    tm->tm_end = tm->tm_start;
-}
-
-/*-------------------------------------------------------------------------*\
-* Returns the length of the operation in ms
-* Input
-*   tm: timeout control structure
-\*-------------------------------------------------------------------------*/
-int tm_getelapsed(p_tm tm)
-{
-    return tm->tm_end - tm->tm_start;
+    tm->start = tm_gettime();
 }
 
 /*-------------------------------------------------------------------------*\
@@ -125,11 +117,31 @@ int tm_gettime(void)
 \*-------------------------------------------------------------------------*/
 void tm_open(lua_State *L)
 {
-    (void) L;
-    lua_pushcfunction(L, tm_lua_time);
-    priv_newglobal(L, "_time");
-    lua_pushcfunction(L, tm_lua_sleep);
-    priv_newglobal(L, "_sleep");
+    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0);
+}
+
+/*-------------------------------------------------------------------------*\
+* Sets timeout values for IO operations
+* Lua Input: base, time [, mode]
+*   time: time out value in seconds
+*   mode: "b" for block timeout, "t" for total timeout. (default: b)
+\*-------------------------------------------------------------------------*/
+int tm_meth_timeout(lua_State *L, p_tm tm)
+{
+    int ms = lua_isnil(L, 2) ? -1 : (int) (luaL_checknumber(L, 2)*1000.0);
+    const char *mode = luaL_optstring(L, 3, "b");
+    switch (*mode) {
+        case 'b':
+            tm_setblock(tm, ms);
+            break;
+        case 'r': case 't':
+            tm_settotal(tm, ms);
+            break;
+        default:
+            luaL_argcheck(L, 0, 3, "invalid timeout mode");
+            break;
+    }
+    return 0;
 }
 
 /*=========================================================================*\

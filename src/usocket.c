@@ -1,5 +1,5 @@
 /*=========================================================================*\
-* Network compatibilization module: Unix version
+* Socket compatibilization module for Unix
 *
 * RCS ID: $Id$
 \*=========================================================================*/
@@ -7,20 +7,20 @@
 #include <lauxlib.h>
 #include <string.h>
 
-#include "lscompat.h"
+#include "sock.h"
 
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-static cchar *try_setoption(lua_State *L, COMPAT_FD sock);
-static cchar *try_setbooloption(lua_State *L, COMPAT_FD sock, int name);
+static const char *try_setoption(lua_State *L, p_sock ps);
+static const char *try_setbooloption(lua_State *L, p_sock ps, int name);
 
 /*=========================================================================*\
 * Exported functions.
 \*=========================================================================*/
-int compat_open(lua_State *L)
+int sock_open(lua_State *L)
 {
-    /* Instals a handler to ignore sigpipe. */
+    /* instals a handler to ignore sigpipe. */
     struct sigaction new;
     memset(&new, 0, sizeof(new));
     new.sa_handler = SIG_IGN;
@@ -28,143 +28,178 @@ int compat_open(lua_State *L)
     return 1;
 }
 
-COMPAT_FD compat_accept(COMPAT_FD s, struct  sockaddr  *addr,  
-        size_t *len, int deadline)
+void sock_destroy(p_sock ps)
 {
-    struct timeval tv;
-    fd_set fds;
-    tv.tv_sec = deadline / 1000;
-    tv.tv_usec = (deadline % 1000) * 1000;
-    FD_ZERO(&fds);
-    FD_SET(s, &fds);
-    select(s+1, &fds, NULL, NULL, deadline >= 0 ? &tv : NULL);
-    return accept(s, addr, len);
+    close(*ps);
 }
 
-int compat_send(COMPAT_FD c, cchar *data, size_t count, size_t *sent, 
-        int deadline)
+const char *sock_create(p_sock ps, int domain, int type, int protocol)
 {
+    t_sock sock = socket(domain, type, protocol);
+    if (sock == SOCK_INVALID) return sock_createstrerror(); 
+    *ps = sock;
+    sock_setnonblocking(ps);
+    sock_setreuseaddr(ps);
+    return NULL;
+}
+
+const char *sock_connect(p_sock ps, SA *addr, size_t addr_len)
+{
+    if (connect(*ps, addr, addr_len) < 0) return sock_connectstrerror();
+    else return NULL;
+}
+
+const char *sock_bind(p_sock ps, SA *addr, size_t addr_len)
+{
+    if (bind(*ps, addr, addr_len) < 0) return sock_bindstrerror();
+    else return NULL;
+}
+
+void sock_listen(p_sock ps, int backlog)
+{
+    listen(*ps, backlog);
+}
+
+void sock_accept(p_sock ps, p_sock pa, SA *addr, size_t *addr_len, int timeout)
+{
+    t_sock sock = *ps;
+    struct timeval tv;
+    fd_set fds;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = (timeout % 1000) * 1000;
+    FD_ZERO(&fds);
+    FD_SET(sock, &fds);
+    select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+    *pa = accept(sock, addr, addr_len);
+}
+
+int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, 
+        int timeout)
+{
+    t_sock sock = *ps;
     struct timeval tv;
     fd_set fds;
     ssize_t put = 0;
     int err;
     int ret;
-    tv.tv_sec = deadline / 1000;
-    tv.tv_usec = (deadline % 1000) * 1000;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
-    FD_SET(c, &fds);
-    ret = select(c+1, NULL, &fds, NULL, deadline >= 0 ? &tv : NULL);
+    FD_SET(sock, &fds);
+    ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
     if (ret > 0) {
-       put = write(c, data, count);  
+       put = write(sock, data, count);  
        if (put <= 0) {
-           err = PRIV_CLOSED;
+           err = IO_CLOSED;
 #ifdef __CYGWIN__
            /* this is for CYGWIN, which is like Unix but has Win32 bugs */
-           if (errno == EWOULDBLOCK) err = PRIV_DONE;
+           if (errno == EWOULDBLOCK) err = IO_DONE;
 #endif
            *sent = 0;
        } else {
            *sent = put;
-           err = PRIV_DONE;
+           err = IO_DONE;
        }
        return err;
     } else {
         *sent = 0;
-        return PRIV_TIMEOUT;
+        return IO_TIMEOUT;
     }
 }
 
-int compat_sendto(COMPAT_FD c, cchar *data, size_t count, size_t *sent, 
-        int deadline, SA *addr, size_t len)
+int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent, 
+        SA *addr, size_t addr_len, int timeout)
 {
+    t_sock sock = *ps;
     struct timeval tv;
     fd_set fds;
     ssize_t put = 0;
     int err;
     int ret;
-    tv.tv_sec = deadline / 1000;
-    tv.tv_usec = (deadline % 1000) * 1000;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
-    FD_SET(c, &fds);
-    ret = select(c+1, NULL, &fds, NULL, deadline >= 0 ? &tv : NULL);
+    FD_SET(sock, &fds);
+    ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
     if (ret > 0) {
-       put = sendto(c, data, count, 0, addr, len);  
+       put = sendto(sock, data, count, 0, addr, addr_len);  
        if (put <= 0) {
-           err = PRIV_CLOSED;
+           err = IO_CLOSED;
 #ifdef __CYGWIN__
            /* this is for CYGWIN, which is like Unix but has Win32 bugs */
-           if (sent < 0 && errno == EWOULDBLOCK) err = PRIV_DONE;
+           if (sent < 0 && errno == EWOULDBLOCK) err = IO_DONE;
 #endif
            *sent = 0;
        } else {
            *sent = put;
-           err = PRIV_DONE;
+           err = IO_DONE;
        }
        return err;
     } else {
         *sent = 0;
-        return PRIV_TIMEOUT;
+        return IO_TIMEOUT;
     }
 }
 
-int compat_recv(COMPAT_FD c, char *data, size_t count, size_t *got, 
-        int deadline)
+int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
 {
+    t_sock sock = *ps;
     struct timeval tv;
     fd_set fds;
     int ret;
     ssize_t taken = 0;
-    tv.tv_sec = deadline / 1000;
-    tv.tv_usec = (deadline % 1000) * 1000;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
-    FD_SET(c, &fds);
-    ret = select(c+1, &fds, NULL, NULL, deadline >= 0 ? &tv : NULL);
+    FD_SET(sock, &fds);
+    ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
     if (ret > 0) {
-       taken = read(c, data, count);  
+       taken = read(sock, data, count);  
        if (taken <= 0) {
            *got = 0;
-           return PRIV_CLOSED;
+           return IO_CLOSED;
        } else {
            *got = taken;
-           return PRIV_DONE;
+           return IO_DONE;
        }
     } else {
         *got = 0;
-        return PRIV_TIMEOUT;
+        return IO_TIMEOUT;
     }
 }
 
-int compat_recvfrom(COMPAT_FD c, char *data, size_t count, size_t *got, 
-        int deadline, SA *addr, size_t *len)
+int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got, 
+        SA *addr, size_t *addr_len, int timeout)
 {
+    t_sock sock = *ps;
     struct timeval tv;
     fd_set fds;
     int ret;
     ssize_t taken = 0;
-    tv.tv_sec = deadline / 1000;
-    tv.tv_usec = (deadline % 1000) * 1000;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
-    FD_SET(c, &fds);
-    ret = select(c+1, &fds, NULL, NULL, deadline >= 0 ? &tv : NULL);
+    FD_SET(sock, &fds);
+    ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
     if (ret > 0) {
-       taken = recvfrom(c, data, count, 0, addr, len);  
+       taken = recvfrom(sock, data, count, 0, addr, addr_len);  
        if (taken <= 0) {
            *got = 0;
-           return PRIV_CLOSED;
+           return IO_CLOSED;
        } else {
            *got = taken;
-           return PRIV_DONE;
+           return IO_DONE;
        }
     } else {
         *got = 0;
-        return PRIV_TIMEOUT;
+        return IO_TIMEOUT;
     }
 }
 
 /*-------------------------------------------------------------------------*\
 * Returns a string describing the last host manipulation error.
 \*-------------------------------------------------------------------------*/
-const char *compat_hoststrerror(void)
+const char *sock_hoststrerror(void)
 {
     switch (h_errno) {
         case HOST_NOT_FOUND: return "host not found";
@@ -178,7 +213,7 @@ const char *compat_hoststrerror(void)
 /*-------------------------------------------------------------------------*\
 * Returns a string describing the last socket manipulation error.
 \*-------------------------------------------------------------------------*/
-const char *compat_socketstrerror(void)
+const char *sock_createstrerror(void)
 {
     switch (errno) {
         case EACCES: return "access denied";
@@ -192,7 +227,7 @@ const char *compat_socketstrerror(void)
 /*-------------------------------------------------------------------------*\
 * Returns a string describing the last bind command error.
 \*-------------------------------------------------------------------------*/
-const char *compat_bindstrerror(void)
+const char *sock_bindstrerror(void)
 {
     switch (errno) {
         case EBADF: return "invalid descriptor";
@@ -209,7 +244,7 @@ const char *compat_bindstrerror(void)
 /*-------------------------------------------------------------------------*\
 * Returns a string describing the last connect error.
 \*-------------------------------------------------------------------------*/
-const char *compat_connectstrerror(void)
+const char *sock_connectstrerror(void)
 {
     switch (errno) {
         case EBADF: return "invalid descriptor";
@@ -229,40 +264,30 @@ const char *compat_connectstrerror(void)
 * Input
 *   sock: socket descriptor
 \*-------------------------------------------------------------------------*/
-void compat_setreuseaddr(COMPAT_FD sock)
+void sock_setreuseaddr(p_sock ps)
 {
     int val = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
-}
-
-COMPAT_FD compat_socket(int domain, int type, int protocol)
-{
-    COMPAT_FD sock = socket(domain, type, protocol);
-    if (sock != COMPAT_INVALIDFD) {
-        compat_setnonblocking(sock);
-        compat_setreuseaddr(sock);
-    }
-    return sock;
+    setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
 }
 
 /*-------------------------------------------------------------------------*\
 * Put socket into blocking mode.
 \*-------------------------------------------------------------------------*/
-void compat_setblocking(COMPAT_FD sock)
+void sock_setblocking(p_sock ps)
 {
-    int flags = fcntl(sock, F_GETFL, 0);
+    int flags = fcntl(*ps, F_GETFL, 0);
     flags &= (~(O_NONBLOCK));
-    fcntl(sock, F_SETFL, flags);
+    fcntl(*ps, F_SETFL, flags);
 }
 
 /*-------------------------------------------------------------------------*\
 * Put socket into non-blocking mode.
 \*-------------------------------------------------------------------------*/
-void compat_setnonblocking(COMPAT_FD sock)
+void sock_setnonblocking(p_sock ps)
 {
-    int flags = fcntl(sock, F_GETFL, 0);
+    int flags = fcntl(*ps, F_GETFL, 0);
     flags |= O_NONBLOCK;
-    fcntl(sock, F_SETFL, flags);
+    fcntl(*ps, F_SETFL, flags);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -273,54 +298,50 @@ void compat_setnonblocking(COMPAT_FD sock)
 * Returns
 *   NULL if successfull, error message on error
 \*-------------------------------------------------------------------------*/
-cchar *compat_trysetoptions(lua_State *L, COMPAT_FD sock)
+const char *sock_trysetoptions(lua_State *L, p_sock ps)
 {
     if (!lua_istable(L, 1)) luaL_argerror(L, 1, "invalid options table");
     lua_pushnil(L);
     while (lua_next(L, 1)) {
-        cchar *err = try_setoption(L, sock);
+        const char *err = try_setoption(L, ps);
         lua_pop(L, 1);
         if (err) return err;
     }
     return NULL;
 }
 
-/*=========================================================================*\
-* Internal functions.
-\*=========================================================================*/
-static cchar *try_setbooloption(lua_State *L, COMPAT_FD sock, int name)
-{
-    int bool, res;
-    if (!lua_isnumber(L, -1)) luaL_error(L, "invalid option value");
-    bool = (int) lua_tonumber(L, -1);
-    res = setsockopt(sock, SOL_SOCKET, name, (char *) &bool, sizeof(bool));
-    if (res < 0) return "error setting option";
-    else return NULL;
-}
-
-
 /*-------------------------------------------------------------------------*\
 * Set socket options from a table on top of Lua stack.
-* Supports SO_KEEPALIVE, SO_DONTROUTE, SO_BROADCAST, and SO_LINGER options.
+* Supports SO_KEEPALIVE, SO_DONTROUTE, and SO_BROADCAST options.
 * Input
-*   L: Lua state to use
-*   sock: socket descriptor
+*   sock: socket 
 * Returns
 *   1 if successful, 0 otherwise
 \*-------------------------------------------------------------------------*/
-static cchar *try_setoption(lua_State *L, COMPAT_FD sock)
+static const char *try_setoption(lua_State *L, p_sock ps)
 {
-    static cchar *options[] = {
-        "SO_KEEPALIVE", "SO_DONTROUTE", "SO_BROADCAST", "SO_LINGER", NULL
+    static const char *options[] = {
+        "SO_KEEPALIVE", "SO_DONTROUTE", "SO_BROADCAST", NULL
     };
-    cchar *option = lua_tostring(L, -2);
+    const char *option = lua_tostring(L, -2);
     if (!lua_isstring(L, -2)) return "invalid option";
     switch (luaL_findstring(option, options)) {
-        case 0: return try_setbooloption(L, sock, SO_KEEPALIVE);
-        case 1: return try_setbooloption(L, sock, SO_DONTROUTE);
-        case 2: return try_setbooloption(L, sock, SO_BROADCAST);
-        case 3: return "SO_LINGER is deprecated";
+        case 0: return try_setbooloption(L, ps, SO_KEEPALIVE);
+        case 1: return try_setbooloption(L, ps, SO_DONTROUTE);
+        case 2: return try_setbooloption(L, ps, SO_BROADCAST);
         default: return "unsupported option";
     }
 }
 
+/*=========================================================================*\
+* Internal functions.
+\*=========================================================================*/
+static const char *try_setbooloption(lua_State *L, p_sock ps, int name)
+{
+    int bool, res;
+    if (!lua_isnumber(L, -1)) luaL_error(L, "invalid option value");
+    bool = (int) lua_tonumber(L, -1);
+    res = setsockopt(*ps, SOL_SOCKET, name, (char *) &bool, sizeof(bool));
+    if (res < 0) return "error setting option";
+    else return NULL;
+}

@@ -1,38 +1,26 @@
 /*=========================================================================*\
-* Internet domain class: inherits from the Socket class, and implement
-* a few methods shared by all internet related objects
+* Internet domain functions
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef INET_H_
-#define INET_H_ 
+#ifndef INET_H
+#define INET_H 
 
 #include <lua.h>
-#include "lssock.h"
-
-/* class name */
-#define INET_CLASS "luasocket(inet)"
-
-/*-------------------------------------------------------------------------*\
-* Socket fields
-\*-------------------------------------------------------------------------*/
-#define INET_FIELDS SOCK_FIELDS
-
-/*-------------------------------------------------------------------------*\
-* Socket structure
-\*-------------------------------------------------------------------------*/
-typedef t_sock t_inet;
-typedef t_inet *p_inet;
+#include "sock.h"
 
 /*-------------------------------------------------------------------------*\
 * Exported functions
 \*-------------------------------------------------------------------------*/
 void inet_open(lua_State *L);
-void inet_construct(lua_State *L, p_inet inet);
-void inet_inherit(lua_State *L, cchar *lsclass);
 
-cchar *inet_tryconnect(p_sock sock, cchar *address, ushort);
-cchar *inet_trybind(p_sock sock, cchar *address, ushort);
-cchar *inet_trysocket(p_inet inet, int type);
+const char *inet_tryconnect(p_sock ps, const char *address, 
+        unsigned short port);
+const char *inet_trybind(p_sock ps, const char *address, 
+        unsigned short port, int backlog);
+const char *inet_trycreate(p_sock ps, int type);
+
+int inet_meth_getpeername(lua_State *L, p_sock ps);
+int inet_meth_getsockname(lua_State *L, p_sock ps);
 
 #endif /* INET_H_ */

@@ -1,10 +1,10 @@
 /*=========================================================================*\
-* Network compatibilization module: Unix version
+* Socket compatibilization module for Unix
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef UNIX_H_
-#define UNIX_H_
+#ifndef UNIX_H
+#define UNIX_H
 
 /*=========================================================================*\
 * BSD include files
@@ -31,13 +31,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define COMPAT_FD int
-#define COMPAT_INVALIDFD (-1)
+typedef int t_sock;
+typedef t_sock *p_sock;
 
-#define compat_bind bind
-#define compat_connect connect
-#define compat_listen listen
-#define compat_close close
-#define compat_select select
+#define SOCK_INVALID (-1)
 
-#endif /* UNIX_H_ */
+#endif /* UNIX_H */

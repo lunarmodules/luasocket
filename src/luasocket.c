@@ -23,18 +23,13 @@
 * LuaSocket includes
 \*=========================================================================*/
 #include "luasocket.h"
-#include "lspriv.h"
-#include "lsselect.h"
-#include "lscompat.h"
-#include "lsbase.h"
-#include "lstm.h"
-#include "lsbuf.h"
-#include "lssock.h"
-#include "lsinet.h"
-#include "lstcpc.h"
-#include "lstcps.h"
-#include "lstcps.h"
-#include "lsudp.h"
+
+#include "tm.h"
+#include "buf.h"
+#include "sock.h"
+#include "inet.h"
+#include "tcp.h"
+#include "udp.h"
 
 /*=========================================================================*\
 * Exported functions
@@ -42,34 +37,29 @@
 /*-------------------------------------------------------------------------*\
 * Initializes all library modules.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int lua_socketlibopen(lua_State *L)
+LUASOCKET_API int luaopen_socketlib(lua_State *L)
 {
-    compat_open(L);
-    priv_open(L);
-    select_open(L);
-    base_open(L);
-    tm_open(L);
-    fd_open(L);
-    sock_open(L);
-    inet_open(L); 
-    tcpc_open(L); 
-    buf_open(L);
-    tcps_open(L); 
-    udp_open(L);
-#ifdef LUASOCKET_DOFILE
-    lua_dofile(L, "concat.lua");
-    lua_dofile(L, "code.lua");
-    lua_dofile(L, "url.lua");
-    lua_dofile(L, "http.lua");
-    lua_dofile(L, "smtp.lua");
-    lua_dofile(L, "ftp.lua");
-#else
-#include "concat.loh"
-#include "code.loh"
-#include "url.loh"
-#include "http.loh"
-#include "smtp.loh"
-#include "ftp.loh"
+    /* create namespace table */
+    lua_pushstring(L, LUASOCKET_LIBNAME);
+    lua_newtable(L);
+#ifdef LUASOCKET_DEBUG
+    lua_pushstring(L, "debug");
+    lua_pushnumber(L, 1);
+    lua_settable(L, -3);
 #endif
+    lua_settable(L, LUA_GLOBALSINDEX);
+    /* make sure modules know what is our namespace */
+    lua_pushstring(L, "LUASOCKET_LIBNAME");
+    lua_pushstring(L, LUASOCKET_LIBNAME);
+    lua_settable(L, LUA_GLOBALSINDEX);
+    /* initialize all modules */
+    sock_open(L);
+    tm_open(L);
+    buf_open(L);
+    inet_open(L); 
+    tcp_open(L);
+    udp_open(L);
+    /* load all Lua code */
+    lua_dofile(L, "luasocket.lua");
     return 0;
 }

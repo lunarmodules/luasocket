@@ -13,12 +13,13 @@ while 1 do
             print("server: closing connection...")
             break
         end
-        error = control:send("\n")
+        sent, error = control:send("\n")
         if error then
             control:close()
             print("server: closing connection...")
             break
         end
+        print(command);
         (loadstring(command))()
     end
 end

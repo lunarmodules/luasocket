@@ -1,5 +1,20 @@
-Socket structures are independent
-UDPBUFFERSIZE is now internal
-Better treatment of closed connections: test!!!
-HTTP post now deals with 1xx codes
-connect, bind etc only try first address returned by resolver
+All functions provided by the library are in the namespace "socket".
+Functions such as send/receive/timeout/close etc do not exist in the
+namespace. They are now only available as methods of the appropriate
+objects.
+
+Object has been changed to become more uniform.  First create an object for
+a given domain/family and protocol. Then connect or bind if needed. Then
+use IO functions.
+
+All functions return a non-nil value as first return value if successful.
+All functions return nil followed by error message in case of error.
+WARNING: The send function was affected.
+
+Better error messages and parameter checking.
+
+UDP connected udp sockets can break association with peer by calling
+setpeername with address "*". 
+
+socket.sleep and socket.time are now part of the library and are 
+supported.

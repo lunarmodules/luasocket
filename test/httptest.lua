@@ -3,9 +3,6 @@
 -- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
 -- to /luasocket-test-cgi
 -- needs AllowOverride AuthConfig on /home/c/diego/tec/luasocket/test/auth
-
-dofile("noglobals.lua")
-
 local similar = function(s1, s2)
 	return string.lower(string.gsub(s1 or "", "%s", "")) == 
         string.lower(string.gsub(s2 or "", "%s", ""))
@@ -27,27 +24,27 @@ end
 
 local check = function (v, e)
 	if v then print("ok")
-	else %fail(e) end
+	else fail(e) end
 end
 	
 local check_request = function(request, expect, ignore)
 	local response = socket.http.request(request)
 	for i,v in response do
 		if not ignore[i] then
-			if v ~= expect[i] then %fail(i .. " differs!") end
+			if v ~= expect[i] then fail(i .. " differs!") end
 		end
 	end
 	for i,v in expect do
 		if not ignore[i] then
-			if v ~= response[i] then %fail(i .. " differs!") end
+			if v ~= response[i] then fail(i .. " differs!") end
 		end
 	end
 	print("ok")
 end
 
-local request, response, ignore, expect, index, prefix, cgiprefix
+local host, request, response, ignore, expect, index, prefix, cgiprefix
 
-local t = socket._time()
+local t = socket.time()
 
 host = host or "localhost"
 prefix = prefix or "/luasocket"
@@ -310,4 +307,4 @@ check(response and response.headers)
 
 print("passed all tests")
 
-print(string.format("done in %.2fs", socket._time() - t))
+print(string.format("done in %.2fs", socket.time() - t))

@@ -5,8 +5,8 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef _LUASOCKET_H_
-#define _LUASOCKET_H_
+#ifndef LUASOCKET_H
+#define LUASOCKET_H
 
 /*-------------------------------------------------------------------------*\
 * Current luasocket version
@@ -28,6 +28,6 @@
 /*-------------------------------------------------------------------------*\
 * Initializes the library.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int lua_socketlibopen(lua_State *L);
+LUASOCKET_API int luaopen_socketlib(lua_State *L);
 
-#endif /* _LUASOCKET_H_ */
+#endif /* LUASOCKET_H */

@@ -1,12 +1,5 @@
 /*=========================================================================*\
-* Internet domain class: inherits from the Socket class, and implement
-* a few methods shared by all internet related objects
-* Lua methods:
-*   getpeername: gets socket peer ip address and port
-*   getsockname: gets local socket ip address and port
-* Global Lua fuctions:
-*   toip: gets resolver info on host name
-*   tohostname: gets resolver info on dotted-quad
+* Internet domain functions
 *
 * RCS ID: $Id$
 \*=========================================================================*/
@@ -15,22 +8,26 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "lsinet.h"
-#include "lssock.h"
-#include "lscompat.h"
+#include "luasocket.h"
+#include "inet.h"
 
 /*=========================================================================*\
 * Internal function prototypes.
 \*=========================================================================*/
-static int inet_lua_toip(lua_State *L);
-static int inet_lua_tohostname(lua_State *L);
-static int inet_lua_getpeername(lua_State *L);
-static int inet_lua_getsockname(lua_State *L);
+static int inet_global_toip(lua_State *L);
+static int inet_global_tohostname(lua_State *L);
+
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
 
-#ifdef COMPAT_INETATON
-static int inet_aton(cchar *cp, struct in_addr *inp);
+#ifdef INET_ATON
+static int inet_aton(const char *cp, struct in_addr *inp);
 #endif
+
+static luaL_reg func[] = {
+    { "toip", inet_global_toip },
+    { "tohostname", inet_global_tohostname },
+    { NULL, NULL}
+};
 
 /*=========================================================================*\
 * Exported functions
@@ -40,39 +37,7 @@ static int inet_aton(cchar *cp, struct in_addr *inp);
 \*-------------------------------------------------------------------------*/
 void inet_open(lua_State *L)
 {
-    lua_pushcfunction(L, inet_lua_toip);
-    priv_newglobal(L, "toip");
-    lua_pushcfunction(L, inet_lua_tohostname);
-    priv_newglobal(L, "tohostname");
-    priv_newglobalmethod(L, "getsockname");
-    priv_newglobalmethod(L, "getpeername");
-}
-
-/*-------------------------------------------------------------------------*\
-* Hook lua methods to methods table.
-* Input
-*   lsclass: class name
-\*-------------------------------------------------------------------------*/
-void inet_inherit(lua_State *L, cchar *lsclass)
-{
-    unsigned int i;
-    static struct luaL_reg funcs[] = {
-        {"getsockname", inet_lua_getsockname},
-        {"getpeername", inet_lua_getpeername},
-    };
-    sock_inherit(L, lsclass);
-    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
-        lua_pushcfunction(L, funcs[i].func);
-        priv_setmethod(L, lsclass, funcs[i].name);
-    }
-}
-
-/*-------------------------------------------------------------------------*\
-* Constructs the object 
-\*-------------------------------------------------------------------------*/
-void inet_construct(lua_State *L, p_inet inet)
-{
-    sock_construct(L, (p_sock) inet);
+    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0);
 }
 
 /*=========================================================================*\
@@ -87,17 +52,18 @@ void inet_construct(lua_State *L, p_inet inet)
 *   On success: first IP address followed by a resolved table
 *   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
-static int inet_lua_toip(lua_State *L)
+static int inet_global_toip(lua_State *L)
 {
-    cchar *address = luaL_checkstring(L, 1);
+    const char *address = luaL_checkstring(L, 1);
     struct in_addr addr;
     struct hostent *hp;
     if (inet_aton(address, &addr))
         hp = gethostbyaddr((char *) &addr, sizeof(addr), AF_INET);
-    else hp = gethostbyname(address);
+    else 
+        hp = gethostbyname(address);
     if (!hp) {
         lua_pushnil(L);
-        lua_pushstring(L, compat_hoststrerror());
+        lua_pushstring(L, sock_hoststrerror());
         return 2;
     }
     addr = *((struct in_addr *) hp->h_addr);
@@ -115,17 +81,18 @@ static int inet_lua_toip(lua_State *L)
 *   On success: canonic name followed by a resolved table
 *   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
-static int inet_lua_tohostname(lua_State *L)
+static int inet_global_tohostname(lua_State *L)
 {
-    cchar *address = luaL_checkstring(L, 1);
+    const char *address = luaL_checkstring(L, 1);
     struct in_addr addr;
     struct hostent *hp;
     if (inet_aton(address, &addr))
         hp = gethostbyaddr((char *) &addr, sizeof(addr), AF_INET);
-    else hp = gethostbyname(address);
+    else 
+        hp = gethostbyname(address);
     if (!hp) {
         lua_pushnil(L);
-        lua_pushstring(L, compat_hoststrerror());
+        lua_pushstring(L, sock_hoststrerror());
         return 2;
     }
     lua_pushstring(L, hp->h_name);
@@ -138,18 +105,17 @@ static int inet_lua_tohostname(lua_State *L)
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Retrieves socket peer name
-* Lua Input: sock 
+* Input: 
 *   sock: socket
 * Lua Returns
 *   On success: ip address and port of peer
 *   On error: nil
 \*-------------------------------------------------------------------------*/
-static int inet_lua_getpeername(lua_State *L)
+int inet_meth_getpeername(lua_State *L, p_sock ps)
 {
-    p_sock sock = (p_sock) lua_touserdata(L, 1);
     struct sockaddr_in peer;
     size_t peer_len = sizeof(peer);
-    if (getpeername(sock->fd, (SA *) &peer, &peer_len) < 0) {
+    if (getpeername(*ps, (SA *) &peer, &peer_len) < 0) {
         lua_pushnil(L);
         return 1;
     }
@@ -160,18 +126,17 @@ static int inet_lua_getpeername(lua_State *L)
 
 /*-------------------------------------------------------------------------*\
 * Retrieves socket local name
-* Lua Input: sock 
+* Input:
 *   sock: socket
 * Lua Returns
 *   On success: local ip address and port
 *   On error: nil
 \*-------------------------------------------------------------------------*/
-static int inet_lua_getsockname(lua_State *L)
+int inet_meth_getsockname(lua_State *L, p_sock ps)
 {
-    p_sock sock = (p_sock) lua_touserdata(L, 1);
     struct sockaddr_in local;
     size_t local_len = sizeof(local);
-    if (getsockname(sock->fd, (SA *) &local, &local_len) < 0) {
+    if (getsockname(*ps, (SA *) &local, &local_len) < 0) {
         lua_pushnil(L);
         return 1;
     }
@@ -222,47 +187,53 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 }
 
 /*-------------------------------------------------------------------------*\
-* Tries to create a TCP socket and connect to remote address (address, port)
+* Tries to connect to remote address (address, port)
 * Input
-*   client: socket structure to be used
+*   ps: pointer to socket 
 *   address: host name or ip address
 *   port: port number to bind to
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-cchar *inet_tryconnect(p_inet inet, cchar *address, ushort port)
+const char *inet_tryconnect(p_sock ps, const char *address, ushort port)
 {
     struct sockaddr_in remote;
     memset(&remote, 0, sizeof(remote));
     remote.sin_family = AF_INET;
     remote.sin_port = htons(port);
-    if (!strlen(address) || !inet_aton(address, &remote.sin_addr)) {
-        struct hostent *hp = gethostbyname(address);
-        struct in_addr **addr;
-        if (!hp) return compat_hoststrerror();
-        addr = (struct in_addr **) hp->h_addr_list;
-        memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
-    }
-    compat_setblocking(inet->fd);
-    if (compat_connect(inet->fd, (SA *) &remote, sizeof(remote)) < 0) {
-        const char *err = compat_connectstrerror();
-        compat_close(inet->fd);
-        inet->fd = COMPAT_INVALIDFD;
+    if (strcmp(address, "*")) {
+        if (!strlen(address) || !inet_aton(address, &remote.sin_addr)) {
+            struct hostent *hp = gethostbyname(address);
+            struct in_addr **addr;
+            remote.sin_family = AF_INET;
+            if (!hp) return sock_hoststrerror();
+            addr = (struct in_addr **) hp->h_addr_list;
+            memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
+        }
+    } else remote.sin_family = AF_UNSPEC;
+    sock_setblocking(ps);
+    const char *err = sock_connect(ps, (SA *) &remote, sizeof(remote));
+    if (err) {
+        sock_destroy(ps);
+        *ps = SOCK_INVALID;
         return err;
-    } 
-    compat_setnonblocking(inet->fd);
-    return NULL;
+    } else {
+        sock_setnonblocking(ps);
+        return NULL;
+    }
 }
 
 /*-------------------------------------------------------------------------*\
-* Tries to create a TCP socket and bind it to (address, port)
+* Tries to bind socket to (address, port)
 * Input
+*   sock: pointer to socket
 *   address: host name or ip address
 *   port: port number to bind to
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-cchar *inet_trybind(p_inet inet, cchar *address, ushort port)
+const char *inet_trybind(p_sock ps, const char *address, ushort port, 
+        int backlog)
 {
     struct sockaddr_in local;
     memset(&local, 0, sizeof(local));
@@ -274,34 +245,33 @@ cchar *inet_trybind(p_inet inet, cchar *address, ushort port)
             (!strlen(address) || !inet_aton(address, &local.sin_addr))) {
         struct hostent *hp = gethostbyname(address);
         struct in_addr **addr;
-        if (!hp) return compat_hoststrerror();
+        if (!hp) return sock_hoststrerror();
         addr = (struct in_addr **) hp->h_addr_list;
         memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
     }
-    compat_setblocking(inet->fd);
-    if (compat_bind(inet->fd, (SA *) &local, sizeof(local)) < 0) {
-        const char *err = compat_bindstrerror();
-        compat_close(inet->fd);
-        inet->fd = COMPAT_INVALIDFD;
+    sock_setblocking(ps);
+    const char *err = sock_bind(ps, (SA *) &local, sizeof(local));
+    if (err) {
+        sock_destroy(ps);
+        *ps = SOCK_INVALID;
         return err;
+    } else {
+        sock_setnonblocking(ps);
+        if (backlog > 0) sock_listen(ps, backlog);
+        return NULL;
     }
-    compat_setnonblocking(inet->fd);
-    return NULL;
 }
 
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
 * Input
-*   udp: udp structure
+*   sock: pointer to socket
 * Returns
 *   NULL if successfull, error message on error
 \*-------------------------------------------------------------------------*/
-cchar *inet_trysocket(p_inet inet, int type)
+const char *inet_trycreate(p_sock ps, int type)
 {
-    if (inet->fd != COMPAT_INVALIDFD) compat_close(inet->fd);
-    inet->fd = compat_socket(AF_INET, type, 0);
-    if (inet->fd == COMPAT_INVALIDFD) return compat_socketstrerror();
-    else return NULL;
+    return sock_create(ps, AF_INET, type, 0);
 }
 
 /*-------------------------------------------------------------------------*\

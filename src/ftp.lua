@@ -7,7 +7,8 @@
 -----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
-socket.ftp = Public
+local socket = _G[LUASOCKET_LIBNAME] -- get LuaSocket namespace
+socket.ftp = Public  -- create ftp sub namespace
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -23,6 +24,33 @@ Public.EMAIL = "anonymous@anonymous.org"
 Public.BLOCKSIZE = 8192
 
 -----------------------------------------------------------------------------
+-- Tries to get a pattern from the server and closes socket on error
+--   sock: socket connected to the server
+--   pattern: pattern to receive
+-- Returns
+--   received pattern on success
+--   nil followed by error message on error
+-----------------------------------------------------------------------------
+function Private.try_receive(sock, pattern)
+    local data, err = sock:receive(pattern)
+    if not data then sock:close() end
+    return data, err
+end
+
+-----------------------------------------------------------------------------
+-- Tries to send data to the server and closes socket on error
+--   sock: socket connected to the server
+--   data: data to send
+-- Returns
+--   err: error message if any, nil if successfull
+-----------------------------------------------------------------------------
+function Private.try_send(sock, data)
+    local sent, err = sock:send(data)
+    if not sent then sock:close() end
+    return err
+end
+
+-----------------------------------------------------------------------------
 -- Tries to send DOS mode lines. Closes socket on error.
 -- Input
 --   sock: server socket
@@ -31,24 +59,7 @@ Public.BLOCKSIZE = 8192
 --   err: message in case of error, nil if successfull
 -----------------------------------------------------------------------------
 function Private.try_sendline(sock, line)
-    local err = sock:send(line .. "\r\n")
-    if err then sock:close() end
-    return err
-end
-
------------------------------------------------------------------------------
--- Tries to get a pattern from the server and closes socket on error
---   sock: socket connected to the server
---   ...: pattern to receive
--- Returns
---   ...: received pattern
---   err: error message if any
------------------------------------------------------------------------------
-function Private.try_receive(...)
-    local sock = arg[1]
-    local data, err = sock.receive(unpack(arg))
-    if err then sock:close() end
-    return data, err
+    return Private.try_send(sock, line .. "\r\n")
 end
 
 -----------------------------------------------------------------------------
@@ -307,20 +318,20 @@ end
 --   nil if successfull, or an error message in case of error
 -----------------------------------------------------------------------------
 function Private.send_indirect(data, send_cb, chunk, size)
-    local sent, err
-    sent = 0
+    local total, sent, err
+    total = 0
     while 1 do
         if type(chunk) ~= "string" or type(size) ~= "number" then
             data:close()
             if not chunk and type(size) == "string" then return size
             else return "invalid callback return" end
         end
-        err = data:send(chunk)
+        sent, err = data:send(chunk)
         if err then
             data:close()
             return err
         end
-        sent = sent + string.len(chunk)
+        total = total + sent
         if sent >= size then break end
         chunk, size = send_cb()
     end

@@ -7,7 +7,8 @@ end
 host = socket.toip(host)
 udp = socket.udp()
 print("Using host '" ..host.. "' and port " ..port.. "...")
-err = udp:sendto("anything", host, port)
+udp:setpeername(host, port)
+sent, err = udp:send("anything")
 if err then print(err) exit() end
 dgram, err = udp:receive()
 if not dgram then print(err) exit() end

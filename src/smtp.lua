@@ -7,7 +7,8 @@
 -----------------------------------------------------------------------------
 
 local Public, Private = {}, {}
-socket.smtp = Public
+local socket = _G[LUASOCKET_LIBNAME] -- get LuaSocket namespace
+socket.smtp = Public  -- create smtp sub namespace
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -23,32 +24,30 @@ Public.DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 Public.SERVER = "localhost"
 
 -----------------------------------------------------------------------------
--- Tries to send data through socket. Closes socket on error.
--- Input
---   sock: server socket
---   data: string to be sent
+-- Tries to get a pattern from the server and closes socket on error
+--   sock: socket connected to the server
+--   pattern: pattern to receive
 -- Returns
---   err: message in case of error, nil if successfull
+--   received pattern on success
+--   nil followed by error message on error
 -----------------------------------------------------------------------------
-function Private.try_send(sock, data)
-    local err = sock:send(data)
-    if err then sock:close() end
-    return err
+function Private.try_receive(sock, pattern)
+    local data, err = sock:receive(pattern)
+    if not data then sock:close() end
+    return data, err
 end
 
 -----------------------------------------------------------------------------
--- Tries to get a pattern from the server and closes socket on error
---   sock: socket opened to the server
---   ...: pattern to receive
+-- Tries to send data to the server and closes socket on error
+--   sock: socket connected to the server
+--   data: data to send
 -- Returns
---   ...: received pattern
---   err: error message if any
+--   err: error message if any, nil if successfull
 -----------------------------------------------------------------------------
-function Private.try_receive(...)
-    local sock = arg[1]
-    local data, err = sock.receive(unpack(arg))
-    if err then sock:close() end
-    return data, err
+function Private.try_send(sock, data)
+    local sent, err = sock:send(data)
+    if not sent then sock:close() end
+    return err
 end
 
 -----------------------------------------------------------------------------

@@ -11,7 +11,7 @@ local files = {
     "/var/spool/mail/luasock3",
 }
 
-local t = socket._time()
+local t = socket.time()
 local err
 
 dofile("mbox.lua")
@@ -106,7 +106,7 @@ local insert = function(sent, message)
 end
 
 local mark = function()
-	local time = socket._time()
+	local time = socket.time()
     return { time = time }
 end
 
@@ -116,11 +116,11 @@ local wait = function(sentinel, n)
     while 1 do
 		local mbox = parse(get())
 		if n == table.getn(mbox) then break end
-        if socket._time() - sentinel.time > 50 then 
+        if socket.time() - sentinel.time > 50 then 
             to = 1 
             break
         end
-        socket._sleep(1)
+        socket.sleep(1)
         io.write(".")
         io.stdout:flush()
     end
@@ -256,4 +256,4 @@ for i = 1, table.getn(mbox) do
 end
 
 print("passed all tests")
-print(string.format("done in %.2fs", socket._time() - t))
+print(string.format("done in %.2fs", socket.time() - t))

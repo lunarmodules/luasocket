@@ -5,10 +5,10 @@ mbox = Public
 function Public.split_message(message_s)
     local message = {}
     message_s = string.gsub(message_s, "\r\n", "\n")
-	string.gsub(message_s, "^(.-\n)\n", function (h) %message.headers = h end)
-	string.gsub(message_s, "^.-\n\n(.*)", function (b) %message.body = b end)
+	string.gsub(message_s, "^(.-\n)\n", function (h) message.headers = h end)
+	string.gsub(message_s, "^.-\n\n(.*)", function (b) message.body = b end)
     if not message.body then
-	    string.gsub(message_s, "^\n(.*)", function (b) %message.body = b end)
+	    string.gsub(message_s, "^\n(.*)", function (b) message.body = b end)
     end
     if not message.headers and not message.body then 
         message.headers = message_s
@@ -20,7 +20,7 @@ function Public.split_headers(headers_s)
     local headers = {}
     headers_s = string.gsub(headers_s, "\r\n", "\n")
     headers_s = string.gsub(headers_s, "\n[ ]+", " ")
-    string.gsub("\n" .. headers_s, "\n([^\n]+)", function (h) table.insert(%headers, h) end)
+    string.gsub("\n" .. headers_s, "\n([^\n]+)", function (h) table.insert(headers, h) end)
     return headers
 end
 
@@ -32,10 +32,10 @@ function Public.parse_header(header_s)
 end
 
 function Public.parse_headers(headers_s)
-    local headers_t = %Public.split_headers(headers_s)
+    local headers_t = Public.split_headers(headers_s)
     local headers = {}
     for i = 1, table.getn(headers_t) do
-        local name, value = %Public.parse_header(headers_t[i])
+        local name, value = Public.parse_header(headers_t[i])
         if name then
             name = string.lower(name)
             if headers[name] then
@@ -73,16 +73,16 @@ function Public.split_mbox(mbox_s)
 end
 
 function Public.parse(mbox_s)
-	local mbox = %Public.split_mbox(mbox_s)
+	local mbox = Public.split_mbox(mbox_s)
 	for i = 1, table.getn(mbox) do
-		mbox[i] = %Public.parse_message(mbox[i])
+		mbox[i] = Public.parse_message(mbox[i])
 	end
 	return mbox
 end
 
 function Public.parse_message(message_s)
     local message = {}
-    message.headers, message.body = %Public.split_message(message_s)
-    message.headers = %Public.parse_headers(message.headers)
+    message.headers, message.body = Public.split_message(message_s)
+    message.headers = Public.parse_headers(message.headers)
     return message
 end

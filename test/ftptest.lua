@@ -1,5 +1,3 @@
-dofile("noglobals.lua")
-
 local similar = function(s1, s2)
     return 
     string.lower(string.gsub(s1, "%s", "")) == 
@@ -34,7 +32,7 @@ end
 
 local index, err, saved, back, expected
 
-local t = socket._time()
+local t = socket.time()
 
 index = readfile("test/index.html")
 
@@ -112,4 +110,4 @@ back, err = socket.ftp.get("ftp://localhost/index.wrong.html;type=a")
 check(err, err)
 
 print("passed all tests")
-print(string.format("done in %.2fs", socket._time() - t))
+print(string.format("done in %.2fs", socket.time() - t))

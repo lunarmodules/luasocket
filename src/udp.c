@@ -1,299 +1,263 @@
 /*=========================================================================*\
-* UDP class: inherits from Socked and Internet domain classes and provides
-* all the functionality for UDP objects.
-* Lua methods: 
-*   send: using compat module
-*   sendto: using compat module
-*   receive: using compat module
-*   receivefrom: using compat module
-*   setpeername: using internet module
-*   setsockname: using internet module
-* Global Lua functions:
-*   udp: creates the udp object
+* UDP object 
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <string.h>
+#include <string.h> 
 
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "lsinet.h"
-#include "lsudp.h"
-#include "lscompat.h"
-#include "lsselect.h"
+#include "luasocket.h"
+
+#include "aux.h"
+#include "inet.h"
+#include "udp.h"
 
 /*=========================================================================*\
-* Internal function prototypes.
+* Internal function prototypes
 \*=========================================================================*/
-static int udp_lua_send(lua_State *L);
-static int udp_lua_sendto(lua_State *L);
-static int udp_lua_receive(lua_State *L);
-static int udp_lua_receivefrom(lua_State *L);
-static int udp_lua_setpeername(lua_State *L);
-static int udp_lua_setsockname(lua_State *L);
+static int udp_global_create(lua_State *L);
+static int udp_meth_send(lua_State *L);
+static int udp_meth_sendto(lua_State *L);
+static int udp_meth_receive(lua_State *L);
+static int udp_meth_receivefrom(lua_State *L);
+static int udp_meth_getsockname(lua_State *L);
+static int udp_meth_getpeername(lua_State *L);
+static int udp_meth_setsockname(lua_State *L);
+static int udp_meth_setpeername(lua_State *L);
+static int udp_meth_close(lua_State *L);
+static int udp_meth_timeout(lua_State *L);
 
-static int udp_global_udp(lua_State *L);
-
-static struct luaL_reg funcs[] = {
-    {"send", udp_lua_send},
-    {"sendto", udp_lua_sendto},
-    {"receive", udp_lua_receive},
-    {"receivefrom", udp_lua_receivefrom},
-    {"setpeername", udp_lua_setpeername},
-    {"setsockname", udp_lua_setsockname},
+/* udp object methods */
+static luaL_reg udp[] = {
+    {"setpeername", udp_meth_setpeername},
+    {"setsockname", udp_meth_setsockname},
+    {"getsockname", udp_meth_getsockname},
+    {"getpeername", udp_meth_getpeername},
+    {"send",        udp_meth_send},
+    {"sendto",      udp_meth_sendto},
+    {"receive",     udp_meth_receive},
+    {"receivefrom", udp_meth_receivefrom},
+    {"timeout",     udp_meth_timeout},
+    {"close",       udp_meth_close},
+    {NULL,          NULL}
 };
 
-/*=========================================================================*\
-* Exported functions
-\*=========================================================================*/
+/* functions in library namespace */
+static luaL_reg func[] = {
+    {"udp", udp_global_create},
+    {NULL, NULL}
+};
+
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
 void udp_open(lua_State *L)
 {
-    unsigned int i;
-    priv_newclass(L, UDP_CLASS);
-    udp_inherit(L, UDP_CLASS);
-    /* declare global functions */
-    lua_pushcfunction(L, udp_global_udp);
-    priv_newglobal(L, "udp");
-    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) 
-        priv_newglobalmethod(L, funcs[i].name);
-    /* make class selectable */
-    select_addclass(L, UDP_CLASS);
-}
-
-/*-------------------------------------------------------------------------*\
-* Hook object methods to methods table.
-\*-------------------------------------------------------------------------*/
-void udp_inherit(lua_State *L, cchar *lsclass)
-{
-    unsigned int i;
-    inet_inherit(L, lsclass);
-    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
-        lua_pushcfunction(L, funcs[i].func);
-        priv_setmethod(L, lsclass, funcs[i].name);
-    }
-}
-
-/*-------------------------------------------------------------------------*\
-* Initializes socket structure 
-\*-------------------------------------------------------------------------*/
-void udp_construct(lua_State *L, p_udp udp)
-{
-    inet_construct(L, (p_inet) udp);
-    udp->udp_connected = 0;
-}
-
-/*-------------------------------------------------------------------------*\
-* Creates a socket structure and initializes it. A socket object is
-* left in the Lua stack.
-* Returns
-*   pointer to allocated structure
-\*-------------------------------------------------------------------------*/
-p_udp udp_push(lua_State *L)
-{
-    p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
-    priv_setclass(L, UDP_CLASS);
-    udp_construct(L, udp);
-    return udp;
+    /* create classes */
+    aux_newclass(L, "udp{connected}", udp);
+    aux_newclass(L, "udp{unconnected}", udp);
+    /* create class groups */
+    aux_add2group(L, "udp{connected}", "udp{any}");
+    aux_add2group(L, "udp{unconnected}", "udp{any}");
+    /* define library functions */
+    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0); 
+    lua_pop(L, 1);
 }
 
 /*=========================================================================*\
-* Socket table constructors
+* Lua methods
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
-* Creates a udp socket object and returns it to the Lua script. 
-* Lua Input: [options]
-*   options: socket options table
-* Lua Returns
-*   On success: udp socket
-*   On error: nil, followed by an error message
+* Send data through connected udp socket
 \*-------------------------------------------------------------------------*/
-static int udp_global_udp(lua_State *L)
+static int udp_meth_send(lua_State *L)
 {
-    int oldtop = lua_gettop(L);
-    p_udp udp = udp_push(L);
-    cchar *err = inet_trysocket((p_inet) udp, SOCK_DGRAM);
-    if (err) {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
-    }
-    if (oldtop < 1) return 1;
-    err = compat_trysetoptions(L, udp->fd);
-    if (err) {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
-    }
-    return 1;
-}
-
-/*=========================================================================*\
-* Socket table methods
-\*=========================================================================*/
-/*-------------------------------------------------------------------------*\
-* Receives data from a UDP socket
-* Lua Input: sock [, wanted]
-*   sock: client socket created by the connect function
-*   wanted: the number of bytes expected (default: LUASOCKET_UDPBUFFERSIZE)
-* Lua Returns
-*   On success: datagram received
-*   On error: nil, followed by an error message
-\*-------------------------------------------------------------------------*/
-static int udp_lua_receive(lua_State *L)
-{
-    p_udp udp = (p_udp) lua_touserdata(L, 1);
-    char buffer[UDP_DATAGRAMSIZE];
-    size_t got, wanted = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{connected}", 1);
+    p_tm tm = &udp->tm;
+    size_t count, sent = 0;
     int err;
-    p_tm tm = &udp->base_tm;
-    wanted = MIN(wanted, sizeof(buffer));
+    const char *data = luaL_checklstring(L, 2, &count);
     tm_markstart(tm);
-    err = compat_recv(udp->fd, buffer, wanted, &got, tm_getremaining(tm));
-    if (err == PRIV_CLOSED) err = PRIV_REFUSED;
-    if (err != PRIV_DONE) lua_pushnil(L);
-    else lua_pushlstring(L, buffer, got);
-    priv_pusherror(L, err);
+    err = sock_send(&udp->sock, data, count, &sent, tm_get(tm));
+    if (err == IO_DONE) lua_pushnumber(L, sent);
+    else lua_pushnil(L);
+    error_push(L, err);
     return 2;
 }
 
 /*-------------------------------------------------------------------------*\
-* Receives a datagram from a UDP socket
-* Lua Input: sock [, wanted]
-*   sock: client socket created by the connect function
-*   wanted: the number of bytes expected (default: LUASOCKET_UDPBUFFERSIZE)
-* Lua Returns
-*   On success: datagram received, ip and port of sender
-*   On error: nil, followed by an error message
+* Send data through unconnected udp socket
 \*-------------------------------------------------------------------------*/
-static int udp_lua_receivefrom(lua_State *L)
+static int udp_meth_sendto(lua_State *L)
 {
-    p_udp udp = (p_udp) lua_touserdata(L, 1);
-    p_tm tm = &udp->base_tm;
-    struct sockaddr_in peer;
-    size_t peer_len = sizeof(peer);
-    char buffer[UDP_DATAGRAMSIZE];
-    size_t wanted = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
-    size_t got;
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
+    size_t count, sent = 0;
+    const char *data = luaL_checklstring(L, 2, &count);
+    const char *ip = luaL_checkstring(L, 3);
+    ushort port = (ushort) luaL_checknumber(L, 4);
+    p_tm tm = &udp->tm;
+    struct sockaddr_in addr;
     int err;
-    if (udp->udp_connected) luaL_error(L, "receivefrom on connected socket");
+    memset(&addr, 0, sizeof(addr));
+    if (!inet_aton(ip, &addr.sin_addr)) 
+        luaL_argerror(L, 3, "invalid ip address");
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
     tm_markstart(tm);
-    wanted = MIN(wanted, sizeof(buffer));
-    err = compat_recvfrom(udp->fd, buffer, wanted, &got, tm_getremaining(tm),
-            (SA *) &peer, &peer_len);
-    if (err == PRIV_CLOSED) err = PRIV_REFUSED;
-    if (err == PRIV_DONE) {
+    err = sock_sendto(&udp->sock, data, count, &sent, 
+            (SA *) &addr, sizeof(addr), tm_get(tm));
+    if (err == IO_DONE) lua_pushnumber(L, sent);
+    else lua_pushnil(L);
+    error_push(L, err == IO_CLOSED ? IO_REFUSED : err);
+    return 2;
+}
+
+/*-------------------------------------------------------------------------*\
+* Receives data from a UDP socket
+\*-------------------------------------------------------------------------*/
+static int udp_meth_receive(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
+    char buffer[UDP_DATAGRAMSIZE];
+    size_t got, count = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
+    int err;
+    p_tm tm = &udp->tm;
+    count = MIN(count, sizeof(buffer));
+    tm_markstart(tm);
+    err = sock_recv(&udp->sock, buffer, count, &got, tm_get(tm));
+    if (err == IO_DONE) lua_pushlstring(L, buffer, got);
+    else lua_pushnil(L);
+    error_push(L, err);
+    return 2;
+}
+
+/*-------------------------------------------------------------------------*\
+* Receives data and sender from a UDP socket
+\*-------------------------------------------------------------------------*/
+static int udp_meth_receivefrom(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
+    struct sockaddr_in addr;
+    size_t addr_len = sizeof(addr);
+    char buffer[UDP_DATAGRAMSIZE];
+    size_t got, count = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
+    int err;
+    p_tm tm = &udp->tm;
+    tm_markstart(tm);
+    count = MIN(count, sizeof(buffer));
+    err = sock_recvfrom(&udp->sock, buffer, count, &got, 
+            (SA *) &addr, &addr_len, tm_get(tm));
+    if (err == IO_DONE) {
         lua_pushlstring(L, buffer, got);
-        lua_pushstring(L, inet_ntoa(peer.sin_addr));
-        lua_pushnumber(L, ntohs(peer.sin_port));
+        lua_pushstring(L, inet_ntoa(addr.sin_addr));
+        lua_pushnumber(L, ntohs(addr.sin_port));
         return 3;
     } else {
         lua_pushnil(L);
-        priv_pusherror(L, err);
+        error_push(L, err);
         return 2;
     }
 }
 
 /*-------------------------------------------------------------------------*\
-* Send data through a connected UDP socket
-* Lua Input: sock, data
-*   sock: udp socket
-*   data: data to be sent
-* Lua Returns
-*   On success: nil, followed by the total number of bytes sent
-*   On error: error message
+* Just call inet methods
 \*-------------------------------------------------------------------------*/
-static int udp_lua_send(lua_State *L)
+static int udp_meth_getpeername(lua_State *L)
 {
-    p_udp udp = (p_udp) lua_touserdata(L, 1);
-    p_tm tm = &udp->base_tm;
-    size_t wanted, sent = 0;
-    int err;
-    cchar *data = luaL_checklstring(L, 2, &wanted);
-    if (!udp->udp_connected) luaL_error(L, "send on unconnected socket");
-    tm_markstart(tm);
-    err = compat_send(udp->fd, data, wanted, &sent, tm_getremaining(tm));
-    priv_pusherror(L, err == PRIV_CLOSED ? PRIV_REFUSED : err);
-    lua_pushnumber(L, sent);
-    return 2;
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{connected}", 1);
+    return inet_meth_getpeername(L, &udp->sock);
+}
+
+static int udp_meth_getsockname(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
+    return inet_meth_getsockname(L, &udp->sock);
 }
 
 /*-------------------------------------------------------------------------*\
-* Send data through a unconnected UDP socket
-* Lua Input: sock, data, ip, port
-*   sock: udp socket
-*   data: data to be sent
-*   ip: ip address of target
-*   port: port in target
-* Lua Returns
-*   On success: nil, followed by the total number of bytes sent
-*   On error: error message
+* Just call tm methods
 \*-------------------------------------------------------------------------*/
-static int udp_lua_sendto(lua_State *L)
+static int udp_meth_timeout(lua_State *L)
 {
-    p_udp udp = (p_udp) lua_touserdata(L, 1);
-    size_t wanted, sent = 0;
-    cchar *data = luaL_checklstring(L, 2, &wanted);
-    cchar *ip = luaL_checkstring(L, 3);
-    ushort port = (ushort) luaL_checknumber(L, 4);
-    p_tm tm = &udp->base_tm;
-    struct sockaddr_in peer;
-    int err;
-    if (udp->udp_connected) luaL_error(L, "sendto on connected socket");
-    memset(&peer, 0, sizeof(peer));
-    if (!inet_aton(ip, &peer.sin_addr)) luaL_error(L, "invalid ip address");
-    peer.sin_family = AF_INET;
-    peer.sin_port = htons(port);
-    tm_markstart(tm);
-    err = compat_sendto(udp->fd, data, wanted, &sent, tm_getremaining(tm),
-            (SA *) &peer, sizeof(peer));
-    priv_pusherror(L, err == PRIV_CLOSED ? PRIV_REFUSED : err);
-    lua_pushnumber(L, sent);
-    return 2;
+    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
+    return tm_meth_timeout(L, &udp->tm);
 }
 
 /*-------------------------------------------------------------------------*\
-* Associates a local address to an UDP socket
-* Lua Input: address, port
-*   address: host name or ip address to bind to 
-*   port: port to bind to
-* Lua Returns
-*   On success: nil
-*   On error: error message
+* Turns a master udp object into a client object.
 \*-------------------------------------------------------------------------*/
-static int udp_lua_setsockname(lua_State * L)
+static int udp_meth_setpeername(lua_State *L)
 {
-    p_udp udp = (p_udp) lua_touserdata(L, 1);
-    cchar *address = luaL_checkstring(L, 2);
-    ushort port = (ushort) luaL_checknumber(L, 3);
-    cchar *err = inet_trybind((p_inet) udp, address, port);
-    if (err) lua_pushstring(L, err);
-    else lua_pushnil(L);
-    return 1;
-}
-
-/*-------------------------------------------------------------------------*\
-* Sets a peer for a UDP socket
-* Lua Input: address, port
-*   address: remote host name
-*   port: remote host port
-* Lua Returns
-*   On success: nil
-*   On error: error message
-\*-------------------------------------------------------------------------*/
-static int udp_lua_setpeername(lua_State *L)
-{
-    p_udp udp = (p_udp) lua_touserdata(L, 1);
-    cchar *address = luaL_checkstring(L, 2);
-    ushort port = (ushort) luaL_checknumber(L, 3);
-    cchar *err = inet_tryconnect((p_inet) udp, address, port);
-    if (!err) {
-        udp->udp_connected = 1;
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
+    const char *address =  luaL_checkstring(L, 2);
+    int connecting = strcmp(address, "*");
+    unsigned short port = connecting ? 
+        (ushort) luaL_checknumber(L, 3) : (ushort) luaL_optnumber(L, 3, 0);
+    const char *err = inet_tryconnect(&udp->sock, address, port);
+    if (err) {
         lua_pushnil(L);
-    } else lua_pushstring(L, err);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    /* change class to connected or unconnected depending on address */
+    if (connecting) aux_setclass(L, "udp{connected}", 1);
+    else aux_setclass(L, "udp{unconnected}", 1);
+    lua_pushnumber(L, 1);
     return 1;
 }
 
+/*-------------------------------------------------------------------------*\
+* Closes socket used by object 
+\*-------------------------------------------------------------------------*/
+static int udp_meth_close(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
+    sock_destroy(&udp->sock);
+    return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Turns a master object into a server object
+\*-------------------------------------------------------------------------*/
+static int udp_meth_setsockname(lua_State *L)
+{
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{master}", 1);
+    const char *address =  luaL_checkstring(L, 2);
+    unsigned short port = (ushort) luaL_checknumber(L, 3);
+    const char *err = inet_trybind(&udp->sock, address, port, -1);
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    lua_pushnumber(L, 1);
+    return 1;
+}
+
+/*=========================================================================*\
+* Library functions
+\*=========================================================================*/
+/*-------------------------------------------------------------------------*\
+* Creates a master udp object 
+\*-------------------------------------------------------------------------*/
+int udp_global_create(lua_State *L)
+{
+    /* allocate udp object */
+    p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
+    /* set its type as master object */
+    aux_setclass(L, "udp{unconnected}", -1);
+    /* try to allocate a system socket */
+    const char *err = inet_trycreate(&udp->sock, SOCK_DGRAM);
+    if (err) {
+        /* get rid of object on stack and push error */
+        lua_pop(L, 1);
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    /* initialize timeout management */
+    tm_init(&udp->tm, -1, -1);
+    return 1;
+}
