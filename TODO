@@ -1,3 +1,15 @@
+
+think about a dispatcher.
+    - it creates a server and receives a function that will do the work on
+    received connections
+    - this function is invoked with the client socket
+    - it calls special send and receive functions that yield on timeout
+
+think about how to extend http, ftp, smtp to use special send and receive
+functions for non-blocking so they can be used in the context of the
+dispatcher!
+
+adjust manual for new sock:send returns.
 check all "require("http")" etc in the manual.
 _VERSION, _DEBUG, etc.
 get rid of "base." kludge

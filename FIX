@@ -1,1 +1,2 @@
-tcp:shutdown() was checking for group instead of class.
+tcp{client}:shutdown() was checking for group instead of class.
+tcp{client}:send() now returns i+sent-1...

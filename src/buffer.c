@@ -90,9 +90,9 @@ int buf_meth_send(lua_State *L, p_buf buf) {
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, buf->io->error(buf->io->ctx, err)); 
-        lua_pushnumber(L, sent);
+        lua_pushnumber(L, sent+start-1);
     } else {
-        lua_pushnumber(L, sent);
+        lua_pushnumber(L, sent+start-1);
         lua_pushnil(L);
         lua_pushnil(L);
     }
