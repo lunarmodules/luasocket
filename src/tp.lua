@@ -20,16 +20,16 @@ TIMEOUT = 60
 -- Implementation
 -----------------------------------------------------------------------------
 -- gets server reply (works for SMTP and FTP)
-local function get_reply(control)
+local function get_reply(c)
     local code, current, sep
-    local line, err = control:receive()
+    local line, err = c:receive()
     local reply = line
     if err then return nil, err end
     code, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
     if not code then return nil, "invalid server reply" end
     if sep == "-" then -- reply is multiline
         repeat
-            line, err = control:receive()
+            line, err = c:receive()
             if err then return nil, err end
             current, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
             reply = reply .. "\n" .. line
@@ -43,7 +43,7 @@ end
 local metat = { __index = {} }
 
 function metat.__index:check(ok)
-    local code, reply = get_reply(self.control)
+    local code, reply = get_reply(self.c)
     if not code then return nil, reply end
     if type(ok) ~= "function" then
         if type(ok) == "table" then 
@@ -59,50 +59,55 @@ function metat.__index:check(ok)
 end
 
 function metat.__index:command(cmd, arg)
-    if arg then return self.control:send(cmd .. " " .. arg.. "\r\n")
-    else return self.control:send(cmd .. "\r\n") end
+    if arg then return self.c:send(cmd .. " " .. arg.. "\r\n")
+    else return self.c:send(cmd .. "\r\n") end
 end
 
 function metat.__index:sink(snk, pat)
-    local chunk, err = control:receive(pat)
+    local chunk, err = c:receive(pat)
     return snk(chunk, err)
 end
 
 function metat.__index:send(data)
-    return self.control:send(data)
+    return self.c:send(data)
 end
 
 function metat.__index:receive(pat)
-    return self.control:receive(pat)
+    return self.c:receive(pat)
 end
 
 function metat.__index:getfd()
-    return self.control:getfd()
+    return self.c:getfd()
 end
 
 function metat.__index:dirty()
-    return self.control:dirty()
+    return self.c:dirty()
 end
 
 function metat.__index:getcontrol()
-    return self.control
+    return self.c
 end
 
 function metat.__index:source(source, step)
-    local sink = socket.sink("keep-open", self.control)
+    local sink = socket.sink("keep-open", self.c)
     return ltn12.pump.all(source, sink, step or ltn12.pump.step)
 end
 
--- closes the underlying control
+-- closes the underlying c
 function metat.__index:close()
-    self.control:close()
+    self.c:close()
 	return 1
 end
 
--- connect with server and return control object
-connect = socket.protect(function(host, port, timeout)
-    local control = socket.try(socket.tcp())
-    socket.try(control:settimeout(timeout or TIMEOUT))
-    socket.try(control:connect(host, port))
-    return setmetatable({control = control}, metat)
-end)
+-- connect with server and return c object
+function connect(host, port, timeout)
+    local c, e = socket.tcp()
+    if not c then return nil, e end
+    c:settimeout(timeout or TIMEOUT)
+    local r, e = c:connect(host, port)
+    if not r then 
+        c:close() 
+        return nil, e
+    end
+    return setmetatable({c = c}, metat)
+end

@@ -56,7 +56,7 @@ the changes that made it into version 2.0:
    LUASOCKET_DEBUG was defined, but it turns out they might be useful for
    applications;
 
-<> 'socket.try' and 'socket.protect' provide a simple
+<> 'socket.newtry' and 'socket.protect' provide a simple
    interface to exceptions that proved very in the implementation of
    high-level modules; 
 

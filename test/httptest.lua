@@ -155,14 +155,15 @@ check_request(request, expect, ignore)
 io.write("testing simple post function: ")
 back = http.request("http://" .. host .. cgiprefix .. "/cat", index)
 assert(back == index)
+print("ok")
 
 ------------------------------------------------------------------------
 io.write("testing ltn12.(sink|source).file: ")
 request = {
 	url = "http://" .. host .. cgiprefix .. "/cat",
 	method = "POST",
-	source = ltn12.source.file(io.open(index_file, "r")),
-    sink = ltn12.sink.file(io.open(index_file .. "-back", "w")),
+	source = ltn12.source.file(io.open(index_file, "rb")),
+    sink = ltn12.sink.file(io.open(index_file .. "-back", "wb")),
     headers = { ["content-length"] = string.len(index) }
 }
 expect = {
@@ -187,7 +188,7 @@ local function b64length(len)
 end
 
 local source = ltn12.source.chain(
-    ltn12.source.file(io.open(index_file, "r")),
+    ltn12.source.file(io.open(index_file, "rb")),
     ltn12.filter.chain(
         mime.encode("base64"),
         mime.wrap("base64")
@@ -196,7 +197,7 @@ local source = ltn12.source.chain(
 
 local sink = ltn12.sink.chain(
     mime.decode("base64"),
-    ltn12.sink.file(io.open(index_file .. "-back", "w"))
+    ltn12.sink.file(io.open(index_file .. "-back", "wb"))
 )
 
 request = {

@@ -60,7 +60,7 @@ function metat.__index:quit()
 end
 
 function metat.__index:close()
-    return self.try(self.tp:close())
+    return self.tp:close()
 end
 
 function metat.__index:login(user, password)
@@ -104,9 +104,10 @@ end
 
 function open(server, port)
     local tp = socket.try(tp.connect(server or SERVER, port or PORT, TIMEOUT))
+    local s = setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
-    local try = socket.newtry(function() tp:close() end)
-    return setmetatable({ tp = tp, try = try}, metat)
+    local try = socket.newtry(function() s:close() end)
+    return s 
 end
 
 ---------------------------------------------------------------------------

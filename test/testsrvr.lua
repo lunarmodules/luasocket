@@ -13,7 +13,6 @@ while 1 do
     -- control:setoption("nodelay", true)
     while 1 do 
         command, error = control:receive()
-print(error)
         if error then
             control:close()
             print("server: closing connection...")

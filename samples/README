@@ -19,13 +19,18 @@ printed by listen.lua.
 These are tiny programs that perform Base64, Quoted-Printable and
 end-of-line marker conversions.
 
+    lp.lua                  -- lp client
+
+This is a cool program written by David Burgess to print files using the
+Line Printer Daemon protocol, widely used in Unix machines.  
+Just run 'lua lp.lua <filename> queue=<printername>' and the file will print!
+
     cddb.lua                -- CDDB client
 
 This is the first try on a simple CDDB client. Not really useful, but one
 day it might become a module. 
 
     daytimeclnt.lua         -- day time client
-
 
 Just run the program to retrieve the hour and date in readable form from
 any server running an UDP daytime daemon.

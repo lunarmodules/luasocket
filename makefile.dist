@@ -29,6 +29,7 @@ EXAMPLES = \
 	eol.lua \
 	listener.lua \
 	qp.lua \
+	lp.lua \
 	talker.lua \
 	tinyirc.lua
 
@@ -101,14 +102,13 @@ dist:
 	mkdir -p $(DIST)/tests
 	mkdir -p $(DIST)/etc
 	mkdir -p $(DIST)/lua
-	mkdir -p $(DIST)/make
 	mkdir -p $(DIST)/manual
 	cp -vf $(CORE) $(DIST)
 	cp -vf README $(DIST)
 	cp -vf NEW $(DIST)
 	cp -vf LICENSE $(DIST)
-	cp -vf $(MAKE) $(DIST)/make
-	cp -vf make.README $(DIST)/make/README
+	cp -vf $(MAKE) $(DIST)
+	cp -vf make.README $(DIST)/INSTALL
 	cp -vf $(LUA) $(DIST)/lua
 	cp -vf lua.README $(DIST)/lua/README
 	cp -vf $(EXAMPLES) $(DIST)/examples

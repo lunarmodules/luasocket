@@ -12,33 +12,21 @@
 /*=========================================================================*\
 * Internal function prototypes.
 \*=========================================================================*/
-static int global_try(lua_State *L);
 static int global_protect(lua_State *L);
 static int global_newtry(lua_State *L);
 static int protected(lua_State *L);
 static int finalize(lua_State *L);
+static int do_nothing(lua_State *L);
 
 /* except functions */
 static luaL_reg func[] = {
-    {"try",       global_try},
     {"newtry",    global_newtry},
     {"protect",   global_protect},
     {NULL,        NULL}
 };
 
 /*-------------------------------------------------------------------------*\
-* Try method
-\*-------------------------------------------------------------------------*/
-static int global_try(lua_State *L) {
-    if (lua_isnil(L, 1) || (lua_isboolean(L, 1) && !lua_toboolean(L, 1))) {
-        lua_settop(L, 2);
-        lua_error(L);
-        return 0;
-    } else return lua_gettop(L);
-}
-
-/*-------------------------------------------------------------------------*\
-* Finalizer factory
+* Try factory
 \*-------------------------------------------------------------------------*/
 static int finalize(lua_State *L) {
     if (lua_isnil(L, 1) || (lua_isboolean(L, 1) && !lua_toboolean(L, 1))) {
@@ -50,7 +38,14 @@ static int finalize(lua_State *L) {
     } else return lua_gettop(L);
 }
 
+static int do_nothing(lua_State *L) { 
+    (void) L;
+    return 0; 
+}
+
 static int global_newtry(lua_State *L) {
+    lua_settop(L, 1);
+    if (lua_isnil(L, 1)) lua_pushcfunction(L, do_nothing);
     lua_pushcclosure(L, finalize, 1);
     return 1;
 }

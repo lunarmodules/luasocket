@@ -32,14 +32,10 @@ local metat = { __index = {} }
 
 function open(server, port)
     local tp = socket.try(tp.connect(server, port or PORT, TIMEOUT))
-    local f = { tp = tp }
+    local f = setmetat({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
-    f.try = socket.newtry(function() 
-        tp:close() 
-        if f.data then f.data:close() end
-        if f.server then f.server:close() end
-    end)
-    return setmetatable(f, metat)
+    f.try = socket.newtry(function() f:close() end)
+    return f 
 end
 
 function metat.__index:portconnect()
@@ -173,13 +169,9 @@ function metat.__index:quit()
 end
 
 function metat.__index:close()
-    self.tp:close()
     if self.data then self.data:close() end
     if self.server then self.server:close() end
-    self.tp = nil
-    self.data = nil
-    self.server = nil
-    return 1
+    return self.tp:close()
 end
 
 -----------------------------------------------------------------------------

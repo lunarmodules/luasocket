@@ -1,24 +1,10 @@
 This directory contains code that is more useful than the examples. This code
 *is* supported.
 
-    lua.lua
+    lua.lua                 -- new require and requirelib implementations
 
-These are modules to suport dynamic loading of LuaSocket by the stand alone
-Lua Interpreter with the use of new "require" and "requirelib" functions.
-For my Mac OS X box, for instance, I place all files in
-/Users/diego/tec/luasocket and set the following environment variables:
-
-    LUA_INIT=@/Users/diego/tec/luasocket/lua.lua
-    LUA_PATH=/Users/diego/tec/luasocket/?.lua;?.lua
-    LUA_PATHLIB=/Users/diego/tec/luasocket/?.dylib;?.dylib
-
-With that, I can run any luasocket application with the command line:
-
-    lua <script>
-
-as long as the script uses "require" to load the needed namespaces.
-Much nicer than having to build a new executable just to initialize
-LuaSocket!
+This is to support dynamic loading of LuaSocket. Check the INSTALL
+file for more information.
 
     tftp.lua                -- Trivial FTP client
 

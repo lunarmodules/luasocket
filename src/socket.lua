@@ -37,6 +37,8 @@ function socket.bind(host, port, backlog)
     return sock
 end
 
+socket.try = socket.newtry()
+
 function socket.choose(table)
     return function(name, opt1, opt2)
         if type(name) ~= "string" then

@@ -32,11 +32,12 @@ local metat = { __index = {} }
 
 function open(host, port)
     local c = socket.try(socket.tcp()) 
+    local h = setmetatable({ c = c }, metat)
     -- make sure the connection gets closed on exception
-    local try = socket.newtry(function() c:close() end)
-    try(c:settimeout(TIMEOUT))
-    try(c:connect(host, port or PORT))
-    return setmetatable({ c = c, try = try }, metat)
+    h.try = socket.newtry(function() h:close() end)
+    h.try(c:settimeout(TIMEOUT))
+    h.try(c:connect(host, port or PORT))
+    return h 
 end
 
 function metat.__index:sendrequestline(method, uri)
@@ -57,9 +58,8 @@ function metat.__index:sendbody(headers, source, step)
     source = source or ltn12.source.empty()
     step = step or ltn12.pump.step
     -- if we don't know the size in advance, send chunked and hope for the best
-    local mode
-    if headers["content-length"] then mode = "keep-open"
-    else mode = "http-chunked" end
+    local mode = "http-chunked"
+    if headers["content-length"] then mode = "keep-open" end
     return self.try(ltn12.pump.all(source, socket.sink(mode, self.c), step))
 end
 
@@ -99,10 +99,9 @@ function metat.__index:receivebody(headers, sink, step)
     step = step or ltn12.pump.step
     local length = tonumber(headers["content-length"])
     local TE = headers["transfer-encoding"]
-    local mode
+    local mode = "default" -- connection close
     if TE and TE ~= "identity" then mode = "http-chunked"
-    elseif tonumber(headers["content-length"]) then mode = "by-length"
-    else mode = "default" end
+    elseif tonumber(headers["content-length"]) then mode = "by-length" end
     return self.try(ltn12.pump.all(socket.source(mode, self.c, length), 
         sink, step))
 end
@@ -191,9 +190,9 @@ function tauthorize(reqt)
 end
 
 function tredirect(reqt, headers)
-    -- the RFC says the redirect URL has to be absolute, but some
-    -- servers do not respect that
     return trequest {
+        -- the RFC says the redirect URL has to be absolute, but some
+        -- servers do not respect that
         url = url.absolute(reqt, headers["location"]),
         source = reqt.source,
         sink = reqt.sink,
