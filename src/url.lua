@@ -1,0 +1,204 @@
+-----------------------------------------------------------------------------
+-- URI parsing, composition and relative URL resolution
+-- LuaSocket 1.4 toolkit.
+-- Author: Diego Nehab
+-- Date: 20/7/2001
+-- Conforming to: RFC 2396, LTN7
+-- RCS ID: $Id$
+----------------------------------------------------------------------------
+
+local Public, Private = {}, {}
+URL = Public
+
+-----------------------------------------------------------------------------
+-- Parses a url and returns a table with all its parts according to RFC 2396
+-- The following grammar describes the names given to the URL parts
+-- <url> ::= <scheme>://<authority>/<path>;<params>?<query>#<fragment>
+-- <authority> ::= <userinfo>@<host>:<port>
+-- <userinfo> ::= <user>[:<password>]
+-- <path> :: = {<segment>/}<segment>
+-- Input
+--   url: uniform resource locator of request
+--   default: table with default values for each field
+-- Returns
+--   table with the following fields, where RFC naming conventions have
+--   been preserved:
+--     scheme, authority, userinfo, user, password, host, port, 
+--     path, params, query, fragment
+-- Obs:
+--   the leading '/' in {/<path>} is considered part of <path>
+-----------------------------------------------------------------------------
+function Public.parse_url(url, default)
+    -- initialize default parameters
+    local parsed = default or {}
+    -- empty url is parsed to nil
+    if not url or url == "" then return nil end
+    -- remove whitespace
+    url = gsub(url, "%s", "")
+    -- get fragment
+    url = gsub(url, "#(.*)$", function(f) %parsed.fragment = f end)
+    -- get scheme
+    url = gsub(url, "^([%w][%w%+%-%.]*)%:", function(s) %parsed.scheme = s end)
+    -- get authority
+    url = gsub(url, "^//([^/]*)", function(n) %parsed.authority = n end)
+    -- get query string
+    url = gsub(url, "%?(.*)", function(q) %parsed.query = q end)
+    -- get params
+    url = gsub(url, "%;(.*)", function(p) %parsed.params = p end)
+    if url ~= "" then parsed.path = url end
+    local authority = parsed.authority
+    if not authority then return parsed end
+    authority = gsub(authority,"^([^@]*)@",function(u) %parsed.userinfo = u end)
+    authority = gsub(authority, ":([^:]*)$", function(p) %parsed.port = p end)
+    if authority ~= "" then parsed.host = authority end
+    local userinfo = parsed.userinfo
+    if not userinfo then return parsed end
+    userinfo = gsub(userinfo, ":([^:]*)$", function(p) %parsed.password = p end)
+    parsed.user = userinfo 
+    return parsed
+end
+
+-----------------------------------------------------------------------------
+-- Rebuilds a parsed URL from its components.
+-- Components are protected if any reserved or unallowed characters are found
+-- Input
+--   parsed: parsed URL, as returned by Public.parse
+-- Returns
+--   a string with the corresponding URL
+-----------------------------------------------------------------------------
+function Public.build_url(parsed)
+    local url = parsed.path or ""
+    if parsed.params then url = url .. ";" .. parsed.params end
+    if parsed.query then url = url .. "?" .. parsed.query end
+    if parsed.authority then url = "//" .. parsed.authority .. url end
+    if parsed.scheme then url = parsed.scheme .. ":" .. url end
+    if parsed.fragment then url = url .. "#" .. parsed.fragment end
+    return gsub(url, "%s", "")
+end
+
+-----------------------------------------------------------------------------
+-- Builds a absolute URL from a base and a relative URL according to RFC 2396
+-- Input
+--   base_url
+--   relative_url
+-- Returns
+--   corresponding absolute url
+-----------------------------------------------------------------------------
+function Public.absolute_url(base_url, relative_url)
+    local base = %Public.parse_url(base_url)
+    local relative = %Public.parse_url(relative_url)
+    if not base then return relative_url
+    elseif not relative then return base_url
+    elseif relative.scheme then return relative_url
+    else
+        relative.scheme = base.scheme
+        if not relative.authority then
+            relative.authority = base.authority
+            if not relative.path then
+                relative.path = base.path
+                if not relative.params then
+                    relative.params = base.params
+                    if not relative.query then
+                        relative.query = base.query
+                    end
+                end
+            else     
+                relative.path = %Private.absolute_path(base.path,relative.path)
+            end
+        end
+        return %Public.build_url(relative)
+    end
+end
+
+-----------------------------------------------------------------------------
+-- Breaks a path into its segments, unescaping the segments
+-- Input
+--   path
+-- Returns
+--   segment: a table with one entry per segment
+-----------------------------------------------------------------------------
+function Public.parse_path(path)
+	local parsed = {}
+	path = gsub(path, "%s", "")
+	gsub(path, "([^/]+)", function (s) tinsert(%parsed, s) end)
+	for i = 1, getn(parsed) do
+		parsed[i] = Code.unescape(parsed[i])
+	end
+	if strsub(path, 1, 1) == "/" then parsed.is_absolute = 1 end
+	if strsub(path, -1, -1) == "/" then parsed.is_directory = 1 end
+	return parsed
+end
+
+-----------------------------------------------------------------------------
+-- Builds a path component from its segments, escaping protected characters.
+-- Input
+--   parsed: path segments
+-- Returns
+--   path: correspondin path string
+-----------------------------------------------------------------------------
+function Public.build_path(parsed)
+	local path = ""
+	local n = getn(parsed)
+	for i = 1, n-1 do
+		path = path .. %Private.protect_segment(parsed[i])
+		path = path .. "/"
+	end
+	if n > 0 then
+		path = path .. %Private.protect_segment(parsed[n])
+		if parsed.is_directory then path = path .. "/" end
+	end
+	if parsed.is_absolute then path = "/" .. path end
+	return path
+end
+
+function Private.make_set(table)
+	local s = {}
+	for i = 1, getn(table) do
+		s[table[i]] = 1
+	end
+	return s
+end
+
+-- these are allowed withing a path segment, along with alphanum
+-- other characters must be escaped
+Private.segment_set = Private.make_set {
+    "-", "_", ".", "!", "~", "*", "'", "(", 
+	")", ":", "@", "&", "=", "+", "$", ",",
+}
+
+function Private.protect_segment(s)
+	local segment_set = %Private.segment_set
+	return gsub(s, "(%W)", function (c) 
+		if %segment_set[c] then return c
+		else return Code.escape(c) end
+	end)
+end
+
+-----------------------------------------------------------------------------
+-- Builds a path from a base path and a relative path
+-- Input
+--   base_path
+--   relative_path
+-- Returns
+--   corresponding absolute path
+-----------------------------------------------------------------------------
+function Private.absolute_path(base_path, relative_path)
+    if strsub(relative_path, 1, 1) == "/" then return relative_path end
+    local path = gsub(base_path, "[^/]*$", "")
+    path = path .. relative_path
+    path = gsub(path, "([^/]*%./)", function (s) 
+        if s ~= "./" then return s else return "" end
+    end)
+    path = gsub(path, "/%.$", "/")
+    local reduced 
+    while reduced ~= path do
+        reduced = path
+        path = gsub(reduced, "([^/]*/%.%./)", function (s)
+            if s ~= "../../" then return "" else return s end
+        end)
+    end
+    path = gsub(reduced, "([^/]*/%.%.)$", function (s)
+        if s ~= "../.." then return "" else return s end
+    end)
+    return path
+end
