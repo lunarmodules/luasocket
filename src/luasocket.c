@@ -1113,13 +1113,13 @@ static int set_option(lua_State *L, p_sock sock)
 			lua_gettable(L, -2);
 			if (!lua_isnumber(L, -1))
 				lua_error(L, "invalid SO_LINGER (l_onoff) value");
-			linger.l_onoff = lua_tonumber(L, -1);
+			linger.l_onoff = (int) lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			lua_pushstring(L, "l_linger");
 			lua_gettable(L, -2);
 			if (!lua_isnumber(L, -1))
 				lua_error(L, "invalid SO_LINGER (l_linger) value");
-			linger.l_linger = lua_tonumber(L, -1);
+			linger.l_linger = (int) lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_LINGER, 
                 (char *) &linger, sizeof(linger));
