@@ -1,31 +1,28 @@
-
 take a look at DB's smtp patch
-
-sort out the wrap around of gettime...
-    use doubles all over
-    tm_get e tm_getretry return the timeval structure pointer
-    sock_send, sock_recv & sock_select use p_tm instead of timeout
-    make select interrupt safe (will be with tm stuff)
-    use GetSystemTimeAsFileTime in windows (WinCE will suffer document)
 
 optmize aux_getgroupudata
     make aux_newclass receive upvalues
     use one upvalue per string name of class/group
     make aux_checkgroup by upvalue (faster)
 
+add error message stuff to the manual
 
 make sure all modules that can use it actually use socket.newtry
 adicionar exemplos de expansão: pipe, local, named pipe
 Add service name translation.
 testar os options!
-- Fazer compilar com g++
 - Thread-safe
   - proteger get*by*.* com um mutex GLOBAL!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 
-
-create the getstats method. 
-    sent, received, age = sock:getstats()
+*create the getstats method. 
 *fix local domain socket kludge of name size
 *use TLS 
+*sort out the wrap around of gettime...
+ *use doubles all over
+ *sock_send, sock_recv & sock_select use p_tm instead of timeout
+ *make select interrupt safe (will be with tm stuff)
+ *use GetSystemTimeAsFileTime in windows (WinCE will suffer document)
+*add getstats to the manual
+*Fazer compilar com g++
