@@ -1,3 +1,34 @@
+
+Read about
+
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-8BITMIME
+250-SIZE
+250-DSN
+250-ETRN
+250-AUTH GSSAPI
+250-DELIVERBY
+250 HELP
+
+Change return of send and receive callbacks to allow for 
+new functions. "" signals end of transmission. Pass total 
+number of bytes in request table for HTTP. Callback has nothing
+to do with it.
+
+Make sure nobody can fuck up with the metatables...
+
+Create a passive mode option for the FTP (good for firewall).
+
+Use environments in module definitions or declare all local and create the
+function with exported symbols later?
+
+local P = {}
+complex = P
+setfenv(1, P)
+
+Modules should return their namespace table in the end of the chunk.
+
 Adjust dates in all files
 
 Test the library on every system possible
@@ -7,7 +38,7 @@ Document socket.time and socket.sleep
 Implement time critical stuff from code module in C.
 Add service name translation.
 
-Ajeitar o protocolo da lua_socketlibopen()...
+Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
 
 - testar os options!
 - adicionar exemplos de expansão: pipe, local, named pipe

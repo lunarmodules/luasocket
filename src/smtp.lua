@@ -1,314 +1,157 @@
------------------------------------------------------------------------------
--- SMTP support for the Lua language.
--- LuaSocket toolkit
--- Author: Diego Nehab
--- Conforming to: RFC 821, LTN7
--- RCS ID: $Id$
------------------------------------------------------------------------------
+-- make sure LuaSocket is loaded
+if not LUASOCKET_LIBNAME then error('module requires LuaSocket') end
+-- get LuaSocket namespace
+local socket = _G[LUASOCKET_LIBNAME] 
+if not socket then error('module requires LuaSocket') end
+-- create smtp namespace inside LuaSocket namespace
+local smtp = {}
+socket.smtp = smtp
+-- make all module globals fall into smtp namespace
+setmetatable(smtp, { __index = _G })
+setfenv(1, smtp)
 
-local Public, Private = {}, {}
-local socket = _G[LUASOCKET_LIBNAME] -- get LuaSocket namespace
-socket.smtp = Public  -- create smtp sub namespace
-
------------------------------------------------------------------------------
--- Program constants
------------------------------------------------------------------------------
--- timeout in secconds before we give up waiting
-Public.TIMEOUT = 180
--- port used for connection
-Public.PORT = 25
+-- default port
+PORT = 25 
 -- domain used in HELO command and default sendmail 
 -- If we are under a CGI, try to get from environment
-Public.DOMAIN = os.getenv("SERVER_NAME") or "localhost"
+DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default server used to send e-mails
-Public.SERVER = "localhost"
+SERVER = "localhost"
 
------------------------------------------------------------------------------
--- Tries to get a pattern from the server and closes socket on error
---   sock: socket connected to the server
---   pattern: pattern to receive
--- Returns
---   received pattern on success
---   nil followed by error message on error
------------------------------------------------------------------------------
-function Private.try_receive(sock, pattern)
-    local data, err = sock:receive(pattern)
-    if not data then sock:close() end
-    return data, err
+-- tries to get a pattern from the server and closes socket on error
+local function try_receiving(connection, pattern)
+    local data, message = connection:receive(pattern)
+    if not data then connection:close() end
+    print(data)
+    return data, message
 end
 
------------------------------------------------------------------------------
--- Tries to send data to the server and closes socket on error
---   sock: socket connected to the server
---   data: data to send
--- Returns
---   err: error message if any, nil if successfull
------------------------------------------------------------------------------
-function Private.try_send(sock, data)
-    local sent, err = sock:send(data)
-    if not sent then sock:close() end
-    return err
+-- tries to send data to server and closes socket on error
+local function try_sending(connection, data)
+    local sent, message = connection:send(data)
+    if not sent then connection:close() end
+    io.write(data)
+    return sent, message
 end
 
------------------------------------------------------------------------------
--- Sends a command to the server (closes sock on error)
--- Input
---   sock: server socket
---   command: command to be sent
---   param: command parameters if any
--- Returns
---   err: error message if any
------------------------------------------------------------------------------
-function Private.send_command(sock, command, param)
+-- gets server reply
+local function get_reply(connection)
+    local code, current, separator, _
+    local line, message = try_receiving(connection)
+    local reply = line
+    if message then return nil, message end
+    _, _, code, separator = string.find(line, "^(%d%d%d)(.?)")
+    if not code then return nil, "invalid server reply" end
+    if separator == "-" then -- reply is multiline
+        repeat
+            line, message = try_receiving(connection)
+            if message then return nil, message end
+            _,_, current, separator = string.find(line, "^(%d%d%d)(.)")
+            if not current or not separator then 
+                return nil, "invalid server reply" 
+            end
+            reply = reply .. "\n" .. line
+        -- reply ends with same code
+        until code == current and separator == " " 
+    end
+    return code, reply
+end
+
+-- metatable for server connection object
+local metatable = { __index = {} }
+
+-- switch handler for execute function
+local switch = {}
+
+-- execute the "check" instruction
+function switch.check(connection, instruction)
+    local code, reply = get_reply(connection)
+    if not code then return nil, reply end
+    if type(instruction.check) == "function" then
+        return instruction.check(code, reply)
+    else
+        if string.find(code, instruction.check) then return code, reply
+        else return nil, reply end
+    end
+end
+
+-- stub for invalid instructions 
+function switch.invalid(connection, instruction)
+    return nil, "invalid instruction"
+end
+
+-- execute the "command" instruction
+function switch.command(connection, instruction)
     local line
-    if param then line = command .. " " .. param .. "\r\n"
-    else line = command .. "\r\n" end
-    return Private.try_send(sock, line)
+    if instruction.argument then
+        line = instruction.command .. " " .. instruction.argument .. "\r\n"
+    else line = instruction.command .. "\r\n" end
+    return try_sending(connection, line)
 end
 
------------------------------------------------------------------------------
--- Gets command reply, (accepts multiple-line replies)
--- Input
---   control: control openion socket
--- Returns
---   answer: whole server reply, nil if error
---   code: reply status code or error message
------------------------------------------------------------------------------
-function Private.get_answer(control)
-    local code, lastcode, sep, _
-    local line, err = Private.try_receive(control)
-    local answer = line
-    if err then return nil, err end
-    _,_, code, sep = string.find(line, "^(%d%d%d)(.)")
-    if not code or not sep then return nil, answer end
-    if sep == "-" then -- answer is multiline
-        repeat 
-            line, err = Private.try_receive(control)
-            if err then return nil, err end
-            _,_, lastcode, sep = string.find(line, "^(%d%d%d)(.)")
-            answer = answer .. "\n" .. line
-        until code == lastcode and sep == " " -- answer ends with same code
-    end
-    return answer, tonumber(code)
-end
-
------------------------------------------------------------------------------
--- Checks if a message reply code is correct. Closes control openion 
--- if not.
--- Input
---   control: control openion socket
---   success: table with successfull reply status code
--- Returns
---   code: reply code or nil in case of error
---   answer: complete server answer or system error message
------------------------------------------------------------------------------
-function Private.check_answer(control, success)
-    local answer, code = Private.get_answer(control)
-    if not answer then return nil, code end
-    if type(success) ~= "table" then success = {success} end
-    for i = 1, table.getn(success) do
-        if code == success[i] then
-            return code, answer
+function switch.raw(connection, instruction)
+    if type(instruction.raw) == "function" then
+        local f = instruction.raw
+        while true do 
+            local chunk, new_f = f()
+            if not chunk then return nil, new_f end
+            if chunk == "" then return true end
+            f = new_f or f
+            local code, message = try_sending(connection, chunk)
+            if not code then return nil, message end
         end
+    else return try_sending(connection, instruction.raw) end
+end
+
+-- finds out what instruction are we dealing with
+local function instruction_type(instruction) 
+    if type(instruction) ~= "table" then return "invalid" end
+    if instruction.command then return "command" end
+    if instruction.check then return "check" end
+    if instruction.raw then return "raw" end
+    return "invalid"
+end
+
+-- execute a list of instructions
+function metatable.__index:execute(instructions)
+    if type(instructions) ~= "table" then error("instruction expected", 1) end
+    if not instructions[1] then instructions = { instructions } end
+    local code, message
+    for _, instruction in ipairs(instructions) do
+        local type = instruction_type(instruction)
+        code, message = switch[type](self.connection, instruction)
+        if not code then break end
     end
-    control:close()
-    return nil, answer
+    return code, message
 end
 
------------------------------------------------------------------------------
--- Sends initial client greeting
--- Input
---   sock: server socket
--- Returns
---   code: server code if ok, nil if error
---   answer: complete server reply
------------------------------------------------------------------------------
-function Private.send_helo(sock)
-    local err = Private.send_command(sock, "HELO", Public.DOMAIN)
-    if err then return nil, err end
-    return Private.check_answer(sock, 250)
+-- closes the underlying connection
+function metatable.__index:close()
+    self.connection:close()
 end
 
------------------------------------------------------------------------------
--- Sends openion termination command
--- Input
---   sock: server socket
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply or error message
------------------------------------------------------------------------------
-function Private.send_quit(sock)
-    local err = Private.send_command(sock, "QUIT")
-    if err then return nil, err end
-    local code, answer = Private.check_answer(sock, 221)
-    sock:close()
-    return code, answer
+-- connect with server and return a smtp connection object
+function connect(host)
+    local connection, message = socket.connect(host, PORT)
+    if not connection then return nil, message end
+    return setmetatable({ connection = connection }, metatable)
 end
 
------------------------------------------------------------------------------
--- Sends sender command
--- Input
---   sock: server socket
---   sender: e-mail of sender
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply or error message
------------------------------------------------------------------------------
-function Private.send_mail(sock, sender)
-    local param = string.format("FROM:<%s>", sender or "")
-    local err = Private.send_command(sock, "MAIL", param)
-    if err then return nil, err end
-    return Private.check_answer(sock, 250)
-end
+-- simple test drive 
 
------------------------------------------------------------------------------
--- Sends mime headers
--- Input
---   sock: server socket
---   headers: table with mime headers to be sent
--- Returns
---   err: error message if any
------------------------------------------------------------------------------
-function Private.send_headers(sock, headers)
-    local err
-    -- send request headers 
-    for i, v in headers or {} do
-        err = Private.try_send(sock, i .. ": " .. v .. "\r\n")
-        if err then return err end
-    end
-    -- mark end of request headers
-    return Private.try_send(sock, "\r\n")
-end
+--[[
+c, m = connect("localhost")
+assert(c, m)
+assert(c:execute {check = "2.." })
+assert(c:execute {{command = "EHLO", argument = "localhost"}, {check = "2.."}})
+assert(c:execute {command = "MAIL", argument = "FROM:<diego@princeton.edu>"})
+assert(c:execute {check = "2.."})
+assert(c:execute {command = "RCPT", argument = "TO:<diego@cs.princeton.edu>"})
+assert(c:execute {check = function (code) return code == "250" end})
+assert(c:execute {{command = "DATA"}, {check = "3.."}})
+assert(c:execute {{raw = "This is the message\r\n.\r\n"}, {check = "2.."}})
+assert(c:execute {{command = "QUIT"}, {check = "2.."}})
+c:close()
+]]
 
------------------------------------------------------------------------------
--- Sends message mime headers and body
--- Input
---   sock: server socket
---   headers: table containing all mime headers to be sent
---   body: message body
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply or error message
------------------------------------------------------------------------------
-function Private.send_data(sock, headers, body)
-    local err = Private.send_command(sock, "DATA")
-    if err then return nil, err end
-    local code, answer = Private.check_answer(sock, 354)
-    if not code then return nil, answer end
-    -- avoid premature end in message body
-    body = string.gsub(body or "", "\n%.", "\n%.%.")
-    -- mark end of message body
-    body = body .. "\r\n.\r\n"
-    err = Private.send_headers(sock, headers)
-    if err then return nil, err end
-    err = Private.try_send(sock, body)
-    return Private.check_answer(sock, 250)
-end
-
------------------------------------------------------------------------------
--- Sends recipient list command
--- Input
---   sock: server socket
---   rcpt: lua table with recipient list
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply
------------------------------------------------------------------------------
-function Private.send_rcpt(sock, rcpt)
-    local err
-	local code, answer = nil, "No recipient specified"
-    if type(rcpt) ~= "table" then rcpt = {rcpt} end
-    for i = 1, table.getn(rcpt) do
-        err = Private.send_command(sock, "RCPT", 
-            string.format("TO:<%s>", rcpt[i]))
-        if err then return nil, err end
-        code, answer = Private.check_answer(sock, {250, 251})
-        if not code then return code, answer end
-    end
-    return code, answer
-end
-
------------------------------------------------------------------------------
--- Starts the connection and greets server
--- Input
---   parsed: parsed URL components
--- Returns
---   sock: socket connected to server
---   err: error message if any
------------------------------------------------------------------------------
-function Private.open(server)
-    local code, answer
-	-- default server
-	server = server or Public.SERVER
-	-- connect to server and make sure we won't hang
-    local sock, err = socket.connect(server, Public.PORT)
-    if not sock then return nil, err end
-    sock:settimeout(Public.TIMEOUT)
-    -- initial server greeting
-    code, answer = Private.check_answer(sock, 220)
-    if not code then return nil, answer end
-    -- HELO
-    code, answer = Private.send_helo(sock)
-    if not code then return nil, answer end
-    return sock
-end
-
------------------------------------------------------------------------------
--- Sends a message using an opened server
--- Input
---   sock: socket connected to server 
---   message: a table with the following fields:
---     from: message sender's e-mail
---     rcpt: message recipient's e-mail
---     headers: message mime headers
---     body: messge body
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply
------------------------------------------------------------------------------
-function Private.send(sock, message)
-    local code, answer
-    -- MAIL
-    code, answer = Private.send_mail(sock, message.from)
-    if not code then return nil, answer end
-    -- RCPT
-    code, answer = Private.send_rcpt(sock, message.rcpt)
-    if not code then return nil, answer end
-    -- DATA
-    return Private.send_data(sock, message.headers, message.body)
-end
-
------------------------------------------------------------------------------
--- Closes connection with server
--- Input
---   sock: socket connected to server 
--- Returns
---   code: server status code, nil if error
---   answer: complete server reply
------------------------------------------------------------------------------
-function Private.close(sock)
-    -- QUIT
-    return Private.send_quit(sock)
-end
-
------------------------------------------------------------------------------
--- Main mail function
--- Input
---   message: a table with the following fields:
---     from: message sender
---     rcpt: table containing message recipients
---     headers: table containing mime headers
---     body: message body
---     server: smtp server to be used
--- Returns
---   nil if successfull, error message in case of error
------------------------------------------------------------------------------
-function Public.mail(message)
-    local sock, err = Private.open(message.server)
-    if not sock then return nil, err end
-    local code, answer = Private.send(sock, message)
-    if not code then return nil, answer end
-	code, answer = Private.close(sock)
-	if code then return 1
-	else return nil, answer end
-end
+return smtp
