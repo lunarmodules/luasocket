@@ -4,6 +4,7 @@
 *   select: waits until socket ready
 * RCS ID: $Id$
 \*=========================================================================*/
+#include <string.h>
 #include <lua.h>
 #include <lauxlib.h>
 
