@@ -1,6 +1,6 @@
-require "socket"
-require "ltn12"
-require "mime"
+require("socket")
+require("ltn12")
+require("mime")
 
 dofile("testsupport.lua")
 
@@ -8,7 +8,7 @@ local qptest = "qptest.bin"
 local eqptest = "qptest.bin2"
 local dqptest = "qptest.bin3"
 
-local b64test = "libluasocket.so"
+local b64test = "luasocket.dylib"
 local eb64test = "b64test.bin"
 local db64test = "b64test.bin2"
 
