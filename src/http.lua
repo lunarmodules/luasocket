@@ -32,13 +32,26 @@ USERAGENT = socket.VERSION
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function open(host, port)
-    local c = socket.try(socket.tcp()) 
+-- default connect function, respecting the timeout
+local function connect(host, port)
+    local c, e = socket.tcp()
+    if not c then return nil, e end
+    c:settimeout(TIMEOUT)
+    local r, e = c:connect(host, port or PORT)
+    if not r then 
+        c:close()
+        return nil, e 
+    end
+    return c
+end
+
+function open(host, port, user)
+    -- create socket with user connect function, or with default
+    local c = socket.try((user or connect)(host, port))
+    -- create our http request object, pointing to the socket
     local h = base.setmetatable({ c = c }, metat)
-    -- make sure the connection gets closed on exception
+    -- make sure the object close gets called on exception
     h.try = socket.newtry(function() h:close() end)
-    h.try(c:settimeout(TIMEOUT))
-    h.try(c:connect(host, port or PORT))
     return h 
 end
 
@@ -215,13 +228,14 @@ function tredirect(reqt, headers)
         sink = reqt.sink,
         headers = reqt.headers,
         proxy = reqt.proxy,
-        nredirects = (reqt.nredirects or 0) + 1
+        nredirects = (reqt.nredirects or 0) + 1,
+        connect = reqt.connect
     }
 end
 
 function trequest(reqt)
     reqt = adjustrequest(reqt)
-    local h = open(reqt.host, reqt.port)
+    local h = open(reqt.host, reqt.port, reqt.connect)
     h:sendrequestline(reqt.method, reqt.uri)
     h:sendheaders(reqt.headers)
     h:sendbody(reqt.headers, reqt.source, reqt.step)
