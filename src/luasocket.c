@@ -291,13 +291,7 @@ static int global_tcpconnect(lua_State *L)
     const char *address = luaL_check_string(L, 1);
     unsigned short port = (unsigned short) luaL_check_number(L, 2);
     p_sock sock = push_clienttable(L, tags);
-    const char *err;
-    if (!sock) {
-        lua_pushnil(L);
-        lua_pushstring(L, "out of memory");
-        return 2;
-    }
-    err = tcp_tryconnect(sock, address, port);
+    const char *err = tcp_tryconnect(sock, address, port);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -316,18 +310,18 @@ static int global_tcpconnect(lua_State *L)
 static int global_udpsocket(lua_State *L)
 {
     p_tags tags = pop_tags(L);
-	int top = lua_gettop(L);
+    int top = lua_gettop(L);
     p_sock sock = push_udptable(L, tags);
     if (!sock) return 2;
-	if (top >= 1 ) {
-		if  (lua_istable(L, 1)) {
-			lua_pushnil(L);
-			while (lua_next(L, 1)) {
-				if (!set_option(L, sock)) lua_error(L, "error setting option");
-				lua_pop(L, 1);
-			}
-		} else luaL_argerror(L, 1, "invalid options");
-	}
+    if (top >= 1 ) {
+        if  (lua_istable(L, 1)) {
+            lua_pushnil(L);
+            while (lua_next(L, 1)) {
+                if (!set_option(L, sock)) lua_error(L, "error setting option");
+                lua_pop(L, 1);
+            }
+        } else luaL_argerror(L, 1, "invalid options");
+    }
     return 1;
 }
 
@@ -1072,63 +1066,63 @@ void set_reuseaddr(p_sock sock)
 \*-------------------------------------------------------------------------*/
 static int set_option(lua_State *L, p_sock sock)
 {
-	static const char *const optionnames[] = {
-		"SO_KEEPALIVE", "SO_DONTROUTE", "SO_BROADCAST", "SO_LINGER", NULL
-	};
-	const char *option;
-	int err;
-	if (!lua_isstring(L, -2)) return 0;
-	option = lua_tostring(L, -2);
-	switch (luaL_findstring(option, optionnames)) {
-		case 0: {
-			int bool;
-			if (!lua_isnumber(L, -1)) 
-				lua_error(L, "invalid SO_KEEPALIVE value");
-		    bool = (int) lua_tonumber(L, -1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_KEEPALIVE, 
+    static const char *const optionnames[] = {
+        "SO_KEEPALIVE", "SO_DONTROUTE", "SO_BROADCAST", "SO_LINGER", NULL
+    };
+    const char *option;
+    int err;
+    if (!lua_isstring(L, -2)) return 0;
+    option = lua_tostring(L, -2);
+    switch (luaL_findstring(option, optionnames)) {
+        case 0: {
+            int bool;
+            if (!lua_isnumber(L, -1)) 
+                lua_error(L, "invalid SO_KEEPALIVE value");
+            bool = (int) lua_tonumber(L, -1);
+            err = setsockopt(sock->sock, SOL_SOCKET, SO_KEEPALIVE, 
                 (char *) &bool, sizeof(bool));
-			return err >= 0;
-		}
-		case 1: {
-			int bool;
-			if (!lua_isnumber(L, -1))
-				lua_error(L, "invalid SO_DONTROUTE value");
-		    bool = (int) lua_tonumber(L, -1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_DONTROUTE, 
+            return err >= 0;
+        }
+        case 1: {
+            int bool;
+            if (!lua_isnumber(L, -1))
+                lua_error(L, "invalid SO_DONTROUTE value");
+            bool = (int) lua_tonumber(L, -1);
+            err = setsockopt(sock->sock, SOL_SOCKET, SO_DONTROUTE, 
                 (char *) &bool, sizeof(bool));
-			return err >= 0;
-		}
-		case 2: {
-			int bool;
-			if (!lua_isnumber(L, -1))
-				lua_error(L, "invalid SO_BROADCAST value");
-		    bool = (int) lua_tonumber(L, -1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_BROADCAST, 
+            return err >= 0;
+        }
+        case 2: {
+            int bool;
+            if (!lua_isnumber(L, -1))
+                lua_error(L, "invalid SO_BROADCAST value");
+            bool = (int) lua_tonumber(L, -1);
+            err = setsockopt(sock->sock, SOL_SOCKET, SO_BROADCAST, 
                 (char *) &bool, sizeof(bool));
-			return err >= 0;
-		}
-		case 3: {
-			struct linger linger;
-			if (!lua_istable(L, -1))
-				lua_error(L, "invalid SO_LINGER value");
-			lua_pushstring(L, "l_onoff");
-			lua_gettable(L, -2);
-			if (!lua_isnumber(L, -1))
-				lua_error(L, "invalid SO_LINGER (l_onoff) value");
-			linger.l_onoff = (int) lua_tonumber(L, -1);
-			lua_pop(L, 1);
-			lua_pushstring(L, "l_linger");
-			lua_gettable(L, -2);
-			if (!lua_isnumber(L, -1))
-				lua_error(L, "invalid SO_LINGER (l_linger) value");
-			linger.l_linger = (int) lua_tonumber(L, -1);
-			lua_pop(L, 1);
-			err = setsockopt(sock->sock, SOL_SOCKET, SO_LINGER, 
+            return err >= 0;
+        }
+        case 3: {
+            struct linger linger;
+            if (!lua_istable(L, -1))
+                lua_error(L, "invalid SO_LINGER value");
+            lua_pushstring(L, "l_onoff");
+            lua_gettable(L, -2);
+            if (!lua_isnumber(L, -1))
+                lua_error(L, "invalid SO_LINGER (l_onoff) value");
+            linger.l_onoff = (int) lua_tonumber(L, -1);
+            lua_pop(L, 1);
+            lua_pushstring(L, "l_linger");
+            lua_gettable(L, -2);
+            if (!lua_isnumber(L, -1))
+                lua_error(L, "invalid SO_LINGER (l_linger) value");
+            linger.l_linger = (int) lua_tonumber(L, -1);
+            lua_pop(L, 1);
+            err = setsockopt(sock->sock, SOL_SOCKET, SO_LINGER, 
                 (char *) &linger, sizeof(linger));
-			return err >= 0;
-		}
-		default: return 0;
-	}
+            return err >= 0;
+        }
+        default: return 0;
+    }
 }
 
 
@@ -1675,21 +1669,18 @@ LUASOCKET_API int lua_socketlibopen(lua_State *L)
     unsigned int i;
     /* declare new Lua tags for used userdata values */
     p_tags tags = (p_tags) lua_newuserdata(L, sizeof(t_tags));
-    if (!tags) lua_error(L, "out of memory");
-	/* remove tags userdatum from stack but avoid garbage collection */
-	lua_ref(L, 1);
     tags->client = lua_newtag(L);
     tags->server = lua_newtag(L);
     tags->table = lua_newtag(L);
     tags->udp = lua_newtag(L);
     /* global functions exported */
     for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
-        lua_pushuserdata(L, tags);
+        lua_pushvalue(L, -1);
         lua_pushcclosure(L, funcs[i].func, 1);
         lua_setglobal(L, funcs[i].name);
     }
     /* socket garbage collection */
-    lua_pushuserdata(L, tags);
+    lua_pushvalue(L, -1);
     lua_pushcclosure(L, gc_table, 1);
     lua_settagmethod(L, tags->table, "gc");
 #ifdef WIN32
@@ -1714,13 +1705,15 @@ LUASOCKET_API int lua_socketlibopen(lua_State *L)
         unsigned int i;
         for (i = 0; i < sizeof(global)/sizeof(char *); i++) {
             lua_pushstring(L, global[i]);
-            lua_pushuserdata(L, tags);
+            lua_pushvalue(L, -2);
             lua_pushcclosure(L, global_callfromtable, 2);
             lua_setglobal(L, global[i]);
         }
     }
 #endif
-	return 1;
+    /* remove tags userdatum from stack */
+    lua_pop(L, 1);
+    return 1;
 }
 
 /*=========================================================================*\
@@ -1745,12 +1738,11 @@ static p_sock push_clienttable(lua_State *L, p_tags tags)
         {"timeout", table_timeout},
     };
     unsigned int i;
-    p_sock sock;
+    p_sock sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
+    lua_settag(L, tags->client);
     lua_newtable(L); lua_settag(L, tags->table);
     lua_pushstring(L, P_SOCK);
-    sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
-    if (!sock) return NULL;
-    lua_settag(L, tags->client);
+    lua_pushvalue(L, -3);
     lua_settable(L, -3);
     sock->sock = INVALID_SOCKET;
     sock->is_connected = 0;
@@ -1759,7 +1751,7 @@ static p_sock push_clienttable(lua_State *L, p_tags tags)
     sock->bf_first = sock->bf_last = 0;
     for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
         lua_pushstring(L, funcs[i].name);
-        lua_pushusertag(L, sock, tags->client);
+        lua_pushvalue(L, -3);
         lua_pushcclosure(L, funcs[i].func, 1);
         lua_settable(L, -3);
     }
@@ -1782,12 +1774,11 @@ static p_sock push_servertable(lua_State *L, p_tags tags)
         {"timeout", table_timeout},
     };
     unsigned int i;
-    p_sock sock;
+    p_sock sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
+    lua_settag(L, tags->server);
     lua_newtable(L); lua_settag(L, tags->table);
     lua_pushstring(L, P_SOCK);
-    sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
-    if (!sock) return NULL;
-    lua_settag(L, tags->server);
+    lua_pushvalue(L, -3);
     lua_settable(L, -3);
     sock->sock = INVALID_SOCKET;
     sock->tm_block = -1;
@@ -1795,14 +1786,18 @@ static p_sock push_servertable(lua_State *L, p_tags tags)
     sock->bf_first = sock->bf_last = 0;
     for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
         lua_pushstring(L, funcs[i].name);
-        lua_pushusertag(L, sock, tags->client);
+        lua_pushvalue(L, -3);
         lua_pushcclosure(L, funcs[i].func, 1);
         lua_settable(L, -3);
     }
     /* the accept method is different, it needs the tags closure too */
     lua_pushstring(L, "accept");
+#ifdef LUASOCKET_41FRIENDLY
+    lua_newuserdatabox(L, tags);
+#else
     lua_pushuserdata(L, tags);
-    lua_pushusertag(L, sock, tags->client);
+#endif
+    lua_pushvalue(L, -4);
     lua_pushcclosure(L, table_tcpaccept, 2);
     lua_settable(L, -3);
     return sock;
@@ -1831,16 +1826,11 @@ static p_sock push_udptable(lua_State *L, p_tags tags)
         {"timeout", table_timeout},
     };
     unsigned int i;
-    p_sock sock;
+    p_sock sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
+    lua_settag(L, tags->udp);
     lua_newtable(L); lua_settag(L, tags->table);
     lua_pushstring(L, P_SOCK);
-    sock = (p_sock) lua_newuserdata(L, sizeof(t_sock));
-    if (!sock) { 
-        lua_pushnil(L);
-        lua_pushstring(L, "out of memory");
-        return NULL;
-    }
-    lua_settag(L, tags->udp);
+    lua_pushvalue(L, -3);
     lua_settable(L, -3);
     sock->sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock->sock == INVALID_SOCKET) {
@@ -1854,7 +1844,7 @@ static p_sock push_udptable(lua_State *L, p_tags tags)
     sock->bf_first = sock->bf_last = 0;
     for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
         lua_pushstring(L, funcs[i].name);
-        lua_pushusertag(L, sock, tags->udp);
+        lua_pushvalue(L, -3);
         lua_pushcclosure(L, funcs[i].func, 1);
         lua_settable(L, -3);
     }
