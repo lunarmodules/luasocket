@@ -85,7 +85,6 @@ int mime_open(lua_State *L)
     lua_newtable(L);
     luaL_openlib(L, NULL, func, 0);
     lua_settable(L, LUA_GLOBALSINDEX);
-    lua_pop(L, 1);
     /* initialize lookup tables */
     qpsetup(qpclass, qpunbase);
     b64setup(b64unbase);
