@@ -177,7 +177,6 @@ const char *inet_tryconnect(p_sock ps, const char *address,
         if (!strlen(address) || !inet_aton(address, &remote.sin_addr)) {
             struct hostent *hp = gethostbyname(address);
             struct in_addr **addr;
-            remote.sin_family = AF_INET;
             if (!hp) return sock_hoststrerror();
             addr = (struct in_addr **) hp->h_addr_list;
             memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));

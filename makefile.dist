@@ -2,45 +2,49 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-1.5-alpha
+DIST = luasocket-2.0-alpha
 
 LUA = \
-    concat.lua \
-    code.lua \
-    url.lua \
-    http.lua \
-    smtp.lua \
-    ftp.lua \
-    select.lua \
-    luasocket.lua
+auxiliar.lua
+code.lua
+concat.lua
+ftp.lua
 
 TESTS = \
-    testclnt.lua \
-    testsrvr.lua \
-    testcmd.lua \
-    codetest.lua \
-    urltest.lua \
-    concattest.lua \
-	ftptest.lua \
-    httptest.lua \
-    smtptest.lua \
-    mbox.lua \
-    udptest.lua
+codetest.lua
+concattest.lua
+ftptest.lua
 
 EXAMPLES = \
-    check-links.lua \
-    daytimeclnt.lua \
-    echoclnt.lua \
-    echosrvr.lua \
-    get.lua \
-    listener.lua \
-    talker.lua \
-    tinyirc.lua
+check-links.lua
+daytimeclnt.lua
+echoclnt.lua
+echosrvr.lua
+dict.lua
 
 ETC = \
-    cl-compat.lua \
-    tftp.lua \
-    dict.lua 
+cl-compat.lua
+
+get.lua
+http.lua
+httptest.lua
+listener.lua
+lua.lua
+luasocket.lua
+mbox.lua
+noglobals.lua
+select.lua
+smtp.lua
+smtptest.lua
+talker.lua
+testclnt.lua
+test.lua
+testsrvr.lua
+tftp.lua
+tinyirc.lua
+udptest.lua
+url.lua
+urltest.lua
 
 MAIN = \
 	auxiliar.c \

@@ -25,6 +25,11 @@ void aux_open(lua_State *L)
     lua_pushnumber(L, 1);
     lua_rawset(L, -3);
 #endif
+    /* make version string available so scripts */
+    lua_pushstring(L, "version");
+    lua_pushstring(L, LUASOCKET_VERSION);
+    lua_rawset(L, -3);
+    /* store namespace as global */
     lua_settable(L, LUA_GLOBALSINDEX);
     /* make sure modules know what is our namespace */
     lua_pushstring(L, "LUASOCKET_LIBNAME");

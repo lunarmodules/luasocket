@@ -6,7 +6,7 @@
 -----------------------------------------------------------------------------
 host = host or "*"
 port1 = port1 or 8080
-port2 = port2 or 8081
+port2 = port2 or 8181
 if arg then
     host = arg[1] or host
     port1 = arg[2] or port1
@@ -15,11 +15,16 @@ end
 
 server1, error = socket.bind(host, port1)
 assert(server1, error)
-server1:timeout(1)
+server1:timeout(1) -- make sure we don't block in accept
 server2, error = socket.bind(host, port2)
 assert(server2, error)
-server2:timeout(1)
+server2:timeout(1) -- make sure we don't block in accept
 
+io.write("Servers bound\n")
+
+-- simple set implementation
+-- the select function doesn't care about what is passed to it as long as
+-- it behaves like a table
 function newset()
     local reverse = {}
     local set = {}
@@ -32,46 +37,43 @@ function newset()
             table.remove(set, reverse[value])
             reverse[value] = nil
         end,
-        id = function(set, value)
-            return reverse[value]
-        end
     }})
     return set
 end
 
-sockets = newset()
+set = newset()
 
-sockets:insert(server1)
-sockets:insert(server2)
+io.write("Inserting servers in set\n")
+set:insert(server1)
+set:insert(server2)
 
 while 1 do
-    local readable, _, error = socket.select(sockets, nil)
+    local readable, _, error = socket.select(set, nil)
     for _, input in readable do
         -- is it a server socket?
-        local id = sockets:id(input)
         if input == server1 or input == server2 then
+            io.write("Waiting for clients\n")
             local new = input:accept()
             if new then 
                 new:timeout(1)
-                sockets:insert(new) 
-                io.write("Server ", id, " got client ", sockets:id(new), "\n")
+                io.write("Inserting client in set\n")
+                set:insert(new) 
             end
         -- it is a client socket
         else
             local line, error = input:receive()
             if error then 
                 input:close()
-                io.write("Removing client ", id, "\n")
-                sockets:remove(input) 
+                io.write("Removing client from set\n")
+                set:remove(input) 
             else
-            	io.write("Broadcasting line '", id, "> ", line, "'.\n")
-            	__, writable, error = socket.select(nil, sockets, 1)
+            	io.write("Broadcasting line '", line, "'\n")
+            	__, writable, error = socket.select(nil, set, 1)
             	if not error then
                 	for ___, output in writable do
-                        io.write("Sending to client ", sockets:id(output), "\n")
-                    	output:send(id, "> ", line, "\r\n")
+                    	output:send(line .. "\n")
                 	end
-            	else io.write("No one ready to listen!!!\n") end
+            	else io.write("No client ready to receive!!!\n") end
 			end
         end
     end
