@@ -1,7 +1,17 @@
-replace times by getrusage
+change send/recv to avoid using select
+
+add gethostname and use it in HTTP, SMTP etc, and add manual entry.
+add local connect, and manual entry
+add shutdown, and manual entry
+
+only allocate in case of success
+only call select if io fails...
+Proxy support pro http
+
+make REUSEADDR an option...
 
 make sure modules know if their dependencies are there.
-
+_
 one thing i noticed in usocket.c is that it doesn't check for EINTR
 after write(), sendto(), read(), recvfrom() etc. ?  the usual trick is
 to loop while you get EINTR:
@@ -68,7 +78,6 @@ Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 - SSL
-- Proxy support pro http
 
 - checar operações em closed sockets
 - checar teste de writable socket com select

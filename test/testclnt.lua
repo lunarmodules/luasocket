@@ -84,19 +84,19 @@ function reconnect()
     remote [[
         if data then data:close() data = nil end
         data = server:accept()
-        -- data:setoption("nodelay", true)
+        data:setoption("tcp-nodelay", true)
     ]]
     data, err = socket.connect(host, port)
     if not data then fail(err) 
     else pass("connected!") end
-    -- data:setoption("nodelay", true)
+    data:setoption("tcp-nodelay", true)
 end
 
 pass("attempting control connection...")
 control, err = socket.connect(host, port)
 if err then fail(err)
 else pass("connected!") end
--- control:setoption("nodelay", true)
+control:setoption("tcp-nodelay", true)
 
 ------------------------------------------------------------------------
 test("method registration")

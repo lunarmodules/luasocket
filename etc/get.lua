@@ -99,7 +99,7 @@ end
 function getbyhttp(url, file, size)
     local response = socket.http.request_cb(
         {url = url},
-		{body_cb = receive2disk(file, size)} 
+		{body_cb = receive2disk(file, size)}
     )
 	print()
 	if response.code ~= 200 then print(response.status or response.error) end

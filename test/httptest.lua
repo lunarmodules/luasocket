@@ -1,8 +1,8 @@
 -- needs Alias from /home/c/diego/tec/luasocket/test to 
--- /luasocket-test
+-- "/luasocket-test" and "/luasocket-test/"
 -- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
--- to /luasocket-test-cgi
--- needs AllowOverride AuthConfig on /home/c/diego/tec/luasocket/test/auth
+-- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
+-- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
 local similar = function(s1, s2)
 	return string.lower(string.gsub(s1 or "", "%s", "")) == 
         string.lower(string.gsub(s2 or "", "%s", ""))
@@ -31,12 +31,18 @@ local check_request = function(request, expect, ignore)
 	local response = socket.http.request(request)
 	for i,v in response do
 		if not ignore[i] then
-			if v ~= expect[i] then fail(i .. " differs!") end
+			if v ~= expect[i] then 
+                if string.len(v) < 80 then print(v) end
+                fail(i .. " differs!") 
+            end
 		end
 	end
 	for i,v in expect do
 		if not ignore[i] then
-			if v ~= response[i] then fail(i .. " differs!") end
+			if v ~= response[i] then 
+                if string.len(v) < 80 then print(v) end
+                fail(i .. " differs!") 
+            end
 		end
 	end
 	print("ok")
@@ -47,15 +53,18 @@ local host, request, response, ignore, expect, index, prefix, cgiprefix
 local t = socket.time()
 
 host = host or "localhost"
-prefix = prefix or "/luasocket"
-cgiprefix = cgiprefix or "/luasocket/cgi"
+prefix = prefix or "/luasocket-test"
+cgiprefix = cgiprefix or "/luasocket-test-cgi"
 index = readfile("test/index.html")
 
 io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
-local back = socket.http.get("http://" .. host .. forth)
+local back, h, c, e = socket.http.get("http://" .. host .. forth)
 if similar(back, forth) then print("ok")
-else fail("failed!") end
+else 
+print(h, c, e)
+fail()
+end
 
 io.write("testing query string correctness: ")
 forth = "this+is+the+query+string"
@@ -76,6 +85,38 @@ ignore = {
 	headers = 1
 }
 check_request(request, expect, ignore)
+
+socket.http.get("http://" .. host .. prefix .. "/lixo.html")
+
+io.write("testing post method: ")
+-- wanted to test chunked post, but apache doesn't support it...
+request = {
+	url = "http://" .. host .. cgiprefix .. "/cat",
+	method = "POST",
+	body = index,
+    -- remove content-length header to send chunked body
+    headers = { ["content-length"] = string.len(index) }
+}
+expect = {
+	body = index,
+	code = 200
+}
+ignore = {
+	status = 1,
+	headers = 1
+}
+check_request(request, expect, ignore)
+
+io.write("testing simple post function: ")
+body = socket.http.post("http://" .. host .. cgiprefix .. "/cat", index)
+check(body == index)
+
+io.write("testing simple post function with table args: ")
+body = socket.http.post {
+	url = "http://" .. host .. cgiprefix .. "/cat",
+	body = index
+}
+check(body == index)
 
 io.write("testing http redirection: ")
 request = {
@@ -175,7 +216,8 @@ io.write("testing manual basic auth: ")
 request = {
 	url = "http://" .. host .. prefix .. "/auth/index.html",
 	headers = {
-		authorization = "Basic " .. socket.code.base64("luasocket:password")
+		authorization = "Basic " .. 
+            socket.code.base64.encode("luasocket:password")
 	}
 }
 expect = {
@@ -246,22 +288,6 @@ ignore = {
 }
 check_request(request, expect, ignore)
 
-io.write("testing post method: ")
-request = {
-	url = "http://" .. host .. cgiprefix .. "/cat",
-	method = "POST",
-	body = index
-}
-expect = {
-	body = index,
-	code = 200
-}
-ignore = {
-	status = 1,
-	headers = 1
-}
-check_request(request, expect, ignore)
-
 io.write("testing wrong scheme: ")
 request = {
 	url = "wrong://" .. host .. cgiprefix .. "/cat",
@@ -284,17 +310,6 @@ body = socket.http.get {
 	url = "http://really:wrong@" .. host .. prefix .. "/auth/index.html",
 	user = "luasocket",
 	password = "password"
-}
-check(body == index)
-
-io.write("testing simple post function: ")
-body = socket.http.post("http://" .. host .. cgiprefix .. "/cat", index)
-check(body == index)
-
-io.write("testing simple post function with table args: ")
-body = socket.http.post {
-	url = "http://" .. host .. cgiprefix .. "/cat",
-	body = index
 }
 check(body == index)
 

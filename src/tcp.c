@@ -25,6 +25,7 @@ static int meth_bind(lua_State *L);
 static int meth_send(lua_State *L);
 static int meth_getsockname(lua_State *L);
 static int meth_getpeername(lua_State *L);
+static int meth_shutdown(lua_State *L);
 static int meth_receive(lua_State *L);
 static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
@@ -49,6 +50,7 @@ static luaL_reg tcp[] = {
     {"getsockname", meth_getsockname},
     {"settimeout",  meth_settimeout},
     {"close",       meth_close},
+    {"shutdown",    meth_shutdown},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
     {"fd",          meth_fd},
@@ -201,12 +203,12 @@ static int meth_accept(lua_State *L)
     int err = IO_ERROR;
     p_tcp server = (p_tcp) aux_checkclass(L, "tcp{server}", 1);
     p_tm tm = &server->tm;
-    p_tcp client = lua_newuserdata(L, sizeof(t_tcp));
-    aux_setclass(L, "tcp{client}", -1);
+    p_tcp client;
+    t_sock sock;
     tm_markstart(tm);
     /* loop until connection accepted or timeout happens */
     while (err != IO_DONE) { 
-        err = sock_accept(&server->sock, &client->sock, 
+        err = sock_accept(&server->sock, &sock, 
             (SA *) &addr, &addr_len, tm_getfailure(tm));
         if (err == IO_CLOSED || (err == IO_TIMEOUT && !tm_getfailure(tm))) {
             lua_pushnil(L); 
@@ -214,6 +216,9 @@ static int meth_accept(lua_State *L)
             return 2;
         }
     }
+    client = lua_newuserdata(L, sizeof(t_tcp));
+    aux_setclass(L, "tcp{client}", -1);
+    client->sock = sock;
     /* initialize remaining structure fields */
     io_init(&client->io, (p_send) sock_send, (p_recv) sock_recv, &client->sock);
     tm_init(&client->tm, -1, -1);
@@ -269,6 +274,33 @@ static int meth_close(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     sock_destroy(&tcp->sock);
+    return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Shuts the connection down
+\*-------------------------------------------------------------------------*/
+static int meth_shutdown(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    const char *how = luaL_optstring(L, 2, "both");
+    switch (how[0]) {
+        case 'b':
+            if (strcmp(how, "both")) goto error;
+            sock_shutdown(&tcp->sock, 2);
+            break;
+        case 's':
+            if (strcmp(how, "send")) goto error;
+            sock_shutdown(&tcp->sock, 1);
+            break;
+        case 'r':
+            if (strcmp(how, "receive")) goto error;
+            sock_shutdown(&tcp->sock, 0);
+            break;
+    }
+    return 0;
+error:
+    luaL_argerror(L, 2, "invalid shutdown method");
     return 0;
 }
 

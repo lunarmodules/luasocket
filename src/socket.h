@@ -37,6 +37,7 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len,
 const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len); 
 const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len); 
 void sock_listen(p_sock ps, int backlog);
+void sock_shutdown(p_sock ps, int how); 
 int sock_send(p_sock ps, const char *data, size_t count, 
         size_t *sent, int timeout);
 int sock_recv(p_sock ps, char *data, size_t count, 
