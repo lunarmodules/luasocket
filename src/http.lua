@@ -18,7 +18,7 @@ Public.TIMEOUT = 60
 -- default port for document retrieval
 Public.PORT = 80
 -- user agent field sent in request
-Public.USERAGENT = "LuaSocket 1.5"
+Public.USERAGENT = "LuaSocket 2.0"
 -- block size used in transfers
 Public.BLOCKSIZE = 8192
 
@@ -193,7 +193,8 @@ function Private.receivebody_bylength(sock, length, receive_cb)
     while length > 0 do
         local size = math.min(Public.BLOCKSIZE, length)
         local chunk, err = sock:receive(size)
-        if err then 
+        -- if there was an error before we got all the data
+        if err and string.len(chunk) ~= length then
             go, uerr = receive_cb(nil, err)
             return uerr or err
         end

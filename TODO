@@ -1,3 +1,15 @@
+replace times by getrusage
+
+make sure modules know if their dependencies are there.
+
+one thing i noticed in usocket.c is that it doesn't check for EINTR
+after write(), sendto(), read(), recvfrom() etc. ?  the usual trick is
+to loop while you get EINTR:
+
+        do
+                ret = write(...);
+        while(ret < 0 && errno == EINTR)
+
 
 Read about
 

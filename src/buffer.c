@@ -138,7 +138,8 @@ int sendraw(p_buf buf, const char *data, size_t count, size_t *sent)
     int err = IO_DONE;
     while (total < count && err == IO_DONE) {
         size_t done;
-        err = io->send(io->ctx, data+total, count-total, &done, tm_get(tm));
+        err = io->send(io->ctx, data+total, count-total, &done, 
+                tm_getsuccess(tm));
         total += done;
     }
     *sent = total;
@@ -239,7 +240,8 @@ int buf_get(p_buf buf, const char **data, size_t *count)
     p_tm tm = buf->tm;
     if (buf_isempty(buf)) {
         size_t got;
-        err = io->recv(io->ctx, buf->data, BUF_SIZE, &got, tm_get(tm));
+        err = io->recv(io->ctx, buf->data, BUF_SIZE, &got, 
+                tm_getsuccess(tm));
         buf->first = 0;
         buf->last = got;
     }

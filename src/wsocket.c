@@ -86,10 +86,12 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len,
     SA dummy_addr;
     socklen_t dummy_len;
     fd_set fds;
+    if (sock == SOCK_INVALID) return IO_CLOSED;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
     FD_SET(sock, &fds);
+    *pa = SOCK_INVALID;
     if (select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL) <= 0)
         return IO_TIMEOUT;
     if (!addr) addr = &dummy_addr;
@@ -109,6 +111,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
     struct timeval tv;
     fd_set fds;
     ssize_t put = 0;
+    if (sock == SOCK_INVALID) return IO_CLOSED;
     int err;
     int ret;
     tv.tv_sec = timeout / 1000;
@@ -148,6 +151,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
     ssize_t put = 0;
     int err;
     int ret;
+    if (sock == SOCK_INVALID) return IO_CLOSED;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
@@ -183,6 +187,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
     fd_set fds;
     int ret;
     ssize_t taken = 0;
+    if (sock == SOCK_INVALID) return IO_CLOSED;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);
@@ -214,6 +219,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
     fd_set fds;
     int ret;
     ssize_t taken = 0;
+    if (sock == SOCK_INVALID) return IO_CLOSED;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
     FD_ZERO(&fds);

@@ -16,8 +16,8 @@
 #ifdef WIN32
 #include <windows.h>
 #else
+#include <sys/time.h>
 #include <sys/times.h>
-#include <time.h>
 #include <unistd.h>
 #endif
 
@@ -46,40 +46,62 @@ void tm_init(p_tm tm, int block, int total)
 }
 
 /*-------------------------------------------------------------------------*\
-* Set and get timeout limits
-\*-------------------------------------------------------------------------*/
-void tm_setblock(p_tm tm, int block)
-{ tm->block = block; }
-void tm_settotal(p_tm tm, int total)
-{ tm->total = total; }
-int tm_getblock(p_tm tm)
-{ return tm->block; }
-int tm_gettotal(p_tm tm)
-{ return tm->total; }
-int tm_getstart(p_tm tm)
-{ return tm->start; }
-
-/*-------------------------------------------------------------------------*\
-* Determines how much time we have left for the current operation
+* Determines how much time we have left for the next system call,
+* if the previous call was successful 
 * Input
 *   tm: timeout control structure
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-int tm_get(p_tm tm)
+int tm_getsuccess(p_tm tm)
 {
-    /* no timeout */
-    if (tm->block < 0 && tm->total < 0)
+    if (tm->block < 0 && tm->total < 0) {
         return -1;
-    /* there is no block timeout, we use the return timeout */
-    else if (tm->block < 0)
-        return MAX(tm->total - tm_gettime() + tm->start, 0);
-    /* there is no return timeout, we use the block timeout */
-    else if (tm->total < 0) 
+    } else if (tm->block < 0) {
+        int t = tm->total - tm_gettime() + tm->start;
+        return MAX(t, 0);
+    } else if (tm->total < 0) {
         return tm->block;
-    /* both timeouts are specified */
-    else return MIN(tm->block, 
-            MAX(tm->total - tm_gettime() + tm->start, 0));
+    } else {
+        int t = tm->total - tm_gettime() + tm->start;
+        return MIN(tm->block, MAX(t, 0));
+    }
+}
+
+/*-------------------------------------------------------------------------*\
+* Returns time since start of operation
+* Input
+*   tm: timeout control structure
+* Returns
+*   start field of structure
+\*-------------------------------------------------------------------------*/
+int tm_getstart(p_tm tm)
+{
+    return tm->start;
+}
+
+/*-------------------------------------------------------------------------*\
+* Determines how much time we have left for the next system call,
+* if the previous call was a failure
+* Input
+*   tm: timeout control structure
+* Returns
+*   the number of ms left or -1 if there is no time limit
+\*-------------------------------------------------------------------------*/
+int tm_getfailure(p_tm tm)
+{
+    if (tm->block < 0 && tm->total < 0) {
+        return -1;
+    } else if (tm->block < 0) {
+        int t = tm->total - tm_gettime() + tm->start;
+        return MAX(t, 0);
+    } else if (tm->total < 0) {
+        int t = tm->block - tm_gettime() + tm->start;
+        return MAX(t, 0);
+    } else {
+        int t = tm->total - tm_gettime() + tm->start;
+        return MIN(tm->block, MAX(t, 0));
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -131,10 +153,10 @@ int tm_meth_settimeout(lua_State *L, p_tm tm)
     const char *mode = luaL_optstring(L, 3, "b");
     switch (*mode) {
         case 'b':
-            tm_setblock(tm, ms);
+            tm->block = ms; 
             break;
         case 'r': case 't':
-            tm_settotal(tm, ms);
+            tm->total = ms;
             break;
         default:
             luaL_argcheck(L, 0, 3, "invalid timeout mode");

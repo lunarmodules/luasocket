@@ -198,21 +198,21 @@ static int meth_accept(lua_State *L)
 {
     struct sockaddr_in addr;
     socklen_t addr_len = sizeof(addr);
+    int err = IO_ERROR;
     p_tcp server = (p_tcp) aux_checkclass(L, "tcp{server}", 1);
     p_tm tm = &server->tm;
     p_tcp client = lua_newuserdata(L, sizeof(t_tcp));
-    tm_markstart(tm);
     aux_setclass(L, "tcp{client}", -1);
-    for ( ;; ) {
-        sock_accept(&server->sock, &client->sock, 
-            (SA *) &addr, &addr_len, tm_get(tm));
-        if (client->sock == SOCK_INVALID) {
-           if (tm_get(tm) == 0) {
-                lua_pushnil(L);
-                io_pusherror(L, IO_TIMEOUT);
-                return 2;
-           }
-        } else break;
+    tm_markstart(tm);
+    /* loop until connection accepted or timeout happens */
+    while (err != IO_DONE) { 
+        err = sock_accept(&server->sock, &client->sock, 
+            (SA *) &addr, &addr_len, tm_getfailure(tm));
+        if (err == IO_CLOSED || (err == IO_TIMEOUT && !tm_getfailure(tm))) {
+            lua_pushnil(L); 
+            io_pusherror(L, err);
+            return 2;
+        }
     }
     /* initialize remaining structure fields */
     io_init(&client->io, (p_send) sock_send, (p_recv) sock_recv, &client->sock);

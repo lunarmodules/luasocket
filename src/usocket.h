@@ -34,11 +34,6 @@
 /* TCP options (nagle algorithm disable) */
 #include <netinet/tcp.h>
 
-#ifdef __APPLE__
-/* for some reason socklen_t is not defined in Mac Os X */
-typedef int socklen_t;
-#endif
-
 typedef int t_sock;
 typedef t_sock *p_sock;
 
