@@ -1,8 +1,4 @@
 - Melhorar a interface de setoptions (aceitar nada como true, por exemplo)
-- Inicializaccao das classes pode falhar?
-- Ajeitar melhor a hierarquia de classes. Ajeitar o file...
-- GARBAGE COLLECTOR!
-- Adicionar um método sock:setoption???
 - testar em várias plataformas
 - adicionar exemplos de expansão: pipe, local, named pipe
 

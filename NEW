@@ -1,17 +1,21 @@
-All functions provided by the library are in the namespace "socket".
-Functions such as send/receive/timeout/close etc do not exist in the
-namespace. They are now only available as methods of the appropriate
-objects.
+Major C code rewrite. Code is modular and extensible. Hopefully, next
+versions will include code for local domain sockets, file descriptors,
+pipes (on unix) and named pipes (on windows) as a bonus.
 
-Object has been changed to become more uniform.  First create an object for
-a given domain/family and protocol. Then connect or bind if needed. Then
-use IO functions.
+All functions provided by the library are in the namespace "socket".
+Functions such as send/receive/timeout/close etc do not exist anymore as
+stand alone functions. They are now only available as methods of the
+appropriate objects.
+
+TCP has been changed to become more uniform.  First create an object, then 
+connect or bind if needed. Then use IO functions. The "socket.connect" and
+"socket.bind" functions are provided for simplicity, but they just call
+"socket.tcp" followed by the ":connect" or ":bind" methods.
 
 All functions return a non-nil value as first return value if successful.
 All functions return whatever could be retrieved followed by error message 
 in case of error. The best way to check for errors is to check for the
-presence of an error message. 
-WARNING: The send function was affected.
+presence of an error message.  WARNING: The send function was affected.
 
 Better error messages and parameter checking.
 
@@ -20,3 +24,6 @@ setpeername with address "*".
 
 socket.sleep and socket.time are now part of the library and are 
 supported.
+
+Socket options interface has been improved and TCP now also supports socket
+options.

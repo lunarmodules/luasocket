@@ -1,12 +1,9 @@
 This release is work in progress. It has been tested on WinXP, Mac OS X,
-SunOS and Linux. The most important change is a major rewrite of the C code
-that attempts to make the library extensible. Also, all functions were
-moved to the 'socket' namespace. A few changes are expected for the final
-version, mostly in order to make the API more uniform.
+SunOS and Linux. 
 
-In this version, all Lua code has been built into the binary. For that, you
+In this version, all Lua code should be built into the binary. For that, you
 will need a working versions of luac and bin2c, both available with your
-Lua distribution. Check makefile for details.
+Lua distribution. Check the makefile for details.
 
 Have fun,
 Diego Nehab.

@@ -120,6 +120,7 @@ test_methods(socket.tcp(), {
     "setsockname",
     "getpeername",
     "getsockname",
+    "setoption",
     "timeout",
     "close",
 })
@@ -133,6 +134,7 @@ test_methods(socket.udp(), {
     "sendto", 
     "receive", 
     "receivefrom", 
+    "setoption",
     "timeout", 
     "close", 
 })
@@ -162,21 +164,16 @@ remote "data:send(str); data:close()"
 end
 
 
---test_mixed(1)
---test_mixed(17)
---test_mixed(200)
---test_mixed(4091)
---test_mixed(80199)
---test_mixed(4091)
---test_mixed(200)
---test_mixed(17)
---test_mixed(1)
+test_mixed(1)
+test_mixed(17)
+test_mixed(200)
+test_mixed(4091)
+test_mixed(80199)
+test_mixed(4091)
+test_mixed(200)
+test_mixed(17)
+test_mixed(1)
 
-test_mixed(4091)
-test_mixed(4091)
-test_mixed(4091)
-test_mixed(4091)
-test_mixed(4091)
 ------------------------------------------------------------------------
 test("character line")
 reconnect()
@@ -203,6 +200,11 @@ test_asciiline(200)
 test_asciiline(4091)
 test_asciiline(80199)
 test_asciiline(800000)
+test_asciiline(80199)
+test_asciiline(4091)
+test_asciiline(200)
+test_asciiline(17)
+test_asciiline(1)
 
 ------------------------------------------------------------------------
 test("binary line")
@@ -479,9 +481,7 @@ function test_selectbugs()
     pass("invalid input: ok")
 end
 
--- test_selectbugs()
-
-
+test_selectbugs()
 
 
 test(string.format("done in %.2fs", socket.time() - start))

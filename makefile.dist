@@ -5,46 +5,45 @@
 DIST = luasocket-2.0-alpha
 
 LUA = \
-auxiliar.lua
-code.lua
-concat.lua
-ftp.lua
+	auxiliar.lua \
+	code.lua \
+	concat.lua \
+	ftp.lua \
+	http.lua \
+	select.lua \
+	smtp.lua \
+	url.lua
 
 TESTS = \
-codetest.lua
-concattest.lua
-ftptest.lua
+	codetest.lua \
+	concattest.lua \
+	ftptest.lua \
+	mbox.lua \
+	httptest.lua \
+	noglobals.lua \
+	smtptest.lua \
+	testclnt.lua \
+	testsrvr.lua \
+	udptest.lua \
+	urltest.lua
 
 EXAMPLES = \
-check-links.lua
-daytimeclnt.lua
-echoclnt.lua
-echosrvr.lua
-dict.lua
+	daytimeclnt.lua \
+	echoclnt.lua \
+	echosrvr.lua \
+	dict.lua \
+	listener.lua \
+	talker.lua \
+	tinyirc.lua
 
 ETC = \
-cl-compat.lua
+	check-links.lua \
+	cl-compat.lua \
+	get.lua \
+	lua.lua \
+	luasocket.lua \
+	tftp.lua \
 
-get.lua
-http.lua
-httptest.lua
-listener.lua
-lua.lua
-luasocket.lua
-mbox.lua
-noglobals.lua
-select.lua
-smtp.lua
-smtptest.lua
-talker.lua
-testclnt.lua
-test.lua
-testsrvr.lua
-tftp.lua
-tinyirc.lua
-udptest.lua
-url.lua
-urltest.lua
 
 MAIN = \
 	auxiliar.c \
@@ -57,10 +56,8 @@ MAIN = \
 	inet.h \
 	io.c \
 	io.h \
-	lua.c \
 	luasocket.c \
 	luasocket.h \
-	makefile \
 	select.c \
 	select.h \
 	socket.h \
@@ -73,23 +70,24 @@ MAIN = \
 	usocket.c \
 	usocket.h \
 	wsocket.c \
-	wsocket.h \
+	wsocket.h
 
 dist:
 	mkdir -p $(DIST)/examples
 	mkdir -p $(DIST)/tests
 	mkdir -p $(DIST)/etc
-	mkdir -p $(DIST)/lua
 	cp -vf $(MAIN) $(DIST)
 	cp -vf $(LUA) $(DIST)
 	cp -vf makefile $(DIST)
 	cp -vf README $(DIST)
+	cp -vf lua.README $(DIST)
+	cp -vf NEW $(DIST)
 	cp -vf $(EXAMPLES) $(DIST)/examples
-	cp -vf README.examples $(DIST)/examples/README
+	cp -vf examples.README $(DIST)/examples/README
 	cp -vf $(TESTS) $(DIST)/tests
-	cp -vf README.tests $(DIST)/tests/README
+	cp -vf tests.README $(DIST)/tests/README
 	cp -vf $(ETC) $(DIST)/etc
-	cp -vf README.etc $(DIST)/etc/README
+	cp -vf etc.README $(DIST)/etc/README
 	tar -zcvf $(DIST).tar.gz $(DIST)
 	zip -r $(DIST).zip $(DIST)
 
