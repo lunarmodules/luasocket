@@ -8,9 +8,8 @@
 -----------------------------------------------------------------------------
 -- Setup namespace
 -----------------------------------------------------------------------------
-local ltn12 = {}
-setmetatable(ltn12, { __index = _G })
-setfenv(1, ltn12)
+_LOADED["ltn12"] = getfenv(1)
+
 filter = {}
 source = {}
 sink = {}
@@ -18,10 +17,6 @@ pump = {}
 
 -- 2048 seems to be better in windows...
 BLOCKSIZE = 2048
-
-local function shift(a, b, c)
-    return b, c
-end
 
 -----------------------------------------------------------------------------
 -- Filter stuff
@@ -53,7 +48,9 @@ local function chain2(f1, f2)
         end
     end)
     return function(chunk)
-        return shift(coroutine.resume(co, chunk))
+        local ret, a, b  = coroutine.resume(co, chunk)
+        if ret then return a, b
+        else return nil, a end
     end
 end
 
@@ -149,7 +146,9 @@ function source.chain(src, f)
         end
     end)
     return function()
-        return shift(coroutine.resume(co))
+        local ret, a, b  = coroutine.resume(co)
+        if ret then return a, b
+        else return nil, a end
     end
 end
 
@@ -166,7 +165,9 @@ function source.cat(...)
         end
     end)
     return function()
-        return shift(coroutine.resume(co))
+        local ret, a, b  = coroutine.resume(co)
+        if ret then return a, b
+        else return nil, a end
     end
 end
 

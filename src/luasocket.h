@@ -25,6 +25,7 @@
 /*-------------------------------------------------------------------------*\
 * Initializes the library.
 \*-------------------------------------------------------------------------*/
+#define LUASOCKET_LIBNAME "socket"
 LUASOCKET_API int luaopen_socket(lua_State *L);
 
 #endif /* LUASOCKET_H */

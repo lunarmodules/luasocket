@@ -10,7 +10,6 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "luasocket.h"
 #include "inet.h"
 
 /*=========================================================================*\

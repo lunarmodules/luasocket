@@ -8,6 +8,7 @@ socket = require("socket")
 http = require("http")
 ftp = require("ftp")
 url = require("url")
+ltn12 = require("ltn12")
 
 -- formats a number of seconds into human readable form
 function nicetime(s)

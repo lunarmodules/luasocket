@@ -7,7 +7,7 @@
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load other required modules
+-- Load required modules
 -----------------------------------------------------------------------------
 local socket = require("socket")
 local ltn12 = require("ltn12")
@@ -17,10 +17,7 @@ local tp = require("tp")
 -----------------------------------------------------------------------------
 -- Setup namespace
 -----------------------------------------------------------------------------
-local ftp = {}
--- make all module globals fall into namespace
-setmetatable(ftp, { __index = _G })
-setfenv(1, ftp)
+_LOADED["ftp"] = getfenv(1)
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -32,9 +29,7 @@ PORT = 21
 -- this is the default anonymous password. used when no password is
 -- provided in url. should be changed to your e-mail.
 USER = "ftp"
-EMAIL = "anonymous@anonymous.org"
--- block size used in transfers
-BLOCKSIZE = 2048
+PASSWORD = "anonymous@anonymous.org"
 
 -----------------------------------------------------------------------------
 -- Low level FTP API
@@ -42,7 +37,7 @@ BLOCKSIZE = 2048
 local metat = { __index = {} }
 
 function open(server, port)
-    local tp = socket.try(socket.tp.connect(server, port or PORT))
+    local tp = socket.try(tp.connect(server, port or PORT, TIMEOUT))
     return setmetatable({tp = tp}, metat)
 end
 
@@ -51,14 +46,17 @@ local function port(portt)
 end
 
 local function pasv(pasvt)
-    return socket.connect(pasvt.ip, pasvt.port)
+    local data = socket.try(socket.tcp())
+    socket.try(data:settimeout(TIMEOUT))
+    socket.try(data:connect(pasvt.ip, pasvt.port))
+    return data
 end
 
 function metat.__index:login(user, password)
     socket.try(self.tp:command("user", user or USER))
     local code, reply = socket.try(self.tp:check{"2..", 331})
     if code == 331 then
-        socket.try(self.tp:command("pass", password or EMAIL))
+        socket.try(self.tp:command("pass", password or PASSWORD))
         socket.try(self.tp:check("2.."))
     end
     return 1
@@ -104,6 +102,7 @@ function metat.__index:send(sendt)
     socket.try(self.pasvt or self.portt, "need port or pasv first")
     if self.pasvt then data = socket.try(pasv(self.pasvt)) end
     local argument = sendt.argument or string.gsub(sendt.path, "^/", "")
+    if argument == "" then argument = nil end
     local command =  sendt.command or "stor"
     socket.try(self.tp:command(command, argument))
     local code, reply = socket.try(self.tp:check{"2..", "1.."})
@@ -133,6 +132,7 @@ function metat.__index:receive(recvt)
     socket.try(self.pasvt or self.portt, "need port or pasv first")
     if self.pasvt then data = socket.try(pasv(self.pasvt)) end
     local argument = recvt.argument or string.gsub(recvt.path, "^/", "")
+    if argument == "" then argument = nil end
     local command =  recvt.command or "retr"
     socket.try(self.tp:command(command, argument))
     local code = socket.try(self.tp:check{"1..", "2.."})
@@ -182,14 +182,14 @@ end
 -- High level FTP API
 -----------------------------------------------------------------------------
 local function tput(putt)
-    local ftp = socket.ftp.open(putt.host, putt.port)
-    ftp:greet()
-    ftp:login(putt.user, putt.password)
-    if putt.type then ftp:type(putt.type) end
-    ftp:pasv()
-    ftp:send(putt)
-    ftp:quit()
-    return ftp:close()
+    local con = ftp.open(putt.host, putt.port)
+    con:greet()
+    con:login(putt.user, putt.password)
+    if putt.type then con:type(putt.type) end
+    con:pasv()
+    con:send(putt)
+    con:quit()
+    return con:close()
 end
 
 local default = {
@@ -198,15 +198,16 @@ local default = {
 }
 
 local function parse(u)
-    local putt = socket.try(url.parse(u, default))
-    socket.try(putt.scheme == "ftp", "invalid scheme '" .. putt.scheme .. "'")
-    socket.try(putt.host, "invalid host")
+    local t = socket.try(url.parse(u, default))
+    socket.try(t.scheme == "ftp", "invalid scheme '" .. t.scheme .. "'")
+    socket.try(t.host, "invalid host")
     local pat = "^type=(.)$"
-    if putt.params then 
-        putt.type = socket.skip(2, string.find(putt.params, pat))
-        socket.try(putt.type == "a" or putt.type == "i")
+    if t.params then 
+        t.type = socket.skip(2, string.find(t.params, pat))
+        socket.try(t.type == "a" or t.type == "i",
+            "invalid type '" .. t.type .. "'")
     end
-    return putt
+    return t
 end
 
 local function sput(u, body)
@@ -221,17 +222,17 @@ put = socket.protect(function(putt, body)
 end)
 
 local function tget(gett)
-    local ftp = socket.ftp.open(gett.host, gett.port)
-    ftp:greet()
-    ftp:login(gett.user, gett.password)
-    if gett.type then ftp:type(gett.type) end
-    ftp:pasv()
-    ftp:receive(gett)
-    ftp:quit()
-    return ftp:close()
+    local con = ftp.open(gett.host, gett.port)
+    con:greet()
+    con:login(gett.user, gett.password)
+    if gett.type then con:type(gett.type) end
+    con:pasv()
+    con:receive(gett)
+    con:quit()
+    return con:close()
 end
 
-local function sget(u, body)
+local function sget(u)
     local gett = parse(u) 
     local t = {}
     gett.sink = ltn12.sink.table(t)
@@ -240,7 +241,7 @@ local function sget(u, body)
 end
 
 get = socket.protect(function(gett)
-    if type(gett) == "string" then return sget(gett, body)
+    if type(gett) == "string" then return sget(gett)
     else return tget(gett) end
 end)
 

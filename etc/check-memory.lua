@@ -1,0 +1,17 @@
+function load(s)
+    collectgarbage()
+    local a = gcinfo()
+    _G[s] = require(s)
+    collectgarbage()
+    local b = gcinfo()
+    print(s .. ":\t " .. (b-a) .. "k")
+end
+
+load("socket")
+load("url")
+load("ltn12")
+load("mime")
+load("tp")
+load("smtp")
+load("http")
+load("ftp")

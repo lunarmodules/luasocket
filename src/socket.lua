@@ -7,8 +7,8 @@
 -----------------------------------------------------------------------------
 -- Load LuaSocket from dynamic library
 -----------------------------------------------------------------------------
-local open = assert(loadlib("luasocket", "luaopen_socket"))
-local socket = assert(open())
+local socket = requirelib("luasocket", "luaopen_socket", getfenv(1))
+_LOADED["socket"] = socket
 
 -----------------------------------------------------------------------------
 -- Auxiliar functions
@@ -116,18 +116,21 @@ socket.sourcet["by-length"] = function(sock, length)
 end
 
 socket.sourcet["until-closed"] = function(sock)
+    local done
     return setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
     }, { 
-        __call = ltn12.source.simplify(function()
+        __call = function()
+            if done then return nil end
             local chunk, err, partial = sock:receive(socket.BLOCKSIZE)
             if not err then return chunk
             elseif err == "closed" then 
                 sock:close()
-                return partial, ltn12.source.empty()
+                done = 1
+                return partial
             else return nil, err end 
-        end)
+        end
     })
 end
 

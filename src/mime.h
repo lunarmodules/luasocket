@@ -19,6 +19,7 @@
 #define MIME_API extern
 #endif
 
+#define MIME_LIBNAME "mime"
 MIME_API int luaopen_mime(lua_State *L);
 
 #endif /* MIME_H */

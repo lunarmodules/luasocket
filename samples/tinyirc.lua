@@ -4,7 +4,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-require("socket")
+socket = require("socket")
 host = host or "*"
 port1 = port1 or 8080
 port2 = port2 or 8181

@@ -7,15 +7,9 @@
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load SMTP from dynamic library
--- Comment these lines if you are loading static
+-- Load required modules
 -----------------------------------------------------------------------------
-local open = assert(loadlib("smtp", "luaopen_smtp"))
-local smtp = assert(open())
-
------------------------------------------------------------------------------
--- Load other required modules
------------------------------------------------------------------------------
+local smtp = requirelib("smtp")
 local socket = require("socket")
 local ltn12 = require("ltn12")
 local tp = require("tp")
@@ -23,10 +17,10 @@ local tp = require("tp")
 -----------------------------------------------------------------------------
 -- Setup namespace 
 -----------------------------------------------------------------------------
--- make all module globals fall into smtp namespace
-setmetatable(smtp, { __index = _G })
-setfenv(1, smtp)
+_LOADED["smtp"] = smtp
 
+-- timeout for connection
+TIMEOUT = 60
 -- default server used to send e-mails
 SERVER = "localhost"
 -- default port
@@ -94,9 +88,7 @@ function metat.__index:send(mailt)
 end
 
 function open(server, port)
-    print(server or SERVER, port or PORT)
-    local tp, error = tp.connect(server or SERVER, port or PORT)
-    if not tp then return nil, error end
+    local tp = socket.try(tp.connect(server or SERVER, port or PORT, TIMEOUT))
     return setmetatable({tp = tp}, metat)
 end
 
@@ -121,7 +113,10 @@ local function send_multipart(mesgt)
     coroutine.yield('content-type: multipart/mixed; boundary="' .. 
         bd .. '"\r\n\r\n')
     -- send preamble
-    if mesgt.body.preamble then coroutine.yield(mesgt.body.preamble) end
+    if mesgt.body.preamble then 
+        coroutine.yield(mesgt.body.preamble) 
+        coroutine.yield("\r\n") 
+    end
     -- send each part separated by a boundary
     for i, m in ipairs(mesgt.body) do
         coroutine.yield("\r\n--" .. bd .. "\r\n")
@@ -130,7 +125,10 @@ local function send_multipart(mesgt)
     -- send last boundary 
     coroutine.yield("\r\n--" .. bd .. "--\r\n\r\n")
     -- send epilogue
-    if mesgt.body.epilogue then coroutine.yield(mesgt.body.epilogue) end
+    if mesgt.body.epilogue then 
+        coroutine.yield(mesgt.body.epilogue) 
+        coroutine.yield("\r\n") 
+    end
 end
 
 -- yield message body from a source
@@ -183,12 +181,12 @@ end
 -- set defaul headers
 local function adjust_headers(mesgt)
     local lower = {}
-    for i,v in (mesgt or lower) do
+    for i,v in (mesgt.headers or lower) do
         lower[string.lower(i)] = v
     end
     lower["date"] = lower["date"] or 
         os.date("!%a, %d %b %Y %H:%M:%S ") .. (mesgt.zone or ZONE)
-    lower["x-mailer"] = lower["x-mailer"] or socket.version
+    lower["x-mailer"] = lower["x-mailer"] or socket.VERSION
     -- this can't be overriden
     lower["mime-version"] = "1.0" 
     mesgt.headers = lower
@@ -198,18 +196,22 @@ function message(mesgt)
     adjust_headers(mesgt)
     -- create and return message source
     local co = coroutine.create(function() send_message(mesgt) end)
-    return function() return socket.skip(1, coroutine.resume(co)) end
+    return function() 
+        local ret, a, b = coroutine.resume(co)
+        if ret then return a, b
+        else return nil, a end
+    end
 end
 
 ---------------------------------------------------------------------------
 -- High level SMTP API
 -----------------------------------------------------------------------------
 send = socket.protect(function(mailt)
-    local smtp = socket.try(open(mailt.server, mailt.port))
-    smtp:greet(mailt.domain)
-    smtp:send(mailt)
-    smtp:quit()
-    return smtp:close()
+    local con = open(mailt.server, mailt.port)
+    con:greet(mailt.domain)
+    con:send(mailt)
+    con:quit()
+    return con:close()
 end)
 
 return smtp

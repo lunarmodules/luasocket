@@ -35,9 +35,9 @@
 
 <p>
 FTP  (File Transfer  Protocol)  is a  protocol  used  to transfer  files
-between hosts.  The module  <tt>ftp.lua</tt> offers simple  FTP support,
-allowing applications to  download and upload files,  and list directory
-contents. The implementation conforms to
+between hosts.  The module  <tt>ftp.lua</tt> offers simple  FTP support.
+Applications can easily download and upload files. 
+The implementation conforms to
 <a href="http://www.cs.princeton.edu/~diego/rfc/rfc0959.txt">RFC 959</a>.
 </p>
 
@@ -49,175 +49,191 @@ URLs MUST conform to
 
 <blockquote>
 <tt>
-[ftp://][&lt;user&gt;[:&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;][/&lt;path&gt;][<i>type</i>=a|i|d]</tt>
+[ftp://][&lt;user&gt;[:&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;][/&lt;path&gt;][<i>type</i>=a|i]</tt>
 </blockquote>
+
+<p>
+High level functions are provided supporting the most common operations.
+These high level functions are implemented on top of a lower level
+interface. By using the low-level interface, users can easily create their
+own functions to access <em>any</em> operation supported by the FTP
+protocol.  For that, check the implementation.  
+</p>
+
+<p>
+To use some of the functions in this module, a good understanding of 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">
+LTN012, Filters sources and sinks</a> is necessary. 
+</p>
+
+<p>
+The following constants can be set to control the default behaviour of
+the FTP module: 
+</p>
+
+<ul>
+<li> <tt>PASSWORD</tt>: default anonymous password.
+<li> <tt>PORT</tt>: default port used for the control connection;
+<li> <tt>TIMEOUT</tt>: sets the timeout for all I/O operations;
+<li> <tt>USER</tt>: default anonymous user;
+</ul>
 
 <!-- ftp.get ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=get>
-socket.ftp.<b>get(</b>url<b>)</b><br>
-socket.ftp.<b>get{</b><br>
-&nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;type = <i>string</i>,<br>
-&nbsp;&nbsp;user = <i>string</i>,<br> 
-&nbsp;&nbsp;password = <i>string</i><br>
+ftp.<b>get(</b>url<b>)</b><br>
+ftp.<b>get{</b><br>
+&nbsp;&nbsp;host = <i>string</i>,<br>
+&nbsp;&nbsp;sink = <i>LTN12 sink</i>,<br>
+&nbsp;&nbsp;argument <i>or</i> path = <i>string</i>,<br>
+&nbsp;&nbsp;[user = <i>string</i>,]<br>
+&nbsp;&nbsp;[password = <i>string</i>]<br>
+&nbsp;&nbsp;[command = <i>string</i>,]<br>
+&nbsp;&nbsp;[port = <i>number</i>,]<br>
+&nbsp;&nbsp;[type = <i>string</i>,]<br>
+&nbsp;&nbsp;[step = <i>LTN12 pump step</i>],<br>
 <b>}</b>
 </p>
 
 <p class=description>
-Downloads an URL from a FTP server.
+The <tt>get</tt> function has two forms. The simple form has fixed
+functionality: it downloads the contents of a URL and returns it as a
+string. The generic form allows a <em>lot</em> more control, as explained
+below.
 </p>
 
 <p class=parameters>
-The function can be  called either  directly with  a <tt>url</tt>  
-or with  a <em>request table</em>. 
-Fields passed  explicitly in  the request  table override  those
-present in the <tt>url</tt>.
+If the argument of the <tt>get</tt> function is a table, the function
+expects at least the fields <tt>host</tt>, <tt>sink</tt>, and one of 
+<tt>argument</tt> or <tt>path</tt> (<tt>argument</tt> takes
+precedence). <tt>Host</tt> is the server to connect to. <tt>Sink</tt> is
+the LTN12 sink that will receive the downloaded data. <tt>Argument</tt> or
+<tt>path</tt> give the target path to the resource in the server. The
+optional arguments are the following:
 </p>
-
-<p class=parameters>
-The parameter <tt>type</tt> accepts values '<tt>a</tt>' (ASCII, the
-default), '<tt>i</tt>' (binary) or  '<tt>d</tt>' (directory listing) and
-determines  the  transfer type.  If  <tt>&lt;path&gt;</tt>  ends with  a
-'<tt>/</tt>' or  <tt>type</tt> is  '<tt>d</tt>', a directory  listing of
-<tt>&lt;path&gt;</tt> is  returned.  If no <tt>user</tt> is provided in the
-<tt>url</tt> or explicitly, the function tries to log in as user
-'<tt>anonymous</tt>'.
-</p>
+<ul>
+<li><tt>user</tt>, <tt>password</tt>: User name and password used for
+authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
+<li><tt>command</tt>: The FTP command used to obtain data. Defaults to
+"<tt>retr</tt>", but see example below;
+<li><tt>port</tt>: The port to contacct the server at. Defaults to 21;
+<li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
+"<tt>a</tt>". Defaults to whatever is the server default;
+<li><tt>step</tt>: LTN12 pump step function used to pass data from the
+server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function.
+</ul>
 
 <p class=return>
-If successful, the  function returns
-the file  content as a string.  In case of error,  the function returns
-<b><tt>nil</tt></b> and an error message describing the error. 
+If successful, the simple version returns the URL  contents as a
+string, and the generic function returns 1.  In case of error,  both
+functions return <b><tt>nil</tt></b> and an error message describing the
+error.  
 </p>
 
 <pre class=example>
--- Log as user "anonymous" on server "ftp.tecgraf.puc-rio.br",
--- go to directory "pub/lua" and get file "lua.tar.gz" as binary.
-f, e = socket.ftp.get("ftp://ftp.tecgraf.puc-rio.br/pub/lua/lua.tar.gz;type=i")
+-- load the ftp support
+local ftp = require("ftp")
 
 -- Log as user "anonymous" on server "ftp.tecgraf.puc-rio.br",
--- go to director "pub" and retrieve directory listing of directory "lua"
-f, e = socket.ftp.get("ftp://ftp.tecgraf.puc-rio.br/pub/lua;type=d")
-
--- Log as user "diego", password "nehab", on server "ftp.tecgraf.puc-rio.br",
--- go to directory "tec/luasocket/bin" and retrieve file "luasocket.exe"
--- (actually, fails because of wrong password, of course)
-f, e = socket.ftp.get{
-  url = "ftp://ftp.tecgraf.puc-rio.br/tec/luasocket/bin/luasocket.exe",
-  user = "diego",
-  password = "nehab",
-  type = "i"
-}
--- f returns nil, and e returns an appropriate error message
+-- and get file "lua.tar.gz" from directory "pub/lua" as binary.
+f, e = ftp.get("ftp://ftp.tecgraf.puc-rio.br/pub/lua/lua.tar.gz;type=i")
 </pre>
 
-<!-- get_cb +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<pre class=example>
+-- load needed modules
+local ftp = require("ftp")
+local ltn12 = require("ltn12")
+local url = require("url")
 
-<p class=name id=get_cb>
-socket.ftp.<b>get_cb{</b><br>
-&nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;type = <i>string</i>,<br>
-&nbsp;&nbsp;content_cb = <i>receive-callback</i>,<br>
-&nbsp;&nbsp;user = <i>string</i>,<br>
-&nbsp;&nbsp;password = <i>string</i><br>
-<b>}</b>
-</p>
-
-<p class=description>
-Same as <a href="#get"><tt>get</tt></a>, but the library returns
-the  content of  the  downloaded file  to  the receive callback
-<tt>content_cb</tt>. 
-</p>
-
-<p class=note>
-Note: for more information on callbacks, refer to 
-<a href="stream.html#stream">Streaming with callbacks</a>.
-</p>
+-- a function that returns a directory listing
+function ls(u)
+    local t = {}
+    local p = url.parse(u)
+    p.command = "nlst"
+    p.sink = ltn12.sink.table(t)
+    local r, e = ftp.get(p)
+    return r and table.concat(t), e
+end
+</pre>
 
 <!-- put ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=put>
-socket.ftp.<b>put(</b>url, content<b>)</b><br>
-socket.ftp.<b>put{</b><br>
-&nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;content = <i>string</i>,<br>
-&nbsp;&nbsp;type = <i>string</i>,<br>
-&nbsp;&nbsp;user = <i>string</i>,<br>
-&nbsp;&nbsp;password = <i>string</i><br>
+ftp.<b>put(</b>url, content<b>)</b><br>
+ftp.<b>put{</b><br>
+&nbsp;&nbsp;host = <i>string</i>,<br>
+&nbsp;&nbsp;source = <i>LTN12 sink</i>,<br>
+&nbsp;&nbsp;argument <i>or</i> path = <i>string</i>,<br>
+&nbsp;&nbsp;[user = <i>string</i>,]<br>
+&nbsp;&nbsp;[password = <i>string</i>]<br>
+&nbsp;&nbsp;[command = <i>string</i>,]<br>
+&nbsp;&nbsp;[port = <i>number</i>,]<br>
+&nbsp;&nbsp;[type = <i>string</i>,]<br>
+&nbsp;&nbsp;[step = <i>LTN12 pump step</i>],<br>
 <b>}</b>
 </p>
 
 <p class=description>
-Upload a file to a  FTP server. 
+The <tt>put</tt> function has two forms. The simple form has fixed
+functionality: it uploads a string of content into a URL. The generic form
+allows a <em>lot</em> more control, as explained below.  
 </p>
 
 <p class=parameters>
-The  function   can  be   called  directly   with  a
-<tt>url</tt> and  <tt>content</tt> parameters, or with  a 
-<em>request table</em>.
-Values passed  explicitly in the  request table override those  present in
-the   <tt>url</tt>.   The   parameter   <tt>type</tt>   accept   values
-'<tt>a</tt>'  (ASCII,   the  default)   or  '<tt>i</tt>'   (binary)  and
-determines  the transfer  type.  If no  <tt>user</tt>  is provided,  the
-function tries to log in as '<tt>anonymous</tt>'.
+If the argument of the <tt>put</tt> function is a table, the function
+expects at least the fields <tt>host</tt>, <tt>source</tt>, and one of 
+<tt>argument</tt> or <tt>path</tt> (<tt>argument</tt> takes
+precedence). <tt>Host</tt> is the server to connect to. <tt>Source</tt> is
+the LTN12 source that will provide the contents to be uploaded. 
+<tt>Argument</tt> or
+<tt>path</tt> give the target path to the resource in the server. The
+optional arguments are the following:
 </p>
+<ul>
+<li><tt>user</tt>, <tt>password</tt>: User name and password used for
+authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
+<li><tt>command</tt>: The FTP command used to obtain data. Defaults to
+"<tt>retr</tt>", but see example below;
+<li><tt>port</tt>: The port to contacct the server at. Defaults to 21;
+<li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
+"<tt>a</tt>". Defaults to whatever is the server default;
+<li><tt>step</tt>: LTN12 pump step function used to pass data from the
+server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function.
+</ul>
 
 <p class=return>
-If successful, the function returns  1. In case of error, the
-function returns <b><tt>nil</tt></b> followed by a string describing the error. 
+Both functions return 1 if successful, or <b><tt>nil</tt></b> and an error
+message describing the reason for failure.
 </p>
 
 <pre class=example>
--- Log as user "anonymous" on server "ftp.free.org" and store file
--- "hello" with contents "hello world!", using binary mode for the transfer
-r, e = socket.ftp.put("ftp://ftp.free.org/hello;type=i", "hello world!\n")
+-- load the ftp support
+local ftp = require("ftp")
 
--- Does exactly the same, but logging in as diego
-r, e = socket.ftp.put{
-  url = "ftp://ftp.free.org/hello",
-  type = "i",
+-- Log as user "diego" on server "ftp.tecgraf.puc-rio.br",
+-- using password "nehab", and store a file "README" with contents 
+-- "wrong password, of course"
+f, e = ftp.put("ftp://diego:nehab@ftp.tecgraf.puc-rio.br/README", "wrong password, of course")
+</pre>
+
+<pre class=example>
+-- load the ftp support
+local ftp = require("ftp")
+local ltn12 = require("ltn12")
+
+-- Log as user "diego" on server "ftp.tecgraf.puc-rio.br",
+-- using password "nehab", and append to the file "LOG", sending the
+-- contents of a local file 
+f, e = ftp.put{
+  host = "ftp.tecgraf.puc-rio.br", 
   user = "diego",
   password = "nehab",
-  content = "hello world\n"
+  command = "appe",
+  argument = "LOG",
+  source = ltn12.source.file(io.open("LOCAL-LOG", "r"))
 }
 </pre>
-</blockquote>
 
-<!-- put_cb +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<p class=name id=put_cb>
-socket.ftp.<b>put_cb{</b><br>
-&nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;type = <i>string</i>,<br>
-&nbsp;&nbsp;content_cb = <i>send-callback</i>,<br>
-&nbsp;&nbsp;user = <i>string</i>,<br>
-&nbsp;&nbsp;password = <i>string</i><br>
-<b>}</b>
-</p>
-
-<p class=description>
-Same as <a href="#put"><tt>put</tt></a>, but the
-library obtains the contents of  the file to be uploaded using  the send
-callback <tt>content_cb</tt>. 
-</p>
-
-<p class=note>
-Note: for more information on callbacks, refer to 
-<a href="stream.html#stream">Streaming with callbacks</a>.
-</p>
-
-<pre class=example>
--- Log as user "anonymous" on server "ftp.free.org" and store file
--- "hello" with contents of the same file in the current directory, 
--- using binary mode for the transfer
-r, e = socket.ftp.put_cb{
-  url = "ftp://ftp.free.org/hello",
-  type = "i",
-  content_cb = socket.callback.send_file(io.open("hello", "r"))
-}
-</pre>
-</blockquote>
 
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 

@@ -9,25 +9,20 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "luasocket.h"
 #include "socket.h"
-#include "auxiliar.h"
 #include "select.h"
 
 /*=========================================================================*\
 * Internal function prototypes.
 \*=========================================================================*/
-static int meth_set(lua_State *L);
-static int meth_isset(lua_State *L);
-static int c_select(lua_State *L);
+static int getfd(lua_State *L);
+static int dirty(lua_State *L);
+static int collect_fd(lua_State *L, int tab, int max_fd, int itab, fd_set *set);
+static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set);
+static void return_fd(lua_State *L, fd_set *set, int max_fd, 
+        int itab, int tab, int start);
+static void make_assoc(lua_State *L, int tab);
 static int global_select(lua_State *L);
-
-/* fd_set object methods */
-static luaL_reg set[] = {
-    {"set",    meth_set},
-    {"isset",  meth_isset},
-    {NULL,     NULL}
-};
 
 /* functions in library namespace */
 static luaL_reg func[] = {
@@ -36,22 +31,13 @@ static luaL_reg func[] = {
 };
 
 /*=========================================================================*\
-* Internal function prototypes.
+* Exported functions
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int select_open(lua_State *L)
-{
-    /* get select auxiliar lua function from lua code and register
-    * pass it as an upvalue to global_select */
-#ifdef LUASOCKET_COMPILED
-#include "select.lch"
-#else
-    lua_dofile(L, "select.lua");
-#endif
-    luaL_openlib(L, NULL, func, 1);
-    aux_newclass(L, "select{fd_set}", set);
+int select_open(lua_State *L) {
+    luaL_openlib(L, NULL, func, 0);
     return 0;
 }
 
@@ -61,64 +47,149 @@ int select_open(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Waits for a set of sockets until a condition is met or timeout.
 \*-------------------------------------------------------------------------*/
-static int global_select(lua_State *L)
-{
-    fd_set *read_fd_set, *write_fd_set;
-    /* make sure we have enough arguments (nil is the default) */
+static int global_select(lua_State *L) {
+    int timeout, rtab, wtab, itab, max_fd, ret, ndirty;
+    fd_set rset, wset;
+    FD_ZERO(&rset); FD_ZERO(&wset);
     lua_settop(L, 3);
-    /* check timeout */
-    if (!lua_isnil(L, 3) && !lua_isnumber(L, 3))
-        luaL_argerror(L, 3, "number or nil expected");
-    /* select auxiliar lua function to be called comes first */
-    lua_pushvalue(L, lua_upvalueindex(1)); 
-    lua_insert(L, 1);
-    /* pass fd_set objects */
-    read_fd_set = (fd_set *) lua_newuserdata(L, sizeof(fd_set)); 
-    FD_ZERO(read_fd_set);
-    aux_setclass(L, "select{fd_set}", -1);
-    write_fd_set = (fd_set *) lua_newuserdata(L, sizeof(fd_set)); 
-    FD_ZERO(write_fd_set);
-    aux_setclass(L, "select{fd_set}", -1);
-    /* pass select auxiliar C function */
-    lua_pushcfunction(L, c_select);
-    /* call select auxiliar lua function */
-    lua_call(L, 6, 3);
-    return 3;
-}
-
-/*=========================================================================*\
-* Lua methods
-\*=========================================================================*/
-static int meth_set(lua_State *L)
-{
-    fd_set *set = (fd_set *) aux_checkclass(L, "select{fd_set}", 1);
-    t_sock fd = (t_sock) lua_tonumber(L, 2);
-    if (fd >= 0) FD_SET(fd, set);
-    return 0;
-}
-
-static int meth_isset(lua_State *L)
-{
-    fd_set *set = (fd_set *) aux_checkclass(L, "select{fd_set}", 1);
-    t_sock fd = (t_sock) lua_tonumber(L, 2);
-    if (fd >= 0 && FD_ISSET(fd, set)) lua_pushnumber(L, 1);
-    else lua_pushnil(L);
-    return 1;
+    timeout = lua_isnil(L, 3) ? -1 : (int)(luaL_checknumber(L, 3) * 1000);
+    lua_newtable(L); itab = lua_gettop(L);
+    lua_newtable(L); rtab = lua_gettop(L);
+    lua_newtable(L); wtab = lua_gettop(L);
+    max_fd = collect_fd(L, 1, -1, itab, &rset);
+    ndirty = check_dirty(L, 1, rtab, &rset);
+    timeout = ndirty > 0? 0: timeout;
+    max_fd = collect_fd(L, 2, max_fd, itab, &wset);
+    ret = sock_select(max_fd+1, &rset, &wset, NULL, timeout);
+    if (ret > 0 || (ret == 0 && ndirty > 0)) {
+        return_fd(L, &rset, max_fd+1, itab, rtab, ndirty);
+        return_fd(L, &wset, max_fd+1, itab, wtab, 0);
+        make_assoc(L, rtab);
+        make_assoc(L, wtab);
+        return 2;
+    } else if (ret == 0) {
+        lua_pushstring(L, "timeout");
+        return 3;
+    } else {
+        lua_pushnil(L);
+        lua_pushnil(L);
+        lua_pushstring(L, "error");
+        return 3;
+    }
 }
 
 /*=========================================================================*\
 * Internal functions
 \*=========================================================================*/
-static int c_select(lua_State *L)
-{
-    int max_fd = (int) lua_tonumber(L, 1);
-    fd_set *read_fd_set = (fd_set *) aux_checkclass(L, "select{fd_set}", 2);
-    fd_set *write_fd_set = (fd_set *) aux_checkclass(L, "select{fd_set}", 3);
-    int timeout = lua_isnil(L, 4) ? -1 : (int)(lua_tonumber(L, 4) * 1000);
-    struct timeval tv;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    lua_pushnumber(L, select(max_fd, read_fd_set, write_fd_set, NULL, 
-                timeout < 0 ? NULL : &tv));
-    return 1;
+static int getfd(lua_State *L) {
+    int fd = -1;
+    lua_pushstring(L, "getfd");
+    lua_gettable(L, -2);
+    if (!lua_isnil(L, -1)) {
+        lua_pushvalue(L, -2);
+        lua_call(L, 1, 1);
+        if (lua_isnumber(L, -1)) 
+            fd = lua_tonumber(L, -1); 
+    } 
+    lua_pop(L, 1);
+    return fd;
 }
+
+static int dirty(lua_State *L) {
+    int is = 0;
+    lua_pushstring(L, "dirty");
+    lua_gettable(L, -2);
+    if (!lua_isnil(L, -1)) {
+        lua_pushvalue(L, -2);
+        lua_call(L, 1, 1);
+        is = lua_toboolean(L, -1);
+    } 
+    lua_pop(L, 1);
+    return is;
+}
+
+static int collect_fd(lua_State *L, int tab, int max_fd, 
+        int itab, fd_set *set) {
+    int i = 1;
+    if (lua_isnil(L, tab)) 
+        return max_fd;
+    while (1) {
+        int fd;
+        lua_pushnumber(L, i);
+        lua_gettable(L, tab);
+        if (lua_isnil(L, -1)) {
+            lua_pop(L, 1);
+            break;
+        }
+        fd = getfd(L);
+        if (fd > 0) {
+            FD_SET(fd, set);
+            if (max_fd < fd) max_fd = fd;
+            lua_pushnumber(L, fd);
+            lua_pushvalue(L, -2);
+            lua_settable(L, itab);
+        }
+        lua_pop(L, 1);
+        i = i + 1;
+    }
+    return max_fd;
+}
+
+static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set) {
+    int ndirty = 0, i = 1;
+    if (lua_isnil(L, tab)) 
+        return 0;
+    while (1) {
+        int fd;
+        lua_pushnumber(L, i);
+        lua_gettable(L, tab);
+        if (lua_isnil(L, -1)) {
+            lua_pop(L, 1);
+            break;
+        }
+        fd = getfd(L);
+        if (fd > 0 && dirty(L)) {
+            lua_pushnumber(L, ++ndirty);
+            lua_pushvalue(L, -2);
+            lua_settable(L, dtab);
+            FD_CLR(fd, set);
+        }
+        lua_pop(L, 1);
+        i = i + 1;
+    }
+    return ndirty;
+}
+
+static void return_fd(lua_State *L, fd_set *set, int max_fd, 
+        int itab, int tab, int start) {
+    int fd;
+    for (fd = 0; fd < max_fd; fd++) {
+        if (FD_ISSET(fd, set)) {
+            lua_pushnumber(L, ++start);
+            lua_pushnumber(L, fd);
+            lua_gettable(L, itab);
+            lua_settable(L, tab);
+        }
+    }
+}
+
+static void make_assoc(lua_State *L, int tab) {
+    int i = 1, atab;
+    lua_newtable(L); atab = lua_gettop(L);
+    while (1) {
+        lua_pushnumber(L, i);
+        lua_gettable(L, tab);
+        if (!lua_isnil(L, -1)) {
+            lua_pushnumber(L, i);
+            lua_pushvalue(L, -2);
+            lua_settable(L, atab);
+            lua_pushnumber(L, i);
+            lua_settable(L, atab);
+        } else {
+            lua_pop(L, 1);
+            break;
+        }
+        i = i+1;
+    }
+}
+

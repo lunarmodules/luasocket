@@ -2,6 +2,15 @@ ajeitar os README.*
 ajeitar select. upvalue nao tem nada a ver...
 make sure filter.chain fails gracefully.
 ajeitar o manual sobre select, mais liberal agora
+falar sobre o novo esquema de namespace
+tirar socket.url socket.ftp etc do manual. agora os namespaces estao
+liberados.
+ajeitar as referencias a RFCS e LTNS em todos os arquivos.
+proxy no ftp
+ajeitar < e-mail > no smtp?
+ajeitar referencias a LTN12 nos manuais
+
+make sure sockets are closed when exceptions are raised
 
 falar sobre encodet/wrapt/decodet no manual sobre mime
 
@@ -14,8 +23,6 @@ expose encode/decode tables to provide extensibility for mime module
 use coroutines instead of fancy filters
 
 check garbage collection in test*.lua
-pop3???
-
 
 add socket.TIMEOUT to be default timeout? 
 

@@ -7,7 +7,6 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "auxiliar.h"
 #include "buffer.h"
 
 /*=========================================================================*\
@@ -19,6 +18,14 @@ static int recvall(p_buf buf, luaL_Buffer *b);
 static int buf_get(p_buf buf, const char **data, size_t *count);
 static void buf_skip(p_buf buf, size_t count);
 static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent);
+
+/* min and max macros */
+#ifndef MIN
+#define MIN(x, y) ((x) < (y) ? x : y)
+#endif
+#ifndef MAX
+#define MAX(x, y) ((x) > (y) ? x : y)
+#endif
 
 /*=========================================================================*\
 * Exported functions

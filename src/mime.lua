@@ -6,23 +6,15 @@
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load MIME from dynamic library
--- Comment these lines if you are loading static
------------------------------------------------------------------------------
-local open = assert(loadlib("mime", "luaopen_mime"))
-local mime = assert(open())
-
------------------------------------------------------------------------------
 -- Load other required modules
 -----------------------------------------------------------------------------
+local mime = requirelib("mime", "luaopen_mime", getfenv(1))
 local ltn12 = require("ltn12")
 
 -----------------------------------------------------------------------------
 -- Setup namespace 
 -----------------------------------------------------------------------------
--- make all module globals fall into mime namespace
-setmetatable(mime, { __index = _G })
-setfenv(1, mime)
+_LOADED["mime"] = mime
 
 -- encode, decode and wrap algorithm tables
 encodet = {}
@@ -48,7 +40,7 @@ end
 
 encodet['quoted-printable'] = function(mode)
     return ltn12.filter.cycle(qp, "", 
-        (mode == "binary") and "=0D=0A" or "\13\10")
+        (mode == "binary") and "=0D=0A" or "\r\n")
 end
 
 -- define the decoding filters

@@ -59,7 +59,7 @@ An URL is defined by the following grammar:
 <!-- absolute +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=absolute>
-socket.url.<b>absolute(</b>base, relative<b>)</b>
+url.<b>absolute(</b>base, relative<b>)</b>
 </p>
 
 <p class=description>
@@ -79,7 +79,7 @@ The function returns a string with the absolute URL.
 Note: The rules that
 govern the composition are fairly complex, and are described in detail in
 <a href="http://www.cs.princeton.edu/~diego/rfc/rfc2396.txt">RFC 2396</a>.
-The example bellow should give an idea of what are the rules.
+The example bellow should give an idea of what the rules are.
 </p>
 
 <pre class=example>
@@ -114,7 +114,7 @@ g;x?y#s  =  http://a/b/c/g;x?y#s
 <!-- build ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=build>
-socket.url.<b>build(</b>parsed_url<b>)</b>
+url.<b>build(</b>parsed_url<b>)</b>
 </p>
 
 <p class=description>
@@ -135,7 +135,7 @@ The function returns a string with the built URL.
 <!-- build_path +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=build_path>
-socket.url.<b>build_path(</b>segments, unsafe<b>)</b>
+url.<b>build_path(</b>segments, unsafe<b>)</b>
 </p>
 
 <p class=description>
@@ -157,10 +157,39 @@ The  function  returns   a string with the
 built <tt>&lt;path&gt;</tt> component. 
 </p>
 
+<!-- escape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="escape">
+url.<b>escape(</b>content<b>)</b>
+</p>
+
+<p class=description>
+Applies the URL escaping content coding to a string
+Each byte is encoded as a percent character followed
+by the two byte hexadecimal representation of its integer 
+value.
+</p>
+
+<p class=parameters>
+<tt>Content</tt> is the string to be encoded.
+</p>
+
+<p class=result>
+The function returns the encoded string.
+</p>
+
+<pre class=example>
+-- load url module
+url = require("url")
+
+code = url.escape("/#?;")
+-- code = "%2f%23%3f%3b"
+</pre>
+
 <!-- parse ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=parse>
-socket.url.<b>parse(</b>url, default<b>)</b>
+url.<b>parse(</b>url, default<b>)</b>
 </p>
 
 <p class=description>
@@ -196,7 +225,10 @@ parsed_url = {<br>
 </tt></blockquote>
 
 <pre class=example>
-parsed_url = socket.url.parse("http://www.puc-rio.br/~diego/index.lua?a=2#there")
+-- load url module
+url = require("url")
+
+parsed_url = url.parse("http://www.puc-rio.br/~diego/index.lua?a=2#there")
 -- parsed_url = {
 --   scheme = "http",
 --   authority = "www.puc-rio.br",
@@ -206,7 +238,7 @@ parsed_url = socket.url.parse("http://www.puc-rio.br/~diego/index.lua?a=2#there"
 --   host = "www.puc-rio.br",
 -- }
 
-parsed_url = socket.url.parse("ftp://root:passwd@unsafe.org/pub/virus.exe;type=i")
+parsed_url = url.parse("ftp://root:passwd@unsafe.org/pub/virus.exe;type=i")
 -- parsed_url = {
 --   scheme = "ftp",
 --   authority = "root:passwd@unsafe.org",
@@ -222,7 +254,7 @@ parsed_url = socket.url.parse("ftp://root:passwd@unsafe.org/pub/virus.exe;type=i
 <!-- parse_path +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=parse_path>
-socket.url.<b>parse_path(</b>path<b>)</b>
+url.<b>parse_path(</b>path<b>)</b>
 </p>
 
 <p class=description>
@@ -241,36 +273,10 @@ returning a list with all the parsed segments, the function unescapes all
 of them. 
 </p>
 
-<!-- escape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<p class=name id="escape">
-socket.url.<b>escape(</b>content<b>)</b>
-</p>
-
-<p class=description>
-Applies the URL escaping content coding to a string
-Each byte is encoded as a percent character followed
-by the two byte hexadecimal representation of its integer 
-value.
-</p>
-
-<p class=parameters>
-<tt>Content</tt> is the string to be encoded.
-</p>
-
-<p class=result>
-The function returns the encoded string.
-</p>
-
-<pre class=example>
-code = socket.url.escape("/#?;")
--- code = "%2f%23%3f%3b"
-</pre>
-
 <!-- unescape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id="unescape">
-socket.url.<b>unescape(</b>content<b>)</b>
+url.<b>unescape(</b>content<b>)</b>
 </p>
 
 <p class=description>

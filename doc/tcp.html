@@ -241,18 +241,16 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 <!-- receive ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=receive>
-client:<b>receive(</b>[pattern<sub>1</sub>, pattern<sub>2</sub>,
-... pattern<sub>N</sub>]<b>)</b>
+client:<b>receive(</b>[pattern]<b>)</b>
 </p>
 
 <p class=description>
 Reads data from a client object, according to the specified <em>read
-patterns</em>.  Patterns follow the Lua file I/O format, and the difference in performance between all patterns is negligible. 
+pattern</em>.  Patterns follow the Lua file I/O format, and the difference in performance between all patterns is negligible. 
 </p>
 
 <p class=parameters>
-The parameters <tt>pattern</tt><sub>1</sub>, <tt>pattern</tt><sub>2</sub>, ...
-<tt>pattern</tt><sub>N</sub> can be any of the following: 
+<tt>Pattern</tt> can be any of the following: 
 </p>
 
 <ul>
@@ -267,16 +265,21 @@ of bytes from the socket.
 </ul>
 
 <p class=return>
-The method  returns one value for  each pattern, followed by  a single
-error  code that  can be  <b><tt>nil</tt></b> in  case of  success, the  string
-'<tt>closed</tt>'  in   case  the  connection  was   closed  before  the
-transmission  was completed  or  the string  '<tt>timeout</tt>' in  case
-there was a timeout during  the operation. 
+If successful, the method returns the received pattern. In case of error,
+the method returns <tt><b>nil</b></tt> followed by an error message which
+can be the string '<tt>closed</tt>'  in   case  the  connection  was
+closed  before  the transmission  was completed  or  the string
+'<tt>timeout</tt>' in  case there was a timeout during  the operation.
+Also, after the error message, the function returns the partial result of
+the transmission.
 </p>
 
 <p class=note>
-Note: In case of error, the method always return everything it managed
-to download before the error condition was met.
+<b>Important note</b>: This function was changed <em>severely</em>. It used
+to support multiple patterns (but I have never seen this feature used) and
+partial results used to be returned in the same way as successful results.
+This last feature violated the idea that all functions should return
+<tt><b>nil</b></tt> on error.  Thus the change.  
 </p>
 
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -428,7 +431,7 @@ client:<b>shutdown(</b>mode<b>)</b><br>
 </p>
 
 <p class=description>
-Shuts down part of a full duplex connection. 
+Shuts down part of a full-duplex connection. 
 </p>
 
 <p class=parameters>

@@ -36,7 +36,7 @@
 <h2>Reference</h2>
 
 <blockquote>
-<a href="dns.html">DNS services (socket.dns)</a>
+<a href="dns.html">DNS (in socket)</a>
 <blockquote>
 <a href="dns.html#toip">toip</a>,
 <a href="dns.html#tohostname">tohostname</a>,
@@ -47,31 +47,17 @@
 <!-- ftp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="ftp.html">FTP (socket.ftp)</a>
+<a href="ftp.html">FTP</a>
 <blockquote>
 <a href="ftp.html#get">get</a>,
-<a href="ftp.html#put">put</a>,
-<a href="ftp.html#open">open</a>.
+<a href="ftp.html#put">put</a>
 </blockquote>
 </blockquote>
-
-<!-- global +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<blockquote>
-<a href="global.html">Global symbols</a>
-<blockquote>
-<a href="global.html#LUASOCKET_LIBNAME">LUASOCKET_LIBNAME</a>,
-<a href="global.html#mime">mime</a>,
-<a href="global.html#ltn12">ltn12</a>,
-<a href="global.html#socket">socket</a>.
-</blockquote>
-</blockquote>
-</table>
 
 <!-- http +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="http.html">HTTP (socket.http)</a>
+<a href="http.html">HTTP</a>
 <blockquote>
 <a href="http.html#get">get</a>,
 <a href="http.html#post">post</a>,
@@ -82,46 +68,45 @@
 <!-- ltn12 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="ltn12.html">LTN012 (ltn12)</a>
+<a href="ltn12.html">LTN12</a>
 <blockquote>
 <a href="ltn12.html#filter">filter</a>:
-<a href="ltn12.html#chain">chain</a>,
-<a href="ltn12.html#cycle">cycle</a>.
+<a href="ltn12.html#filter.chain">chain</a>,
+<a href="ltn12.html#filter.cycle">cycle</a>.
 </blockquote>
 <blockquote>
 <a href="ltn12.html#pump">pump</a>:
-<a href="ltn12.html#all">all</a>,
-<a href="ltn12.html#step">step</a>.
+<a href="ltn12.html#pump.all">all</a>,
+<a href="ltn12.html#pump.step">step</a>.
 </blockquote>
 <blockquote>
 <a href="ltn12.html#sink">sink</a>:
-<a href="ltn12.html#chain">chain</a>,
-<a href="ltn12.html#error">error</a>,
-<a href="ltn12.html#chain">file</a>,
-<a href="ltn12.html#file">null</a>,
-<a href="ltn12.html#simplify">simplify</a>,
-<a href="ltn12.html#table">table</a>.
+<a href="ltn12.html#sink.chain">chain</a>,
+<a href="ltn12.html#sink.error">error</a>,
+<a href="ltn12.html#sink.file">file</a>,
+<a href="ltn12.html#sink.null">null</a>,
+<a href="ltn12.html#sink.simplify">simplify</a>,
+<a href="ltn12.html#sink.table">table</a>.
 </blockquote>
 <blockquote>
 <a href="ltn12.html#source">source</a>: 
-<a href="ltn12.html#cat">cat</a>,
-<a href="ltn12.html#chain">chain</a>,
-<a href="ltn12.html#empty">empty</a>,
-<a href="ltn12.html#file">file</a>,
-<a href="ltn12.html#simplify">simplify</a>,
-<a href="ltn12.html#simplify">rewind</a>,
-<a href="ltn12.html#simplify">string</a>.
+<a href="ltn12.html#source.cat">cat</a>,
+<a href="ltn12.html#source.chain">chain</a>,
+<a href="ltn12.html#source.empty">empty</a>,
+<a href="ltn12.html#source.error">error</a>,
+<a href="ltn12.html#source.file">file</a>,
+<a href="ltn12.html#source.simplify">simplify</a>,
+<a href="ltn12.html#source.string">string</a>.
 </blockquote>
 </blockquote>
 
 <!-- mime +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="mime.html">MIME (mime) </a>
+<a href="mime.html">MIME</a>
 <blockquote>
 <a href="mime.html#high">high-level</a>:
 <a href="mime.html#normalize">normalize</a>,
-<a href="mime.html#chain">chain</a>,
 <a href="mime.html#decode">decode</a>,
 <a href="mime.html#encode">encode</a>,
 <a href="mime.html#wrap">wrap</a>.
@@ -141,9 +126,8 @@
 <!-- smtp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="smtp.html">SMTP (socket.smtp)</a>
+<a href="smtp.html">SMTP</a>
 <blockquote>
-<a href="smtp.html#mail">open</a>,
 <a href="smtp.html#message">message</a>,
 <a href="smtp.html#send">send</a>.
 </blockquote>
@@ -152,26 +136,20 @@
 <!-- socket +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="socket.html">The socket namespace (socket)</a>
+<a href="socket.html">Socket</a>
 <blockquote>
-<a href="tcp.html#bind">bind</a>,
-<a href="tcp.html#connect">connect</a>,
-<a href="socket.html#debug">debug</a>,
+<a href="socket.html#debug">DEBUG</a>,
 <a href="dns.html#dns">dns</a>,
-<a href="ftp.html#ftp">ftp</a>,
-<a href="http.html#http">http</a>,
 <a href="socket.html#protect">protect</a>,
 <a href="socket.html#select">select</a>,
 <a href="socket.html#sink">sink</a>,
 <a href="socket.html#source">source</a>,
 <a href="socket.html#sleep">sleep</a>,
-<a href="smtp.html#smtp">smtp</a>,
 <a href="socket.html#time">time</a>,
 <a href="tcp.html#tcp">tcp</a>,
 <a href="socket.html#try">try</a>,
 <a href="udp.html#udp">udp</a>,
-<a href="url.html#url">url</a>,
-<a href="socket.html#version">version</a>.
+<a href="socket.html#version">VERSION</a>.
 </blockquote>
 </blockquote>
 </table>
@@ -179,7 +157,7 @@
 <!-- tcp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="tcp.html">TCP (socket.tcp)</a>
+<a href="tcp.html">TCP (in socket)</a>
 <blockquote>
 <a href="tcp.html#accept">accept</a>,
 <a href="tcp.html#bind">bind</a>,
@@ -198,7 +176,7 @@
 <!-- udp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="udp.html">UDP (socket.udp)</a>
+<a href="udp.html">UDP (in socket)</a>
 <blockquote>
 <a href="udp.html#close">close</a>,
 <a href="udp.html#getpeername">getpeername</a>,
@@ -210,23 +188,22 @@
 <a href="udp.html#setpeername">setpeername</a>,
 <a href="udp.html#setsockname">setsockname</a>,
 <a href="udp.html#setoption">setoption</a>,
-<a href="udp.html#settimeout">settimeout</a>,
-<a href="udp.html#settimeout">shutdown</a>.
+<a href="udp.html#settimeout">settimeout</a>.
 </blockquote>
 </blockquote>
 
 <!-- url ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
-<a href="url.html">URL (socket.url) </a>
+<a href="url.html">URL</a>
 <blockquote>
 <a href="url.html#absolute">absolute</a>,
 <a href="url.html#build">build</a>,
 <a href="url.html#build_path">build_path</a>,
-<a href="url.html#quote">quote</a>,
+<a href="url.html#escape">escape</a>,
 <a href="url.html#parse">parse</a>,
 <a href="url.html#parse_path">parse_path</a>,
-<a href="url.html#quote">unquote</a>.
+<a href="url.html#unescape">unescape</a>.
 </blockquote>
 </blockquote>
 

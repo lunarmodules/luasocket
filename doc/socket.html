@@ -36,16 +36,13 @@
 <h2 id=socket>The socket namespace</h2> 
 
 <p>
-The <tt>socket</tt> namespace contains the namespace tables for all
-LuaSocket modules as well as function that didn't belong in any specific 
-module, functions that are so commonly used that deserve a shortcut and a
-few constants.
+The <tt>socket</tt> namespace contains the core functionality of LuaSocket. 
 </p>
 
 <!-- debug ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=debug> 
-socket.<b>debug</b>
+socket.<b>DEBUG</b>
 </p>
 
 <p class=description>
@@ -57,7 +54,7 @@ with debug support.
 <!-- protect +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=protect> 
-socket.<b>protect(</b>function<b>)</b>
+socket.<b>protect(</b>func<b>)</b>
 </p>
 
 <p class=description>
@@ -65,12 +62,12 @@ Converts a function that throws exceptions into a safe function.
 </p>
 
 <p class=parameters>
-<tt>Function</tt> is a function that calls 
+<tt>Funct</tt> is a function that calls 
 <a href=#try><tt>try</tt></a> to throw exceptions. 
 </p>
 
 <p class=return>
-The function an equivalent function that instead of throwing exceptoins,
+Returns an equivalent function that instead of throwing exceptions,
 returns <tt><b>nil</b></tt> followed by an error message. 
 </p>
 
@@ -103,16 +100,16 @@ simplify the test if a specific socket has changed status.
 </p>
 
 <p class=note>
-<b>Important Note</b>: a known bug in WinSock causes <tt>select</tt> to fail 
+<b>Important note</b>: a known bug in WinSock causes <tt>select</tt> to fail 
 on non-blocking TCP sockets. The function may return a socket as
 writable even though the socket is <em>not</em> ready for sending.
 </p>
 
 <p class=note>
-<b>Important note</b>: calling select with a server socket in the receive
+<b>Another important note</b>: calling select with a server socket in the receive
 parameter before a call to accept does <em>not</em> guarantee
 <a href=tcp.html#accept><tt>accept</tt></a> will return immediately. 
-Use the <a href=tcp.html#timeout><tt>timeout</tt></a> 
+Use the <a href=tcp.html#settimeout><tt>settimeout</tt></a> 
 method or <tt>accept</tt> might block forever.  
 </p>
 
@@ -131,7 +128,7 @@ socket.<b>sink(</b>mode, socket<b>)</b>
 
 <p class=description>
 Creates an 
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN012</a>
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
 sink from a stream socket object. 
 </p>
 
@@ -163,7 +160,7 @@ socket.<b>source(</b>mode, socket [, length]<b>)</b>
 
 <p class=description>
 Creates an 
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN012</a>
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
 source from a stream socket object. 
 </p>
 
@@ -217,7 +214,7 @@ c = socket.try(socket.connect("localhost", 80))
 <!-- version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=version> 
-socket.<b>version</b>
+socket.<b>VERSION</b>
 </p>
 
 <p class=description>

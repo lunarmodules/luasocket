@@ -2,24 +2,28 @@
 -- Unified SMTP/FTP subsystem
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- Conforming to: RFC 2616, LTN7
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load other required modules
+-- Load required modules
 -----------------------------------------------------------------------------
 local socket = require("socket")
+local ltn12 = require("ltn12")
 
 -----------------------------------------------------------------------------
 -- Setup namespace
 -----------------------------------------------------------------------------
-tp = {}
-setmetatable(tp, { __index = _G })
-setfenv(1, tp)
+_LOADED["tp"] = getfenv(1)
 
+-----------------------------------------------------------------------------
+-- Program constants
+-----------------------------------------------------------------------------
 TIMEOUT = 60
 
+-----------------------------------------------------------------------------
+-- Implementation
+-----------------------------------------------------------------------------
 -- gets server reply (works for SMTP and FTP)
 local function get_reply(control)
     local code, current, sep
@@ -37,7 +41,6 @@ local function get_reply(control)
         -- reply ends with same code
         until code == current and sep == " " 
     end
-print(reply)
     return code, reply
 end
 
@@ -46,6 +49,7 @@ local metat = { __index = {} }
 
 function metat.__index:check(ok)
     local code, reply = get_reply(self.control)
+print(reply)
     if not code then return nil, reply end
     if type(ok) ~= "function" then
         if type(ok) == "table" then 
@@ -103,11 +107,11 @@ function metat.__index:close()
 end
 
 -- connect with server and return control object
-function connect(host, port)
-    local control, err = socket.connect(host, port)
-    if not control then return nil, err end
-    control:settimeout(TIMEOUT)
+connect = socket.protect(function(host, port, timeout)
+    local control = socket.try(socket.tcp())
+    socket.try(control:settimeout(timeout or TIMEOUT))
+    socket.try(control:connect(host, port))
     return setmetatable({control = control}, metat)
-end
+end)
 
 return tp

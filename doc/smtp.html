@@ -35,15 +35,22 @@
 
 <h2 id=smtp>SMTP</h2> 
 
-<p>
-The  <tt>smtp.lua</tt> module  provides functionality  to  send  e-mail
+<p> The  <tt>smtp.lua</tt> module  provides functionality to send e-mail
 messages. The implementation conforms to the Simple Mail Transfer Protocol,
 <a href="http://www.cs.princeton.edu/~diego/rfc/rfc2821.txt">RFC 2821</a>.
-The other RFC of interest in this implementation is 
-<a href="http://www.cs.princeton.edu/~diego/rfc/rfc2822.txt">RFC 2822</a>,
+Another RFC of interest is <a
+href="http://www.cs.princeton.edu/~diego/rfc/rfc2822.txt">RFC 2822</a>,
 which governs the Internet Message Format.
+Multipart messages (those that contain attatchments) are part
+of the MIME standard, but described mainly
+in <a href="http://www.cs.princeton.edu/~diego/rfc/rfc2046.txt">RFC
+2046</a>
 
-</p>
+<p> In the description below, good understanding of <a
+href="http://lua-users.org/wiki/FiltersSourcesAndSinks"> LTN012, Filters
+sources and sinks</a> and the  <a href=mime.html>MIME</a> module is
+assumed.  In fact, the SMTP module was the main reason for their 
+creation. </p>
 
 <p>
 MIME headers are represented as a Lua table in the form:
@@ -78,35 +85,69 @@ Note: MIME headers are independent of order. Therefore, there is no problem
 in representing them in a Lua table. 
 </p>
 
-<!-- mail +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<p>
+The following constants can be set to control the default behaviour of
+the SMTP module: 
+</p>
 
-<p class=name id=mail> 
-socket.smtp.<b>mail{</b><br>
+<ul>
+<li> <tt>DOMAIN</tt>: domain used to greet the server;
+<li> <tt>PORT</tt>: default port used for the connection;
+<li> <tt>SERVER</tt>: default server used for the connection;
+<li> <tt>TIMEOUT</tt>: default timeout for all I/O operations;
+<li> <tt>ZONE</tt>: default time zone.
+</ul>
+
+<!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=send> 
+smtp.<b>send{</b><br>
 &nbsp;&nbsp;from = <i>string</i>,<br>
 &nbsp;&nbsp;rcpt = <i>string</i> or <i>string-table</i>,<br>
-&nbsp;&nbsp;body = <i>string</i>,<br>
-&nbsp;&nbsp;headers = <i>headers-table</i>,<br>
-&nbsp;&nbsp;server = <i>string</i><br>
+&nbsp;&nbsp;source = <i>LTN12 source</i>,<br>
+&nbsp;&nbsp;[server = <i>string</i>],<br>
+&nbsp;&nbsp;[port = <i>string</i>]<br>
+&nbsp;&nbsp;[domain = <i>string</i>],<br>
+&nbsp;&nbsp;[step = <i>LTN12 pump step</i>],<br>
 <b>}</b>
 </p>
 
 <p class=description>
-Sends a message to a recipient list.
+Sends a message to a recipient list. Since sending messages is not as
+simple as downloading an URL from a FTP or HTTP server, this function 
+doesn't have a simple interface. However, see the 
+<a href=#message><tt>message</tt></a> source factory for 
+a very powerful way to define the message contents.
 </p>
 
 <p class=parameters>
-<tt>Rcpt</tt> is a Lua table with one entry for each recipient, or a string
+The sender is given by the e-mail address in the <tt>from</tt> field. 
+<tt>Rcpt</tt> is a Lua table with one entry for each recipient e-mail
+address, or a string
 in case there is just one recipient. 
-The sender is given by the e-mail address <tt>from</tt>. 
-The message is composed by the optional MIME Headers <tt>headers</tt> 
-and text <tt>body</tt>. The message is  sent using  the server  
-<tt>server</tt>. 
+The contents of the message are given by a LTN12 <tt>source</tt>. Several
+arguments are optional:
+<ul>
+<li> <tt>server</tt>: Server to connect to. Defaults to "localhost";
+<li> <tt>port</tt>: Port to connect to. Defaults to 25;
+<li> <tt>domain</tt>: Domain name used to greet the server; Defaults to the
+local machine host name; 
+<li> <tt>step</tt>: LTN12 pump step function used to pass data from the
+source to the server. Defaults to the LTN12 <tt>pump.step</tt> function.
+</ul>
 </p>
 
 <p class=return> 
 If  successful, the function returns 1. Otherwise, the function returns
 <b><tt>nil</tt></b> followed by an error message.
 </p>
+
+<p class=note>
+Note: SMTP servers are can be very picky with the format of e-mail
+addresses. To be safe, use only addresses of the form
+"<tt>&lt;fulano@tecgraf.puc-rio.br&gt;</tt>" in the <tt>from</tt> and
+<tt>rcpt</tt> arguments to the <tt>send</tt> function. In headers, e-mail
+addresses can take whatever form you like.  </p>
 
 <p class=note>
 Big note: There is a good deal of misconception with the use of the
@@ -117,11 +158,12 @@ exact opposite of what you expect.
 </p>
 
 <p class=note>
-Only recipients specified in the recipient list will receive a copy of the
+Only recipients specified in the <tt>rcpt</tt> list will receive a copy of the
 message.  Each recipient of an SMTP mail message receives a copy of the
-message body along with the headers, and nothing more.  The headers are
-considered as part of the message. The list of recipients is <em>not</em>
-part of the message.  
+message body along with the headers, and nothing more.  The headers
+<em>are</em> part of the message and should be produced by the LTN12 
+<tt>source</tt> function. The <tt>rcpt</tt> list is <em>not</em>
+part of the message and will not be sent to anyone.
 </p>
 
 <p class=note>
@@ -143,9 +185,9 @@ Copy") contains addresses of recipients of the message whose addresses are not t
 </ul> 
 
 <p class=note>
-The LuaSocket <tt>mail</tt> function does not interpret the headers you 
-pass to, but it gives you full control over what is sent and to whom 
-it is sent:
+The LuaSocket <tt>send</tt> function does not care or interpret the 
+headers you send, but it gives you full control over what is sent and 
+to whom it is sent:
 </p>
 <ul>
 <li> If someone is to receive the message, the e-mail address <em>has</em>
@@ -171,36 +213,147 @@ and
 </p>
 
 <pre class=example>
+-- load the smtp support
+local smtp = require("smtp")
+
 -- Connects to server "localhost" and sends a message to users
 -- "fulano@tecgraf.puc-rio.br",  "beltrano@tecgraf.puc-rio.br", 
 -- and "sicrano@tecgraf.puc-rio.br".
 -- Note that "fulano" is the primary recipient, "beltrano" receives a
 -- carbon copy and neither of them knows that "sicrano" received a blind
 -- carbon copy of the message.
-headers = {
-  to = "fulano@tecgraf.puc-rio.br",
-  cc = "beltrano@tecgraf.puc-rio.br",
-  subject = "LuaSocket test message"
-}
-
-from = "luasocket@tecgraf.puc-rio.br"
+from = "&lt;luasocket@tecgraf.puc-rio.br&gt;"
 
 rcpt = {
-  "fulano@tecgraf.puc-rio.br",
-  "beltrano@tecgraf.puc-rio.br",
-  "sicrano@tecgraf.puc-rio.br"
+  "&lt;fulano@tecgraf.puc-rio.br&gt;",
+  "&lt;beltrano@tecgraf.puc-rio.br&gt;",
+  "&lt;sicrano@tecgraf.puc-rio.br&gt;"
 }
 
-body = "This is a test message. Please ignore."
+mesgt = {
+  headers = {
+    to = "Fulano da Silva &lt;fulano@tecgraf.puc-rio.br&gt;",
+    cc = '"Beltrano F. Nunes" &lt;beltrano@tecgraf.puc-rio.br&gt;',
+    subject = "My first message"
+  }
+  body = "I hope this works. If it does, I can send you another 1000 copies."
+}
 
-server = "localhost"
-
-r, e = socket.smtp.mail{
+r, e = smtp.send{
   from = from,
   rcpt = rcpt, 
-  headers = headers, 
-  body = body, 
-  server = server
+  source = smtp.message(mesgt)
+}
+</pre>
+
+<!-- message ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=message> 
+smtp.<b>message(</b>mesgt<b>)</b>
+</p>
+
+<p class=description>
+Returns a LTN12 source that sends an SMTP message body, possibly multipart
+(arbitrarily deep). 
+</p>
+
+<p class=parameters>
+The only parameter of the function is a table describing the message.
+<tt>Mesgt</tt> has the following form (notice the recursive structure):
+</p>
+
+<blockquote>
+<table summary="Mesgt table structure">
+<tr><td><tt>
+mesgt = {<br>
+&nbsp;&nbsp;headers = <i>header-table</i>,<br>
+&nbsp;&nbsp;body = <i>LTN12 source</i> or <i>string</i> or 
+<i>multipart-mesgt</i><br>
+}<br>
+&nbsp;<br>
+multipart-mesgt = {<br>
+&nbsp;&nbsp;preamble = <i>string</i><br>
+&nbsp;&nbsp;[1] = <i>mesgt</i>,<br>
+&nbsp;&nbsp;[2] = <i>mesgt</i>,<br>
+&nbsp;&nbsp;...<br>
+&nbsp;&nbsp;[<i>n</i>] = <i>mesgt</i>,<br>
+&nbsp;&nbsp;epilogue = <i>string</i>,<br>
+}<br>
+</tt></td></tr>
+</table>
+</blockquote>
+
+<p class=parameters>
+For a simple message, all that is needed is a set of <tt>headers</tt>
+and the <tt>body</tt>. The message <tt>body</tt> can be given as a string
+or as a LTN12 source. For multipart messages, the body is a table that
+recursively defines each part as an independent message, plus a preamble
+and an epilogue.
+</p>
+
+<p class=return> 
+The function returns an LTN12 source that produces the message contents as
+defined by <tt>mesgt</tt>.  Hopefuly, the following example will make
+things clear. When in doubt, refer to the appropriate RFC as listed in the
+introduction.  </p>
+
+<pre class=example>
+-- load the smtp support and its friends
+local smtp = require("smtp")
+local mime = require("mime")
+local ltn12 = require("ltn12")
+
+-- creates a source to send a message with two parts. The first part is 
+-- plain text, the second part is a PNG image, encoded as base64.
+source = smtp.message{
+  headers = {
+     -- Remember that headers are *ignored* by smtp.send. 
+     from = "Sicrano de Oliveira &lt;sicrano@tecgraf.puc-rio.br&gt;",
+     to = "Fulano da Silva &lt;fulano@tecgraf.puc-rio.br&gt;",
+     subject = "Here is a message with attachments"
+  },
+  body = {
+    preamble = "If your client doesn't understand attachments, \r\n" ..
+               "it will still display the preamble and the epilogue.\r\n",
+               "Preamble might show up even in a MIME enabled client.",
+    -- first part: no headers means plain text, us-ascii.
+    -- The mime.eol low-level filter normalizes end-of-line markers.
+    [1] = { 
+      body = mime.eol(0, [[
+        Lines in a message body should always end with CRLF. 
+        The smtp module will *NOT* perform translation. It will
+        perform necessary stuffing or '.' characters, though.
+      ]])
+    },
+    -- second part: headers describe content to be a png image, 
+    -- sent under the base64 transfer content encoding.
+    -- notice that nothing happens until the message is actually sent. 
+    -- small chunks are loaded into memory right before transmission and 
+    -- translation happens on the fly.
+    [2] = { 
+      headers = {
+        ["content-type"] = 'image/png; name="image.png"',
+        ["content-disposition"] = 'attachment; filename="image.png"',
+        ["content-description"] = 'a beautiful image',
+        ["content-transfer-encoding"] = "BASE64"
+      },
+      body = ltn12.source.chain(
+        ltn12.source.file(io.open("image.png", "rb")),
+        ltn12.filter.chain(
+          mime.encode("base64"),
+          mime.wrap()
+        )
+      )
+    },
+    epilogue = "This might also show up, but after the attachments"
+  }
+}
+
+-- finally send it
+r, e = smtp.send{
+    from = "&lt;sicrano@tecgraf.puc-rio.br&gt;",
+    rcpt = "&lt;fulano@tecgraf.puc-rio.br&gt;",
+    source = source,
 }
 </pre>
 

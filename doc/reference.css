@@ -10,6 +10,9 @@ tt {
 
 h1, h2, h3, h4 { margin-left: 0em; }
 
+
+h3 { padding-top: 1em; }
+
 p { margin-left: 1em; }
 
 p.name { 

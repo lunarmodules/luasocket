@@ -9,13 +9,10 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "luasocket.h"
-
 #include "auxiliar.h"
 #include "socket.h"
 #include "inet.h"
 #include "options.h"
-#include "base.h"
 #include "tcp.h"
 
 /*=========================================================================*\
@@ -41,7 +38,7 @@ static int meth_dirty(lua_State *L);
 /* tcp object methods */
 static luaL_reg tcp[] = {
     {"__gc",        meth_close},
-    {"__tostring",  base_meth_tostring},
+    {"__tostring",  aux_tostring},
     {"accept",      meth_accept},
     {"bind",        meth_bind},
     {"close",       meth_close},

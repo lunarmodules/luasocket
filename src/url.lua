@@ -9,9 +9,7 @@
 -----------------------------------------------------------------------------
 -- Setup namespace
 -----------------------------------------------------------------------------
-local url = {}
-setmetatable(url, { __index = _G })
-setfenv(1, url)
+_LOADED["url"] = getfenv(1)
 
 -----------------------------------------------------------------------------
 -- Encodes a string into its escaped hexadecimal representation

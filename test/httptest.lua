@@ -4,14 +4,18 @@
 -- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
 
-require("http")
+socket = require("socket")
+http = require("http")
+mime = require("mime")
+url = require("url")
+ltn12 = require("ltn12")
 
 dofile("testsupport.lua")
 
 local host, proxy, request, response, index_file
 local ignore, expect, index, prefix, cgiprefix, index_crlf
 
-socket.http.TIMEOUT = 10
+http.TIMEOUT = 10
 
 local t = socket.time()
 
@@ -56,7 +60,7 @@ local check_request = function(request, expect, ignore)
     end
     request.source = request.source or 
         (request.body and ltn12.source.string(request.body))
-	local response = socket.http.request(request)
+	local response = http.request(request)
     if t and table.getn(t) > 0 then response.body = table.concat(t) end
     check_result(response, expect, ignore)
 end
@@ -64,16 +68,16 @@ end
 ------------------------------------------------------------------------
 io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
-local back, h, c, e = socket.http.get("http://" .. host .. forth)
+local back, h, c, e = http.get("http://" .. host .. forth)
 if not back then fail(e) end
-back = socket.url.parse(back)
+back = url.parse(back)
 if similar(back.query, "this+is+the+query+string") then print("ok")
 else fail(back.query) end
 
 ------------------------------------------------------------------------
 io.write("testing query string correctness: ")
 forth = "this+is+the+query+string"
-back = socket.http.get("http://" .. host .. cgiprefix .. 
+back = http.get("http://" .. host .. cgiprefix .. 
     "/query-string?" .. forth)
 if similar(back, forth) then print("ok")
 else fail("failed!") end
@@ -149,7 +153,7 @@ check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing simple post function: ")
-back = socket.http.post("http://" .. host .. cgiprefix .. "/cat", index)
+back = http.post("http://" .. host .. cgiprefix .. "/cat", index)
 assert(back == index)
 
 ------------------------------------------------------------------------
@@ -278,30 +282,6 @@ ignore = {
 check_request(request, expect, ignore)
     
 ------------------------------------------------------------------------
-io.write("testing host not found: ")
-request = {
-	url = "http://wronghost/does/not/exist"
-}
-local c, e = socket.connect("wronghost", 80)
-expect = {
-	error = e
-}
-ignore = {}
-check_request(request, expect, ignore)
-
-------------------------------------------------------------------------
-io.write("testing invalid url: ")
-request = {
-	url = host .. prefix
-}
-local c, e = socket.connect("", 80)
-expect = {
-	error = e
-}
-ignore = {}
-check_request(request, expect, ignore)
-
-------------------------------------------------------------------------
 io.write("testing document not found: ")
 request = {
 	url = "http://" .. host .. "/wrongdocument.html"
@@ -397,29 +377,16 @@ ignore = {
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
-io.write("testing wrong scheme: ")
-request = {
-	url = "wrong://" .. host .. cgiprefix .. "/cat",
-	method = "GET"
-}
-expect = {
-	error = "unknown scheme 'wrong'"
-}
-ignore = {
-}
-check_request(request, expect, ignore)
-
-------------------------------------------------------------------------
 local body
 io.write("testing simple get function: ")
-body = socket.http.get("http://" .. host .. prefix .. "/index.html")
+body = http.get("http://" .. host .. prefix .. "/index.html")
 assert(body == index)
 print("ok")
 
 ------------------------------------------------------------------------
 io.write("testing HEAD method: ")
-socket.http.TIMEOUT = 1
-response = socket.http.request {
+http.TIMEOUT = 1
+response = http.request {
   method = "HEAD",
   url = "http://www.cs.princeton.edu/~diego/"
 }
@@ -427,6 +394,25 @@ assert(response and response.headers)
 print("ok")
 
 ------------------------------------------------------------------------
+io.write("testing host not found: ")
+local c, e = socket.connect("wronghost", 80)
+local r, re = http.request{url = "http://wronghost/does/not/exist"}
+assert(r == nil and e == re) 
+r, re = http.get("http://wronghost/does/not/exist")
+assert(r == nil and e == re) 
+print("ok")
+
+------------------------------------------------------------------------
+io.write("testing invalid url: ")
+local c, e = socket.connect("", 80)
+local r, re = http.request{url = host .. prefix}
+assert(r == nil and e == re) 
+r, re = http.get(host .. prefix)
+assert(r == nil and e == re) 
+print("ok")
+
+------------------------------------------------------------------------
 print("passed all tests")
+os.remove("err")
 
 print(string.format("done in %.2fs", socket.time() - t))
