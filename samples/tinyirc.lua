@@ -28,34 +28,42 @@ server2:timeout(1)
 server2.is_server = 1
 
 set = {server1, server2}
+number = 1
 
 while 1 do
-    local r, s, e, l
+    local r, s, e, l, n
     r, _, e = select(set, nil)
     for i, v in r do
         if v.is_server then
             s = v:accept()
             if s then 
                 s:timeout(1)
+				s.number = number
+				number = number + 1
                 set_add(set, s) 
-                write("Added new client. ", getn(set)-2, " total.\n")
+                write("Added client number ", s.number, ". ", 
+					getn(set)-2, " total.\n")
             end
         else
             l, e = v:receive()
+			n = v.number
             if e then 
                 v:close()
                 set_remove(set, v) 
-                write("Removed client. ", getn(set)-2, " total.\n")
-            end
-            write("Broadcasting line '", tostring(l), "'.\n")
-            _, s, e = select(nil, set, 1)
-            if not e then
-                for i,v in s do
-                    v:send(l, "\r\n")
-                end
+                write("Removed client number ", n, ". ",
+					getn(set)-2, " total.\n")
             else
-                write("No one ready to listen!!!\n")
-            end
+            	write("Broadcasting line '", tostring(n), "> ", 
+					tostring(l), "'.\n")
+            	_, s, e = select(nil, set, 1)
+            	if not e then
+                	for i,v in s do
+                    	v:send(tostring(n), "> ", l, "\r\n")
+                	end
+            	else
+                	write("No one ready to listen!!!\n")
+            	end
+			end
         end
     end
 end
