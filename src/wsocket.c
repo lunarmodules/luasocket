@@ -100,7 +100,7 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len,
     FD_ZERO(&fds);
     FD_SET(sock, &fds);
     *pa = SOCK_INVALID;
-    if (select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL) <= 0)
+    if (select(0, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL) <= 0)
         return IO_TIMEOUT;
     if (!addr) addr = &dummy_addr;
     if (!addr_len) addr_len = &dummy_len;
@@ -116,34 +116,35 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
         int timeout)
 {
     t_sock sock = *ps;
-    struct timeval tv;
-    fd_set fds;
-    ssize_t put = 0;
-    if (sock == SOCK_INVALID) return IO_CLOSED;
-    int err;
+    ssize_t put;
     int ret;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    FD_ZERO(&fds);
-    FD_SET(sock, &fds);
-    ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
-    if (ret > 0) {
-       put = send(sock, data, count, 0);  
-       if (put <= 0) {
-           /* a bug in WinSock forces us to do a busy wait until we manage
-           ** to write, because select returns immediately even though it
-           ** should have blocked us until we could write... */
-           if (WSAGetLastError() == WSAEWOULDBLOCK) err = IO_DONE;
-           else err = IO_CLOSED;
-           *sent = 0;
-       } else {
-           *sent = put;
-           err = IO_DONE;
-       }
-       return err;
-    } else {
+    /* avoid making system calls on closed sockets */
+    if (sock == SOCK_INVALID) return IO_CLOSED;
+    /* try to send something */
+    put = send(sock, data, (int) count, 0);
+    /* deal with failure */
+    if (put <= 0) {
+        /* in any case, nothing has been sent */
         *sent = 0;
-        return IO_TIMEOUT;
+        /* run select to avoid busy wait */
+        if (WSAGetLastError() == WSAEWOULDBLOCK) {
+            struct timeval tv;
+            fd_set fds;
+            tv.tv_sec = timeout / 1000;
+            tv.tv_usec = (timeout % 1000) * 1000;
+            FD_ZERO(&fds);
+            FD_SET(sock, &fds);
+            ret = select(0, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
+            /* tell the caller to call us again because there is more data */
+            if (ret > 0) return IO_DONE;
+            /* tell the caller there was no data before timeout */
+            else return IO_TIMEOUT;
+        /* here we know the connection has been closed */
+        } else return IO_CLOSED;
+    /* here we successfully sent something */
+    } else {
+        *sent = put;
+        return IO_DONE;
     }
 }
 
@@ -154,34 +155,35 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         SA *addr, socklen_t addr_len, int timeout)
 {
     t_sock sock = *ps;
-    struct timeval tv;
-    fd_set fds;
-    ssize_t put = 0;
-    int err;
+    ssize_t put;
     int ret;
+    /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    FD_ZERO(&fds);
-    FD_SET(sock, &fds);
-    ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
-    if (ret > 0) {
-       put = sendto(sock, data, count, 0, addr, addr_len);  
-       if (put <= 0) {
-           /* a bug in WinSock forces us to do a busy wait until we manage
-           ** to write, because select returns immediately even though it
-           ** should have blocked us until we could write... */
-           if (WSAGetLastError() == WSAEWOULDBLOCK) err = IO_DONE;
-           else err = IO_CLOSED;
-           *sent = 0;
-       } else {
-           *sent = put;
-           err = IO_DONE;
-       }
-       return err;
-    } else {
+    /* try to send something */
+    put = sendto(sock, data, (int) count, 0, addr, addr_len);
+    /* deal with failure */
+    if (put <= 0) {
+        /* in any case, nothing has been sent */
         *sent = 0;
-        return IO_TIMEOUT;
+        /* run select to avoid busy wait */
+        if (WSAGetLastError() == WSAEWOULDBLOCK) {
+            struct timeval tv;
+            fd_set fds;
+            tv.tv_sec = timeout / 1000;
+            tv.tv_usec = (timeout % 1000) * 1000;
+            FD_ZERO(&fds);
+            FD_SET(sock, &fds);
+            ret = select(0, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
+            /* tell the caller to call us again because there is more data */
+            if (ret > 0) return IO_DONE;
+            /* tell the caller there was no data before timeout */
+            else return IO_TIMEOUT;
+        /* here we know the connection has been closed */
+        } else return IO_CLOSED;
+    /* here we successfully sent something */
+    } else {
+        *sent = put;
+        return IO_DONE;
     }
 }
 
@@ -191,28 +193,25 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
 int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
 {
     t_sock sock = *ps;
-    struct timeval tv;
-    fd_set fds;
-    int ret;
-    ssize_t taken = 0;
+    ssize_t taken;
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    FD_ZERO(&fds);
-    FD_SET(sock, &fds);
-    ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
-    if (ret > 0) {
-       taken = recv(sock, data, count, 0);  
-       if (taken <= 0) {
-           *got = 0;
-           return IO_CLOSED;
-       } else {
-           *got = taken;
-           return IO_DONE;
-       }
-    } else {
+    taken = recv(sock, data, (int) count, 0);
+    if (taken <= 0) {
+        struct timeval tv;
+        fd_set fds;
+        int ret;
         *got = 0;
-        return IO_TIMEOUT;
+        if (taken == 0) return IO_CLOSED;
+        tv.tv_sec = timeout / 1000;
+        tv.tv_usec = (timeout % 1000) * 1000;
+        FD_ZERO(&fds);
+        FD_SET(sock, &fds);
+        ret = select(0, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+        if (ret > 0) return IO_DONE;
+        else return IO_TIMEOUT;
+    } else {
+        *got = taken;
+        return IO_DONE;
     }
 }
 
@@ -223,28 +222,25 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         SA *addr, socklen_t *addr_len, int timeout)
 {
     t_sock sock = *ps;
-    struct timeval tv;
-    fd_set fds;
-    int ret;
-    ssize_t taken = 0;
+    ssize_t taken;
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    FD_ZERO(&fds);
-    FD_SET(sock, &fds);
-    ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
-    if (ret > 0) {
-       taken = recvfrom(sock, data, count, 0, addr, addr_len);  
-       if (taken <= 0) {
-           *got = 0;
-           return IO_CLOSED;
-       } else {
-           *got = taken;
-           return IO_DONE;
-       }
-    } else {
+    taken = recvfrom(sock, data, (int) count, 0, addr, addr_len);
+    if (taken <= 0) {
+        struct timeval tv;
+        fd_set fds;
+        int ret;
         *got = 0;
-        return IO_TIMEOUT;
+        if (taken == 0) return IO_CLOSED;
+        tv.tv_sec = timeout / 1000;
+        tv.tv_usec = (timeout % 1000) * 1000;
+        FD_ZERO(&fds);
+        FD_SET(sock, &fds);
+        ret = select(0, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+        if (ret > 0) return IO_DONE;
+        else return IO_TIMEOUT;
+    } else {
+        *got = taken;
+        return IO_DONE;
     }
 }
 

@@ -36,6 +36,7 @@ static int meth_dirty(lua_State *L);
 static int opt_tcp_nodelay(lua_State *L);
 static int opt_keepalive(lua_State *L);
 static int opt_linger(lua_State *L);
+static int opt_reuseaddr(lua_State *L);
 
 /* tcp object methods */
 static luaL_reg tcp[] = {
@@ -61,6 +62,7 @@ static luaL_reg tcp[] = {
 /* socket option handlers */
 static luaL_reg opt[] = {
     {"keepalive",   opt_keepalive},
+    {"reuseaddr",   opt_reuseaddr},
     {"tcp-nodelay",     opt_tcp_nodelay},
     {"linger",      opt_linger},
     {NULL,          NULL}
@@ -123,7 +125,7 @@ static int meth_setoption(lua_State *L)
 
 static int opt_boolean(lua_State *L, int level, int name)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     int val = aux_checkboolean(L, 2);
     if (setsockopt(tcp->sock, level, name, (char *) &val, sizeof(val)) < 0) {
         lua_pushnil(L);
@@ -134,16 +136,16 @@ static int opt_boolean(lua_State *L, int level, int name)
     return 1;
 }
 
+/* enables reuse of local address */
+static int opt_reuseaddr(lua_State *L)
+{
+    return opt_boolean(L, SOL_SOCKET, SO_REUSEADDR); 
+}
+
 /* disables the Naggle algorithm */
 static int opt_tcp_nodelay(lua_State *L)
 {
-    struct protoent *pe = getprotobyname("TCP");
-    if (!pe) {
-        lua_pushnil(L);
-        lua_pushstring(L, "getprotobyname");
-        return 2;
-    }
-    return opt_boolean(L, pe->p_proto, TCP_NODELAY); 
+    return opt_boolean(L, IPPROTO_TCP, TCP_NODELAY); 
 }
 
 static int opt_keepalive(lua_State *L)

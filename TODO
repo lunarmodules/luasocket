@@ -1,8 +1,13 @@
-change send/recv to avoid using select
 
+
+
+check for interrupt compliance
+add connect with timeout
 add gethostname and use it in HTTP, SMTP etc, and add manual entry.
+
 add local connect, and manual entry
-add shutdown, and manual entry
+
+add shutdown manual entry
 
 only allocate in case of success
 only call select if io fails...
@@ -65,6 +70,8 @@ Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
 - testar os options!
 - adicionar exemplos de expansão: pipe, local, named pipe
 
+* add shutdown
+* change send/recv to avoid using select
 * O location do "redirect" pode ser relativo ao servidor atual (não pode,
   mas os servidores fazem merda...)
 * Ajeitar para Lua 5.0

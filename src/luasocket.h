@@ -18,7 +18,9 @@
 /*-------------------------------------------------------------------------*\
 * Library's namespace
 \*-------------------------------------------------------------------------*/
+#ifndef LUASOCKET_LIBNAME
 #define LUASOCKET_LIBNAME "socket"
+#endif
 
 /*-------------------------------------------------------------------------*\
 * This macro prefixes all exported API functions

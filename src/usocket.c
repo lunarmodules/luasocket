@@ -145,7 +145,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
             else return IO_TIMEOUT;
         /* here we know the connection has been closed */
         } else return IO_CLOSED; 
-    /* here we sent successfully sent something */
+    /* here we successfully sent something */
     } else {
         *sent = put;
         return IO_DONE;
@@ -159,34 +159,36 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         SA *addr, socklen_t addr_len, int timeout)
 {
     t_sock sock = *ps;
-    struct timeval tv;
-    fd_set fds;
-    ssize_t put = 0;
-    int err;
+    ssize_t put;
     int ret;
+    /* avoid making system calls on closed sockets */
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    FD_ZERO(&fds);
-    FD_SET(sock, &fds);
-    ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
-    if (ret > 0) {
-       put = sendto(sock, data, count, 0, addr, addr_len);  
-       if (put <= 0) {
-           err = IO_CLOSED;
-#ifdef __CYGWIN__
-           /* this is for CYGWIN, which is like Unix but has Win32 bugs */
-           if (sent < 0 && errno == EWOULDBLOCK) err = IO_DONE;
-#endif
-           *sent = 0;
-       } else {
-           *sent = put;
-           err = IO_DONE;
-       }
-       return err;
-    } else {
+    /* make sure we repeat in case the call was interrupted */
+    do put = sendto(sock, data, count, 0, addr, addr_len);  
+    while (put <= 0 && errno == EINTR);
+    /* deal with failure */
+    if (put <= 0) {
+        /* in any case, nothing has been sent */
         *sent = 0;
-        return IO_TIMEOUT;
+        /* run select to avoid busy wait */
+        if (errno != EPIPE) {
+            struct timeval tv;
+            fd_set fds;
+            tv.tv_sec = timeout / 1000;
+            tv.tv_usec = (timeout % 1000) * 1000;
+            FD_ZERO(&fds);
+            FD_SET(sock, &fds);
+            ret = select(sock+1, NULL, &fds, NULL, timeout >= 0 ? &tv : NULL);
+            /* tell the caller to call us again because there is more data */
+            if (ret > 0) return IO_DONE;
+            /* tell the caller there was no data before timeout */
+            else return IO_TIMEOUT;
+        /* here we know the connection has been closed */
+        } else return IO_CLOSED; 
+    /* here we successfully sent something */
+    } else {
+        *sent = put;
+        return IO_DONE;
     }
 }
 
@@ -232,28 +234,26 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         SA *addr, socklen_t *addr_len, int timeout)
 {
     t_sock sock = *ps;
-    struct timeval tv;
-    fd_set fds;
-    int ret;
+    ssize_t taken;
     if (sock == SOCK_INVALID) return IO_CLOSED;
-    ssize_t taken = 0;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    FD_ZERO(&fds);
-    FD_SET(sock, &fds);
-    ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
-    if (ret > 0) {
-       taken = recvfrom(sock, data, count, 0, addr, addr_len);  
-       if (taken <= 0) {
-           *got = 0;
-           return IO_CLOSED;
-       } else {
-           *got = taken;
-           return IO_DONE;
-       }
-    } else {
+    do taken = recvfrom(sock, data, count, 0, addr, addr_len);  
+    while (taken <= 0 && errno == EINTR);
+    if (taken <= 0) {
+        struct timeval tv;
+        fd_set fds;
+        int ret;
         *got = 0;
-        return IO_TIMEOUT;
+        if (taken == 0) return IO_CLOSED;
+        tv.tv_sec = timeout / 1000;
+        tv.tv_usec = (timeout % 1000) * 1000;
+        FD_ZERO(&fds);
+        FD_SET(sock, &fds);
+        ret = select(sock+1, &fds, NULL, NULL, timeout >= 0 ? &tv : NULL);
+        if (ret > 0) return IO_DONE;
+        else return IO_TIMEOUT;
+    } else {
+        *got = taken;
+        return IO_DONE;
     }
 }
 
