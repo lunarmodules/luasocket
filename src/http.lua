@@ -146,8 +146,7 @@ local function adjustheaders(headers, host)
         lower[string.lower(i)] = v
     end
     lower["user-agent"] = lower["user-agent"] or USERAGENT
-    -- these cannot be overriden
-    lower["host"] = host
+    lower["host"] = lower["host"] or host
     return lower
 end
 
