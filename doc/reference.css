@@ -1,0 +1,40 @@
+body { 
+	margin-left: 1em; 
+	margin-right: 1em; 
+}
+
+body > * { margin-left: 1em; }
+
+div.header, div.footer { margin-left: 0em; }
+hr, h1, h2, h3, h4 { margin-left: 0em; }
+p.name { margin-left: 0em; }
+
+h2:first-letter, h2:first-letter, h3:first-letter { color: #00007f; }
+
+blockquote { margin-left: 3em; }
+
+a[href] { color: #00007f; }
+
+p.name { 
+    font-size: large; 
+    font-family: monospace; 
+    padding-top: 1em;
+}
+
+pre.example {
+    background: #ccc;
+    font-size: small;
+    padding: 1em;
+}
+
+hr { 
+	background: #00007f;
+	border: 0px;
+	height: 1px;
+}
+
+ul { list-style-type: disc; }
+
+table.index { border: 1px #00007f; }
+table.index td { text-align: left; vertical-align: top; }
+table.index ul { padding-top: 0em; margin-top: 0em; }

@@ -1,0 +1,212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+<title>LuaSocket: Network support for the Lua language </title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=header>
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align=center><a href="http://www.lua.org">
+<img border=0 alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align=center valign=top>Network support for the Lua language
+</td></tr>
+</table>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+</center>
+<hr>
+</div>
+
+<!-- whatis +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=whatis>What is LuaSocket?</h2>
+
+<p>
+LuaSocket  is a  <a href="http://www.lua.org">Lua</a>  extension library
+that is composed by two parts: a C layer that provides  support for the TCP
+and UDP transport layers, and a set of Lua modules that add support for
+the SMTP (sending  e-mails),  HTTP  (WWW access)  and  FTP  (uploading  and
+downloading files) protocols. 
+</p>
+
+<p>
+Network support has been  implemented so that it  is both efficient and
+simple to use.  LuaSocket can be used by any Lua application once it has
+been properly linked with and initialized by the interpreter running the
+Lua application.  The code has been tested and runs well on several Windows
+and Unix platforms. 
+</p>
+
+<p>
+The library is available under the same  
+<a href="http://www.lua.org/copyright.html">
+terms and conditions</a> as the Lua language, the MIT license. The idea is
+that if you can use Lua in a project, you should also be able to use 
+LuaSocket.
+</p>
+
+<p>
+Copyright &copy; 1999-2003 Tecgraf/PUC-Rio. All rights reserved. <br>
+Author: <A href="http://www.cs.princeton.edu/~diego">Diego Nehab</a>
+</p>
+
+<!-- download +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=down>Download</h2>
+
+<p>
+LuaSocket version  2.0 alpha is now  available for download! It  is
+compatible with   Lua&nbsp;5.0   and   has    been   tested   on
+Windows&nbsp;XP, Linux, and Mac OS X. 
+</p>
+
+<p>
+The library can be downloaded in source code from the following links: 
+</p>
+
+<blockquote>
+<p>
+<a href="luasocket-2.0-alpha.tar.gz">luasocket-2.0-alpha.tar.gz</a> <br>
+<a href="luasocket-2.0-alpha.zip">luasocket-2.0-alpha.zip</a>
+</p>
+</blockquote>
+
+<p>
+Besides the full C and Lua source code for the library, the distribution
+contains several examples, this user's manual and the test procedures.
+</p>
+
+<p>
+I  am also  providing  a Windows  binary  for those  that  want to  give
+LuaSocket a quick try: 
+</p>
+
+<blockquote>
+<p>
+<a href="luasocket-2.0.exe">luasocket-2.0.exe</a>
+</p>
+</blockquote>
+
+<p>
+This  binary has been compiled  with the <tt>LUASOCKET_DEBUG</tt>
+option, and  should be able to run the automatic test procedures.
+</p>
+
+<!-- whatsnew +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=new>What's New</h2>
+
+<p>
+Most of  the changes for  2.0 happened in the C layer, which
+has been almost completely rewritten. The code has been ported to Lua 5.0
+and greatly improved.  There have also been some API changes
+that made  the interface simpler and  more consistent. Here are  some of
+the changes that made it into version 2.0: 
+</p>
+
+<ul>
+<li> Major C code rewrite. Code is modular and extensible. Hopefully, next
+     versions will include code for local domain sockets, file descriptors,
+     pipes (on Unix) and named pipes (on windows) as a bonus;
+
+<li> Following the Lua 5.0 trend, all functions provided by the library are
+     in the namespace <tt>socket</tt>.  Functions such as
+     send/receive/timeout/close etc do not exist anymore as stand-alone
+     functions. They are now only available as methods of the appropriate
+     objects;
+
+<li> All functions return a non-nil value as first return value if successful.
+     All functions return whatever could be retrieved followed by error message
+     in case of error. The best way to check for errors is to check for the
+     presence of an error message;  
+
+<li> UDP connected   sockets can break association with peer by calling
+     <tt>setpeername</tt> with address '<tt>*</tt>';
+
+<li> TCP has been changed to become more uniform.  First create an object,
+     then connect or bind if needed, and finally use I/O functions. The
+     <tt>socket.connect</tt> and <tt>socket.bind</tt> functions are still
+     provided for simplicity, but they just call <tt>socket.tcp</tt> followed 
+     by the <tt>connect</tt> or <tt>bind</tt> methods;
+
+<li> Better error messages and parameter checking;
+
+<li> <tt>socket.sleep</tt> and <tt>socket.time</tt> are now part of the
+     library and are supported. They used to be available only when
+     LUASOCKET_DEBUG was defined, but it turns out they might be useful for
+     applications;
+
+<li> Socket options interface has been improved and TCP objects also 
+     support socket options.
+
+</ul>
+
+<!-- incompatible +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h3 id=incompatible>Incompatibilities with previous versions</h3>
+
+<ul>
+<li> The introduction of namespaces affects all programs that use LuaSocket,
+specially code that relies on global functions. These are no longer
+available. Note that even the support modules (<tt>http</tt>, <tt>smtp</tt>
+etc) have been moved to the namespace (i.e.  <tt>socket.http</tt>,
+<tt>socket.smtp</tt> etc);
+
+<li> WARNING: The new <tt>send</tt>,
+<tt>sendto</tt>, <tt>setpeername</tt> and <tt>setsockname</tt>, 
+<tt>ftp.put</tt>, <tt>ftp.put_cb</tt> return convention WILL break old code; 
+
+<li> Interface to options has changed;
+
+<li> <tt>socket.select</tt> refuses tables that have anything that is not
+an object from the group <tt>select{able}</tt>. This includes even the
+'<tt>n</tt>' field. Silently ignoring objects was a source of bugs for Lua
+programs.
+</ul>
+
+<!-- old ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=old>Old Versions</h2>
+
+<p>
+All  previous versions  of the  LuaSocket library  can be  downloaded 
+<a href="http://www.tecgraf.puc-rio.br/luasocket/old">here</a>. Although
+these  versions are  no longer  supported, they  are still available for
+those that have compatibility issues. 
+</p>
+
+<!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=footer>
+<hr>
+<center>
+<p class=bar>
+<a href="home.html#down">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+<p>
+<small>
+Last modified by Diego Nehab on <br>
+Sun Aug 10 01:36:26 PDT 2003
+</small>
+</p>
+</center>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+<title>LuaSocket: Network support for the Lua language</title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=header>
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align=center><a href="http://www.lua.org">
+<img border=0 alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align=center valign=top>Network support for the Lua language
+</td></tr>
+</table>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+</center>
+<hr>
+</div>
+
+<!-- stream ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=stream>Streaming with Callbacks</h2> 
+
+<p>
+HTTP and FTP  transfers sometimes involve large  amounts of information.
+Sometimes an application  needs to generate outgoing data  in real time,
+or needs  to process incoming  information as  it is being  received. To
+address these  problems, LuaSocket  allows HTTP  message bodies  and FTP
+file  contents to  be received  or sent  through the  callback mechanism
+outlined below. 
+</p>
+
+<p>
+Instead of  returning the entire contents  of a FTP file  or HTTP message
+body as  strings to the Lua  application, the library allows  the user to
+provide a  <em>receive callback</em> that  will be called  with successive
+chunks of data, as the data becomes available. Conversely, the <em>send
+callbacks</em> should be used when data needed by LuaSocket 
+is generated incrementally by the application. 
+</p>
+
+<!-- tohostname +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=receive_cb> 
+<b>receive_cb(</b>chunk, err<b>)</b>
+</p>
+
+<p class=description>
+The  callback provided  by the  user will  be repeatedly  called by  the
+library whenever  new data  is available.  Each time  it is  called, the
+callback receives  successive chunks  of downloaded  data. 
+</p>
+
+<p class=parameters>
+<tt>Chunk</tt> contains the current chunk of data.
+When the transmission  is over, the function  is called with an  
+empty string (i.e.&nbsp;<tt>""</tt>) as  the <tt>chunk</tt>. If an  error occurs, the
+function  receives <tt>nil</tt> as <tt>chunk</tt> and  an error  message as
+<tt>err</tt>. 
+</p>
+
+<p class=return>
+The callback  can abort transmission by returning
+<tt>nil</tt> as its first return value. In that case, it can also return
+an error  message. Any non-<tt>nil</tt>  return value proceeds  with the
+transmission. 
+</p>
+
+<pre class=example>
+-- The implementation of socket.callback.receive_concat
+function Public.receive_concat(concat)
+    concat = concat or socket.concat.create()
+    local callback = function(chunk, err)
+        -- if not finished, add chunk
+        if chunk and chunk ~= "" then
+            concat:addstring(chunk)
+            return 1
+        end
+    end
+    return callback, concat
+end
+</pre>
+
+<!-- send_cb ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name>
+<b>send_cb()</b>
+</p>
+
+<p class=description>
+The callback provided by the user will be repeatedly called whenever the
+library needs more data to be sent. 
+</p>
+
+<p class=return> 
+Each time the callback is called, it
+should return the next part of the information the library is expecting,
+followed by the total number of bytes to be sent. 
+The callback can abort
+the  process  at any  time  by  returning  <tt>nil</tt> followed  by  an
+optional error message. 
+</p>
+
+
+<p class=note>
+Note: The need for the second return value comes from the fact that, with
+the HTTP protocol for instance, the library needs to know in advance the
+total number of bytes that will be sent. 
+</p>
+
+<pre class=example>
+-- The implementation of socket.callback.send_file
+function Public.send_file(file)
+    local callback
+    -- if successfull, return the callback that reads from the file
+    if file then
+        -- get total size
+        local size = file:seek("end") 
+        -- go back to start of file
+        file:seek("set")
+        callback = function()
+            -- send next block of data
+            local chunk = file:read(Public.BLOCKSIZE)
+            if not chunk then file:close() end
+            return chunk, size
+        end
+    -- else, return a callback that just aborts the transfer
+    else
+        callback = function() 
+            -- just abort
+            return nil, "unable to open file"
+        end
+    end
+    return callback, file
+end
+</pre>
+
+<!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=footer>
+<hr>
+<center>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#down">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+<p>
+<small>
+Last modified by Diego Nehab on <br>
+Sat Aug 9 01:00:41 PDT 2003
+</small>
+</p>
+</center>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> <html>
+
+<head>
+<title>LuaSocket: Network support for the Lua language</title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=header>
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align=center><a href="http://www.lua.org">
+<img border=0 alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align=center valign=top>Network support for the Lua language
+</td></tr>
+</table>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+</center>
+<hr>
+</div>
+
+<!-- ftp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=ftp>FTP</h2> 
+
+<p>
+FTP  (File Transfer  Protocol)  is a  protocol  used  to transfer  files
+between hosts.  The module  <tt>ftp.lua</tt> offers simple  FTP support,
+allowing applications to  download and upload files,  and list directory
+contents. The implementation conforms to
+<a href="http://www.cs.princeton.edu/~diego/rfc/rfc0959.txt">RFC 959</a>.
+</p>
+
+<p>
+URLs MUST conform to
+<a href="http://www.cs.princeton.edu/~diego/rfc/rfc1738.txt">RFC
+1738</a>, that is, an URL is a string in the form: 
+</p>
+
+<blockquote>
+<tt>
+[ftp://][&lt;user&gt;[:&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;][/&lt;path&gt;][<i>type</i>=a|i|d]</tt>
+</blockquote>
+
+<!-- ftp.get ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=get>
+socket.ftp.<b>get(</b>url<b>)</b><br>
+socket.ftp.<b>get{</b><br>
+&nbsp;&nbsp;url = <i>string</i>,<br>
+&nbsp;&nbsp;type = <i>string</i>,<br>
+&nbsp;&nbsp;user = <i>string</i>,<br> 
+&nbsp;&nbsp;password = <i>string</i><br>
+<b>}</b>
+</p>
+
+<p class=description>
+Downloads an URL from a FTP server.
+</p>
+
+<p class=parameters>
+The function can be  called either  directly with  a <tt>url</tt>  
+or with  a <em>request table</em>. 
+Fields passed  explicitly in  the request  table override  those
+present in the <tt>url</tt>.
+</p>
+
+<p class=parameters>
+The parameter <tt>type</tt> accepts values '<tt>a</tt>' (ASCII, the
+default), '<tt>i</tt>' (binary) or  '<tt>d</tt>' (directory listing) and
+determines  the  transfer type.  If  <tt>&lt;path&gt;</tt>  ends with  a
+'<tt>/</tt>' or  <tt>type</tt> is  '<tt>d</tt>', a directory  listing of
+<tt>&lt;path&gt;</tt> is  returned.  If no <tt>user</tt> is provided in the
+<tt>url</tt> or explicitly, the function tries to log in as user
+'<tt>anonymous</tt>'.
+</p>
+
+<p class=return>
+If successful, the  function returns
+the file  content as a string.  In case of error,  the function returns
+<tt>nil</tt> and an error message describing the error. 
+</p>
+
+<pre class=example>
+-- Log as user "anonymous" on server "ftp.tecgraf.puc-rio.br",
+-- go to directory "pub/lua" and get file "lua.tar.gz" as binary.
+f, e = socket.ftp.get("ftp://ftp.tecgraf.puc-rio.br/pub/lua/lua.tar.gz;type=i")
+
+-- Log as user "anonymous" on server "ftp.tecgraf.puc-rio.br",
+-- go to director "pub" and retrieve directory listing of directory "lua"
+f, e = socket.ftp.get("ftp://ftp.tecgraf.puc-rio.br/pub/lua;type=d")
+
+-- Log as user "diego", password "nehab", on server "ftp.tecgraf.puc-rio.br",
+-- go to directory "tec/luasocket/bin" and retrieve file "luasocket.exe"
+-- (actually, fails because of wrong password, of course)
+f, e = socket.ftp.get{
+  url = "ftp://ftp.tecgraf.puc-rio.br/tec/luasocket/bin/luasocket.exe",
+  user = "diego",
+  password = "nehab",
+  type = "i"
+}
+-- f returns nil, and e returns an appropriate error message
+</pre>
+
+<!-- get_cb +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=get_cb>
+socket.ftp.<b>get_cb{</b><br>
+&nbsp;&nbsp;url = <i>string</i>,<br>
+&nbsp;&nbsp;type = <i>string</i>,<br>
+&nbsp;&nbsp;content_cb = <i>receive-callback</i>,<br>
+&nbsp;&nbsp;user = <i>string</i>,<br>
+&nbsp;&nbsp;password = <i>string</i><br>
+<b>}</b>
+</p>
+
+<p class=description>
+Same as <a href="#get"><tt>get</tt></a>, but the library returns
+the  content of  the  downloaded file  to  the receive callback
+<tt>content_cb</tt>. 
+</p>
+
+<p class=note>
+Note: for more information on callbacks, refer to 
+<a href="stream.html#stream">Streaming with callbacks</a>.
+</p>
+
+<!-- put ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=put>
+socket.ftp.<b>put(</b>url, content<b>)</b><br>
+socket.ftp.<b>put{</b><br>
+&nbsp;&nbsp;url = <i>string</i>,<br>
+&nbsp;&nbsp;content = <i>string</i>,<br>
+&nbsp;&nbsp;type = <i>string</i>,<br>
+&nbsp;&nbsp;user = <i>string</i>,<br>
+&nbsp;&nbsp;password = <i>string</i><br>
+<b>}</b>
+</p>
+
+<p class=description>
+Upload a file to a  FTP server. 
+</p>
+
+<p class=parameters>
+The  function   can  be   called  directly   with  a
+<tt>url</tt> and  <tt>content</tt> parameters, or with  a 
+<em>request table</em>.
+Values passed  explicitly in the  request table override those  present in
+the   <tt>url</tt>.   The   parameter   <tt>type</tt>   accept   values
+'<tt>a</tt>'  (ASCII,   the  default)   or  '<tt>i</tt>'   (binary)  and
+determines  the transfer  type.  If no  <tt>user</tt>  is provided,  the
+function tries to log in as '<tt>anonymous</tt>'.
+</p>
+
+<p class=return>
+If successful, the function returns  1. In case of error, the
+function returns <tt>nil</tt> followed by a string describing the error. 
+</p>
+
+<pre class=example>
+-- Log as user "anonymous" on server "ftp.free.org" and store file
+-- "hello" with contents "hello world!", using binary mode for the transfer
+r, e = socket.ftp.put("ftp://ftp.free.org/hello;type=i", "hello world!\n")
+
+-- Does exactly the same, but logging in as diego
+r, e = socket.ftp.put{
+  url = "ftp://ftp.free.org/hello",
+  type = "i",
+  user = "diego",
+  password = "nehab",
+  content = "hello world\n"
+}
+</pre>
+</blockquote>
+
+<!-- put_cb +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=put_cb>
+socket.ftp.<b>put_cb{</b><br>
+&nbsp;&nbsp;url = <i>string</i>,<br>
+&nbsp;&nbsp;type = <i>string</i>,<br>
+&nbsp;&nbsp;content_cb = <i>send-callback</i>,<br>
+&nbsp;&nbsp;user = <i>string</i>,<br>
+&nbsp;&nbsp;password = <i>string</i><br>
+<b>}</b>
+</p>
+
+<p class=description>
+Same as <a href="#put"><tt>put</tt></a>, but the
+library obtains the contents of  the file to be uploaded using  the send
+callback <tt>content_cb</tt>. 
+</p>
+
+<p class=note>
+Note: for more information on callbacks, refer to 
+<a href="stream.html#stream">Streaming with callbacks</a>.
+</p>
+
+<pre class=example>
+-- Log as user "anonymous" on server "ftp.free.org" and store file
+-- "hello" with contents of the same file in the current directory, 
+-- using binary mode for the transfer
+r, e = socket.ftp.put_cb{
+  url = "ftp://ftp.free.org/hello",
+  type = "i",
+  content_cb = socket.callback.send_file(io.open("hello", "r"))
+}
+</pre>
+</blockquote>
+
+<!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=footer>
+<hr>
+<center>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+<p>
+<small>
+Last modified by Diego Nehab on <br>
+Sat Aug 9 01:00:41 PDT 2003
+</small>
+</p>
+</center>
+</div>
+
+</body>
+</html>

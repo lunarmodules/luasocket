@@ -1,0 +1,388 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+<title>LuaSocket: Network support for the Lua language</title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=header>
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align=center><a href="http://www.lua.org">
+<img border=0 alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align=center valign=top>Network support for the Lua language
+</td></tr>
+</table>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+</center>
+<hr>
+</div>
+
+<!-- http +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=http>HTTP</h2> 
+
+<p>
+HTTP (Hyper Text  Transfer Protocol) is the protocol  used to exchange
+information  between  web-browsers and  servers.  The  <tt>http.lua</tt>
+module offers  support for the client  side of the HTTP  protocol (i.e.,
+the facilities that would be  used by a web-browser implementation). The
+implementation    conforms     to    the    HTTP/1.1     standard,
+<a href="http://www.cs.princeton.edu/~diego/rfc/rfc2616.txt">RFC
+2616</a>.
+</p>
+
+<p>
+The module exports functions that provide HTTP functionality in different
+levels of abstraction, from a simple <a
+href="#get"><tt>get</tt></a>, to the generic, stream oriented
+<a href="#request_cb"> <tt>request_cb</tt></a>.
+</p>
+
+<p>
+URLs must conform to
+<a href="http://www.cs.princeton.edu/~diego/rfc/rfc1738.txt">RFC
+1738</a>,
+that is, an URL is a string in the form: 
+</p>
+
+<blockquote>
+<pre>
+[http://][&lt;user&gt;[:&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;][/&lt;path&gt;] 
+</pre>
+</blockquote>
+
+<p>
+MIME headers are represented as a Lua table in the form:
+</p>
+
+<blockquote>
+<table summary="MIME headers in Lua table">
+<tr><td><tt>
+headers = {<br>
+&nbsp;&nbsp;field-1-name = <i>field-1-value</i>,<br>
+&nbsp;&nbsp;field-2-name = <i>field-2-value</i>,<br>
+&nbsp;&nbsp;field-3-name = <i>field-3-value</i>,
+</tt></td></tr>
+<tr><td align=center><tt>
+&nbsp;&nbsp;...
+</tt></td></tr>
+<tr><td><tt>
+&nbsp;&nbsp;field-n-name = <i>field-n-value</i><br>
+}
+</tt></td></tr>
+</table>
+</blockquote>
+
+<p>
+Field names are case insensitive (as  specified by the standard) and all
+functions  work with  lowercase field names.  
+Field values are left unmodified.
+</p>
+
+<p class=note>
+Note: MIME headers are independent of order. Therefore, there is no problem
+in representing them in a Lua table. 
+</p>
+
+<!-- http.get +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=get>
+socket.http.<b>get(</b>url<b>)</b><br>
+socket.http.<b>get{</b><br>
+&nbsp;&nbsp;url = <i>string</i>,<br>
+&nbsp;&nbsp;headers = <i>header-table</i>,<br>
+&nbsp;&nbsp;user = <i>string</i>,<br>
+&nbsp;&nbsp;password = <i>string</i>,<br>
+&nbsp;&nbsp;stay = <i>bool</i>,<br>
+<b>}</b>
+</p>
+
+<p class=description>
+Performs  the HTTP method <tt>GET</tt>. 
+</p>
+
+<p class=parameters>
+The  function can  be
+called either directly with a <tt>url</tt>  or with a <em>request table</em>. 
+The use of  a request table allows  complete control over the  components of
+the  request.  Values  passed explicitly  as fields of the request table
+override those given by the <tt>url</tt>. For a description of the fields,
+see the <a href=#request><tt>request</tt></a> function.
+</p>
+
+<p class=return>
+The function  returns the response  message body, the mime  headers, the
+status  code and  an  error message (if  any). In  case  of failure,  the
+function returns all information it managed to gather.
+</p>
+
+<p class=note>
+Note: The function is trivially implemented with the use of the 
+<a href="#request"><tt>request</tt></a> function. 
+</p>
+
+<pre class=example>
+-- connect to server "www.tecgraf.puc-rio.br" and retrieves this manual
+-- file from "/luasocket/http.html"
+b, h, c, e = socket.http.get("http://www.tecgraf.puc-rio.br/luasocket/http.html")
+
+-- connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
+-- "~diego/auth/index.html". Fails because authentication is needed.
+b, h, c, e = socket.http.get("http://www.tecgraf.puc-rio.br/~diego/auth/index.html")
+-- b returns some useless page telling about the denied access, 
+-- h returns authentication information
+-- and c returns with value 401 (Authentication Required)
+
+-- tries to connect to server "wrong.host" to retrieve "/"
+-- and fails because the host does not exist.
+b, h, c, e = socket.http.get("http://wrong.host/")
+-- b, h, c are nil, and e returns with value "host not found"
+</pre>
+
+<!-- http.post ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=post>
+socket.http.<b>post(</b>url, body<b>)</b><br>
+socket.http.<b>post{</b><br>
+&nbsp;&nbsp; url = <i>string</i>,<br>
+&nbsp;&nbsp; headers = <i>header-table</i>,<br>
+&nbsp;&nbsp; body = <i>string</i>,<br>
+&nbsp;&nbsp; user = <i>string</i>,<br>
+&nbsp;&nbsp; password = <i>string</i>,<br>
+&nbsp;&nbsp; stay = <i>bool</i>,<br>
+<b>}</b>
+</p>
+
+<p class=description>
+Same  as <a  href="#get"><tt>get</tt></a>,  except
+that the <tt>POST</tt> method is used and the  request 
+message <tt>body</tt>  is sent along with the request.
+</p>
+
+<p class=note>
+Note: This function is also trivially implemented with the use of the 
+<a href="#request"><tt>request</tt></a> function. 
+</p>
+
+<!-- http.request ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=request>
+socket.http.<b>request{</b><br>
+&nbsp;&nbsp;method = <i>string</i>,<br>
+&nbsp;&nbsp;url = <i>string</i>,<br>
+&nbsp;&nbsp;headers = <i>header-table</i>,<br>
+&nbsp;&nbsp;body = <i>string</i>,<br>
+&nbsp;&nbsp;user = <i>string</i>,<br>
+&nbsp;&nbsp;password = <i>string</i>,<br>
+&nbsp;&nbsp;stay = <i>string</i>,<br>
+<b>}</b>
+</p>
+
+<p class=description>
+Performs the generic HTTP  request using.
+</p>
+
+<p class=parameters>
+The request uses <tt>method</tt> on <tt>url</tt>
+sending the  request <tt>headers</tt>  and request <tt>body</tt>  in the
+request message. If authentication information is provided, the function
+uses the  Basic Authentication Scheme (see  <a href="#authentication">note</a>)
+to retrieve  the document. <tt>User</tt> and  <tt>password</tt> provided
+explicitly override  those given by the  <tt>url</tt>. The <tt>stay</tt>
+parameter, when set to anything  but <tt>nil</tt>, prevents the function
+from automatically following 301 or 302 server redirect messages. 
+</p>
+
+<p class=return>
+The function returns a table with all components of the response message
+it managed to retrieve. The response table has the following form:
+</p>
+
+<blockquote><tt>
+response = {<br>
+&nbsp;&nbsp;body = <i>string</i>,<br>
+&nbsp;&nbsp;headers = <i>header-table</i>,<br>
+&nbsp;&nbsp;status = <i>string</i>,<br>
+&nbsp;&nbsp;code = <i>number</i>,<br>
+&nbsp;&nbsp;error = <i>string</i><br>
+}
+</tt></blockquote>
+
+<p class=return>
+Even  when there  was failure  (URL not  found, for  example), the
+function may succeed retrieving a message body (a web page informing the
+URL  was  not found  or  some  other useless  page).  To  make sure  the
+operation was successful, check  the returned status <tt>code</tt>. For
+a  list  of  the  possible  values  and  their  meanings,  refer  to  <a
+href="http://www.cs.princeton.edu/~diego/rfc/rfc2616.txt">RFC
+2616</a>. 
+</p>
+
+<pre class=example>
+-- Requests information about a document, without downloading it.
+-- Useful, for example, if you want to display a download gauge and need
+-- to know the size of the document in advance
+response = socket.http.request {
+  method = "HEAD",
+  url = "http://www.tecgraf.puc-rio.br/~diego"
+}
+-- Would return the following headers:
+-- response.headers = {
+--   date = "Tue, 18 Sep 2001 20:42:21 GMT",
+--   server = "Apache/1.3.12 (Unix)  (Red Hat/Linux)",
+--   ["last-modified"] = "Wed, 05 Sep 2001 06:11:20 GMT",
+--   ["content-length"] = 15652,
+--   ["connection"] = "close",
+--   ["content-Type"] = "text/html"
+-- }
+</pre>
+</blockquote>
+
+<p class=note id=authentication> 
+Note: Some URLs are protected by their
+servers from anonymous download. For those URLs, the server must receive
+some  sort of  authentication along  with the  request or  it will  deny
+download and return status "401&nbsp;Authentication Required". 
+</p>
+
+<p class=note>
+The  HTTP/1.1 standard  defines  two authentication  methods: the  Basic
+Authentication  Scheme  and  the   Digest  Authentication  Scheme,  both
+explained in detail in
+<a href="http://www.cs.princeton.edu/~diego/rfc/rfc2068.txt">RFC 2068</a>.
+</p>
+
+<p class=note>The Basic  Authentication   Scheme  sends   
+<tt>&lt;user&gt;</tt>  and
+<tt>&lt;password&gt;</tt>  unencrypted to  the server  and is  therefore
+considered unsafe.  Unfortunately, by  the time of  this implementation,
+the wide majority of servers and browsers support the Basic Scheme only.
+Therefore,   this  is   the  method   used  by   the  toolkit   whenever
+authentication is required.
+</p>
+
+<pre class=example>
+-- Connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
+-- "~diego/auth/index.html", using the provided name and password to
+-- authenticate the request
+response = socket.http.request{
+  url = "http://www.tecgraf.puc-rio.br/~diego/auth/index.html",
+  user = "diego",
+  password = "password"
+}
+
+-- Alternatively, one could fill the appropriate header and authenticate
+-- the request directly.
+headers = {
+  authentication = "Basic " .. socket.code.base64("diego:password")
+}
+response = socket.http.request {
+  url = "http://www.tecgraf.puc-rio.br/~diego/auth/index.html",
+  headers = headers
+}
+</pre>
+
+<!-- request_cb +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=request_cb>
+socket.http.<b>request_cb(</b>request, response<b>)</b>
+</p>
+
+<p class=description>
+Performs the generic HTTP  request.
+</p>
+
+<p class=parameters>
+The function receives two tables as parameters. The <tt>request</tt> table
+provides information about the request: 
+</p>
+
+<blockquote><tt>
+request = {<br>
+&nbsp;&nbsp;method = <i>string</i>,<br>
+&nbsp;&nbsp;url = <i>string</i>,<br>
+&nbsp;&nbsp;headers = <i>header-table</i>,<br>
+&nbsp;&nbsp;body_cb = <i>send-callback</i>,<br>
+&nbsp;&nbsp;user = <i>string</i>,<br>
+&nbsp;&nbsp;password = <i>string</i>,<br>
+&nbsp;&nbsp;stay = <i>string</i>,<br>
+}</tt>
+</blockquote>
+
+<p class=parameters>
+The function uses the HTTP method specified in 
+<tt>request.method</tt> on the URL <tt>request.url</tt>,
+sending <tt>request.headers</tt> along with the request. The request
+message  body  is sent  via the send  callback <tt>request.body_cb</tt>.
+If authentication information is provided, the function    uses   the Basic
+Authentication    Scheme   (see    <a href="#authentication">note</a>)  to
+retrieve  the document.  <tt>Request.user</tt> and
+<tt>request.password</tt>  override  those  given  by the
+<tt>request.url</tt>.  The <tt>request.stay</tt>  parameter,  when set  to
+anything but <tt>nil</tt>, prevents the function  from automatically
+following 301 or 302 server redirect messages.  
+</p>
+
+<p class=parameters>
+The <tt>response</tt> table specifies information about the desired
+response:
+</p>
+
+<blockquote><tt>
+response = {<br>
+&nbsp;&nbsp;body_cb = <i>receive-callback</i><br>
+}</tt>
+</blockquote>
+
+<p class=return>
+The function  returns the same  response table  as that returned  by the
+<tt>socket.http.request</tt>  function, except  the  response  message body  is
+returned    to    the    receive   callback   given    by    the
+<tt>response.body_cb</tt> field. 
+</p>
+
+<p class=note>
+Note: For more information on callbacks, please refer to 
+<a href="stream.html#stream">Streaming with callbacks</a>.
+</p>
+
+<p class=note>
+Note: Method names are case <em>sensitive</em>
+</p>
+
+<!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=footer>
+<hr>
+<center>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+<p>
+<small>
+Last modified by Diego Nehab on <br>
+Sat Aug 9 01:00:41 PDT 2003
+</small>
+</p>
+</center>
+</div>
+
+</body>
+</html>
