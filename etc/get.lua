@@ -1,10 +1,3 @@
--- this examples needs it all
-assert(dofile("../lua/code.lua"))
-assert(dofile("../lua/ftp.lua"))
-assert(dofile("../lua/concat.lua"))
-assert(dofile("../lua/url.lua"))
-assert(dofile("../lua/http.lua"))
-
 -- formats a number of seconds into human readable form
 function nicetime(s)
 	local l = "s"
