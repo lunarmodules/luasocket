@@ -136,8 +136,7 @@ int tm_gettime(void)
 int tm_gettime(void) 
 {
     struct timeval v;
-    struct timezone z = {0, 0};
-    gettimeofday(&v, &z);
+    gettimeofday(&v, (struct timezone *) NULL);
     return v.tv_sec * 1000 + v.tv_usec/1000;
 }
 #endif

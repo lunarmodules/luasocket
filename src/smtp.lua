@@ -106,7 +106,10 @@ function open(server, port)
     local tp = socket.try(tp.connect(server or SERVER, port or PORT, TIMEOUT))
     local s = setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
-    s.try = socket.newtry(function() s:close() end)
+    s.try = socket.newtry(function() 
+        if s.tp:command("QUIT") then s.tp:check("2..") end
+        s:close()
+    end)
     return s 
 end
 

@@ -30,7 +30,6 @@ function socket.bind(host, port, backlog)
     sock:setoption("reuseaddr", true)
     local res, err = sock:bind(host, port)
     if not res then return nil, err end
-    backlog = backlog or 32
     res, err = sock:listen(backlog)
     if not res then return nil, err end
     return sock

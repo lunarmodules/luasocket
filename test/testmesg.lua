@@ -50,9 +50,11 @@ source = smtp.message{
 
 -- finally send it
 r, e = smtp.send{
-    rcpt = "<fulano@tecgraf.puc-rio.br>",
-    from = "<sicrano@tecgraf.puc-rio.br>",
-    source = source
+    rcpt = {"<diego@tecgraf.puc-rio.br>",
+            "<diego@princeton.edu>" },
+    from = "<diego@princeton.edu>",
+    source = source,
+    server = "mail.cs.princeton.edu"
 }
 
 print(r, e)

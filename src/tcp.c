@@ -232,7 +232,7 @@ static int meth_close(lua_State *L)
 static int meth_listen(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
-    int backlog = (int) luaL_checknumber(L, 2);
+    int backlog = (int) luaL_optnumber(L, 2, 32);
     const char *err = sock_listen(&tcp->sock, backlog);
     if (err) {
         lua_pushnil(L);
