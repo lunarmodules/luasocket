@@ -272,4 +272,3 @@ assert(filter3(nil, 1), "filter3 not empty")
 assert(filter4(nil, 1), "filter4 not empty")
 assert(filter5(nil, 1), "filter5 not empty")
 print("ok")
-

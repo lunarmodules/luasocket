@@ -1,3 +1,4 @@
+mime filters are more strict with ltn12 standards
 ltn12 avoids coroutines (so you can go wild on the C side)
 automated tests for ftp now in use
 new compat-5.1 distribution

@@ -1,3 +1,6 @@
+"foo.bar.baz" previously had to provide luaopen_foobarbaz() and now 
+should use luaopen_foo_bar_baz(). Change compat-5.1 and LuaSocket?
+
 ftp.send/recv return bytes transfered?
 new scheme to choose family/protocol of object to create
 change ltn13 to make sure drawbacks are obvious
