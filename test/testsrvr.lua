@@ -8,6 +8,7 @@
 -----------------------------------------------------------------------------
 -- Read command definitions
 -----------------------------------------------------------------------------
+HOST = HOST or "*"
 assert(dofile("testcmd.lua"))
 test_debug_mode()
 
@@ -33,6 +34,7 @@ function execute_command(cmd, par)
 	if cmd == CONNECT then
 		print("server: waiting for data connection...")
 		data = server:accept()
+		data:timeout(10)
 		if not data then
 			fail("server: unable to start data connection!")
 		else
