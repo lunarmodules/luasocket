@@ -1,22 +1,32 @@
 -----------------------------------------------------------------------------
 -- Full HTTP/1.1 client support for the Lua language using the 
--- LuaSocket 1.2 toolkit.
+-- LuaSocket 1.4a toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
 -- Conforming to: RFC 2068
 -----------------------------------------------------------------------------
 
+local Public, Private = {}, {}
+HTTP = Public
+
 -----------------------------------------------------------------------------
 -- Program constants
 -----------------------------------------------------------------------------
 -- connection timeout in seconds
-local TIMEOUT = 60 
+Private.TIMEOUT = 60 
 -- default port for document retrieval
-local PORT = 80
+Private.PORT = 80
 -- user agent field sent in request
-local USERAGENT = "LuaSocket 1.3b HTTP 1.1"
+Private.USERAGENT = "LuaSocket 1.4a"
 -- block size used in transfers
-local BLOCKSIZE = 8192
+Private.BLOCKSIZE = 8192
+
+-----------------------------------------------------------------------------
+-- Required libraries
+-----------------------------------------------------------------------------
+dofile "buffer.lua"
+dofile "url.lua"
+dofile "encode.lua"
 
 -----------------------------------------------------------------------------
 -- Tries to get a pattern from the server and closes socket on error
@@ -26,9 +36,9 @@ local BLOCKSIZE = 8192
 --   data: line received or nil in case of error
 --   err: error message if any
 -----------------------------------------------------------------------------
-local try_get = function(...)
+function Private.try_receive(...)
     local sock = arg[1]
-    local data, err = call(sock.receive,  arg)
+    local data, err = call(sock.receive, arg)
     if err then
         sock:close()
         return nil, err
@@ -43,8 +53,8 @@ end
 -- Returns
 --   err: error message if any, nil if successfull
 -----------------------------------------------------------------------------
-local try_send = function(sock, data)
-    err = sock:send(data)
+function Private.try_send(sock, data)
+    local err = sock:send(data)
     if err then sock:close() end
     return err
 end
@@ -56,13 +66,14 @@ end
 -- Returns
 --   code: integer with status code
 -----------------------------------------------------------------------------
-local get_statuscode = function(line)
-    local _,_, code = strfind(line, " (%d%d%d) ")
+function Private.get_statuscode(line)
+    local code, _
+    _, _, code = strfind(line, "HTTP/%d*%.%d* (%d%d%d)")
     return tonumber(code)
 end
 
 -----------------------------------------------------------------------------
--- Receive server reply messages
+-- Receive server reply messages, parsing status code
 -- Input
 --   sock: socket connected to the server
 -- Returns
@@ -70,29 +81,29 @@ end
 --   line: full http status line
 --   err: error message if any
 -----------------------------------------------------------------------------
-local get_status = function(sock)
+function Private.receive_status(sock)
     local line, err
-    line, err = %try_get(sock)
-    if not err then return %get_statuscode(line), line
+    line, err = %Private.try_receive(sock)
+    if not err then return %Private.get_statuscode(line), line
     else return nil, nil, err end
 end
 
 -----------------------------------------------------------------------------
--- Receive and parse responce header fields
+-- Receive and parse response header fields
 -- Input
 --   sock: socket connected to the server
---   hdrs: a table that might already contain headers
+--   headers: a table that might already contain headers
 -- Returns
---   hdrs: a table with all headers fields in the form
+--   headers: a table with all headers fields in the form
 --        {name_1 = "value_1", name_2 = "value_2" ... name_n = "value_n"} 
 --        all name_i are lowercase
 --   nil and error message in case of error
 -----------------------------------------------------------------------------
-local get_hdrs = function(sock, hdrs)
+function Private.receive_headers(sock, headers)
     local line, err
-    local name, value
+    local name, value, _
     -- get first line
-    line, err = %try_get(sock)
+    line, err = %Private.try_receive(sock)
     if err then return nil, err end
     -- headers go until a blank line is found
     while line ~= "" do
@@ -104,34 +115,35 @@ local get_hdrs = function(sock, hdrs)
         end
         name = strlower(name)
         -- get next line (value might be folded)
-        line, err = %try_get(sock)
+        line, err = %Private.try_receive(sock)
         if err then return nil, err end
         -- unfold any folded values
         while not err and strfind(line, "^%s") do
             value = value .. line
-            line, err = %try_get(sock)
+            line, err = %Private.try_receive(sock)
             if err then return nil, err end
         end
         -- save pair in table
-        if hdrs[name] then hdrs[name] = hdrs[name] .. ", " .. value
-        else hdrs[name] = value end
+        if headers[name] then headers[name] = headers[name] .. ", " .. value
+        else headers[name] = value end
     end
-    return hdrs
+    return headers
 end
 
 -----------------------------------------------------------------------------
 -- Receives a chunked message body
 -- Input
 --   sock: socket connected to the server
+--   headers: header set in which to include trailer headers
 --   receive_cb: function to receive chunks
 -- Returns
 --   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local try_getchunked = function(sock, receive_cb)
+function Private.receivebody_bychunks(sock, headers, receive_cb)
     local chunk, size, line, err, go, uerr, _
-    repeat 
+    while 1 do
         -- get chunk size, skip extention
-        line, err = %try_get(sock)
+        line, err = %Private.try_receive(sock)
         if err then 
             local _, uerr = receive_cb(nil, err)
             return uerr or err
@@ -143,8 +155,10 @@ local try_getchunked = function(sock, receive_cb)
             _, uerr = receive_cb(nil, err)
             return uerr or err
         end
+		-- was it the last chunk?
+		if size <= 0 then break end
         -- get chunk
-        chunk, err = %try_get(sock, size) 
+        chunk, err = %Private.try_receive(sock, size) 
         if err then 
             _, uerr = receive_cb(nil, err)
             return uerr or err
@@ -155,13 +169,21 @@ local try_getchunked = function(sock, receive_cb)
             sock:close()
             return uerr or "aborted by callback"
         end
-        -- skip blank line
-        _, err = %try_get(sock)
+        -- skip CRLF on end of chunk
+        _, err = %Private.try_receive(sock)
         if err then 
             _, uerr = receive_cb(nil, err)
             return uerr or err
         end
-    until size <= 0
+    end
+	-- the server should not send trailer  headers because we didn't send a
+	-- header informing  it we know  how to deal with  them. we do not risk
+	-- being caught unprepaired.
+	headers, err = %Private.receive_headers(sock, headers)
+	if err then
+        _, uerr = receive_cb(nil, err)
+        return uerr or err
+	end
     -- let callback know we are done
     _, uerr = receive_cb("")
     return uerr
@@ -175,10 +197,10 @@ end
 -- Returns
 --   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local try_getbylength = function(sock, length, receive_cb)
+function Private.receivebody_bylength(sock, length, receive_cb)
     local uerr, go
     while length > 0 do
-        local size = min(%BLOCKSIZE, length)
+        local size = min(%Private.BLOCKSIZE, length)
         local chunk, err = sock:receive(size)
         if err then 
             go, uerr = receive_cb(nil, err)
@@ -203,10 +225,10 @@ end
 -- Returns
 --   nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local try_getuntilclosed = function(sock, receive_cb)
+function Private.receivebody_untilclosed(sock, receive_cb)
     local err, go, uerr
     while 1 do
-        local chunk, err = sock:receive(%BLOCKSIZE)
+        local chunk, err = sock:receive(%Private.BLOCKSIZE)
         if err == "closed" or not err then 
             go, uerr = receive_cb(chunk)
             if not go then
@@ -227,62 +249,36 @@ end
 -- Receives http response body
 -- Input
 --   sock: socket connected to the server
---   resp_hdrs: response header fields
+--   headers: response header fields
 --   receive_cb: function to receive chunks
 -- Returns
 --    nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local try_getbody = function(sock, resp_hdrs, receive_cb)
-    local err
-    if resp_hdrs["transfer-encoding"] == "chunked" then
+function Private.receive_body(sock, headers, receive_cb)
+	local te = headers["transfer-encoding"]
+    if te and te ~= "identity" then 
         -- get by chunked transfer-coding of message body
-        return %try_getchunked(sock, receive_cb)
-    elseif tonumber(resp_hdrs["content-length"]) then
+        return %Private.receivebody_bychunks(sock, headers, receive_cb)
+    elseif tonumber(headers["content-length"]) then
         -- get by content-length
-        local length = tonumber(resp_hdrs["content-length"])
-        return %try_getbylength(sock, length, receive_cb)
+        local length = tonumber(headers["content-length"])
+        return %Private.receivebody_bylength(sock, length, receive_cb)
     else 
         -- get it all until connection closes
-        return %try_getuntilclosed(sock, receive_cb) 
+        return %Private.receivebody_untilclosed(sock, receive_cb) 
     end
 end
 
 -----------------------------------------------------------------------------
--- Parses a url and returns its scheme, user, password, host, port 
--- and path components, according to RFC 1738
+-- Drop http response body
 -- Input
---   url: uniform resource locator of request
---   default: table containing default values to be returned
+--   sock: socket connected to the server
+--   headers: response header fields
 -- Returns
---   table with the following fields:
---     host: host to connect
---     path: url path
---     port: host port to connect
---     user: user name
---     pass: password
---     scheme: protocol
+--    nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
-local split_url = function(url, default)
-    -- initialize default parameters
-    local parsed = default or {}
-    -- get scheme
-    url = gsub(url, "^(.+)://", function (s) %parsed.scheme = s end)
-    -- get user name and password. both can be empty!
-    -- moreover, password can be ommited
-    url = gsub(url, "^([^@:/]*)(:?)([^:@/]-)@", function (u, c, p)
-        %parsed.user = u
-        -- there can be an empty password, but the ':' has to be there
-        -- or else there is no password
-        %parsed.pass = nil -- kill default password
-        if c == ":" then %parsed.pass = p end
-    end)
-    -- get host
-    url = gsub(url, "^([%w%.%-]+)", function (h) %parsed.host = h end)
-    -- get port if any
-    url = gsub(url, "^:(%d+)", function (p) %parsed.port = p end)
-    -- whatever is left is the path
-    if url ~= "" then parsed.path = url end
-    return parsed
+function Private.drop_body(sock, headers)
+    return %Private.receive_body(sock, headers, function (c, e) return 1 end)
 end
 
 -----------------------------------------------------------------------------
@@ -294,20 +290,20 @@ end
 -- Returns
 --   nil if successfull, or an error message in case of error
 -----------------------------------------------------------------------------
-local try_sendindirect = function(data, send_cb, chunk, size)
+function Private.send_indirect(data, send_cb, chunk, size)
     local sent, err
     sent = 0
     while 1 do
         if type(chunk) ~= "string" or type(size) ~= "number" then
-			data:close()
+            data:close()
             if not chunk and type(size) == "string" then return size
             else return "invalid callback return" end
         end
         err = data:send(chunk)
         if err then 
-			data:close() 
-			return err 
-		end
+            data:close() 
+            return err 
+        end
         sent = sent + strlen(chunk)
         if sent >= size then break end
         chunk, size = send_cb()
@@ -320,243 +316,313 @@ end
 --   sock: socket connected to the server
 --   method: request method to  be used
 --   path: url path
---   req_hdrs: request headers to be sent
---   req_body_cb: callback to send request message body
+--   headers: request headers to be sent
+--   body_cb: callback to send request message body
 -- Returns
 --   err: nil in case of success, error message otherwise
 -----------------------------------------------------------------------------
-local send_request = function(sock, method, path, req_hdrs, req_body_cb)
+function Private.send_request(sock, method, path, headers, body_cb)
     local chunk, size, done, err
     -- send request line
-    err = %try_send(sock, method .. " " .. path .. " HTTP/1.1\r\n")
+    err = %Private.try_send(sock, method .. " " .. path .. " HTTP/1.1\r\n")
     if err then return err end
     -- if there is a request message body, add content-length header
-    if req_body_cb then
-        chunk, size = req_body_cb()
+    if body_cb then
+        chunk, size = body_cb()
         if type(chunk) == "string" and type(size) == "number" then
-            req_hdrs["content-length"] = tostring(size)
+            headers["content-length"] = tostring(size)
         else
             sock:close()
-			if not chunk and type(size) == "string" then return size
-			else return "invalid callback return" end
+            if not chunk and type(size) == "string" then return size
+            else return "invalid callback return" end
         end
     end 
     -- send request headers 
-    for i, v in req_hdrs do
-        err = %try_send(sock, i .. ": " .. v .. "\r\n")
+    for i, v in headers do
+        err = %Private.try_send(sock, i .. ": " .. v .. "\r\n")
         if err then return err end
     end
     -- mark end of request headers
-    err = %try_send(sock, "\r\n")
+    err = %Private.try_send(sock, "\r\n")
     if err then return err end
     -- send request message body, if any
-    if req_body_cb then 
-        return %try_sendindirect(sock, req_body_cb, chunk, size) 
+    if body_cb then 
+        return %Private.send_indirect(sock, body_cb, chunk, size) 
     end
 end
 
 -----------------------------------------------------------------------------
 -- Determines if we should read a message body from the server response
 -- Input
---   method: method used in request
---   code: server response status code
+--   request: a table with the original request information
+--   response: a table with the server response information
 -- Returns
 --   1 if a message body should be processed, nil otherwise
 -----------------------------------------------------------------------------
-function has_respbody(method, code)
-    if method == "HEAD" then return nil end
-    if code == 204 or code == 304 then return nil end
-    if code >= 100 and code < 200 then return nil end
+function Private.has_body(request, response)
+    if request.method == "HEAD" then return nil end
+    if response.code == 204 or response.code == 304 then return nil end
+    if response.code >= 100 and response.code < 200 then return nil end
     return 1
 end
 
 -----------------------------------------------------------------------------
--- We need base64 convertion routines for Basic Authentication Scheme
------------------------------------------------------------------------------
-dofile("base64.lua")
-
------------------------------------------------------------------------------
 -- Converts field names to lowercase and adds a few needed headers
 -- Input
---   hdrs: request header fields
+--   headers: request header fields
 --   parsed: parsed url components
 -- Returns
 --   lower: a table with the same headers, but with lowercase field names
 -----------------------------------------------------------------------------
-local fill_hdrs = function(hdrs, parsed)
+function Private.fill_headers(headers, parsed)
     local lower = {}
-    hdrs = hdrs or {}
-    for i,v in hdrs do
+    headers = headers or {}
+    -- set default headers
+    lower["user-agent"] = %Private.USERAGENT
+    lower["host"] = parsed.host
+    -- override with user values
+    for i,v in headers do
         lower[strlower(i)] = v
     end
+    -- this cannot be overriden
     lower["connection"] = "close"
-    lower["host"] = parsed.host
-    lower["user-agent"] = %USERAGENT
-    if parsed.user and parsed.pass then -- Basic Authentication
-        lower["authorization"] = "Basic ".. 
-            base64(parsed.user .. ":" .. parsed.pass)
-    end
     return lower
+end
+
+-----------------------------------------------------------------------------
+-- Decides wether we should follow retry with authorization formation
+-- Input
+--   request: a table with the original request information
+--   parsed: parsed request url
+--   response: a table with the server response information
+-- Returns
+--   1 if we should retry, nil otherwise
+-----------------------------------------------------------------------------
+function Private.should_authorize(request, parsed, response)
+    -- if there has been an authorization attempt, it must have failed
+    if request.headers["authorization"] then return nil end
+    -- if we don't have authorization information, we can't retry
+    if parsed.user and parsed.password then return 1
+    else return nil end
+end
+
+-----------------------------------------------------------------------------
+-- Returns the result of retrying a request with authorization information
+-- Input
+--   request: a table with the original request information
+--   parsed: parsed request url
+--   response: a table with the server response information
+-- Returns
+--   response: result of target redirection
+-----------------------------------------------------------------------------
+function Private.authorize(request, parsed, response)
+    request.headers["authorization"] = "Basic " .. 
+        base64(parsed.user .. ":" .. parsed.password)
+    local authorize = {
+		redirects = request.redirects,
+        method = request.method,
+        url = request.url,
+        body_cb = request.body_cb,
+        headers = request.headers
+    }
+    return %Public.request_indirect(authorize, response)
+end
+
+-----------------------------------------------------------------------------
+-- Decides wether we should follow a server redirect message
+-- Input
+--   request: a table with the original request information
+--   response: a table with the server response information
+-- Returns
+--   1 if we should redirect, nil otherwise
+-----------------------------------------------------------------------------
+function Private.should_redirect(request, response)
+    local follow = not request.stay
+    follow = follow and (response.code == 301 or response.code == 302)
+    follow = follow and (request.method == "GET" or request.method == "HEAD")
+    follow = follow and not (request.redirects and request.redirects >= 5)
+    return follow
+end
+
+-----------------------------------------------------------------------------
+-- Returns the result of a request following a server redirect message.
+-- Input
+--   request: a table with the original request information
+--   response: a table with the following fields:
+--     body_cb: response method body receive-callback
+-- Returns
+--   response: result of target redirection
+-----------------------------------------------------------------------------
+function Private.redirect(request, response)
+    local redirects = request.redirects or 0
+    redirects = redirects + 1
+    local redirect = {
+        redirects = redirects,
+        method = request.method,
+        -- the RFC says the redirect url has to be absolute, but some
+        -- servers do not respect that 
+        url = URL.build_absolute(request.url,response.headers["location"]),
+        body_cb = request.body_cb,
+        headers = request.headers
+    }
+    return %Public.request_indirect(redirect, response)
+end
+
+-----------------------------------------------------------------------------
+-- Computes the request URI from the given URL
+-- Input
+--   parsed: parsed url
+-- Returns
+--   uri: request URI for parsed URL
+-----------------------------------------------------------------------------
+function Private.request_uri(parsed)
+    local uri = ""
+    if parsed.path then uri = uri .. parsed.path end
+    if parsed.params then uri = uri .. ";" .. parsed.params end
+    if parsed.query then uri = uri .. "?" .. parsed.query end
+    if parsed.fragment then uri = uri .. "#" .. parsed.fragment end
+    return uri
 end
 
 -----------------------------------------------------------------------------
 -- Sends a HTTP request and retrieves the server reply using callbacks to
 -- send the request body and receive the response body
 -- Input
---   method: "GET", "PUT", "POST" etc
---   url: target uniform resource locator
---   resp_body_cb: response message body receive callback
---   req_hdrs: request headers to send, or nil if none
---   req_body_cb: request message body send callback, or nil if none
---   stay: should we refrain from following a server redirect message?
+--   request: a table with the following fields
+--     method: "GET", "PUT", "POST" etc (defaults to "GET")
+--     url: target uniform resource locator
+--     user, password: authentication information
+--     headers: request headers to send, or nil if none
+--     body_cb: request message body send-callback, or nil if none
+--     stay: should we refrain from following a server redirect message?
+--   response: a table with the following fields:
+--     body_cb: response method body receive-callback
 -- Returns
---   resp_hdrs: response header fields received, or nil if failed
---   resp_line: server response status line, or nil if failed
---   err: error message, or nil if successfull
+--   response: a table with the following fields: 
+--     headers: response header fields received, or nil if failed
+--     status: server response status line, or nil if failed
+--     code: server status code, or nil if failed
+--     error: error message, or nil if successfull
 -----------------------------------------------------------------------------
-function http_requestindirect(method, url, resp_body_cb, req_hdrs, 
-  req_body_cb, stay)
-    local sock, err
-    local resp_hdrs
-    local resp_line, resp_code
+function Public.request_indirect(request, response)
     -- get url components
-    local parsed = %split_url(url, {port = %PORT, path ="/"})
-    -- methods are case sensitive
-    method = strupper(method)
+    local parsed = URL.parse(request.url, {port = %Private.PORT, path ="/"})
+    -- explicit authentication info overrides that given by the url
+    parsed.user = request.user or parsed.user
+    parsed.password = request.password or parsed.password
+    -- default method
+    request.method = request.method or "GET"
     -- fill default headers
-    req_hdrs = %fill_hdrs(req_hdrs, parsed)
-    -- try connection
-    sock, err = connect(parsed.host, parsed.port)
-    if not sock then return nil, nil, err end
-    -- set connection timeout
-    sock:timeout(%TIMEOUT)
-    -- send request
-    err = %send_request(sock, method, parsed.path, req_hdrs, req_body_cb)
-    if err then return nil, nil, err end
-    -- get server message
-    resp_code, resp_line, err = %get_status(sock)
-    if err then return nil, nil, err end
-    -- deal with reply
-    resp_hdrs, err = %get_hdrs(sock, {})
-    if err then return nil, line, err end
-    -- did we get a redirect? should we automatically retry?
-    if not stay and (resp_code == 301 or resp_code == 302) and 
-       (method == "GET" or method == "HEAD") then 
+    request.headers = %Private.fill_headers(request.headers, parsed)
+    -- try to connect to server
+    local sock
+    sock, response.error = connect(parsed.host, parsed.port)
+    if not sock then return response end
+    -- set connection timeout so that we do not hang forever
+    sock:timeout(%Private.TIMEOUT)
+    -- send request message
+    response.error = %Private.send_request(sock, request.method, 
+        %Private.request_uri(parsed), request.headers, request.body_cb)
+    if response.error then return response end
+    -- get server response message
+    response.code, response.status, response.error = 
+        %Private.receive_status(sock)
+    if response.error then return response end
+    -- receive all headers
+    response.headers, response.error = %Private.receive_headers(sock, {})
+    if response.error then return response end
+    -- decide what to do based on request and response parameters
+    if %Private.should_redirect(request, response) then
+        %Private.drop_body(sock, response.headers)
         sock:close()
-        return http_requestindirect(method, resp_hdrs["location"], 
-            resp_body_cb, req_hdrs, req_body_cb, stay)
-    end 
-    -- get response message body if status and method combination allow one
-    if has_respbody(method, resp_code) then
-        err = %try_getbody(sock, resp_hdrs, resp_body_cb)
-        if err then return resp_hdrs, resp_line, err end
+        return %Private.redirect(request, response)
+    elseif %Private.should_authorize(request, parsed, response) then
+        %Private.drop_body(sock, response.headers)
+        sock:close()
+        return %Private.authorize(request, parsed, response)
+    elseif %Private.has_body(request, response) then
+        response.error = %Private.receive_body(sock, response.headers,
+            response.body_cb)
+        if response.error then return response end
+        sock:close()
+        return response
     end
     sock:close()
-    return resp_hdrs, resp_line
 end
-
------------------------------------------------------------------------------
--- We need fast concatenation routines for direct requests
------------------------------------------------------------------------------
-dofile("buffer.lua")
 
 -----------------------------------------------------------------------------
 -- Sends a HTTP request and retrieves the server reply
 -- Input
---   method: "GET", "PUT", "POST" etc
---   url: target uniform resource locator
---   req_hdrs: request headers to send, or nil if none
---   req_body: request message body as a string, or nil if none
---   stay: should we refrain from following a server redirect message?
+--   request: a table with the following fields
+--     method: "GET", "PUT", "POST" etc (defaults to "GET")
+--     url: target url, i.e. the document to be retrieved
+--     user, password: authentication information
+--     headers: request header fields, or nil if none
+--     body: request message body as a string, or nil if none
+--     stay: should we refrain from following a server redirect message?
 -- Returns
---   resp_body: response message body, or nil if failed
---   resp_hdrs: response header fields received, or nil if failed
---   resp_line: server response status line, or nil if failed
---   err: error message, or nil if successfull
+--   response: a table with the following fields:
+--     body: response message body, or nil if failed
+--     headers: response header fields, or nil if failed
+--     status: server response status line, or nil if failed
+--     code: server response status code, or nil if failed
+--     error: error message if any
 -----------------------------------------------------------------------------
-function http_request(method, url, req_hdrs, req_body, stay)
-    local resp_hdrs, resp_line, err
-    local req_body_cb = function() 
-        return %req_body, strlen(%req_body) 
+function Public.request(request)
+    local response = {}
+    if request.body then 
+        request.body_cb = function() 
+               return %request.body, strlen(%request.body) 
+        end
     end
-    local resp_body = { buf = buf_create() }
-    local resp_body_cb = function(chunk, err)
-        if not chunk then %resp_body.buf = nil end
-        buf_addstring(%resp_body.buf, chunk)
+    local auxiliar = { buf = buf_create() }
+    response.body_cb = function(chunk, err)
+        if not chunk then %auxiliar.buf = nil end
+        buf_addstring(%auxiliar.buf, chunk)
         return 1
     end
-    if not req_body then req_body_cb = nil end
-    resp_hdrs, resp_line, err = http_requestindirect(method, url, resp_body_cb,
-        req_hdrs, req_body_cb, stay)
-    return buf_getresult(resp_body.buf), resp_hdrs, resp_line, err
+    %Public.request_indirect(request, response)
+    response.body = buf_getresult(auxiliar.buf)
+    response.body_cb = nil
+    return response
 end
 
 -----------------------------------------------------------------------------
 -- Retrieves a URL by the method "GET"
 -- Input
---   url: target uniform resource locator
---   req_hdrs: request headers to send, or nil if none
---   stay: should we refrain from following a server redirect message?
+--   url: target url, i.e. the document to be retrieved
 -- Returns
---   resp_body: response message body, or nil if failed
---   resp_hdrs: response header fields received, or nil if failed
---   resp_line: server response status line, or nil if failed
---   err: error message, or nil if successfull
+--   body: response message body, or nil if failed
+--   headers: response header fields received, or nil if failed
+--   status: server response status line, or nil if failed
+--   error: error message if any
 -----------------------------------------------------------------------------
-function http_get(url, req_hdrs, stay)
-    return http_request("GET", url, req_hdrs, stay)
-end
-
------------------------------------------------------------------------------
--- Retrieves a URL by the method "GET"
--- Input
---   url: target uniform resource locator
---   resp_body_cb: response message body receive callback
---   req_hdrs: request headers to send, or nil if none
---   stay: should we refrain from following a server redirect message?
--- Returns
---   resp_body: response message body, or nil if failed
---   resp_hdrs: response header fields received, or nil if failed
---   resp_line: server response status line, or nil if failed
---   err: error message, or nil if successfull
------------------------------------------------------------------------------
-function http_getindirect(url, resp_body_cb, req_hdrs, stay)
-    return http_requestindirect("GET", url, resp_body_cb, req_hdrs, nil, stay)
+function Public.get(url)
+    local response = %Public.request {
+        method = "GET", 
+        url = url 
+    }
+    return response.body, response.headers, 
+        response.status, response.error
 end
 
 -----------------------------------------------------------------------------
 -- Retrieves a URL by the method "POST"
 -- Input
---   method: "GET", "PUT", "POST" etc
---   url: target uniform resource locator
---   req_hdrs: request headers to send, or nil if none
---   req_body: request message body, or nil if none
---   stay: should we refrain from following a server redirect message?
+--   url: target url, i.e. the document to be retrieved
+--   body: request message body, or nil if none
 -- Returns
---   resp_body: response message body, or nil if failed
---   resp_hdrs: response header fields received, or nil if failed
---   resp_line: server response status line, or nil if failed
---   err: error message, or nil if successfull
+--   body: response message body, or nil if failed
+--   headers: response header fields received, or nil if failed
+--   status: server response status line, or nil if failed
+--   error: error message, or nil if successfull
 -----------------------------------------------------------------------------
-function http_post(url, req_body, req_hdrs, stay)
-    return http_request("POST", url, req_hdrs, req_body, stay)
-end
-
------------------------------------------------------------------------------
--- Retrieves a URL by the method "POST"
--- Input
---   url: target uniform resource locator
---   resp_body_cb: response message body receive callback
---   req_body_cb: request message body send callback
---   req_hdrs: request headers to send, or nil if none
---   stay: should we refrain from following a server redirect message?
--- Returns
---   resp_body: response message body, or nil if failed
---   resp_hdrs: response header fields received, or nil if failed
---   resp_line: server response status line, or nil if failed
---   err: error message, or nil if successfull
------------------------------------------------------------------------------
-function http_getindirect(url, resp_body_cb, req_body_cb, req_hdrs, stay)
-    return http_requestindirect("GET", url, resp_body_cb, req_hdrs, 
-      req_body_cb, stay)
+function Public.post(url, body)
+    local response = %Public.request {
+        method = "POST", 
+        url = url,
+        body = body
+    }
+    return response.body, response.headers, 
+        response.status, response.error
 end
