@@ -33,14 +33,22 @@ servers as well.
 This module implements file retrieval by the TFTP protocol. Its main use
 is to test the UDP code, but someone might find it usefull.
 
-    broadcast.lua           -- Broadcast telnet server
+    tinyirc.lua             -- irc like broadcast server
 
-This is a simple server that waits simultaneously on two server sockets for
-telnet connections. Everything it receives from the telnet clients is
-broadcast to every other connected client. It tests the select function and
-shows how to create a simple server whith LuaSocket. Just run broadcast.lua
-and then open as many telnet connections as you want to ports 8080 and
-8081.
+This is a simple server that  waits simultaneously on two server sockets
+for telnet connections.  Everything it receives from  the telnet clients
+is  broadcasted to  every other  connected client.  It tests  the select
+function and shows  how to create a simple server  whith LuaSocket. Just
+run broadcast.lua and  then open as many telnet connections  as you want
+to ports 8080 and 8081.
+
+    get.lua                 -- file retriever
+
+This module is a  client that uses the FTP and HTTP  code to implement a
+command line file  graber. Just run 'luasocket  -f get.lua <remote-file>
+<local-file>' to  download a remote  file (either ftp:// or  http://) to
+the  specified  local  file.  The   program  also  prints  the  download
+throughput during download.
 
 Good luck,
 Diego.
