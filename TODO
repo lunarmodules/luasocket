@@ -1,4 +1,3 @@
-change copyright in manual
 get rid of "base." kludge
 make sure sock_gethostname.*  only return success if the hp is not 
 null!
