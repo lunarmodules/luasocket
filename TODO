@@ -1,24 +1,8 @@
-URL e URI eh a mesma coisa?
-
-Check spelling
-Fazer uma página com os exemplos.
-Ajeitar links pras RFCs.
-Usar DFN no lugar de <i> pra definiccoes.
-Usar VAR pra argumentos?
-Usar CODE pros trechos? funciona como PRE?
-Usar PRE { margin-botton: 1em; } pra pular linha antes do </pre>
-Trocar todos os <a name=bla> por <... id=bla>?
-Make sure all .html are STRICT 4.01
-Add license.txt.
-Check RFC links.
-Add lots of hyperlinks
-Check all function names (must use . or :)
-Make sure IPv4 goes away
-The words function and method should follow the convention
 Adjust dates in all files
+
 Test the library on every system possible
+
 Document socket.time and socket.sleep
-Create the windows executable.
 
 Implement time critical stuff from code module in C.
 Add service name translation.
@@ -26,7 +10,6 @@ Add service name translation.
 Ajeitar o protocolo da lua_socketlibopen()...
 
 - testar os options!
-- testar em várias plataformas
 - adicionar exemplos de expansão: pipe, local, named pipe
 
 * O location do "redirect" pode ser relativo ao servidor atual (não pode,
@@ -47,7 +30,6 @@ Ajeitar o protocolo da lua_socketlibopen()...
 - checar operações em closed sockets
 - checar teste de writable socket com select
 
-- trocar IPv4 para networking ou ipc
 
 - checar todos os metodos
 - checar options em UDP
@@ -57,5 +39,4 @@ Ajeitar o protocolo da lua_socketlibopen()...
 
 - unix 92 bytes maximo no endereço, incluindo o zero
 - unix 9216 maximo de datagram size
-
 

@@ -338,16 +338,16 @@ function Private.send_request(sock, method, uri, headers, body_cb)
     err = Private.try_send(sock, method .. " " .. uri .. " HTTP/1.1\r\n")
     if err then return err end
     -- if there is a request message body, add content-length header
-    if body_cb then
-        chunk, size = body_cb()
-        if type(chunk) == "string" and type(size) == "number" then
-            headers["content-length"] = tostring(size)
-        else
-            sock:close()
-            if not chunk and type(size) == "string" then return size
-            else return "invalid callback return" end
-        end
-    end 
+    chunk, size = body_cb()
+    if type(chunk) == "string" and type(size) == "number" then
+		if size > 0 then 
+			headers["content-length"] = tostring(size) 
+		end
+    else
+        sock:close()
+        if not chunk and type(size) == "string" then return size
+        else return "invalid callback return" end
+    end
     -- send request headers 
     err = Private.send_headers(sock, headers)
     if err then return err end
@@ -505,7 +505,10 @@ end
 -----------------------------------------------------------------------------
 function Private.build_request(data)
     local request = {}
-    if type(data) == "table" then for i, v in data do request[i] = v end
+    if type(data) == "table" then 
+		for i, v in data 
+			do request[i] = v 
+		end
     else request.url = data end
     return request
 end
@@ -613,18 +616,11 @@ end
 -----------------------------------------------------------------------------
 function Public.request(request)
     local response = {}
-    if request.body then 
-        request.body_cb = function() 
-            return request.body, string.len(request.body) 
-        end
-    end
-    local cat = socket.concat.create()
-    response.body_cb = function(chunk, err)
-        if chunk then cat:addstring(chunk) end
-        return 1
-    end
+    request.body_cb = socket.callback.send_string(request.body) 
+    local concat = socket.concat.create()
+    response.body_cb = socket.callback.receive_concat(concat)
     response = Public.request_cb(request, response)
-    response.body = cat:getresult()
+    response.body = concat:getresult()
     response.body_cb = nil
     return response
 end

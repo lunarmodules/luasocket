@@ -602,10 +602,12 @@ function Public.put_cb(request)
 	local control, err = Private.open(parsed)
 	if not control then return err end
 	local segment = Private.parse_path(parsed)
-	return Private.change_dir(control, segment) or
+	err = Private.change_dir(control, segment) or
 		Private.change_type(control, parsed.params) or
 		Private.upload(control, request, segment) or 
 		Private.close(control)
+	if err then return nil, err
+	else return 1 end
 end
 
 -----------------------------------------------------------------------------
@@ -616,15 +618,15 @@ end
 --     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
 --     user: account user name
 --     password: account password)
+--     content: file contents
 --   content: file contents
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Public.put(url_or_request, content)
 	local request = Private.build_request(url_or_request)
-	request.content_cb = function()
-		return content, string.len(content)
-	end
+	request.content = request.content or content
+	request.content_cb = socket.callback.send_string(request.content)
 	return Public.put_cb(request)
 end
 
@@ -641,12 +643,9 @@ end
 --   err: error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
 function Public.get(url_or_request)
-	local cat = socket.concat.create()
+	local concat = socket.concat.create()
 	local request = Private.build_request(url_or_request)
-	request.content_cb = function(chunk, err)
-		if chunk then cat:addstring(chunk) end
-		return 1
-	end
+	request.content_cb = socket.callback.receive_concat(concat)
 	local err = Public.get_cb(request)
-	return cat:getresult(), err
+	return concat:getresult(), err
 end
