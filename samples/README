@@ -31,5 +31,14 @@ servers as well.
 This module implements file retrieval by the TFTP protocol. Its main use
 is to test the UDP code, but someone might find it usefull.
 
+    broadcast.lua           -- Broadcast telnet server
+
+This is a simple server that waits simultaneously on two server sockets for
+telnet connections. Everything it receives from the telnet clients is
+broadcast to every other connected client. It tests the select function and
+shows how to create a simple server whith LuaSocket. Just run broadcast.lua
+and then open as many telnet connections as you want to ports 8080 and
+8081.
+
 Good luck,
 Diego.
