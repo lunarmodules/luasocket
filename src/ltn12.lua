@@ -46,7 +46,16 @@ function filter.chain(...)
 end
 
 -- create an empty source
-function source.empty(err)
+local function empty()
+    return nil
+end
+
+function source.empty()
+    return empty
+end
+
+-- returns a source that just outputs an error
+function source.error(err)
     return function()
         return nil, err
     end
@@ -60,7 +69,7 @@ function source.file(handle, io_err)
             if not chunk then handle:close() end
             return chunk
         end
-    else source.empty(io_err or "unable to open file") end
+    else source.error(io_err or "unable to open file") end
 end
 
 -- turns a fancy source into a simple source
@@ -83,7 +92,7 @@ function source.string(s)
             if chunk ~= "" then return chunk
             else return nil end
         end
-    else source.empty() end
+    else return source.empty() end
 end
 
 -- creates rewindable source
@@ -166,7 +175,7 @@ function sink.file(handle, io_err)
             end
             return handle:write(chunk)
         end
-    else sink.null() end
+    else return sink.error(io_err or "unable to open file") end
 end
 
 -- creates a sink that discards data
@@ -176,6 +185,13 @@ end
 
 function sink.null()
     return null
+end
+
+-- creates a sink that just returns an error
+function sink.error(err)
+    return function()
+        return nil, err
+    end
 end
 
 -- chains a sink with a filter 

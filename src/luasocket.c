@@ -76,6 +76,7 @@ static int mod_open(lua_State *L, const luaL_reg *mod)
 #include "auxiliar.lch"
 #include "url.lch"
 #include "mime.lch"
+#include "tp.lch"
 #include "smtp.lch"
 #include "http.lch"
 #else
@@ -83,6 +84,7 @@ static int mod_open(lua_State *L, const luaL_reg *mod)
     lua_dofile(L, "auxiliar.lua");
     lua_dofile(L, "url.lua");
     lua_dofile(L, "mime.lua");
+    lua_dofile(L, "tp.lua");
     lua_dofile(L, "smtp.lua");
     lua_dofile(L, "http.lua");
 #endif

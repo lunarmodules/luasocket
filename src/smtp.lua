@@ -22,140 +22,95 @@ function stuff()
     return ltn12.filter.cycle(dot, 2)
 end
 
--- tries to get a pattern from the server and closes socket on error
-local function try_receiving(connection, pattern)
-    local data, message = connection:receive(pattern)
-    if not data then connection:close() end
-    print(data)
-    return data, message
+local function skip(a, b, c)
+    return b, c
 end
 
--- tries to send data to server and closes socket on error
-local function try_sending(connection, data)
-    local sent, message = connection:send(data)
-    if not sent then connection:close() end
-    io.write(data)
-    return sent, message
-end
-
--- gets server reply
-local function get_reply(connection)
-    local code, current, separator, _
-    local line, message = try_receiving(connection)
-    local reply = line
-    if message then return nil, message end
-    _, _, code, separator = string.find(line, "^(%d%d%d)(.?)")
-    if not code then return nil, "invalid server reply" end
-    if separator == "-" then -- reply is multiline
-        repeat
-            line, message = try_receiving(connection)
-            if message then return nil, message end
-            _,_, current, separator = string.find(line, "^(%d%d%d)(.)")
-            if not current or not separator then 
-                return nil, "invalid server reply" 
-            end
-            reply = reply .. "\n" .. line
-        -- reply ends with same code
-        until code == current and separator == " " 
-    end
-    return code, reply
-end
-
--- metatable for server connection object
-local metatable = { __index = {} }
-
--- switch handler for execute function
-local switch = {}
-
--- execute the "check" instruction
-function switch.check(connection, instruction)
-    local code, reply = get_reply(connection)
-    if not code then return nil, reply end
-    if type(instruction.check) == "function" then
-        return instruction.check(code, reply)
-    else
-        if string.find(code, instruction.check) then return code, reply
-        else return nil, reply end
-    end
-end
-
--- stub for invalid instructions 
-function switch.invalid(connection, instruction)
-    return nil, "invalid instruction"
-end
-
--- execute the "command" instruction
-function switch.command(connection, instruction)
-    local line
-    if instruction.argument then
-        line = instruction.command .. " " .. instruction.argument .. "\r\n"
-    else line = instruction.command .. "\r\n" end
-    return try_sending(connection, line)
-end
-
-function switch.raw(connection, instruction)
-    if type(instruction.raw) == "function" then
-        local f = instruction.raw
-        while true do 
-            local chunk, new_f = f()
-            if not chunk then return nil, new_f end
-            if chunk == "" then return true end
-            f = new_f or f
-            local code, message = try_sending(connection, chunk)
-            if not code then return nil, message end
+function psend(control, mailt) 
+    socket.try(control:command("EHLO", mailt.domain or DOMAIN))
+    socket.try(control:check("2.."))
+    socket.try(control:command("MAIL", "FROM:" .. mailt.from))
+    socket.try(control:check("2.."))
+    if type(mailt.rcpt) == "table" then
+        for i,v in ipairs(mailt.rcpt) do
+            socket.try(control:command("RCPT", "TO:" .. v))
         end
-    else return try_sending(connection, instruction.raw) end
-end
-
--- finds out what instruction are we dealing with
-local function instruction_type(instruction) 
-    if type(instruction) ~= "table" then return "invalid" end
-    if instruction.command then return "command" end
-    if instruction.check then return "check" end
-    if instruction.raw then return "raw" end
-    return "invalid"
-end
-
--- execute a list of instructions
-function metatable.__index:execute(instructions)
-    if type(instructions) ~= "table" then error("instruction expected", 1) end
-    if not instructions[1] then instructions = { instructions } end
-    local code, message
-    for _, instruction in ipairs(instructions) do
-        local type = instruction_type(instruction)
-        code, message = switch[type](self.connection, instruction)
-        if not code then break end
+    else
+        socket.try(control:command("RCPT", "TO:" .. mailt.rcpt))
     end
-    return code, message
+    socket.try(control:check("2.."))
+    socket.try(control:command("DATA"))
+    socket.try(control:check("3.."))
+    socket.try(control:source(ltn12.source.chain(mailt.source, stuff())))
+    socket.try(control:send("\r\n.\r\n"))
+    socket.try(control:check("2.."))
+    socket.try(control:command("QUIT"))
+    socket.try(control:check("2.."))
 end
 
--- closes the underlying connection
-function metatable.__index:close()
-    self.connection:close()
+local seqno = 0
+local function newboundary()
+    seqno = seqno + 1
+    return string.format('%s%05d==%05u', os.date('%d%m%Y%H%M%S'),
+        math.random(0, 99999), seqno)
 end
 
--- connect with server and return a smtp connection object
-function connect(host)
-    local connection, message = socket.connect(host, PORT)
-    if not connection then return nil, message end
-    return setmetatable({ connection = connection }, metatable)
+local function sendmessage(mesgt)
+    -- send headers
+    if mesgt.headers then
+        for i,v in pairs(mesgt.headers) do
+            coroutine.yield(i .. ':' .. v .. "\r\n")
+        end
+    end
+    -- deal with multipart
+    if type(mesgt.body) == "table" then
+        local bd = newboundary()
+        -- define boundary and finish headers
+        coroutine.yield('mime-version: 1.0\r\n') 
+        coroutine.yield('content-type: multipart/mixed; boundary="' .. 
+            bd .. '"\r\n\r\n')
+        -- send preamble
+        if mesgt.body.preamble then coroutine.yield(mesgt.body.preamble) end
+        -- send each part separated by a boundary
+        for i, m in ipairs(mesgt.body) do
+            coroutine.yield("\r\n--" .. bd .. "\r\n")
+            sendmessage(m)
+        end
+        -- send last boundary 
+        coroutine.yield("\r\n--" .. bd .. "--\r\n\r\n")
+        -- send epilogue
+        if mesgt.body.epilogue then coroutine.yield(mesgt.body.epilogue) end
+    -- deal with a source 
+    elseif type(mesgt.body) == "function" then
+        -- finish headers
+        coroutine.yield("\r\n")
+        while true do 
+            local chunk, err = mesgt.body()
+            if err then return nil, err
+            elseif chunk then coroutine.yield(chunk)
+            else break end
+        end
+    -- deal with a simple string
+    else
+        -- finish headers
+        coroutine.yield("\r\n")
+        coroutine.yield(mesgt.body)
+    end
 end
 
--- simple test drive 
+function message(mesgt)
+    local co = coroutine.create(function() sendmessage(mesgt) end)
+    return function() return skip(coroutine.resume(co)) end
+end
 
---[[
-c, m = connect("localhost")
-assert(c, m)
-assert(c:execute {check = "2.." })
-assert(c:execute {{command = "EHLO", argument = "localhost"}, {check = "2.."}})
-assert(c:execute {command = "MAIL", argument = "FROM:<diego@princeton.edu>"})
-assert(c:execute {check = "2.."})
-assert(c:execute {command = "RCPT", argument = "TO:<diego@cs.princeton.edu>"})
-assert(c:execute {check = function (code) return code == "250" end})
-assert(c:execute {{command = "DATA"}, {check = "3.."}})
-assert(c:execute {{raw = "This is the message\r\n.\r\n"}, {check = "2.."}})
-assert(c:execute {{command = "QUIT"}, {check = "2.."}})
-c:close()
-]]
+function send(mailt)
+    local control, err = socket.tp.connect(mailt.server or SERVER, 
+        mailt.port or PORT)
+    if not control then return nil, err end
+    local status, err = pcall(psend, control, mailt)
+    control:close()
+    if status then return true
+    else return nil, err end
+end
 
 return smtp
