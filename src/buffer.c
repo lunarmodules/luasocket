@@ -66,8 +66,16 @@ int buf_meth_send(lua_State *L, p_buf buf)
         err = sendraw(buf, data, count, &sent);
         total += sent;
     }
-    lua_pushnumber(L, total);
-    io_pusherror(L, err);
+    /* check if there was an error */
+    if (err != IO_DONE) {
+        lua_pushnil(L);
+        io_pusherror(L, err); 
+        lua_pushnumber(L, total);
+    } else {
+        lua_pushnumber(L, total);
+        lua_pushnil(L);
+        lua_pushnil(L);
+    }
 #ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
     lua_pushnumber(L, (tm_gettime() - tm_getstart(tm))/1000.0);

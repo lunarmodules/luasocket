@@ -225,7 +225,7 @@ function test_totaltimeoutsend(len, tm, sl)
     ]], 2*tm, len, sl, sl, len))
     data:settimeout(tm, "total")
     str = string.rep("a", 2*len)
-    total, err, elapsed = data:send(str)
+    total, err, partial, elapsed = data:send(str)
     check_timeout(tm, sl, elapsed, err, "send", "total", 
         total == 2*len)
 end
@@ -265,7 +265,7 @@ function test_blockingtimeoutsend(len, tm, sl)
     ]], 2*tm, len, sl, sl, len))
     data:settimeout(tm)
     str = string.rep("a", 2*len)
-    total, err,  elapsed = data:send(str)
+    total, err,  partial, elapsed = data:send(str)
     check_timeout(tm, sl, elapsed, err, "send", "blocking",
         total == 2*len)
 end
@@ -326,13 +326,13 @@ function test_closed()
         data:close()
         data = nil
     ]]
-    total, err = data:send(string.rep("ugauga", 100000))
+    total, err, partial = data:send(string.rep("ugauga", 100000))
     if not err then 
         pass("failed: output buffer is at least %d bytes long!", total)
     elseif err ~= "closed" then 
         fail("got '"..err.."' instead of 'closed'.")
     else 
-        pass("graceful 'closed' received after %d bytes were sent", total) 
+        pass("graceful 'closed' received after %d bytes were sent", partial) 
     end
 end
 
