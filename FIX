@@ -1,18 +1,1 @@
-UDP has a reasonable maximum datagram size
-receive accepts the prefix optional argument
-send doesn't support multiple arguments anymore
-send allows the selection of the substring to be sent
-fix bug that caused select return tables not to be associative on windows
-compiles with g++
-new sample unix domain support
-new sample LPD support
-comprehensive error messages in the default case.
-new getstats method to help throttle.
-listen defaults to 32 backlog
-smtp/ftp/http fail gracefully 
-accept/connect/select interrupt safe
-accepted sockets are nonblocking
-new timming functions. higher resolution, no wrap around
-bug fixes in the manual
-getfd missing cast
-fixed local domain socket kludge of name size
+filter.chain is coroutine-free

@@ -1,7 +1,6 @@
-change sendraw to send by chunks
-
 use mike's "don't set to blocking before closing unless needed" patch?
-take a look at DB's smtp patch
+take a look at DB's smtp patch (add "extra argument" table)
+move wsocket.c:sock_send kludge to buffer.c:sendraw (probably)?
 
 optmize aux_getgroupudata (Mike idea)
     make aux_newclass receive upvalues
@@ -32,3 +31,4 @@ testar os options!
 * fix manual for send and receive
 * add thanks to mike
 * change sock:send to use indices just like string.sub?
+* change sendraw to send by chunks
