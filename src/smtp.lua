@@ -19,7 +19,7 @@ Public.TIMEOUT = 180
 Public.PORT = 25
 -- domain used in HELO command and default sendmail 
 -- If we are under a CGI, try to get from environment
-Public.DOMAIN = getenv("SERVER_NAME") or "localhost"
+Public.DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default server used to send e-mails
 Public.SERVER = "localhost"
 

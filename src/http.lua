@@ -32,7 +32,7 @@ Public.BLOCKSIZE = 8192
 -----------------------------------------------------------------------------
 function Private.try_receive(...)
     local sock = arg[1]
-    local data, err = call(sock.receive, arg)
+    local data, err = sock.receive(unpack(arg))
     if err then
         sock:close()
         return nil, err
@@ -62,7 +62,7 @@ end
 -----------------------------------------------------------------------------
 function Private.get_statuscode(line)
     local code, _
-    _, _, code = strfind(line, "HTTP/%d*%.%d* (%d%d%d)")
+    _, _, code = string.find(line, "HTTP/%d*%.%d* (%d%d%d)")
     return tonumber(code)
 end
 
@@ -102,17 +102,17 @@ function Private.receive_headers(sock, headers)
     -- headers go until a blank line is found
     while line ~= "" do
         -- get field-name and value
-        _,_, name, value = strfind(line, "^(.-):%s*(.*)")
+        _,_, name, value = string.find(line, "^(.-):%s*(.*)")
         if not name or not value then 
             sock:close()
             return nil, "malformed reponse headers" 
         end
-        name = strlower(name)
+        name = string.lower(name)
         -- get next line (value might be folded)
         line, err = Private.try_receive(sock)
         if err then return nil, err end
         -- unfold any folded values
-        while not err and strfind(line, "^%s") do
+        while not err and string.find(line, "^%s") do
             value = value .. line
             line, err = Private.try_receive(sock)
             if err then return nil, err end
@@ -142,7 +142,7 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
             local go, uerr = receive_cb(nil, err)
             return uerr or err
         end
-        size = tonumber(gsub(line, ";.*", ""), 16)
+        size = tonumber(string.gsub(line, ";.*", ""), 16)
         if not size then 
             err = "invalid chunk size"
             sock:close()
@@ -299,7 +299,7 @@ function Private.send_indirect(data, send_cb, chunk, size)
             data:close() 
             return err 
         end
-        sent = sent + strlen(chunk)
+        sent = sent + string.len(chunk)
         if sent >= size then break end
         chunk, size = send_cb()
     end
@@ -391,7 +391,7 @@ function Private.fill_headers(headers, parsed)
     lower["user-agent"] = Public.USERAGENT
     -- override with user values
     for i,v in headers do
-        lower[strlower(i)] = v
+        lower[string.lower(i)] = v
     end
     lower["host"] = parsed.host
     -- this cannot be overriden
@@ -554,7 +554,7 @@ function Public.request_cb(request, response)
     request.headers = Private.fill_headers(request.headers, parsed)
     -- try to connect to server
     local sock
-    sock, response.error = connect(parsed.host, parsed.port)
+    sock, response.error = socket.connect(parsed.host, parsed.port)
     if not sock then return response end
     -- set connection timeout so that we do not hang forever
     sock:timeout(Public.TIMEOUT)
@@ -619,7 +619,7 @@ function Public.request(request)
     local response = {}
     if request.body then 
         request.body_cb = function() 
-            return request.body, strlen(request.body) 
+            return request.body, string.len(request.body) 
         end
     end
     local cat = Concat.create()

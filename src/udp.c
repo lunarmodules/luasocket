@@ -45,7 +45,7 @@ void udp_open(lua_State *L)
     udp_inherit(L, UDP_CLASS);
     /* declare global functions */
     lua_pushcfunction(L, udp_global_udpsocket);
-    lua_setglobal(L, "udpsocket");
+    priv_newglobal(L, "udp");
     for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) 
         priv_newglobalmethod(L, funcs[i].name);
     /* make class selectable */
@@ -162,12 +162,12 @@ static int udp_lua_receivefrom(lua_State *L)
     p_udp udp = (p_udp) lua_touserdata(L, 1);
     p_tm tm = &udp->base_tm;
     struct sockaddr_in peer;
-    size_t peer_len = sizeof(peer);
+    int peer_len = sizeof(peer);
     unsigned char buffer[UDP_DATAGRAMSIZE];
     size_t wanted = (size_t) luaL_opt_number(L, 2, sizeof(buffer));
     size_t got;
     int err;
-    if (udp->udp_connected) lua_error(L, "receivefrom on connected socket");
+    if (udp->udp_connected) luaL_error(L, "receivefrom on connected socket");
     tm_markstart(tm);
     wanted = MIN(wanted, sizeof(buffer));
     err = compat_recvfrom(udp->fd, buffer, wanted, &got, tm_getremaining(tm),
@@ -201,7 +201,7 @@ static int udp_lua_send(lua_State *L)
     size_t wanted, sent = 0;
     int err;
     cchar *data = luaL_check_lstr(L, 2, &wanted);
-    if (!udp->udp_connected) lua_error(L, "send on unconnected socket");
+    if (!udp->udp_connected) luaL_error(L, "send on unconnected socket");
     tm_markstart(tm);
     err = compat_send(udp->fd, data, wanted, &sent, tm_getremaining(tm));
     priv_pusherror(L, err == PRIV_CLOSED ? PRIV_REFUSED : err);
@@ -230,9 +230,9 @@ static int udp_lua_sendto(lua_State *L)
     p_tm tm = &udp->base_tm;
     struct sockaddr_in peer;
     int err;
-    if (udp->udp_connected) lua_error(L, "sendto on connected socket");
+    if (udp->udp_connected) luaL_error(L, "sendto on connected socket");
     memset(&peer, 0, sizeof(peer));
-    if (!inet_aton(ip, &peer.sin_addr)) lua_error(L, "invalid ip address");
+    if (!inet_aton(ip, &peer.sin_addr)) luaL_error(L, "invalid ip address");
     peer.sin_family = AF_INET;
     peer.sin_port = htons(port);
     tm_markstart(tm);

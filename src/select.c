@@ -31,9 +31,12 @@ void select_open(lua_State *L)
 {
     /* push select auxiliar lua function and register
     * select_lua_select with it as an upvalue */
-#include "lsselect.loh"
+#ifdef LUASOCKET_DEBUG
+#endif
+    luaL_loadfile(L, "lsselect.lua");
+    lua_call(L, 0, 1);
     lua_pushcclosure(L, select_lua_select, 1);
-    lua_setglobal(L, "select");
+    priv_newglobal(L, "select");
     /* create luasocket(select) table */
     lua_pushstring(L, "luasocket(select)");
     lua_newtable(L);
@@ -61,8 +64,8 @@ static int select_lua_select(lua_State *L)
     /* make sure we have enough arguments (nil is the default) */
     lua_settop(L, 4);
     /* pass FD_SET and manipulation functions */
-    lua_newuserdatabox(L, &read);
-    lua_newuserdatabox(L, &write);
+    lua_boxpointer(L, &read);
+    lua_boxpointer(L, &write);
     lua_pushcfunction(L, local_FD_SET);
     lua_pushcfunction(L, local_FD_ISSET);
     /* pass getfd function with selectable table as upvalue */
@@ -121,7 +124,7 @@ static int local_select(lua_State *L)
 static int local_FD_SET(lua_State *L)
 {
     COMPAT_FD fd = (COMPAT_FD) lua_tonumber(L, 1);
-    fd_set *set = (fd_set *) lua_touserdata(L, 2);
+    fd_set *set = (fd_set *) lua_topointer(L, 2);
     if (fd >= 0) FD_SET(fd, set);
     return 0;
 }
@@ -129,7 +132,7 @@ static int local_FD_SET(lua_State *L)
 static int local_FD_ISSET(lua_State *L)
 {
     COMPAT_FD fd = (COMPAT_FD) lua_tonumber(L, 1);
-    fd_set *set = (fd_set *) lua_touserdata(L, 2);
+    fd_set *set = (fd_set *) lua_topointer(L, 2);
     if (fd >= 0 && FD_ISSET(fd, set)) lua_pushnumber(L, 1);
     else lua_pushnil(L);
     return 1;

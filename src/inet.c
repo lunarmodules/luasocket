@@ -38,9 +38,9 @@ static int inet_aton(cchar *cp, struct in_addr *inp);
 void inet_open(lua_State *L)
 {
     lua_pushcfunction(L, inet_lua_toip);
-    lua_setglobal(L, "toip");
+    priv_newglobal(L, "toip");
     lua_pushcfunction(L, inet_lua_tohostname);
-    lua_setglobal(L, "tohostname");
+    priv_newglobal(L, "tohostname");
     priv_newglobalmethod(L, "getsockname");
     priv_newglobalmethod(L, "getpeername");
 }
@@ -145,7 +145,7 @@ static int inet_lua_getpeername(lua_State *L)
 {
     p_sock sock = (p_sock) lua_touserdata(L, 1);
     struct sockaddr_in peer;
-    size_t peer_len = sizeof(peer);
+    int peer_len = sizeof(peer);
     if (getpeername(sock->fd, (SA *) &peer, &peer_len) < 0) {
         lua_pushnil(L);
         return 1;
@@ -167,7 +167,7 @@ static int inet_lua_getsockname(lua_State *L)
 {
     p_sock sock = (p_sock) lua_touserdata(L, 1);
     struct sockaddr_in local;
-    size_t local_len = sizeof(local);
+    int local_len = sizeof(local);
     if (getsockname(sock->fd, (SA *) &local, &local_len) < 0) {
         lua_pushnil(L);
         return 1;

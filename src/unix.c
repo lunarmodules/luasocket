@@ -28,7 +28,7 @@ void compat_open(lua_State *L)
 }
 
 COMPAT_FD compat_accept(COMPAT_FD s, struct  sockaddr  *addr,  
-        socklen_t *len, int deadline)
+        int *len, int deadline)
 {
     struct timeval tv;
     fd_set fds;
@@ -74,7 +74,7 @@ int compat_send(COMPAT_FD c, cchar *data, size_t count, size_t *sent,
 }
 
 int compat_sendto(COMPAT_FD c, cchar *data, size_t count, size_t *sent, 
-        int deadline, SA *addr, socklen_t len)
+        int deadline, SA *addr, int len)
 {
     struct timeval tv;
     fd_set fds;
@@ -134,7 +134,7 @@ int compat_recv(COMPAT_FD c, uchar *data, size_t count, size_t *got,
 }
 
 int compat_recvfrom(COMPAT_FD c, uchar *data, size_t count, size_t *got, 
-        int deadline, SA *addr, socklen_t *len)
+        int deadline, SA *addr, int *len)
 {
     struct timeval tv;
     fd_set fds;
@@ -290,7 +290,7 @@ cchar *compat_trysetoptions(lua_State *L, COMPAT_FD sock)
 static cchar *try_setbooloption(lua_State *L, COMPAT_FD sock, int name)
 {
     int bool, res;
-    if (!lua_isnumber(L, -1)) lua_error(L, "invalid option value");
+    if (!lua_isnumber(L, -1)) luaL_error(L, "invalid option value");
     bool = (int) lua_tonumber(L, -1);
     res = setsockopt(sock, SOL_SOCKET, name, (char *) &bool, sizeof(bool));
     if (res < 0) return "error setting option";

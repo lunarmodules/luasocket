@@ -125,9 +125,9 @@ void tm_open(lua_State *L)
     (void) L;
 #ifdef _DEBUG
     lua_pushcfunction(L, tm_lua_time);
-    lua_setglobal(L, "_time");
+    priv_newglobal(L, "_time");
     lua_pushcfunction(L, tm_lua_sleep);
-    lua_setglobal(L, "_sleep");
+    priv_newglobal(L, "_sleep");
 #endif
 }
 

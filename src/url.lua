@@ -34,26 +34,30 @@ function Public.parse_url(url, default)
     -- empty url is parsed to nil
     if not url or url == "" then return nil end
     -- remove whitespace
-    url = gsub(url, "%s", "")
+    url = string.gsub(url, "%s", "")
     -- get fragment
-    url = gsub(url, "#(.*)$", function(f) parsed.fragment = f end)
+    url = string.gsub(url, "#(.*)$", function(f) parsed.fragment = f end)
     -- get scheme
-    url = gsub(url, "^([%w][%w%+%-%.]*)%:", function(s) parsed.scheme = s end)
+    url = string.gsub(url, "^([%w][%w%+%-%.]*)%:", 
+        function(s) parsed.scheme = s end)
     -- get authority
-    url = gsub(url, "^//([^/]*)", function(n) parsed.authority = n end)
-    -- get query string
-    url = gsub(url, "%?(.*)", function(q) parsed.query = q end)
+    url = string.gsub(url, "^//([^/]*)", function(n) parsed.authority = n end)
+    -- get query stringing
+    url = string.gsub(url, "%?(.*)", function(q) parsed.query = q end)
     -- get params
-    url = gsub(url, "%;(.*)", function(p) parsed.params = p end)
+    url = string.gsub(url, "%;(.*)", function(p) parsed.params = p end)
     if url ~= "" then parsed.path = url end
     local authority = parsed.authority
     if not authority then return parsed end
-    authority = gsub(authority,"^([^@]*)@",function(u) parsed.userinfo = u end)
-    authority = gsub(authority, ":([^:]*)$", function(p) parsed.port = p end)
+    authority = string.gsub(authority,"^([^@]*)@",
+        function(u) parsed.userinfo = u end)
+    authority = string.gsub(authority, ":([^:]*)$", 
+        function(p) parsed.port = p end)
     if authority ~= "" then parsed.host = authority end
     local userinfo = parsed.userinfo
     if not userinfo then return parsed end
-    userinfo = gsub(userinfo, ":([^:]*)$", function(p) parsed.password = p end)
+    userinfo = string.gsub(userinfo, ":([^:]*)$", 
+        function(p) parsed.password = p end)
     parsed.user = userinfo 
     return parsed
 end
@@ -64,7 +68,7 @@ end
 -- Input
 --   parsed: parsed URL, as returned by Public.parse
 -- Returns
---   a string with the corresponding URL
+--   a stringing with the corresponding URL
 -----------------------------------------------------------------------------
 function Public.build_url(parsed)
     local url = parsed.path or ""
@@ -86,7 +90,7 @@ function Public.build_url(parsed)
     if authority then url = "//" .. authority .. url end
     if parsed.scheme then url = parsed.scheme .. ":" .. url end
     if parsed.fragment then url = url .. "#" .. parsed.fragment end
-    url = gsub(url, "%s", "")
+    url = string.gsub(url, "%s", "")
     return url
 end
 
@@ -134,13 +138,13 @@ end
 function Public.parse_path(path)
 	local parsed = {}
 	path = path or ""
-	path = gsub(path, "%s", "")
-	gsub(path, "([^/]+)", function (s) tinsert(parsed, s) end)
-	for i = 1, getn(parsed) do
+	path = string.gsub(path, "%s", "")
+	string.gsub(path, "([^/]+)", function (s) table.insert(parsed, s) end)
+	for i = 1, table.getn(parsed) do
 		parsed[i] = Code.unescape(parsed[i])
 	end
-	if strsub(path, 1, 1) == "/" then parsed.is_absolute = 1 end
-	if strsub(path, -1, -1) == "/" then parsed.is_directory = 1 end
+	if stringsub(path, 1, 1) == "/" then parsed.is_absolute = 1 end
+	if stringsub(path, -1, -1) == "/" then parsed.is_directory = 1 end
 	return parsed
 end
 
@@ -150,11 +154,11 @@ end
 --   parsed: path segments
 --   unsafe: if true, segments are not protected before path is built
 -- Returns
---   path: correspondin path string
+--   path: correspondin path stringing
 -----------------------------------------------------------------------------
 function Public.build_path(parsed, unsafe)
 	local path = ""
-	local n = getn(parsed)
+	local n = table.getn(parsed)
 	if unsafe then
 		for i = 1, n-1 do
 			path = path .. parsed[i]
@@ -178,10 +182,10 @@ function Public.build_path(parsed, unsafe)
 	return path
 end
 
-function Private.make_set(table)
+function Private.make_set(t)
 	local s = {}
-	for i = 1, getn(table) do
-		s[table[i]] = 1
+	for i = 1, table.getn(t) do
+		s[t[i]] = 1
 	end
 	return s
 end
@@ -195,7 +199,7 @@ Private.segment_set = Private.make_set {
 
 function Private.protect_segment(s)
 	local segment_set = Private.segment_set
-	return gsub(s, "(%W)", function (c) 
+	return string.gsub(s, "(%W)", function (c) 
 		if segment_set[c] then return c
 		else return Code.escape(c) end
 	end)
@@ -210,21 +214,21 @@ end
 --   corresponding absolute path
 -----------------------------------------------------------------------------
 function Private.absolute_path(base_path, relative_path)
-    if strsub(relative_path, 1, 1) == "/" then return relative_path end
-    local path = gsub(base_path, "[^/]*$", "")
+    if stringsub(relative_path, 1, 1) == "/" then return relative_path end
+    local path = string.gsub(base_path, "[^/]*$", "")
     path = path .. relative_path
-    path = gsub(path, "([^/]*%./)", function (s) 
+    path = string.gsub(path, "([^/]*%./)", function (s) 
         if s ~= "./" then return s else return "" end
     end)
-    path = gsub(path, "/%.$", "/")
+    path = string.gsub(path, "/%.$", "/")
     local reduced 
     while reduced ~= path do
         reduced = path
-        path = gsub(reduced, "([^/]*/%.%./)", function (s)
+        path = string.gsub(reduced, "([^/]*/%.%./)", function (s)
             if s ~= "../../" then return "" else return s end
         end)
     end
-    path = gsub(reduced, "([^/]*/%.%.)$", function (s)
+    path = string.gsub(reduced, "([^/]*/%.%.)$", function (s)
         if s ~= "../.." then return "" else return s end
     end)
     return path

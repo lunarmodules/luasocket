@@ -46,15 +46,15 @@ void compat_open(lua_State *L);
 #define compat_select select
 
 COMPAT_FD compat_socket(int domain, int type, int protocol);
-COMPAT_FD compat_accept(COMPAT_FD s, SA *addr, socklen_t *len, int deadline);
+COMPAT_FD compat_accept(COMPAT_FD s, SA *addr, int *len, int deadline);
 int compat_send(COMPAT_FD c, cchar *data, size_t count, size_t *done, 
         int deadline);
 int compat_recv(COMPAT_FD c, uchar *data, size_t count, size_t *done, 
         int deadline);
 int compat_sendto(COMPAT_FD c, cchar *data, size_t count, size_t *done,
-        int deadline, SA *addr, socklen_t len);
+        int deadline, SA *addr, int len);
 int compat_recvfrom(COMPAT_FD c, uchar *data, size_t count, size_t *got, 
-        int deadline, SA *addr, socklen_t *len);
+        int deadline, SA *addr, int *len);
 void compat_setnonblocking(COMPAT_FD sock);
 void compat_setblocking(COMPAT_FD sock);
 void compat_setreuseaddr(COMPAT_FD sock);
