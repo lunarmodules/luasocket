@@ -1,3 +1,4 @@
+check all "require("http")" etc in the manual.
 _VERSION, _DEBUG, etc.
 get rid of "base." kludge
 make sure sock_gethostname.*  only return success if the hp is not 
