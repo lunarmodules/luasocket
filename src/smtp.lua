@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- SMTP support for the Lua language.
--- LuaSocket 1.4 toolkit
+-- LuaSocket 1.5 toolkit
 -- Author: Diego Nehab
 -- Date: 26/12/2000
 -- Conforming to: RFC 821, LTN7
@@ -65,7 +65,7 @@ function Private.send_command(sock, command, param)
     local line
     if param then line = command .. " " .. param .. "\r\n"
     else line = command .. "\r\n" end
-    return %Private.try_send(sock, line)
+    return Private.try_send(sock, line)
 end
 
 -----------------------------------------------------------------------------
@@ -78,14 +78,14 @@ end
 -----------------------------------------------------------------------------
 function Private.get_answer(control)
     local code, lastcode, sep, _
-    local line, err = %Private.try_receive(control)
+    local line, err = Private.try_receive(control)
     local answer = line
     if err then return nil, err end
     _,_, code, sep = strfind(line, "^(%d%d%d)(.)")
     if not code or not sep then return nil, answer end
     if sep == "-" then -- answer is multiline
         repeat 
-            line, err = %Private.try_receive(control)
+            line, err = Private.try_receive(control)
             if err then return nil, err end
             _,_, lastcode, sep = strfind(line, "^(%d%d%d)(.)")
             answer = answer .. "\n" .. line
@@ -105,7 +105,7 @@ end
 --   answer: complete server answer or system error message
 -----------------------------------------------------------------------------
 function Private.check_answer(control, success)
-    local answer, code = %Private.get_answer(control)
+    local answer, code = Private.get_answer(control)
     if not answer then return nil, code end
     if type(success) ~= "table" then success = {success} end
     for i = 1, getn(success) do
@@ -126,9 +126,9 @@ end
 --   answer: complete server reply
 -----------------------------------------------------------------------------
 function Private.send_helo(sock)
-    local err = %Private.send_command(sock, "HELO", %Public.DOMAIN)
+    local err = Private.send_command(sock, "HELO", Public.DOMAIN)
     if err then return nil, err end
-    return %Private.check_answer(sock, 250)
+    return Private.check_answer(sock, 250)
 end
 
 -----------------------------------------------------------------------------
@@ -140,9 +140,9 @@ end
 --   answer: complete server reply or error message
 -----------------------------------------------------------------------------
 function Private.send_quit(sock)
-    local err = %Private.send_command(sock, "QUIT")
+    local err = Private.send_command(sock, "QUIT")
     if err then return nil, err end
-    local code, answer = %Private.check_answer(sock, 221)
+    local code, answer = Private.check_answer(sock, 221)
     sock:close()
     return code, answer
 end
@@ -158,9 +158,9 @@ end
 -----------------------------------------------------------------------------
 function Private.send_mail(sock, sender)
     local param = format("FROM:<%s>", sender or "")
-    local err = %Private.send_command(sock, "MAIL", param)
+    local err = Private.send_command(sock, "MAIL", param)
     if err then return nil, err end
-    return %Private.check_answer(sock, 250)
+    return Private.check_answer(sock, 250)
 end
 
 -----------------------------------------------------------------------------
@@ -175,11 +175,11 @@ function Private.send_headers(sock, headers)
     local err
     -- send request headers 
     for i, v in headers or {} do
-        err = %Private.try_send(sock, i .. ": " .. v .. "\r\n")
+        err = Private.try_send(sock, i .. ": " .. v .. "\r\n")
         if err then return err end
     end
     -- mark end of request headers
-    return %Private.try_send(sock, "\r\n")
+    return Private.try_send(sock, "\r\n")
 end
 
 -----------------------------------------------------------------------------
@@ -193,18 +193,18 @@ end
 --   answer: complete server reply or error message
 -----------------------------------------------------------------------------
 function Private.send_data(sock, headers, body)
-    local err = %Private.send_command(sock, "DATA")
+    local err = Private.send_command(sock, "DATA")
     if err then return nil, err end
-    local code, answer = %Private.check_answer(sock, 354)
+    local code, answer = Private.check_answer(sock, 354)
     if not code then return nil, answer end
     -- avoid premature end in message body
     body = gsub(body or "", "\n%.", "\n%.%.")
     -- mark end of message body
     body = body .. "\r\n.\r\n"
-    err = %Private.send_headers(sock, headers)
+    err = Private.send_headers(sock, headers)
     if err then return nil, err end
-    err = %Private.try_send(sock, body)
-    return %Private.check_answer(sock, 250)
+    err = Private.try_send(sock, body)
+    return Private.check_answer(sock, 250)
 end
 
 -----------------------------------------------------------------------------
@@ -221,9 +221,9 @@ function Private.send_rcpt(sock, rcpt)
 	local code, answer = nil, "No recipient specified"
     if type(rcpt) ~= "table" then rcpt = {rcpt} end
     for i = 1, getn(rcpt) do
-        err = %Private.send_command(sock, "RCPT", format("TO:<%s>", rcpt[i]))
+        err = Private.send_command(sock, "RCPT", format("TO:<%s>", rcpt[i]))
         if err then return nil, err end
-        code, answer = %Private.check_answer(sock, {250, 251})
+        code, answer = Private.check_answer(sock, {250, 251})
         if not code then return code, answer end
     end
     return code, answer
@@ -240,16 +240,16 @@ end
 function Private.open(server)
     local code, answer
 	-- default server
-	server = server or %Public.SERVER
+	server = server or Public.SERVER
 	-- connect to server and make sure we won't hang
-    local sock, err = connect(server, %Public.PORT)
+    local sock, err = connect(server, Public.PORT)
     if not sock then return nil, err end
-    sock:timeout(%Public.TIMEOUT)
+    sock:timeout(Public.TIMEOUT)
     -- initial server greeting
-    code, answer = %Private.check_answer(sock, 220)
+    code, answer = Private.check_answer(sock, 220)
     if not code then return nil, answer end
     -- HELO
-    code, answer = %Private.send_helo(sock)
+    code, answer = Private.send_helo(sock)
     if not code then return nil, answer end
     return sock
 end
@@ -270,13 +270,13 @@ end
 function Private.send(sock, message)
     local code, answer
     -- MAIL
-    code, answer = %Private.send_mail(sock, message.from)
+    code, answer = Private.send_mail(sock, message.from)
     if not code then return nil, answer end
     -- RCPT
-    code, answer = %Private.send_rcpt(sock, message.rcpt)
+    code, answer = Private.send_rcpt(sock, message.rcpt)
     if not code then return nil, answer end
     -- DATA
-    return %Private.send_data(sock, message.headers, message.body)
+    return Private.send_data(sock, message.headers, message.body)
 end
 
 -----------------------------------------------------------------------------
@@ -289,7 +289,7 @@ end
 -----------------------------------------------------------------------------
 function Private.close(sock)
     -- QUIT
-    return %Private.send_quit(sock)
+    return Private.send_quit(sock)
 end
 
 -----------------------------------------------------------------------------
@@ -305,11 +305,11 @@ end
 --   nil if successfull, error message in case of error
 -----------------------------------------------------------------------------
 function Public.mail(message)
-    local sock, err = %Private.open(message.server)
+    local sock, err = Private.open(message.server)
     if not sock then return err end
-    local code, answer = %Private.send(sock, message)
+    local code, answer = Private.send(sock, message)
     if not code then return answer end
-    code, answer = %Private.close(sock)
+    code, answer = Private.close(sock)
     if code then return nil end
     return answer
 end

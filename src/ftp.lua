@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- FTP support for the Lua language
--- LuaSocket 1.4 toolkit.
+-- LuaSocket 1.5 toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
 -- Conforming to: RFC 959, LTN7
@@ -22,13 +22,6 @@ Public.PORT = 21
 Public.EMAIL = "anonymous@anonymous.org"
 -- block size used in transfers
 Public.BLOCKSIZE = 8192
-
------------------------------------------------------------------------------
--- Required libraries
------------------------------------------------------------------------------
-dofile "concat.lua"
-dofile "url.lua"
-dofile "code.lua"
 
 -----------------------------------------------------------------------------
 -- Tries to send DOS mode lines. Closes socket on error.
@@ -91,7 +84,7 @@ function Private.send_command(control, cmd, arg)
 	local line
 	if arg then line = cmd .. " " .. arg
 	else line = cmd end
-	return %Private.try_sendline(control, line)
+	return Private.try_sendline(control, line)
 end
 
 -----------------------------------------------------------------------------
@@ -104,14 +97,14 @@ end
 -----------------------------------------------------------------------------
 function Private.get_answer(control)
 	local code, lastcode, sep, _
-	local line, err = %Private.try_receive(control)
+	local line, err = Private.try_receive(control)
 	local answer = line
 	if err then return nil, err end
 	_,_, code, sep = strfind(line, "^(%d%d%d)(.)")
 	if not code or not sep then return nil, answer end
 	if sep == "-" then -- answer is multiline
 		repeat 
-			line, err = %Private.try_receive(control)
+			line, err = Private.try_receive(control)
 			if err then return nil, err end
 			_,_, lastcode, sep = strfind(line, "^(%d%d%d)(.)")
 			answer = answer .. "\n" .. line
@@ -130,7 +123,7 @@ end
 --   answer: server complete answer or system error message
 -----------------------------------------------------------------------------
 function Private.check_answer(control, success)
-	local answer, code = %Private.get_answer(control)
+	local answer, code = Private.get_answer(control)
 	if not answer then return nil, code end
 	if type(success) ~= "table" then success = {success} end
 	for i = 1, getn(success) do
@@ -155,9 +148,9 @@ end
 --   answer: server complete answer or system error message
 -----------------------------------------------------------------------------
 function Private.command(control, cmd, arg, success)
-	local err = %Private.send_command(control, cmd, arg)
+	local err = Private.send_command(control, cmd, arg)
 	if err then return nil, err end
-	return %Private.check_answer(control, success)
+	return Private.check_answer(control, success)
 end
 
 -----------------------------------------------------------------------------
@@ -169,9 +162,9 @@ end
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
 function Private.greet(control)
-	local code, answer = %Private.check_answer(control, {120, 220})
+	local code, answer = Private.check_answer(control, {120, 220})
 	if code == 120 then -- please try again, somewhat busy now...
-		return %Private.check_answer(control, {220})
+		return Private.check_answer(control, {220})
 	end
 	return code, answer
 end
@@ -187,9 +180,9 @@ end
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
 function Private.login(control, user, password)
-	local code, answer = %Private.command(control, "user", user, {230, 331})
+	local code, answer = Private.command(control, "user", user, {230, 331})
 	if code == 331 and password then -- need pass and we have pass
-		return %Private.command(control, "pass", password, {230, 202})
+		return Private.command(control, "pass", password, {230, 202})
 	end
 	return code, answer
 end
@@ -204,7 +197,7 @@ end
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
 function Private.cwd(control, path)
-	if path then return %Private.command(control, "cwd", path, {250}) 
+	if path then return Private.command(control, "cwd", path, {250}) 
 	else return 250, nil end
 end
 
@@ -221,13 +214,13 @@ function Private.port(control)
 	local server, ctl_ip
 	ctl_ip, answer = control:getsockname()
 	server, answer = bind(ctl_ip, 0)
-	server:timeout(%Public.TIMEOUT)
+	server:timeout(Public.TIMEOUT)
 	local ip, p, ph, pl
 	ip, p = server:getsockname()
 	pl = mod(p, 256)
 	ph = (p - pl)/256
     local arg = gsub(format("%s,%d,%d", ip, ph, pl), "%.", ",")
-	code, answer = %Private.command(control, "port", arg, {200})
+	code, answer = Private.command(control, "port", arg, {200})
 	if not code then 
 		server:close()
 		return nil, answer
@@ -243,7 +236,7 @@ end
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
 function Private.logout(control)
-	local code, answer = %Private.command(control, "quit", nil, {221})
+	local code, answer = Private.command(control, "quit", nil, {221})
 	if code then control:close() end
 	return code, answer
 end
@@ -259,7 +252,7 @@ end
 function Private.receive_indirect(data, callback)
 	local chunk, err, res
 	while not err do
-		chunk, err = %Private.try_receive(data, %Public.BLOCKSIZE)
+		chunk, err = Private.try_receive(data, Public.BLOCKSIZE)
 		if err == "closed" then err = "done" end
 		res = callback(chunk, err)
 		if not res then break end
@@ -282,11 +275,11 @@ function Private.retrieve(control, server, name, is_directory, content_cb)
 	local data
 	-- ask server for file or directory listing accordingly
 	if is_directory then 
-		code, answer = %Private.cwd(control, name) 
+		code, answer = Private.cwd(control, name) 
 		if not code then return answer end
-		code, answer = %Private.command(control, "nlst", nil, {150, 125})
+		code, answer = Private.command(control, "nlst", nil, {150, 125})
 	else 
-		code, answer = %Private.command(control, "retr", name, {150, 125}) 
+		code, answer = Private.command(control, "retr", name, {150, 125}) 
 	end
 	if not code then return nil, answer end
 	data, answer = server:accept()
@@ -295,14 +288,14 @@ function Private.retrieve(control, server, name, is_directory, content_cb)
 		control:close()
 		return answer 
 	end
-	answer = %Private.receive_indirect(data, content_cb)
+	answer = Private.receive_indirect(data, content_cb)
 	if answer then 
 		control:close()
 		return answer
 	end
 	data:close()
 	-- make sure file transfered ok
-	return %Private.check_answer(control, {226, 250})
+	return Private.check_answer(control, {226, 250})
 end
 
 -----------------------------------------------------------------------------
@@ -347,7 +340,7 @@ end
 -----------------------------------------------------------------------------
 function Private.store(control, server, file, send_cb)
 	local data, err
-	local code, answer = %Private.command(control, "stor", file, {150, 125})
+	local code, answer = Private.command(control, "stor", file, {150, 125})
 	if not code then 
 		control:close()
 		return nil, answer 
@@ -360,7 +353,7 @@ function Private.store(control, server, file, send_cb)
 		return nil, answer 
 	end
 	-- send whole file 
-	err = %Private.send_indirect(data, send_cb, send_cb())
+	err = Private.send_indirect(data, send_cb, send_cb())
 	if err then 
 		control:close()
 		return nil, err
@@ -368,7 +361,7 @@ function Private.store(control, server, file, send_cb)
 	-- close connection to inform that file transmission is complete
 	data:close()
 	-- check if file was received correctly
-	return %Private.check_answer(control, {226, 250})
+	return Private.check_answer(control, {226, 250})
 end
 
 -----------------------------------------------------------------------------
@@ -383,7 +376,7 @@ function Private.change_type(control, params)
 	local type, _
 	_, _, type = strfind(params or "", "type=(.)")
 	if type == "a" or type == "i" then 
-		local code, err = %Private.command(control, "type", type, {200})
+		local code, err = Private.command(control, "type", type, {200})
 		if not code then return err end
 	end
 end
@@ -401,12 +394,12 @@ function Private.open(parsed)
 	local control, err = connect(parsed.host, parsed.port)
 	if not control then return nil, err end
 	-- make sure we don't block forever
-	control:timeout(%Public.TIMEOUT)
+	control:timeout(Public.TIMEOUT)
 	-- check greeting
-	local code, answer = %Private.greet(control)
+	local code, answer = Private.greet(control)
 	if not code then return nil, answer end
 	-- try to log in
-	code, err = %Private.login(control, parsed.user, parsed.password)
+	code, err = Private.login(control, parsed.user, parsed.password)
 	if not code then return nil, err
 	else return control end
 end
@@ -418,7 +411,7 @@ end
 -----------------------------------------------------------------------------
 function Private.close(control)
 	-- disconnect
-	%Private.logout(control)
+	Private.logout(control)
 end
 
 -----------------------------------------------------------------------------
@@ -432,7 +425,7 @@ end
 function Private.change_dir(control, segment)
 	local n = getn(segment)
 	for i = 1, n-1 do
-		local code, answer = %Private.cwd(control, segment[i])
+		local code, answer = Private.cwd(control, segment[i])
 		if not code then return answer end
 	end
 end
@@ -457,10 +450,10 @@ function Private.upload(control, request, segment)
 	end
 	content_cb = request.content_cb
 	-- setup passive connection
-	local server, answer = %Private.port(control)
+	local server, answer = Private.port(control)
 	if not server then return answer end
 	-- ask server to receive file
-	code, answer = %Private.store(control, server, name, content_cb)
+	code, answer = Private.store(control, server, name, content_cb)
 	if not code then return answer end
 end
 
@@ -485,10 +478,10 @@ function Private.download(control, request, segment)
 		return "Invalid file path" 
 	end
 	-- setup passive connection
-	local server, answer = %Private.port(control)
+	local server, answer = Private.port(control)
 	if not server then return answer end
 	-- ask server to send file or directory listing
-	code, answer = %Private.retrieve(control, server, name, 
+	code, answer = Private.retrieve(control, server, name, 
 		is_directory, content_cb)
 	if not code then return answer end
 end
@@ -510,7 +503,7 @@ function Private.parse_url(request)
 		user = "anonymous", 
 		port = 21, 
 		path = "/",
-		password = %Public.EMAIL,
+		password = Public.EMAIL,
 		scheme = "ftp"
 	})
 	-- explicit login information overrides that given by URL
@@ -565,17 +558,17 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Public.get_cb(request)
-	local parsed = %Private.parse_url(request)
+	local parsed = Private.parse_url(request)
 	if parsed.scheme ~= "ftp" then 
 		return format("unknown scheme '%s'", parsed.scheme)
 	end
-	local control, err = %Private.open(parsed)
+	local control, err = Private.open(parsed)
 	if not control then return err end
-	local segment = %Private.parse_path(parsed)
-	return %Private.change_dir(control, segment) or
-		%Private.change_type(control, parsed.params) or
-		%Private.download(control, request, segment) or 
-		%Private.close(control)
+	local segment = Private.parse_path(parsed)
+	return Private.change_dir(control, segment) or
+		Private.change_type(control, parsed.params) or
+		Private.download(control, request, segment) or 
+		Private.close(control)
 end
 
 -----------------------------------------------------------------------------
@@ -591,17 +584,17 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Public.put_cb(request)
-	local parsed = %Private.parse_url(request)
+	local parsed = Private.parse_url(request)
 	if parsed.scheme ~= "ftp" then 
 		return format("unknown scheme '%s'", parsed.scheme)
 	end
-	local control, err = %Private.open(parsed)
+	local control, err = Private.open(parsed)
 	if not control then return err end
-	local segment = %Private.parse_path(parsed)
-	return %Private.change_dir(control, segment) or
-		%Private.change_type(control, parsed.params) or
-		%Private.upload(control, request, segment) or 
-		%Private.close(control)
+	local segment = Private.parse_path(parsed)
+	return Private.change_dir(control, segment) or
+		Private.change_type(control, parsed.params) or
+		Private.upload(control, request, segment) or 
+		Private.close(control)
 end
 
 -----------------------------------------------------------------------------
@@ -617,11 +610,11 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 function Public.put(url_or_request, content)
-	local request = %Private.build_request(url_or_request)
+	local request = Private.build_request(url_or_request)
 	request.content_cb = function()
-		return %content, strlen(%content)
+		return content, strlen(content)
 	end
-	return %Public.put_cb(request)
+	return Public.put_cb(request)
 end
 
 -----------------------------------------------------------------------------
@@ -638,11 +631,11 @@ end
 -----------------------------------------------------------------------------
 function Public.get(url_or_request)
 	local cat = Concat.create()
-	local request = %Private.build_request(url_or_request)
+	local request = Private.build_request(url_or_request)
 	request.content_cb = function(chunk, err)
-		if chunk then %cat:addstring(chunk) end
+		if chunk then cat:addstring(chunk) end
 		return 1
 	end
-	local err = %Public.get_cb(request)
+	local err = Public.get_cb(request)
 	return cat:getresult(), err
 end

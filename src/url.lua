@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- URI parsing, composition and relative URL resolution
--- LuaSocket 1.4 toolkit.
+-- LuaSocket 1.5 toolkit.
 -- Author: Diego Nehab
 -- Date: 20/7/2001
 -- Conforming to: RFC 2396, LTN7
@@ -36,24 +36,24 @@ function Public.parse_url(url, default)
     -- remove whitespace
     url = gsub(url, "%s", "")
     -- get fragment
-    url = gsub(url, "#(.*)$", function(f) %parsed.fragment = f end)
+    url = gsub(url, "#(.*)$", function(f) parsed.fragment = f end)
     -- get scheme
-    url = gsub(url, "^([%w][%w%+%-%.]*)%:", function(s) %parsed.scheme = s end)
+    url = gsub(url, "^([%w][%w%+%-%.]*)%:", function(s) parsed.scheme = s end)
     -- get authority
-    url = gsub(url, "^//([^/]*)", function(n) %parsed.authority = n end)
+    url = gsub(url, "^//([^/]*)", function(n) parsed.authority = n end)
     -- get query string
-    url = gsub(url, "%?(.*)", function(q) %parsed.query = q end)
+    url = gsub(url, "%?(.*)", function(q) parsed.query = q end)
     -- get params
-    url = gsub(url, "%;(.*)", function(p) %parsed.params = p end)
+    url = gsub(url, "%;(.*)", function(p) parsed.params = p end)
     if url ~= "" then parsed.path = url end
     local authority = parsed.authority
     if not authority then return parsed end
-    authority = gsub(authority,"^([^@]*)@",function(u) %parsed.userinfo = u end)
-    authority = gsub(authority, ":([^:]*)$", function(p) %parsed.port = p end)
+    authority = gsub(authority,"^([^@]*)@",function(u) parsed.userinfo = u end)
+    authority = gsub(authority, ":([^:]*)$", function(p) parsed.port = p end)
     if authority ~= "" then parsed.host = authority end
     local userinfo = parsed.userinfo
     if not userinfo then return parsed end
-    userinfo = gsub(userinfo, ":([^:]*)$", function(p) %parsed.password = p end)
+    userinfo = gsub(userinfo, ":([^:]*)$", function(p) parsed.password = p end)
     parsed.user = userinfo 
     return parsed
 end
@@ -99,8 +99,8 @@ end
 --   corresponding absolute url
 -----------------------------------------------------------------------------
 function Public.absolute_url(base_url, relative_url)
-    local base = %Public.parse_url(base_url)
-    local relative = %Public.parse_url(relative_url)
+    local base = Public.parse_url(base_url)
+    local relative = Public.parse_url(relative_url)
     if not base then return relative_url
     elseif not relative then return base_url
     elseif relative.scheme then return relative_url
@@ -117,10 +117,10 @@ function Public.absolute_url(base_url, relative_url)
                     end
                 end
             else     
-                relative.path = %Private.absolute_path(base.path,relative.path)
+                relative.path = Private.absolute_path(base.path,relative.path)
             end
         end
-        return %Public.build_url(relative)
+        return Public.build_url(relative)
     end
 end
 
@@ -135,7 +135,7 @@ function Public.parse_path(path)
 	local parsed = {}
 	path = path or ""
 	path = gsub(path, "%s", "")
-	gsub(path, "([^/]+)", function (s) tinsert(%parsed, s) end)
+	gsub(path, "([^/]+)", function (s) tinsert(parsed, s) end)
 	for i = 1, getn(parsed) do
 		parsed[i] = Code.unescape(parsed[i])
 	end
@@ -166,11 +166,11 @@ function Public.build_path(parsed, unsafe)
 		end
 	else
 		for i = 1, n-1 do
-			path = path .. %Private.protect_segment(parsed[i])
+			path = path .. Private.protect_segment(parsed[i])
 			path = path .. "/"
 		end
 		if n > 0 then
-			path = path .. %Private.protect_segment(parsed[n])
+			path = path .. Private.protect_segment(parsed[n])
 			if parsed.is_directory then path = path .. "/" end
 		end
 	end
@@ -194,9 +194,9 @@ Private.segment_set = Private.make_set {
 }
 
 function Private.protect_segment(s)
-	local segment_set = %Private.segment_set
+	local segment_set = Private.segment_set
 	return gsub(s, "(%W)", function (c) 
-		if %segment_set[c] then return c
+		if segment_set[c] then return c
 		else return Code.escape(c) end
 	end)
 end
