@@ -1,13 +1,13 @@
-smtp = require("smtp")
+mime = require("mime")
 
 function test_dot(original, right)
-    local result, n = smtp.dot(2, original)
+    local result, n = mime.dot(2, original)
     assert(result == right, "->" .. result .. "<-")
     print("ok")
 end
 
 function test_stuff(original, right)
-    local result, n = smtp.dot(2, original)
+    local result, n = mime.dot(2, original)
     assert(result == right, "->" .. result .. "<-")
     print("ok")
 end

@@ -1,5 +1,0 @@
-a = ltn12.source.file(io.open("luasocket.lua"))
-b = ltn12.source.file(io.open("auxiliar.lua"))
-c = ltn12.source.cat(a, b) 
-d = ltn12.sink.file(io.stdout)
-socket.try(ltn12.pump.all(c, d))

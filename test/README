@@ -5,19 +5,8 @@ The files provided are:
 
     testsrvr.lua            -- test server
     testclnt.lua            -- test client
-    testcmd.lua             -- test command definitions
 
-To run  the automatic  tests on  your system, make  sure to  compile the
-library  with  _DEBUG  defined  (check   makefile)  and  then  open  two
-terminals. Run  'luasocket testsrvr.lua' on  one of them  and 'luasocket
-testclnt.lua' on  the other. The  programs should start talking  to each
-other and report any failure. The tests can also be used as a benchmark.
-
-    urltest.lua             -- url.lua test module
-    codetest.lua            -- code.lua test module
-    concattest.lua          -- concat.lua test module
-
-To run these tests, just run luasocket on them and see the results.
+To run these tests, just run lua on the server and then on the client. 
 
 Good luck,
 Diego.

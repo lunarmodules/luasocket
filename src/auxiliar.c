@@ -16,6 +16,7 @@
 * Initializes the module
 \*-------------------------------------------------------------------------*/
 int aux_open(lua_State *L) {
+    (void) L;
     return 0;
 }
 

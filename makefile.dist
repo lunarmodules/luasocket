@@ -2,62 +2,60 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-2.0-alpha
+DIST = luasocket-2.0-beta
 
 LUA = \
-	auxiliar.lua \
-	code.lua \
-	concat.lua \
 	ftp.lua \
 	http.lua \
-	select.lua \
+	ltn12.lua \
+	mime.lua \
 	smtp.lua \
+	socket.lua \
+	tp.lua \
 	url.lua
 
 TESTS = \
-	codetest.lua \
-	concattest.lua \
-	ftptest.lua \
-	mbox.lua \
-	httptest.lua \
-	noglobals.lua \
-	smtptest.lua \
 	testclnt.lua \
 	testsrvr.lua \
-	udptest.lua \
-	urltest.lua
+	testsupport.lua
 
 EXAMPLES = \
+	check-memory.lua \
+	b64.lua \
+	cddb.lua \
 	daytimeclnt.lua \
 	echoclnt.lua \
 	echosrvr.lua \
-	dict.lua \
+	eol.lua \
 	listener.lua \
+	qp.lua \
 	talker.lua \
 	tinyirc.lua
 
 ETC = \
 	check-links.lua \
-	cl-compat.lua \
+	dict.lua \
 	get.lua \
 	lua.lua \
-	luasocket.lua \
-	tftp.lua \
+	tftp.lua
 
-
-MAIN = \
+CORE = \
 	auxiliar.c \
 	auxiliar.h \
 	buffer.c \
 	buffer.h \
-	error.c \
-	error.h \
+	except.c \
+	except.h \
 	inet.c \
 	inet.h \
 	io.c \
 	io.h \
 	luasocket.c \
 	luasocket.h \
+	mime.c \
+	mime.h \
+	options.c \
+	options.h \
 	select.c \
 	select.h \
 	socket.h \
@@ -72,25 +70,56 @@ MAIN = \
 	wsocket.c \
 	wsocket.h
 
+MAKE = \
+	makefile.Darwin \
+	makefile.Linux \
+	luasocket.export \
+	mime.export \
+	luasocket.sln \
+	luasocket.vcproj \
+	mime.vcproj
+
+MANUAL = \
+	manual/dns.html \
+	manual/ftp.html \
+	manual/home.html \
+	manual/http.html \
+	manual/introduction.html \
+	manual/ltn12.html \
+	manual/luasocket.png \
+	manual/mime.html \
+	manual/reference.css \
+	manual/reference.html \
+	manual/smtp.html \
+	manual/socket.html \
+	manual/tcp.html \
+	manual/udp.html \
+	manual/url.html
+
 dist:
 	mkdir -p $(DIST)/examples
 	mkdir -p $(DIST)/tests
 	mkdir -p $(DIST)/etc
-	cp -vf $(MAIN) $(DIST)
-	cp -vf $(LUA) $(DIST)
-	cp -vf makefile $(DIST)
+	mkdir -p $(DIST)/lua
+	mkdir -p $(DIST)/make
+	mkdir -p $(DIST)/manual
+	cp -vf $(CORE) $(DIST)
 	cp -vf README $(DIST)
-	cp -vf lua.README $(DIST)
 	cp -vf NEW $(DIST)
+	cp -vf LICENSE $(DIST)
+	cp -vf $(MAKE) $(DIST)/make
+	cp -vf make.README $(DIST)/make/README
+	cp -vf $(LUA) $(DIST)/lua
+	cp -vf lua.README $(DIST)/lua/README
 	cp -vf $(EXAMPLES) $(DIST)/examples
 	cp -vf examples.README $(DIST)/examples/README
 	cp -vf $(TESTS) $(DIST)/tests
 	cp -vf tests.README $(DIST)/tests/README
 	cp -vf $(ETC) $(DIST)/etc
 	cp -vf etc.README $(DIST)/etc/README
+	cp -vf $(MANUAL) $(DIST)/manual
 	tar -zcvf $(DIST).tar.gz $(DIST)
 	zip -r $(DIST).zip $(DIST)
-
 
 clean:
 	\rm -rf $(DIST) $(DIST).tar.gz $(DIST).zip

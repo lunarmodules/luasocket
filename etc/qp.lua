@@ -1,5 +1,11 @@
-require("ltn12")
-require("mime")
+-----------------------------------------------------------------------------
+-- Little program to convert to and from Quoted-Printable
+-- LuaSocket sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
+local ltn12 = require("ltn12")
+local mime = require("mime")
 local convert
 arg = arg or {}
 local mode = arg and arg[1] or "-et"

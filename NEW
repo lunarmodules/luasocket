@@ -1,29 +1,86 @@
-Major C code rewrite. Code is modular and extensible. Hopefully, next
-versions will include code for local domain sockets, file descriptors,
-pipes (on unix) and named pipes (on windows) as a bonus.
+What's New
 
-All functions provided by the library are in the namespace "socket".
-Functions such as send/receive/timeout/close etc do not exist anymore as
-stand alone functions. They are now only available as methods of the
-appropriate objects.
+Everything is new! Many changes for  2.0 happened in the C layer, 
+which has been almost completely rewritten. The code has been ported to 
+Lua 5.0 and greatly improved.  There have also been some API changes
+that made  the interface simpler and  more consistent. Here are  some of
+the changes that made it into version 2.0: 
 
-TCP has been changed to become more uniform.  First create an object, then 
-connect or bind if needed. Then use IO functions. The "socket.connect" and
-"socket.bind" functions are provided for simplicity, but they just call
-"socket.tcp" followed by the ":connect" or ":bind" methods.
+<> Major C code rewrite. Code is modular and extensible. Hopefully, other
+   developers will be motivated to provide code for SSL, local domain 
+   sockets, file descriptors, pipes (on Unix) and named pipes etc;
 
-All functions return a non-nil value as first return value if successful.
-All functions return whatever could be retrieved followed by error message 
-in case of error. The best way to check for errors is to check for the
-presence of an error message.  WARNING: The send function was affected.
+<> Everything that is exported by the library is exported inside 
+   namespaces. These should be obtained with calls to the
+   'require' function; 
 
-Better error messages and parameter checking.
+<> Functions such as
+   send/receive/timeout/close etc do not exist anymore as stand-alone
+   functions. They are now only available as methods of the appropriate
+   objects;
 
-UDP connected udp sockets can break association with peer by calling
-setpeername with address "*". 
+<> All functions return a non-nil value as first return value if successful.
+   All functions return 'nil' followed by error message
+   in case of error. This made the library much easier to use; 
 
-socket.sleep and socket.time are now part of the library and are 
-supported.
+<> Greatly reduced the number of times the C select is called 
+   during data transfers, by calling only on failure. This might 
+   improve a lot the maximum throughput;
 
-Socket options interface has been improved and TCP now also supports socket
-options.
+<> TCP has been changed to become more uniform.  It's possible to first
+   create a TCP object,
+   then connect or bind if needed, and finally use I/O functions. 
+   'socket.connect' and 'socket.bind' functions are still
+   provided for simplicity; 
+
+<> This allows for setting a timeout value before connecting;
+
+<> And also allows binding to a local address before connecting; 
+
+<> New 'socket.dns.gethostname' function and 'shutdown'
+   method;
+
+<> Better error messages and parameter checking;
+
+<> Should be interrupt safe; 
+
+<> UDP connected sockets can break association with peer by calling
+   'setpeername' with address ''*'';
+
+<> Sets returned by 'socket.select' are associative;
+
+<> Select checks if sockets have buffered data and returns immediately; 
+
+<> 'socket.sleep' and 'socket.time' are now part of the
+   library and are supported. They used to be available only when
+   LUASOCKET_DEBUG was defined, but it turns out they might be useful for
+   applications;
+
+<> 'socket.try' and 'socket.protect' provide a simple
+   interface to exceptions that proved very in the implementation of
+   high-level modules; 
+
+<> Socket options interface has been improved. TCP objects also 
+   support socket options and many new options were added.
+
+
+Lots of changes in the Lua modules, too! 
+
+<> Every module loads only the modules that it needs. There is no waste
+   of memory. LuaSocket core takes only 20k of memory;
+
+<> New MIME and LTN12 modules make all other modules much more powerful; 
+
+<> Support for multipart messages in the SMTP module;
+
+<> The old callback mechanism of FTP and HTTP has been replaced with LTN12 
+   sources and sinks, with advantage; 
+
+<> Common implementation for low-level FTP and SMTP;
+
+<> FTP, HTTP, and SMTP are implemented in multiple levels in such a way 
+   that users will have no problems extending the functionality to satisfy
+   personal needs; 
+
+<> SMTP knows how to perform LOGIN and PLAIN authentication. 
+

@@ -75,6 +75,7 @@ static int global_skip(lua_State *L) {
 * Unloads the library
 \*-------------------------------------------------------------------------*/
 static int global_unload(lua_State *L) {
+    (void) L;
     sock_close();
     return 0;
 }

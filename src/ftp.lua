@@ -176,7 +176,7 @@ end
 -- High level FTP API
 -----------------------------------------------------------------------------
 local function tput(putt)
-    local con = ftp.open(putt.host, putt.port)
+    local con = open(putt.host, putt.port)
     con:greet()
     con:login(putt.user, putt.password)
     if putt.type then con:type(putt.type) end
@@ -216,7 +216,7 @@ put = socket.protect(function(putt, body)
 end)
 
 local function tget(gett)
-    local con = ftp.open(gett.host, gett.port)
+    local con = open(gett.host, gett.port)
     con:greet()
     con:login(gett.user, gett.password)
     if gett.type then con:type(gett.type) end

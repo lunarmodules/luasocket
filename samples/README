@@ -1,4 +1,4 @@
-This directory contains some sample  programs using LuaSocket. This code
+This directory contains some sample programs using LuaSocket. This code
 is not supported.
 
     listener.lua            -- socket to stdout
@@ -7,20 +7,25 @@ is not supported.
 listener.lua and talker.lua are about  the simplest applications you can
 write  using  LuaSocket.  Run   
 
-	'lua -l luasocket listen.lua'  and  'lua -l luasocket talk.lua'
+	'lua listen.lua'  and  'lua talk.lua'
 
-on different terminals. Whatever  you type on talk.lua will be
+on different terminals. Whatever you type on talk.lua will be
 printed by listen.lua.
 
-    dict.lua                -- dict client
+    b64.lua
+    qp.lua
+    eol.lua
 
-The dict.lua  module was  a cool  simple client  for the  DICT protocol,
-written by Luiz Henrique Figueiredo. This new version has been converted
-into a library, similar to the HTTP  and FTP libraries, that can be used
-from within  any luasocket application. Take  a look on the  source code
-and you will be able to figure out how to use it.
+These are tiny programs that perform Base64, Quoted-Printable and
+end-of-line marker conversions.
+
+    cddb.lua                -- CDDB client
+
+This is the first try on a simple CDDB client. Not really useful, but one
+day it might become a module. 
 
     daytimeclnt.lua         -- day time client
+
 
 Just run the program to retrieve the hour and date in readable form from
 any server running an UDP daytime daemon.
@@ -39,6 +44,10 @@ is  broadcasted to  every other  connected client.  It tests  the select
 function and shows  how to create a simple server  whith LuaSocket. Just
 run tinyirc.lua and  then open as many telnet connections  as you want
 to ports 8080 and 8081.
+
+    check-memory.lua        -- checks memory consumption
+
+This is just to see how much memory each module uses. 
 
 Good luck,
 Diego.
