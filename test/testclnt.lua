@@ -22,7 +22,7 @@ while control == nil do
 	if control then
 		print("client: control connection stablished!") 
 	else
-		sleep(2)
+		_sleep(2)
 	end
 end
 
@@ -48,7 +48,7 @@ function reconnect()
 		data = connect(HOST, PORT)
 		if not data then 
 			print("client: waiting for data connection.") 
-			sleep(1)
+			_sleep(1)
 		end
 	end
 	sync()
@@ -296,9 +296,6 @@ function test_returntimeout(len, t, s)
 	else fail("blocks don't match") end
 end
 
-
-
-
 -----------------------------------------------------------------------------
 -- Tests read patterns
 -----------------------------------------------------------------------------
@@ -364,9 +361,25 @@ function test_patterns()
 end
 
 -----------------------------------------------------------------------------
+-- Test for select bugs
+-----------------------------------------------------------------------------
+function test_select()
+	local r, s, e = select(nil, nil, 0.1)
+	assert(type(r) == "table" and type(s) == "table" and e == "timeout")
+	pass("both nil")
+	data:close()
+	r, s, e = select({ data }, { data }, 0.1)
+	assert(type(r) == "table" and type(s) == "table" and e == "timeout")
+	pass("closed sockets")
+	e = call(select, {"wrong", 1, 0.1}, "x", nil)
+	assert(e == nil)
+	pass("invalid input")
+end
+
+-----------------------------------------------------------------------------
 -- Execute all tests
 -----------------------------------------------------------------------------
-start = time()
+start = _time()
 
 new_test("control connection test")
 test_command(EXIT)
@@ -376,7 +389,9 @@ test_command(ECHO_BLOCK, 12234)
 test_command(SLEEP, 1111)
 test_command(ECHO_LINE)
 
---a = [[
+new_test("testing for select bugs")
+test_select()
+
 new_test("connection close test")
 test_closed()
 
@@ -438,17 +453,15 @@ test_returntimeout(8000, 1, 2)
 test_returntimeout(80000, 2, 1)
 test_returntimeout(800000, 0.1, 0)
 test_returntimeout(800000, 2, 1)
---]]
 
 -----------------------------------------------------------------------------
 -- Close connection and exit server. We are done.
 -----------------------------------------------------------------------------
+new_test("the library has passed all tests")
 print("client: closing connection with server")
 send_command(CLOSE)
 send_command(EXIT)
 control:close()
-
-new_test("the library has passed all tests")
-print(format("time elapsed: %6.2fs", time() - start))
+print(format("time elapsed: %6.2fs", _time() - start))
 print("client: exiting...")
 exit()
