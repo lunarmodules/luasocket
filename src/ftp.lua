@@ -1,60 +1,62 @@
 -----------------------------------------------------------------------------
--- Simple FTP support for the Lua language using the LuaSocket 1.3b toolkit.
+-- FTP support for the Lua language
+-- LuaSocket 1.4 toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
--- Conforming to: RFC 959
+-- Conforming to: RFC 959, LTN7
+-- RCS ID: $Id$
 -----------------------------------------------------------------------------
+
+local Public, Private = {}, {}
+FTP = Public
 
 -----------------------------------------------------------------------------
 -- Program constants
 -----------------------------------------------------------------------------
 -- timeout in seconds before the program gives up on a connection
-local TIMEOUT = 60
+Public.TIMEOUT = 60
 -- default port for ftp service
-local PORT = 21
+Public.PORT = 21
 -- this is the default anonymous password. used when no password is
--- provided in url. should be changed for your e-mail.
-local EMAIL = "anonymous@anonymous.org"
+-- provided in url. should be changed to your e-mail.
+Public.EMAIL = "anonymous@anonymous.org"
 -- block size used in transfers
-local BLOCKSIZE = 4096
+Public.BLOCKSIZE = 8192
 
 -----------------------------------------------------------------------------
--- Parses a url and returns its scheme, user, password, host, port 
--- and path components, according to RFC 1738, Uniform Resource Locators (URL),
--- of December 1994
--- Input
---   url: unique resource locator desired
---   default: table containing default values to be returned
--- Returns
---   table with the following fields:
---     host: host to connect
---     path: url path
---     port: host port to connect
---     user: user name
---     pass: password
---     scheme: protocol
+-- Required libraries
 -----------------------------------------------------------------------------
-local split_url = function(url, default)
-	-- initialize default parameters
-	local parsed = default or {}
-	-- get scheme
-    url = gsub(url, "^(.+)://", function (s) %parsed.scheme = s end)
-	-- get user name and password. both can be empty!
-	-- moreover, password can be ommited
-    url = gsub(url, "^([^@:/]*)(:?)([^:@/]-)@", function (u, c, p) 
-		%parsed.user = u 
-		-- there can be an empty password, but the ':' has to be there
-		-- or else there is no password
-		%parsed.pass = nil -- kill default password
-		if c == ":" then %parsed.pass = p end
-	end)
-	-- get host
-    url = gsub(url, "^([%w%.%-]+)", function (h) %parsed.host = h end)
-	-- get port if any
-    url = gsub(url, "^:(%d+)", function (p) %parsed.port = p end)
-	-- whatever is left is the path
-	if url ~= "" then parsed.path = url end
-	return parsed
+dofile "concat.lua"
+dofile "url.lua"
+dofile "code.lua"
+
+-----------------------------------------------------------------------------
+-- Tries to send DOS mode lines. Closes socket on error.
+-- Input
+--   sock: server socket
+--   line: string to be sent
+-- Returns
+--   err: message in case of error, nil if successfull
+-----------------------------------------------------------------------------
+function Private.try_sendline(sock, line)
+    local err = sock:send(line .. "\r\n")
+    if err then sock:close() end
+    return err
+end
+
+-----------------------------------------------------------------------------
+-- Tries to get a pattern from the server and closes socket on error
+--   sock: socket connected to the server
+--   ...: pattern to receive
+-- Returns
+--   ...: received pattern
+--   err: error message if any
+-----------------------------------------------------------------------------
+function Private.try_receive(...)
+    local sock = arg[1]
+    local data, err = call(sock.receive, arg)
+    if err then sock:close() end
+    return data, err
 end
 
 -----------------------------------------------------------------------------
@@ -65,14 +67,12 @@ end
 --   ip: string containing ip for data connection
 --   port: port for data connection
 -----------------------------------------------------------------------------
-local get_pasv = function(pasv)
-	local a,b,c,d,p1,p2
+function Private.get_pasv(pasv)
+	local a, b, c, d, p1, p2, _
 	local ip, port
 	_,_, a, b, c, d, p1, p2 =
 		strfind(pasv, "(%d*),(%d*),(%d*),(%d*),(%d*),(%d*)")
-	if not (a and b and c and d and p1 and p2) then
-		return nil, nil
-	end
+	if not (a and b and c and d and p1 and p2) then return nil, nil end
 	ip = format("%d.%d.%d.%d", a, b, c, d)
 	port = tonumber(p1)*256 + tonumber(p2)
 	return ip, port
@@ -87,12 +87,11 @@ end
 -- Returns
 --   error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
-local send_command = function(control, cmd, arg)
-	local line, err
-	if arg then line = cmd .. " " .. arg .. "\r\n" 
-	else line = cmd .. "\r\n" end
-	err = control:send(line)
-	return err
+function Private.send_command(control, cmd, arg)
+	local line
+	if arg then line = cmd .. " " .. arg
+	else line = cmd end
+	return %Private.try_sendline(control, line)
 end
 
 -----------------------------------------------------------------------------
@@ -103,16 +102,16 @@ end
 --   answer: whole server reply, nil if error
 --   code: answer status code or error message
 -----------------------------------------------------------------------------
-local get_answer = function(control)
-	local code, lastcode, sep
-	local line, err = control:receive()
+function Private.get_answer(control)
+	local code, lastcode, sep, _
+	local line, err = %Private.try_receive(control)
 	local answer = line
 	if err then return nil, err end
 	_,_, code, sep = strfind(line, "^(%d%d%d)(.)")
 	if not code or not sep then return nil, answer end
 	if sep == "-" then -- answer is multiline
 		repeat 
-			line, err = control:receive()
+			line, err = %Private.try_receive(control)
 			if err then return nil, err end
 			_,_, lastcode, sep = strfind(line, "^(%d%d%d)(.)")
 			answer = answer .. "\n" .. line
@@ -130,12 +129,9 @@ end
 --   code: reply code or nil in case of error
 --   answer: server complete answer or system error message
 -----------------------------------------------------------------------------
-local check_answer = function(control, success)
-	local answer, code = %get_answer(control)
-	if not answer then 
-		control:close()
-		return nil, code
-	end
+function Private.check_answer(control, success)
+	local answer, code = %Private.get_answer(control)
+	if not answer then return nil, code end
 	if type(success) ~= "table" then success = {success} end
 	for i = 1, getn(success) do
 		if code == success[i] then
@@ -158,38 +154,10 @@ end
 --   code: reply code or nil in case of error
 --   answer: server complete answer or system error message
 -----------------------------------------------------------------------------
-local try_command = function(control, cmd, arg, success)
-	local err = %send_command(control, cmd, arg)
-	if err then 
-		control:close()
-		return nil, err
-	end
-	local code, answer = %check_answer(control, success)
-	if not code then return nil, answer end
-	return code, answer
-end
-
------------------------------------------------------------------------------
--- Creates a table with all directories in path
--- Input
---   file: abolute path to file
--- Returns
---   a table with the following fields
---     name: filename
---     path: directory to file
---     isdir: is it a directory?
------------------------------------------------------------------------------
-local split_path  = function(file)
-    local parsed = {}
-    file = gsub(file, "(/)$", function(i) %parsed.isdir = i end)
-    if not parsed.isdir then
-        file = gsub(file, "([^/]+)$", function(n) %parsed.name = n end)
-    end
-    file = gsub(file, "/$", "")
-    file = gsub(file, "^/", "")
-    if file == "" then file = nil end
-    parsed.path = file
-    if parsed.path or parsed.name or parsed.isdir then return parsed end
+function Private.command(control, cmd, arg, success)
+	local err = %Private.send_command(control, cmd, arg)
+	if err then return nil, err end
+	return %Private.check_answer(control, success)
 end
 
 -----------------------------------------------------------------------------
@@ -200,11 +168,10 @@ end
 --   code: nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local check_greeting = function(control)
-	local code, answer = %check_answer(control, {120, 220})
-	if not code then return nil, answer end
+function Private.greet(control)
+	local code, answer = %Private.check_answer(control, {120, 220})
 	if code == 120 then -- please try again, somewhat busy now...
-		code, answer = %check_answer(control, {220})
+		return %Private.check_answer(control, {220})
 	end
 	return code, answer
 end
@@ -214,16 +181,15 @@ end
 -- Input
 --   control: control connection with server
 --   user: user name
---   pass: user password if any
+--   password: user password if any
 -- Returns
 --   code: nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local login = function(control, user, pass)
-	local code, answer = %try_command(control, "user", parsed.user, {230, 331})
-	if not code then return nil, answer end
-	if code == 331 and parsed.pass then -- need pass and we have pass
-		code, answer = %try_command(control, "pass", parsed.pass, {230, 202})
+function Private.login(control, user, password)
+	local code, answer = %Private.command(control, "user", user, {230, 331})
+	if code == 331 and password then -- need pass and we have pass
+		return %Private.command(control, "pass", password, {230, 202})
 	end
 	return code, answer
 end
@@ -237,12 +203,9 @@ end
 --   code: nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local cwd = function(control, path)
-	local code, answer = 250, "Home directory used"
-	if path then
-		code, answer = %try_command(control, "cwd", path, {250})
-	end
-	return code, answer
+function Private.cwd(control, path)
+	if path then return %Private.command(control, "cwd", path, {250}) 
+	else return 250, nil end
 end
 
 -----------------------------------------------------------------------------
@@ -253,20 +216,19 @@ end
 --   server: server socket bound to local address, nil if error
 --   answer: error message if any
 -----------------------------------------------------------------------------
-local port = function(control)
+function Private.port(control)
 	local code, answer
 	local server, ctl_ip
 	ctl_ip, answer = control:getsockname()
 	server, answer = bind(ctl_ip, 0)
-	server:timeout(%TIMEOUT)
+	server:timeout(%Public.TIMEOUT)
 	local ip, p, ph, pl
 	ip, p = server:getsockname()
 	pl = mod(p, 256)
 	ph = (p - pl)/256
     local arg = gsub(format("%s,%d,%d", ip, ph, pl), "%.", ",")
-	code, answer = %try_command(control, "port", arg, {200})
+	code, answer = %Private.command(control, "port", arg, {200})
 	if not code then 
-		control:close()
 		server:close()
 		return nil, answer
 	else return server end
@@ -280,10 +242,9 @@ end
 --   code: nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local logout = function(control)
-	local code, answer = %try_command(control, "quit", nil, {221})
-	if not code then return nil, answer end
-	control:close()
+function Private.logout(control)
+	local code, answer = %Private.command(control, "quit", nil, {221})
+	if code then control:close() end
 	return code, answer
 end
 
@@ -295,10 +256,10 @@ end
 -- Returns
 --   nil if successfull, or an error message in case of error
 -----------------------------------------------------------------------------
-local receive_indirect = function(data, callback)
+function Private.receive_indirect(data, callback)
 	local chunk, err, res
 	while not err do
-		chunk, err = data:receive(%BLOCKSIZE)
+		chunk, err = %Private.try_receive(data, %Public.BLOCKSIZE)
 		if err == "closed" then err = "done" end
 		res = callback(chunk, err)
 		if not res then break end
@@ -310,33 +271,38 @@ end
 -- Input
 --   control: control connection with server
 --   server: server socket bound to local address
---   file: file name under current directory
---   isdir: is file a directory name?
---   callback: callback to receive file contents
+--   name: file name 
+--   is_directory: is file a directory name?
+--   download_cb: callback to receive file contents
 -- Returns
 --   err: error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
-local retrieve = function(control, server, file, isdir, callback)
+function Private.retrieve(control, server, name, is_directory, download_cb)
 	local code, answer
 	local data
 	-- ask server for file or directory listing accordingly
-	if isdir then code, answer = %try_command(control, "nlst", file, {150, 125})
-	else code, answer = %try_command(control, "retr", file, {150, 125}) end
+	if is_directory then 
+		code, answer = %Private.cwd(control, name) 
+		if not code then return answer end
+		code, answer = %Private.command(control, "nlst", nil, {150, 125})
+	else 
+		code, answer = %Private.command(control, "retr", name, {150, 125}) 
+	end
+	if not code then return nil, answer end
 	data, answer = server:accept()
 	server:close()
 	if not data then 
 		control:close()
 		return answer 
 	end
-	answer = %receive_indirect(data, callback)
+	answer = %Private.receive_indirect(data, download_cb)
 	if answer then 
 		control:close()
 		return answer
 	end
 	data:close()
 	-- make sure file transfered ok
-	code, answer = %check_answer(control, {226, 250})
-	if not code then return answer end
+	return %Private.check_answer(control, {226, 250})
 end
 
 -----------------------------------------------------------------------------
@@ -344,11 +310,11 @@ end
 -- Input
 --   data: data connection
 --   send_cb: callback to produce file contents
---   chunk, size: first callback results
+--   chunk, size: first callback return values
 -- Returns
 --   nil if successfull, or an error message in case of error
 -----------------------------------------------------------------------------
-local try_sendindirect = function(data, send_cb, chunk, size)
+function Private.send_indirect(data, send_cb, chunk, size)
     local sent, err
     sent = 0
     while 1 do
@@ -358,9 +324,9 @@ local try_sendindirect = function(data, send_cb, chunk, size)
             else return "invalid callback return" end
         end
         err = data:send(chunk)
-        if err then 
-            data:close() 
-            return err 
+        if err then
+            data:close()
+            return err
         end
         sent = sent + strlen(chunk)
         if sent >= size then break end
@@ -379,9 +345,9 @@ end
 --   code: return code, nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local store = function(control, server, file, send_cb)
-	local data
-	local code, answer = %try_command(control, "stor", file, {150, 125})
+function Private.store(control, server, file, send_cb)
+	local data, err
+	local code, answer = %Private.command(control, "stor", file, {150, 125})
 	if not code then 
 		control:close()
 		return nil, answer 
@@ -394,7 +360,7 @@ local store = function(control, server, file, send_cb)
 		return nil, answer 
 	end
 	-- send whole file 
-	err = %try_sendindirect(data, send_cb, send_cb())
+	err = %Private.send_indirect(data, send_cb, send_cb())
 	if err then 
 		control:close()
 		return nil, err
@@ -402,144 +368,275 @@ local store = function(control, server, file, send_cb)
 	-- close connection to inform that file transmission is complete
 	data:close()
 	-- check if file was received correctly
-	return %check_answer(control, {226, 250})
+	return %Private.check_answer(control, {226, 250})
 end
 
 -----------------------------------------------------------------------------
 -- Change transfer type
 -- Input
 --   control: control connection with server
---   type: new transfer type
--- Returns
---   code: nil if error
---   answer: server answer or error message
------------------------------------------------------------------------------
-local change_type = function(control, type)
-	if type == "b" then type = "i" else type = "a" end
-	return %try_command(control, "type", type, {200})
-end
-
------------------------------------------------------------------------------
--- Retrieve a file from a ftp server
--- Input
---   url: file location
---   receive_cb: callback to receive file contents
---   type: "binary" or "ascii"
+--   params: "type=i" for binary or "type=a" for ascii
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
-function ftp_getindirect(url, receive_cb, type)
-	local control, server, data, err
-	local answer, code, server, pfile, file
-	parsed = %split_url(url, {user = "anonymous", port = 21, pass = %EMAIL})
+function Private.change_type(control, params)
+	local type
+	if params == "type=i" then type = "i" 
+	elseif params == "type=a" then type = "a" end
+	if type then 
+		local code, err = %Private.command(control, "type", type, {200})
+		if not code then return err end
+	end
+end
+
+-----------------------------------------------------------------------------
+-- Starts a control connection, checks the greeting and log on
+-- Input
+--   parsed: parsed URL components
+-- Returns
+--   control: control connection with server, or nil if error
+--   err: error message if any
+-----------------------------------------------------------------------------
+function Private.open(parsed)
 	-- start control connection
-	control, err = connect(parsed.host, parsed.port)
-	if not control then return err end
-	control:timeout(%TIMEOUT)
-	-- get and check greeting
-	code, answer = %check_greeting(control)
-	if not code then return answer end
+	local control, err = connect(parsed.host, parsed.port)
+	if not control then return nil, err end
+	-- make sure we don't block forever
+	control:timeout(%Public.TIMEOUT)
+	-- check greeting
+	local code, answer = %Private.greet(control)
+	if not code then return nil, answer end
 	-- try to log in
-	code, answer = %login(control, parsed.user, parsed.pass)
-	if not code then return answer end
-	-- go to directory
-	pfile = %split_path(parsed.path)
-	if not pfile then return "invalid path" end
-	code, answer = %cwd(control, pfile.path)
-	if not code then return answer end
-	-- change to binary type?
-	code, answer = %change_type(control, type)
-	if not code then return answer end
+	code, err = %Private.login(control, parsed.user, parsed.password)
+	if not code then return nil, err
+	else return control end
+end
+
+-----------------------------------------------------------------------------
+-- Closes the connection with the server
+-- Input
+--   control: control connection with server
+-----------------------------------------------------------------------------
+function Private.close(control)
+	-- disconnect
+	%Private.logout(control)
+end
+
+-----------------------------------------------------------------------------
+-- Changes to the directory pointed to by URL
+-- Input
+--   control: control connection with server
+--   segment: parsed URL path segments
+-- Returns
+--   err: error message if any
+-----------------------------------------------------------------------------
+function Private.change_dir(control, segment)
+	local n = getn(segment)
+	for i = 1, n-1 do
+		local code, answer = %Private.cwd(control, segment[i])
+		if not code then return answer end
+	end
+end
+
+-----------------------------------------------------------------------------
+-- Stores a file in current directory
+-- Input
+--   control: control connection with server
+--   request: a table with the fields:
+--     upload_cb: send callback to send file contents
+--   segment: parsed URL path segments
+-- Returns
+--   err: error message if any
+-----------------------------------------------------------------------------
+function Private.upload(control, request, segment)
+	local code, name, upload_cb
+	-- get remote file name
+	name = segment[getn(segment)]
+	if not name then 
+		control:close()
+		return "Invalid file path" 
+	end
+	upload_cb = request.upload_cb
 	-- setup passive connection
-	server, answer = %port(control)
+	local server, answer = %Private.port(control)
+	if not server then return answer end
+	-- ask server to receive file
+	code, answer = %Private.store(control, server, name, upload_cb)
+	if not code then return answer end
+end
+
+-----------------------------------------------------------------------------
+-- Download a file from current directory
+-- Input
+--   control: control connection with server
+--   request: a table with the fields:
+--     download_cb: receive callback to receive file contents
+--   segment: parsed URL path segments
+-- Returns
+--   err: error message if any
+-----------------------------------------------------------------------------
+function Private.download(control, request, segment)
+	local code, name, is_directory, download_cb
+	is_directory = segment.is_directory
+	download_cb = request.download_cb
+	-- get remote file name
+	name = segment[getn(segment)]
+	if not name and not is_directory then 
+		control:close()
+		return "Invalid file path" 
+	end
+	-- setup passive connection
+	local server, answer = %Private.port(control)
 	if not server then return answer end
 	-- ask server to send file or directory listing
-	err = %retrieve(control, server, pfile.name, pfile.isdir, receive_cb)
-	if err then return err end
-	-- disconnect
-	%logout(control)
+	code, answer = %Private.retrieve(control, server, name, 
+		is_directory, download_cb)
+	if not code then return answer end
+end
+
+-----------------------------------------------------------------------------
+-- Parses the FTP URL setting default values
+-- Input
+--   request: a table with the fields:
+--     url: the target URL
+--     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
+--     user: account user name
+--     password: account password
+-- Returns
+--   parsed: a table with parsed components
+-----------------------------------------------------------------------------
+function Private.parse_url(request)
+	local parsed = URL.parse_url(request.url, {
+		host = "",
+		user = "anonymous", 
+		port = 21, 
+		path = "/",
+		password = %Public.EMAIL
+	})
+	-- explicit login information overrides that given by URL
+	parsed.user = request.user or parsed.user
+	parsed.password = request.password or parsed.password
+	-- explicit representation type overrides that given by URL
+	if request.type then parsed.params = "type=" .. request.type end
+	return parsed
+end
+
+-----------------------------------------------------------------------------
+-- Parses the FTP URL path setting default values
+-- Input
+--   parsed: a table with the parsed URL components
+-- Returns
+--   dirs: a table with parsed directory components
+-----------------------------------------------------------------------------
+function Private.parse_path(parsed)
+	local segment = URL.parse_path(parsed.path)
+	segment.is_directory = segment.is_directory or (parsed.params == "type=d")
+	return segment
+end
+
+-----------------------------------------------------------------------------
+-- Builds a request table from a URL or request table
+-- Input
+--   url_or_request: target url or request table (a table with the fields:
+--     url: the target URL
+--     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
+--     user: account user name
+--     password: account password)
+-- Returns
+--   request: request table
+-----------------------------------------------------------------------------
+function Private.build_request(data)
+    local request = {}
+    if type(data) == "table" then for i, v in data do request[i] = v end
+    else request.url = data end
+    return request
+end
+
+-----------------------------------------------------------------------------
+-- Downloads a file from a FTP server
+-- Input
+--   request: a table with the fields:
+--     url: the target URL
+--     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
+--     user: account user name
+--     password: account password
+--     download_cb: receive callback to receive file contents
+-- Returns
+--   err: error message if any
+-----------------------------------------------------------------------------
+function Public.get_cb(request)
+	local parsed = %Private.parse_url(request)
+	local control, err = %Private.open(parsed)
+	if not control then return err end
+	local segment = %Private.parse_path(parsed)
+	return %Private.change_dir(control, segment) or
+		%Private.change_type(control, parsed.params) or
+		%Private.download(control, request, segment) or 
+		%Private.close(control)
 end
 
 -----------------------------------------------------------------------------
 -- Uploads a file to a FTP server
 -- Input
---   url: file location
---   send_cb: callback to produce the file contents
---   type: "binary" or "ascii"
+--   request: a table with the fields:
+--     url: the target URL
+--     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
+--     user: account user name
+--     password: account password
+--     upload_cb: send callback to send file contents
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
-function ftp_putindirect(url, send_cb, type)
-	local control, data
-	local answer, code, server, file, pfile
-	parsed = %split_url(url, {user = "anonymous", port = 21, pass = %EMAIL})
-	-- start control connection
-	control, answer = connect(parsed.host, parsed.port)
-	if not control then return answer end
-	control:timeout(%TIMEOUT)
-	-- get and check greeting
-	code, answer = %check_greeting(control)
-	if not code then return answer end
-	-- try to log in
-	code, answer = %login(control, parsed.user, parsed.pass)
-	if not code then return answer end
-	-- go to directory
-	pfile = %split_path(parsed.path)
-	if not pfile or pfile.isdir then return "invalid path" end
-	code, answer = %cwd(control, pfile.path)
-	if not code then return answer end
-	-- change to binary type?
-	code, answer = %change_type(control, type)
-	if not code then return answer end
-	-- setup passive connection
-	server, answer = %port(control)
-	if not server then return answer end
-	-- ask server to send file
-	code, answer = %store(control, server, pfile.name, send_cb)
-	if not code then return answer end
-	-- disconnect
-	%logout(control)
-	-- no errors
-	return nil
+function Public.put_cb(request)
+	local parsed = %Private.parse_url(request)
+	local control, err = %Private.open(parsed)
+	if not control then return err end
+	local segment = %Private.parse_path(parsed)
+	return %Private.change_dir(control, segment) or
+		%Private.change_type(control, parsed.params) or
+		%Private.upload(control, request, segment) or 
+		%Private.close(control)
 end
 
 -----------------------------------------------------------------------------
 -- Uploads a file to a FTP server
 -- Input
---   url: file location
---   bytes: file contents
---   type: "binary" or "ascii"
+--   url_or_request: target url or request table (a table with the fields:
+--     url: the target URL
+--     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
+--     user: account user name
+--     password: account password)
+--   content: file contents
 -- Returns
 --   err: error message if any
 -----------------------------------------------------------------------------
-function ftp_put(url, bytes, type)
-	local send_cb = function()
-		return %bytes, strlen(%bytes)
+function Public.put(url_or_request, content)
+	local request = %Private.build_request(url_or_request)
+	request.upload_cb = function()
+		return %content, strlen(%content)
 	end
-	return ftp_putindirect(url, send_cb, type)
+	return %Public.put_cb(request)
 end
-
------------------------------------------------------------------------------
--- We need fast concatenation routines for direct requests
------------------------------------------------------------------------------
-dofile("buffer.lua")
 
 -----------------------------------------------------------------------------
 -- Retrieve a file from a ftp server
 -- Input
---   url: file location
---   type: "binary" or "ascii"
+--   url_or_request: target url or request table (a table with the fields:
+--     url: the target URL
+--     type: "i" for "image" mode, "a" for "ascii" mode or "d" for directory
+--     user: account user name
+--     password: account password)
 -- Returns
 --   data: file contents as a string
 --   err: error message in case of error, nil otherwise
 -----------------------------------------------------------------------------
-function ftp_get(url, type)
-	local bytes = { buf = buf_create() }
-	local receive_cb = function(chunk, err)
-		if not chunk then %bytes.buf = nil end
-		buf_addstring(%bytes.buf, chunk)
+function Public.get(url_or_request)
+	local cat = Concat.create()
+	local request = %Private.build_request(url_or_request)
+	request.download_cb = function(chunk, err)
+		if chunk then %cat:addstring(chunk) end
 		return 1
 	end
-	err = ftp_getindirect(url, receive_cb, type)
-	return buf_getresult(bytes.buf), err
+	local err = %Public.get_cb(request)
+	return cat:getresult(), err
 end
