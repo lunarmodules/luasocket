@@ -90,6 +90,10 @@ back, err = FTP.get {
 }
 check(not err and back == index, err)
 
+write("testing wrong scheme: ")
+back, err = FTP.get("wrong://banana.com/lixo")
+check(not back and err == "unknown scheme 'wrong'", err)
+
 write("testing invalid url: ")
 back, err = FTP.get("localhost/dir1/index.html;type=i")
 local c, e = connect("", 21)
