@@ -15,7 +15,7 @@ Most Lua functions return {{nil}} in case of error, followed by a message descri
 
 If you are like me, you hate error checking. Most nice little code snippets that look beautiful when you first write them lose some of their charm when you add all that error checking code.  Yet, error checking is as important as  the rest of the code. How sad.
 
-Even if you stick to a return convention, any complex task which involves several function calls makes error checking both boring and error-prone (do you see the error below?)
+Even if you stick to a return convention, any complex task involving several function calls makes error checking both boring and error-prone (do you see the ''error'' below?)
         {{{
 function task(arg1, arg2, ...)
     local ret1, err = task1(arg1)
@@ -32,7 +32,7 @@ function task(arg1, arg2, ...)
 end
 }}}
 
-The standard {{assert}} function provides an interesting alternative.  To use it, the user nests every function calls with calls to {{assert}}.  {{Assert}} checks the value of its first argument, and raises an error (it's second argument) if it is {{nil}}. Otherwise, {{assert}} lets all arguments through as if had not been there. The idea greatly simplifies error checking: 
+The standard {{assert}} function provides an interesting alternative.  To use it, simply nest every function call to  be error checked with a call to {{assert}}. The {{assert}} function checks the value of its first argument.  If it is {{nil}}, {{assert}} throws the second argument as an error message. Otherwise, {{assert}} lets all arguments through as if had not been there. The idea greatly simplifies error checking: 
         {{{
 function task(arg1, arg2, ...)
     local ret1 = assert(task1(arg1))
