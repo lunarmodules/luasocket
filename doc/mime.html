@@ -156,6 +156,22 @@ base64 = ltn12.filter.chain(
 )
 </pre>
 
+<!-- stuff +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="stuff">
+mime.<b>stuff()</b><br>
+</p>
+
+<p class=description>
+Creates and returns a filter that performs stuffing of SMTP messages.
+</p>
+
+<p class=note>
+Note: The <a href=smtp.html#send><tt>smtp.send</tt></a> function 
+uses this filter automatically. You don't need to chain it with your
+source, or apply it to your message body.  
+</p>
+
 <!-- wrap +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id="wrap">
@@ -232,32 +248,35 @@ print((mime.b64("diego:password")))
 
 <!-- dot +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 <p class=name id="dot">
-A, B = mime.<b>dot(</b>C [, D]<b>)</b>
+A, n = mime.<b>dot(</b>m [, B]<b>)</b>
 </p>
 
 <p class=description>
-Low-level filter to perform Base64 encoding. 
+Low-level filter to perform SMTP stuffing and enable transmission of
+messages containing the sequence "CRLF.CRLF". 
 </p>
 
-<p class=description>
-<tt>A</tt> is the encoded version of the largest prefix of 
-<tt>C..D</tt> 
-that can be encoded unambiguously. <tt>B</tt> has the remaining bytes of 
-<tt>C..D</tt>, <em>before</em> encoding. 
-If <tt>D</tt> is <tt><b>nil</b></tt>, <tt>A</tt> is padded with 
-the encoding of the remaining bytes of <tt>C</tt>. 
+<p class=parameters>
+<tt>A</tt> is the stuffed version of <tt>B</tt>. '<tt>n</tt>' gives the
+number of characters from the sequence CRLF seen in the end of <tt>B</tt>.
+'<tt>m</tt>' should tell the same, but for the previous chunk.
 </p>
 
-<p class=note>
-Note: The simplest use of this function is to encode a string into it's
-Base64 transfer content encoding. Notice the extra parenthesis around the
-call to <tt>mime.b64</tt>, to discard the second return value.
+<p class=note>Note: The message body is defined to begin with 
+an implicit CRLF. Therefore, to stuff a message correctly, the
+first <tt>m</tt> should have the value 2. 
 </p>
 
 <pre class=example>
-print((mime.b64("diego:password")))
---&gt; ZGllZ286cGFzc3dvcmQ=
+print((string.gsub(mime.dot(2, ".\r\nStuffing the message.\r\n.\r\n."), "\r\n", "\\n")))
+--&gt; ..\nStuffing the message.\n..\n..
 </pre>
+
+<p class=note>
+Note: The <a href=smtp.html#send><tt>smtp.send</tt></a> function 
+uses this filter automatically. You don't need to 
+apply it again. 
+</p>
 
 <!-- eol ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -273,7 +292,7 @@ context the function receives besides the chunk.  An updated version of
 the context is returned after each new chunk. 
 </p>
 
-<p class=description>
+<p class=parameters>
 <tt>A</tt> is the translated version of <tt>D</tt>. <tt>C</tt> is the
 ASCII value of the last character of the previous chunk, if it was a
 candidate for line break, or 0 otherwise. 
@@ -296,7 +315,7 @@ A, B = mime.<b>qp(</b>C [, D, marker]<b>)</b>
 Low-level filter to perform Quoted-Printable encoding. 
 </p>
 
-<p class=description>
+<p class=parameters>
 <tt>A</tt> is the encoded version of the largest prefix of 
 <tt>C..D</tt> 
 that can be encoded unambiguously. <tt>B</tt> has the remaining bytes of 
@@ -328,7 +347,7 @@ A, m = mime.<b>qpwrp(</b>n [, B, length]<b>)</b>
 Low-level filter to break Quoted-Printable text into lines. 
 </p>
 
-<p class=description>
+<p class=parameters>
 <tt>A</tt> is a copy of <tt>B</tt>, broken into lines of at most 
 <tt>length</tt> bytes (defaults to 76). 
 '<tt>n</tt>' should tell how many bytes are left for the first 
@@ -352,7 +371,7 @@ A, B = mime.<b>unb64(</b>C [, D]<b>)</b>
 Low-level filter to perform Base64 decoding. 
 </p>
 
-<p class=description>
+<p class=parameters>
 <tt>A</tt> is the decoded version of the largest prefix of 
 <tt>C..D</tt> 
 that can be decoded unambiguously. <tt>B</tt> has the remaining bytes of 
@@ -383,7 +402,7 @@ Low-level filter to remove the Quoted-Printable transfer content encoding
 from data. 
 </p>
 
-<p class=description>
+<p class=parameters>
 <tt>A</tt> is the decoded version of the largest prefix of 
 <tt>C..D</tt> 
 that can be decoded unambiguously. <tt>B</tt> has the remaining bytes of 
@@ -414,7 +433,7 @@ Low-level filter to break text into lines with CRLF marker.
 Text is assumed to be in the <a href=#normalize><tt>normalize</tt></a> form.
 </p>
 
-<p class=description>
+<p class=parameters>
 <tt>A</tt> is a copy of <tt>B</tt>, broken into lines of at most 
 <tt>length</tt> bytes (defaults to 76). 
 '<tt>n</tt>' should tell how many bytes are left for the first 
@@ -443,7 +462,7 @@ marker.
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Sat Aug 9 01:00:41 PDT 2003
+Thu Jun 17 02:47:21 EDT 2004
 </small>
 </p>
 </center>

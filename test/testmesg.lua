@@ -23,7 +23,7 @@ source = smtp.message{
         Lines in a message body should always end with CRLF. 
         The smtp module will *NOT* perform translation. It will
         perform necessary stuffing, though.
-     ]])
+      ]])
     },
     -- second part: Headers describe content the to be an image, 
     -- sent under the base64 transfer content encoding.

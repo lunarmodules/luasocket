@@ -347,8 +347,9 @@ source = smtp.message{
     [1] = { 
       body = mime.eol(0, [[
         Lines in a message body should always end with CRLF. 
-        The smtp module will *NOT* perform translation. It will
-        perform necessary stuffing or '.' characters, though.
+        The smtp module will *NOT* perform translation. However, the 
+        send function *DOES* perform SMTP stuffing, whereas the message
+        function does *NOT*.
       ]])
     },
     -- second part: headers describe content to be a png image, 
@@ -397,7 +398,7 @@ r, e = smtp.send{
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Sat Aug 9 01:00:41 PDT 2003
+Thu Jun 17 02:47:21 EDT 2004
 </small>
 </p>
 </center>
