@@ -51,10 +51,10 @@ function metat.__index:rcpt(to)
     return socket.try(self.tp:check("2.."))
 end
 
-function metat.__index:data(src)
+function metat.__index:data(src, step)
     socket.try(self.tp:command("DATA"))
     socket.try(self.tp:check("3.."))
-    socket.try(self.tp:source(src))
+    socket.try(self.tp:source(src, step))
     socket.try(self.tp:send("\r\n.\r\n"))
     return socket.try(self.tp:check("2.."))
 end
@@ -78,7 +78,7 @@ function metat.__index:send(mailt)
     else
         self:rcpt(mailt.rcpt)
     end
-    self:data(ltn12.source.chain(mailt.source, stuff()))
+    self:data(ltn12.source.chain(mailt.source, stuff()), mailt.step)
 end
 
 function open(server, port)

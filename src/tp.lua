@@ -87,13 +87,9 @@ function metat.__index:getcontrol()
     return self.control
 end
 
-function metat.__index:source(src, instr)
-    while true do
-        local chunk, err = src()
-        if not chunk then return not err, err end
-        local ret, err = self.control:send(chunk)
-        if not ret then return nil, err end
-    end
+function metat.__index:source(source, step)
+    local sink = socket.sink("keep-open", self.control)
+    return ltn12.pump.all(source, sink, step or ltn12.pump.step)
 end
 
 -- closes the underlying control

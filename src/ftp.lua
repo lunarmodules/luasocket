@@ -114,7 +114,7 @@ function metat.__index:send(sendt)
         if err then data:close() end
         return ret, err
     end
-    local sink = socket.sink("close-when-empty", data)
+    local sink = socket.sink("close-when-done", data)
     socket.try(ltn12.pump.all(sendt.source, sink, checkstep))
     if string.find(code, "1..") then socket.try(self.tp:check("2..")) end
     return 1

@@ -49,6 +49,5 @@ print(socket.smtp.send {
     rcpt = "<diego@cs.princeton.edu>",
     from = "<diego@cs.princeton.edu>",
     source = socket.smtp.message(mesgt),
-    server = "mail.iis.com.br",
-    port = 7
+    server = "mail.cs.princeton.edu"
 })

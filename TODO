@@ -19,38 +19,40 @@
 * Separar as classes em arquivos
 * Retorno de sendto em datagram sockets pode ser refused
 * select sets are now associative
+* colocar pump.all, pump.step
+* mudar ltn12.html e usar o exemplo source.cat que está muito melhor.
+* break smtp.send into c = smtp.open, c:send() c:close()
+* fazer com que a socket.source e socket.sink sejam "selectable".
+* change mime.eol to output marker on detection of first candidate, instead
+  of on the second. that way it works in one pass for strings that end with 
+  one candidate.
+* unify backbone of smtp and ftp
+* unify filter and send/receive callback. new sink/source/pump idea.
+* get rid of aux_optlstring
+* get rid of unpack in mime.lua
+* create socket.(sink|source).simplify 
+* break chain into a simpler binary chain and a complex (recursive) one. 
+* Create a passive mode option for the FTP (good for firewall).
+* Modules should return their namespace table in the end of the chunk.
 
-colocar pump.all, pump.step e pump.simplify.
-mudar ltn12.html e usar o exemplo source.cat que está muito melhor.
-
-break smtp.send into c = smtp.open, c:send() c:close()
+ajeitar o manual sobre select, mais liberal agora
+conjunto associativo
 
 falar sobre encodet/wrapt/decodet no manual sobre mime
 
 
 RECEIVE MUDOU!!! (partial stuff) COLOCAR NO MANUAL.
 HTTP.lua mudou bastante também.
-
-fazer com que a socket.source e socket.sink sejam "selectable".
-
-change mime.eol to output marker on detection of first candidate, instead
-of on the second. that way it works in one pass for strings that end with 
-one candidate.
+pump.step usado em todo mundo que recebe source ou sink
 
 colocar um userdata com gc metamethod pra chamar sock_close (WSAClose);
 sources ans sinks are always simple in http and ftp and smtp
-unify backbone of smtp and ftp
 expose encode/decode tables to provide extensibility for mime module
 use coroutines instead of fancy filters
-unify filter and send/receive callback. new sink/source/pump idea.
-get rid of aux_optlstring
-wrap sink and sources with a function that performs the replacement
-get rid of unpack in mime.lua
 
 check garbage collection in test*.lua
 pop3???
 
-break chain into a simpler binary chain and a complex (recursive) one. 
 
 add socket.TIMEOUT to be default timeout? 
 
@@ -123,9 +125,7 @@ to do with it.
 
 Make sure nobody can fuck up with the metatables...
 
-Create a passive mode option for the FTP (good for firewall).
 
-Modules should return their namespace table in the end of the chunk.
 
 Adjust dates in all files
 

@@ -33,7 +33,7 @@
 
 <!-- socket +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<h2 id=socket>The LuaSocket namespace</h2> 
+<h2 id=socket>The socket namespace</h2> 
 
 <p>
 The <tt>socket</tt> namespace contains the namespace tables for all
@@ -74,7 +74,120 @@ The function an equivalent function that instead of throwing exceptoins,
 returns <tt><b>nil</b></tt> followed by an error message. 
 </p>
 
-<!-- toip +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- select +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=select> 
+socket.<b>select(</b>recvt, sendt [, timeout]<b>)</b>
+</p>
+
+<p class=description>
+Waits for a number of sockets to change status. 
+</p>
+
+<p class=parameters>
+<tt>Recvt</tt> is an array with the sockets to test for characters
+available for reading. Sockets in the <tt>sendt</tt> array are watched to
+see if it is OK to immediately write on them.  <tt>Timeout</tt> is the
+maximum amount of time (in seconds) to wait for a change in status.  A
+<tt><b>nil</b></tt>, negative or omitted <tt>timeout</tt> value allows the
+function to block indefinitely. <tt>Recvt</tt> and <tt>sendt</tt> can also
+be empty tables or <tt><b>nil</b></tt>. Non-socket values in the arrays
+will be silently ignored.
+</p>
+
+<p class=return> The function returns a table with the sockets ready for
+reading, a table with the sockets ready for writing and an error message.
+The error message is "<tt>timeout</tt>" if a timeout condition was met and
+<tt><b>nil</b></tt> otherwise.  The returned tables are associative, to
+simplify the test if a specific socket has changed status.  
+</p>
+
+<p class=note>
+<b>Important Note</b>: a known bug in WinSock causes <tt>select</tt> to fail 
+on non-blocking TCP sockets. The function may return a socket as
+writable even though the socket is <em>not</em> ready for sending.
+</p>
+
+<p class=note>
+<b>Important note</b>: calling select with a server socket in the receive
+parameter before a call to accept does <em>not</em> guarantee
+<a href=tcp.html#accept><tt>accept</tt></a> will return immediately. 
+Use the <a href=tcp.html#timeout><tt>timeout</tt></a> 
+method or <tt>accept</tt> might block forever.  
+</p>
+
+<p class=note>
+Interesting note: as mentioned in some manuals, calling select with both
+sets empty and a non-null timeout is a fairly portable way to sleep with
+sub-second precision.
+</p>
+
+
+<!-- sink ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=sink> 
+socket.<b>sink(</b>mode, socket<b>)</b>
+</p>
+
+<p class=description>
+Creates an 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN012</a>
+sink from a stream socket object. 
+</p>
+
+<p class=parameters>
+<tt>Mode</tt> defines the behaviour of the sink. The following
+options are available:
+</p>
+<ul>
+<li> <tt>"http-chunked"</tt>: sends data through socket after applying the
+<em>chunked transfer coding</em>, closing the socket when done;
+<li> <tt>"close-when-done"</tt>: sends all received data through the
+socket, closing the socket when done; 
+<li> <tt>"keep-open"</tt>: sends all received data through the
+socket, leaving it open when done. 
+</ul>
+<p>
+<tt>Socket</tt> is the stream socket object used to send the data. 
+</p>
+
+<p class=return>
+The function returns a sink with the appropriate behavior. 
+</p>
+
+<!-- source +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=source> 
+socket.<b>source(</b>mode, socket [, length]<b>)</b>
+</p>
+
+<p class=description>
+Creates an 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN012</a>
+source from a stream socket object. 
+</p>
+
+<p class=parameters>
+<tt>Mode</tt> defines the behaviour of the source. The following
+options are available:
+</p>
+<ul>
+<li> <tt>"http-chunked"</tt>: receives data from socket and removes the
+<em>chunked transfer coding</em> before returning the data;
+<li> <tt>"by-length"</tt>: receives a fixed number of bytes from the
+socket. This mode requires the extra argument <tt>length</tt>; 
+<li> <tt>"until-closed"</tt>: receives data from a socket until the other
+side closes the connection. 
+</ul>
+<p>
+<tt>Socket</tt> is the stream socket object used to receive the data. 
+</p>
+
+<p class=return>
+The function returns a source with the appropriate behavior. 
+</p>
+
+<!-- try ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=try> 
 socket.<b>try(</b>ret<sub>1</sub>, ret<sub>2</sub> ... ret<sub>N</sub><b>)</b>
