@@ -43,7 +43,7 @@ mesgt = {
 
 -- sink = ltn12.sink.file(io.stdout)
 -- source = ltn12.source.chain(socket.smtp.message(mesgt), socket.smtp.stuff())
--- ltn12.pump(source, sink)
+-- ltn12.pump.all(source, sink)
 
 print(socket.smtp.send {
     rcpt = "<diego@cs.princeton.edu>",

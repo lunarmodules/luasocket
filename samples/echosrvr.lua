@@ -4,7 +4,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-require"luasocket"
+require"socket"
 host = host or "127.0.0.1"
 port = port or 7
 if arg then

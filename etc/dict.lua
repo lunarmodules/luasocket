@@ -4,7 +4,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-require"luasocket"
+require"socket"
 
 function get_status(sock, valid)
 	local line, err = sock:receive()

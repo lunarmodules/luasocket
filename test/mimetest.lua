@@ -1,4 +1,4 @@
-require "luasocket"
+require "socket"
 require "ltn12"
 require "mime"
 

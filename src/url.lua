@@ -6,7 +6,7 @@
 -- RCS ID: $Id$
 ----------------------------------------------------------------------------
 -- make sure LuaSocket is loaded
-require"luasocket"
+require("socket")
 -- get LuaSocket namespace
 local socket = _G[LUASOCKET_LIBNAME]
 -- create url namespace inside LuaSocket namespace
