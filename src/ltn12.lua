@@ -31,55 +31,38 @@ function filter.cycle(low, ctx, extra)
     end
 end
 
--- given the return of a filter, can it have pending data?
-local function pending(s)
-    return s ~= "" and s
-end
-
--- chains two filters together
-local function chain2(f1, f2)
-    local cf1, cf2
-    return function(chunk)
-        -- if f2 has pending data, service it first, always
-        if pending(cf2) then
-            cf2 = f2(cf1)
-            if pending(cf2) then return cf2 end
-        end
-        -- here either f2 was already empty or we just found out it is
-        -- we get filtered data from f1
-        cf1 = f1(chunk)
-        -- make sure next time we call f1 to get pending data, 
-        -- we don't pass the same chunk again 
-        if chunk then chunk = "" end 
-        -- while there is data in f1
-        while pending(cf1) do
-            -- pass the new data to f2
-            cf2 = f2(cf1)
-            -- if f2 produced something, return it
-            if pending(cf2) then
-                -- make sure next time we call f2 to get pending data, 
-                -- we don't pass the same chunk again 
-                if cf1 then cf1 = "" end
-                return cf2
-            end
-            -- here f2 is still not satisfied with the amount of data
-            -- f1 produced. we keep trying.
-            cf1 = f1(chunk)
-        end
-        -- here f1 was empty or it became empty without managing
-        -- to produce enough data for f2 to produce something
-        cf2 = f2(cf1)
-        return cf2
-    end
-end
-
--- chains a bunch of filters together
+-- chains a bunch of filters together 
+-- by Wim Couwenberg
 function filter.chain(...)
-    local f = arg[1]
-    for i = 2, table.getn(arg) do
-        f = chain2(f, arg[i])
+    local current = 1
+    local bottom = 1
+    local top = table.getn(arg)
+    local retry = "" 
+    return function(chunk)
+        if chunk ~= retry then
+            current = bottom
+            retry = chunk and retry
+        end
+        repeat
+            if current == bottom then
+                chunk = arg[current](chunk)
+                if chunk == "" or bottom == top then return chunk
+                elseif chunk then current = current + 1
+                else 
+                    bottom = bottom + 1 
+                    current = bottom
+                end
+            else
+                chunk = arg[current](chunk or "")
+                if chunk == "" then
+                    chunk = retry
+                    current = current - 1
+                elseif current == top then return chunk
+                else current = current + 1
+                end
+            end
+        until false
     end
-    return f
 end
 
 -----------------------------------------------------------------------------

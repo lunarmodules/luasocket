@@ -4,7 +4,7 @@ new scheme to choose family/protocol of object to create
 change ltn13 to make sure drawbacks are obvious
     - check discussion
 make sure errors not thrown by try() are not caught by protect()
-use wim's filter.chain
+use wim's filter.chain or something better
 use mike's "don't set to blocking before closing unless needed" patch?
 take a look at DB's smtp patch (add "extra argument" table)
 move wsocket.c:sock_send kludge to buffer.c:sendraw (probably)?
