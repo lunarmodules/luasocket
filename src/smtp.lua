@@ -29,7 +29,6 @@ end
 -----------------------------------------------------------------------------
 local try_send = function(sock, line)
     local err = sock:send(line .. "\r\n")
-print(line)
     if err then sock:close() end
     return err
 end
@@ -47,14 +46,12 @@ local get_answer = function(control)
     local line, err = control:receive()
     local answer = line
     if err then return nil, err end
-print(line)
     _,_, code, sep = strfind(line, "^(%d%d%d)(.)")
     if not code or not sep then return nil, answer end
     if sep == "-" then -- answer is multiline
         repeat 
             line, err = control:receive()
             if err then return nil, err end
-print(line)
             _,_, lastcode, sep = strfind(line, "^(%d%d%d)(.)")
             answer = answer .. "\n" .. line
         until code == lastcode and sep == " " -- answer ends with same code
