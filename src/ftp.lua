@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------
--- Simple FTP support for the Lua language using the LuaSocket toolkit.
+-- Simple FTP support for the Lua language using the LuaSocket 1.2 toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
 -- Conforming to: RFC 959
@@ -170,20 +170,22 @@ end
 -- Input
 --   file: abolute path to file
 -- Returns
---   file: filename
---   path: table with directories to reach filename
---   isdir: is it a directory or a file
+--   a table with the following fields
+--     name: filename
+--     path: directory to file
+--     isdir: is it a directory?
 -----------------------------------------------------------------------------
 local split_path  = function(file)
-	local path = {}
-	local isdir
-	file = file or "/"
-	-- directory ends with a '/'
-	_,_, isdir = strfind(file, "([/])$")
-	gsub(file, "([^/]+)", function (dir) tinsert(%path, dir) end)
-	if not isdir then file = tremove(path)
-	else file = nil end
-	return file, path, isdir
+    local parsed = {}
+    file = gsub(file, "(/)$", function(i) %parsed.isdir = i end)
+    if not parsed.isdir then
+        file = gsub(file, "([^/]+)$", function(n) %parsed.name = n end)
+    end
+    file = gsub(file, "/$", "")
+    file = gsub(file, "^/", "")
+    if file == "" then file = nil end
+    parsed.path = file
+    if parsed.path or parsed.name or parsed.isdir then return parsed end
 end
 
 -----------------------------------------------------------------------------
@@ -226,40 +228,44 @@ end
 -- Change to target directory
 -- Input
 --   control: socket for control connection with server
---   path: array with directories in order
+--   path: directory to change to
 -- Returns
 --   code: nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
 local cwd = function(control, path)
 	local code, answer = 250, "Home directory used"
-	for i = 1, getn(path) do
-		code, answer = %try_command(control, "cwd", path[i], {250})
-		if not code then return nil, answer end
+	if path then
+		code, answer = %try_command(control, "cwd", path, {250})
 	end
 	return code, answer
 end
 
 -----------------------------------------------------------------------------
--- Start data connection with server
+-- Change to target directory
 -- Input
---   control: control connection with server
+--   control: socket for control connection with server
 -- Returns
---   data: socket for data connection with server, nil if error
---   answer: server answer or error message
+--   server: server socket bound to local address, nil if error
+--   answer: error message if any
 -----------------------------------------------------------------------------
-local start_dataconnection = function(control)
-	-- ask for passive data connection
-	local code, answer = %try_command(control, "pasv", nil, {227})
-	if not code then return nil, answer end
-	-- get data connection parameters from server reply
-	local host, port = %get_pasv(answer)
-	if not host or not port then return nil, answer end
-	-- start data connection with given parameters
-	local data, err = connect(host, port)
-	if not data then return nil, err end
-	data:timeout(%TIMEOUT)
-	return data
+local port = function(control)
+	local code, answer
+	local server, ctl_ip
+	ctl_ip, answer = control:getsockname()
+	server, answer = bind(ctl_ip, 0)
+	server:timeout(%TIMEOUT)
+	local ip, p, ph, pl
+	ip, p = server:getsockname()
+	pl = mod(p, 256)
+	ph = (p - pl)/256
+    local arg = gsub(format("%s,%d,%d", ip, ph, pl), "%.", ",")
+	code, answer = %try_command(control, "port", arg, {200})
+	if not code then 
+		control:close()
+		server:close()
+		return nil, answer
+	else return server end
 end
 
 -----------------------------------------------------------------------------
@@ -281,22 +287,21 @@ end
 -- Retrieves file or directory listing
 -- Input
 --   control: control connection with server
---   data: data connection with server
+--   server: server socket bound to local address
 --   file: file name under current directory
 --   isdir: is file a directory name?
 -- Returns
 --   file: string with file contents, nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local retrieve_file = function(control, data, file, isdir)
+local retrieve_file = function(control, server, file, isdir)
+	local data
 	-- ask server for file or directory listing accordingly
 	if isdir then code, answer = %try_command(control, "nlst", file, {150, 125})
 	else code, answer = %try_command(control, "retr", file, {150, 125}) end
-	if not code then 
-		control:close()
-		data:close()
-		return nil, answer 
-	end
+	data, answer = server:accept()
+	server:close()
+	if not data then return nil, answer end
 	-- download whole file
 	file, err = data:receive("*a")
 	data:close()
@@ -314,19 +319,23 @@ end
 -- Stores a file
 -- Input
 --   control: control connection with server
---   data: data connection with server
+--   server: server socket bound to local address
 --   file: file name under current directory
 --   bytes: file contents in string 
 -- Returns
---   file: string with file contents, nil if error
+--   code: return code, nil if error
 --   answer: server answer or error message
 -----------------------------------------------------------------------------
-local store_file = function (control, data, file, bytes)
+local store_file = function (control, server, file, bytes)
+	local data
 	local code, answer = %try_command(control, "stor", file, {150, 125})
 	if not code then 
 		data:close()
 		return nil, answer 
 	end
+	data, answer = server:accept()
+	server:close()
+	if not data then return nil, answer end
 	-- send whole file and close connection to mark file end
 	answer = data:send(bytes)
 	data:close()
@@ -362,8 +371,8 @@ end
 --   err: error message if any
 -----------------------------------------------------------------------------
 function ftp_get(url, type)
-	local control, data, err
-	local answer, code, server, file, path
+	local control, server, data, err
+	local answer, code, server, pfile, file
 	parsed = %split_url(url, {user = "anonymous", port = 21, pass = %EMAIL})
 	-- start control connection
 	control, err = connect(parsed.host, parsed.port)
@@ -376,21 +385,22 @@ function ftp_get(url, type)
 	code, answer = %login(control, parsed.user, parsed.pass)
 	if not code then return nil, answer end
 	-- go to directory
-	file, path, isdir = %split_path(parsed.path)
-	code, answer = %cwd(control, path)
+	pfile = %split_path(parsed.path)
+	if not pfile then return nil, "invalid path" end
+	code, answer = %cwd(control, pfile.path)
 	if not code then return nil, answer end
 	-- change to binary type?
 	code, answer = %change_type(control, type)
 	if not code then return nil, answer end
-	-- start data connection
-	data, answer = %start_dataconnection(control)
-	if not data then return nil, answer end
+	-- setup passive connection
+	server, answer = %port(control)
+	if not server then return nil, answer end
 	-- ask server to send file or directory listing
-	file, answer = %retrieve_file(control, data, file, isdir)
+	file, answer = %retrieve_file(control, server, pfile.name, pfile.isdir)
 	if not file then return nil, answer end
 	-- disconnect
 	%logout(control)
-	-- return whatever file we received plus a possible error
+	-- return whatever file we received plus a possible error message
 	return file, answer
 end
 
@@ -405,7 +415,7 @@ end
 -----------------------------------------------------------------------------
 function ftp_put(url, bytes, type)
 	local control, data
-	local answer, code, server, file, path
+	local answer, code, server, file, pfile
 	parsed = %split_url(url, {user = "anonymous", port = 21, pass = %EMAIL})
 	-- start control connection
 	control, answer = connect(parsed.host, parsed.port)
@@ -418,20 +428,21 @@ function ftp_put(url, bytes, type)
 	code, answer = %login(control, parsed.user, parsed.pass)
 	if not code then return answer end
 	-- go to directory
-	file, path, isdir = %split_path(parsed.path)
-	code, answer = %cwd(control, path)
+	pfile = %split_path(parsed.path)
+	if not pfile or pfile.isdir then return "invalid path" end
+	code, answer = %cwd(control, pfile.path)
 	if not code then return answer end
 	-- change to binary type?
 	code, answer = %change_type(control, type)
 	if not code then return answer end
-	-- start data connection
-	data, answer = %start_dataconnection(control)
-	if not data then return answer end
-	-- ask server to send file or directory listing
-	code, answer = %store_file(control, data, file, bytes)
+	-- setup passive connection
+	server, answer = %port(control)
+	if not server then return answer end
+	-- ask server to send file
+	code, answer = %store_file(control, server, pfile.name, bytes)
 	if not code then return answer end
 	-- disconnect
 	%logout(control)
-	-- return whatever file we received plus a possible error
+	-- no errors
 	return nil
 end
