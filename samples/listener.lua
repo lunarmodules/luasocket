@@ -1,5 +1,5 @@
-host = "localhost"
-port = 8080
+host = host or "localhost"
+port = host or 8080
 if arg then
 	host = arg[1] or host
 	port = arg[2] or port
