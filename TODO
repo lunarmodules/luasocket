@@ -19,6 +19,10 @@
 * Separar as classes em arquivos
 * Retorno de sendto em datagram sockets pode ser refused
 
+change mime.eol to output marker on detection of first candidate, instead
+of on the second. that way it works in one pass for strings that end with 
+one candidate.
+
 colocar um userdata com gc metamethod pra chamar sock_close (WSAClose);
 sources ans sinks are always simple in http and ftp and smtp
 unify backbone of smtp and ftp

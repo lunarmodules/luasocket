@@ -22,6 +22,8 @@ while 1 do
             print("server: closing connection...")
             break
         end
+print(command);
+
         (loadstring(command))()
     end
 end

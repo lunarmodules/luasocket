@@ -619,28 +619,27 @@ static int mime_global_qpwrp(lua_State *L)
 * end of line markers each, but \r\n, \n\r etc will only issue *one*
 * marker.  This covers Mac OS, Mac OS X, VMS, Unix and DOS, as well as
 * probably other more obscure conventions.
+*
+* c is the current character being processed
+* last is the previous character
 \*-------------------------------------------------------------------------*/
 #define eolcandidate(c) (c == CR || c == LF)
-static size_t eolprocess(int c, int ctx, const char *marker, 
+static int eolprocess(int c, int last, const char *marker, 
         luaL_Buffer *buffer)
 {
-    if (eolcandidate(ctx)) {
-        luaL_addstring(buffer, marker);
-        if (eolcandidate(c)) {
-            if (c == ctx)
-                luaL_addstring(buffer, marker);
+    if (eolcandidate(c)) {
+        if (eolcandidate(last)) {
+            if (c == last) luaL_addstring(buffer, marker);
             return 0;
         } else {
-            luaL_putchar(buffer, c);
-            return 0;
+            luaL_addstring(buffer, marker);
+            return c;
         }
     } else {
-        if (!eolcandidate(c)) {
-            luaL_putchar(buffer, c);
-            return 0;
-        } else
-            return c;
+        luaL_putchar(buffer, c);
+        return 0;
     }
+
 }
 
 /*-------------------------------------------------------------------------*\
@@ -661,8 +660,7 @@ static int mime_global_eol(lua_State *L)
     luaL_buffinit(L, &buffer);
     /* if the last character was a candidate, we output a new line */ 
     if (!input) {
-       if (eolcandidate(ctx)) lua_pushstring(L, marker);
-       else lua_pushnil(L);
+       lua_pushnil(L);
        lua_pushnumber(L, 0);
        return 2;
     }

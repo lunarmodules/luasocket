@@ -171,9 +171,8 @@ function sink.file(handle, io_err)
         return function(chunk, err)
             if not chunk then 
                 handle:close()
-                return nil, err
-            end
-            return handle:write(chunk)
+                return 1
+            else return handle:write(chunk) end
         end
     else return sink.error(io_err or "unable to open file") end
 end

@@ -13,9 +13,9 @@
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-static int recvraw(lua_State *L, p_buf buf, size_t wanted);
-static int recvline(lua_State *L, p_buf buf);
-static int recvall(lua_State *L, p_buf buf);
+static int recvraw(p_buf buf, size_t wanted, luaL_Buffer *b);
+static int recvline(p_buf buf, luaL_Buffer *b);
+static int recvall(p_buf buf, luaL_Buffer *b);
 static int buf_get(p_buf buf, const char **data, size_t *count);
 static void buf_skip(p_buf buf, size_t count);
 static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent);
@@ -73,42 +73,34 @@ int buf_meth_send(lua_State *L, p_buf buf)
 \*-------------------------------------------------------------------------*/
 int buf_meth_receive(lua_State *L, p_buf buf)
 {
-    int top = lua_gettop(L);
-    int arg, err = IO_DONE;
+    int err = IO_DONE, top = lua_gettop(L);
     p_tm tm = buf->tm;
+    luaL_Buffer b;
+    luaL_buffinit(L, &b);
     tm_markstart(tm);
-    /* push default pattern if need be */
-    if (top < 2) {
-        lua_pushstring(L, "*l");
-        top++;
-    }
-    /* make sure we have enough stack space for all returns */
-    luaL_checkstack(L, top+LUA_MINSTACK, "too many arguments");
     /* receive all patterns */
-    for (arg = 2; arg <= top && err == IO_DONE; arg++) {
-        if (!lua_isnumber(L, arg)) {
-            static const char *patternnames[] = {"*l", "*a", NULL};
-            const char *pattern = lua_isnil(L, arg) ? 
-                "*l" : luaL_checkstring(L, arg);
-            /* get next pattern */
-            switch (luaL_findstring(pattern, patternnames)) {
-                case 0: /* line pattern */
-                    err = recvline(L, buf); break;
-                case 1: /* until closed pattern */
-                    err = recvall(L, buf); 
-                    if (err == IO_CLOSED) err = IO_DONE;
-                    break;
-                default: /* else it is an error */
-                    luaL_argcheck(L, 0, arg, "invalid receive pattern");
-                    break;
-            }
+    if (!lua_isnumber(L, 2)) {
+        static const char *patternnames[] = {"*l", "*a", NULL};
+        const char *pattern = luaL_optstring(L, 2, "*l");
+        /* get next pattern */
+        int p = luaL_findstring(pattern, patternnames);
+        if (p == 0) err = recvline(buf, &b);
+        else if (p == 1) err = recvall(buf, &b); 
+        else luaL_argcheck(L, 0, 2, "invalid receive pattern");
         /* get a fixed number of bytes */
-        } else err = recvraw(L, buf, (size_t) lua_tonumber(L, arg));
+    } else err = recvraw(buf, (size_t) lua_tonumber(L, 2), &b);
+    /* check if there was an error */
+    if (err != IO_DONE) {
+        luaL_pushresult(&b);
+        io_pusherror(L, err); 
+        lua_pushvalue(L, -2); 
+        lua_pushnil(L);
+        lua_replace(L, -4);
+    } else {
+        luaL_pushresult(&b);
+        lua_pushnil(L);
+        lua_pushnil(L);
     }
-    /* push nil for each pattern after an error */
-    for ( ; arg <= top; arg++) lua_pushnil(L);
-    /* last return is an error code */
-    io_pusherror(L, err);
 #ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
     lua_pushnumber(L, (tm_gettime() - tm_getstart(tm))/1000.0);
@@ -150,21 +142,18 @@ int sendraw(p_buf buf, const char *data, size_t count, size_t *sent)
 * Reads a fixed number of bytes (buffered)
 \*-------------------------------------------------------------------------*/
 static 
-int recvraw(lua_State *L, p_buf buf, size_t wanted)
+int recvraw(p_buf buf, size_t wanted, luaL_Buffer *b)
 {
     int err =  IO_DONE;
     size_t total = 0;
-    luaL_Buffer b;
-    luaL_buffinit(L, &b);
     while (total < wanted && (err == IO_DONE || err == IO_RETRY)) {
         size_t count; const char *data;
         err = buf_get(buf, &data, &count);
         count = MIN(count, wanted - total);
-        luaL_addlstring(&b, data, count);
+        luaL_addlstring(b, data, count);
         buf_skip(buf, count);
         total += count;
     }
-    luaL_pushresult(&b);
     return err;
 }
 
@@ -172,19 +161,17 @@ int recvraw(lua_State *L, p_buf buf, size_t wanted)
 * Reads everything until the connection is closed (buffered)
 \*-------------------------------------------------------------------------*/
 static 
-int recvall(lua_State *L, p_buf buf)
+int recvall(p_buf buf, luaL_Buffer *b)
 {
     int err = IO_DONE;
-    luaL_Buffer b;
-    luaL_buffinit(L, &b);
     while (err == IO_DONE || err == IO_RETRY) {
         const char *data; size_t count;
         err = buf_get(buf, &data, &count);
-        luaL_addlstring(&b, data, count);
+        luaL_addlstring(b, data, count);
         buf_skip(buf, count);
     }
-    luaL_pushresult(&b);
-    return err;
+    if (err == IO_CLOSED) return IO_DONE;
+    else return err;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -192,18 +179,16 @@ int recvall(lua_State *L, p_buf buf)
 * are not returned by the function and are discarded from the buffer
 \*-------------------------------------------------------------------------*/
 static 
-int recvline(lua_State *L, p_buf buf)
+int recvline(p_buf buf, luaL_Buffer *b)
 {
     int err = IO_DONE;
-    luaL_Buffer b;
-    luaL_buffinit(L, &b);
     while (err == IO_DONE || err == IO_RETRY) {
         size_t count, pos; const char *data;
         err = buf_get(buf, &data, &count);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
             /* we ignore all \r's */
-            if (data[pos] != '\r') luaL_putchar(&b, data[pos]);
+            if (data[pos] != '\r') luaL_putchar(b, data[pos]);
             pos++;
         }
         if (pos < count) { /* found '\n' */
@@ -212,7 +197,6 @@ int recvline(lua_State *L, p_buf buf)
         } else /* reached the end of the buffer */
             buf_skip(buf, pos);
     }
-    luaL_pushresult(&b);
     return err;
 }
 

@@ -6,7 +6,7 @@ mesgt = {
     body = {
         preamble = "Some attatched stuff",
         [1] = {
-            body = "Testing stuffing.\r\n.\r\nGot you.\r\n.Hehehe.\r\n"
+            body = mime.eol(0, "Testing stuffing.\n.\nGot you.\n.Hehehe.\n")
         },
         [2] = {
             headers = {
@@ -29,7 +29,7 @@ mesgt = {
                 ["content-transfer-encoding"] = "QUOTED-PRINTABLE"
             },
             body = ltn12.source.chain(
-                ltn12.source.file(io.open("message.lua", "rb")),
+                ltn12.source.file(io.open("testmesg.lua", "rb")),
                 ltn12.filter.chain(
                     mime.normalize(),
                     mime.encode("quoted-printable"),
@@ -46,8 +46,8 @@ mesgt = {
 -- ltn12.pump(source, sink)
 
 print(socket.smtp.send {
-    rcpt = {"<db@werx4.com>", "<diego@cs.princeton.edu>"},
+    rcpt = "<diego@cs.princeton.edu>",
     from = "<diego@cs.princeton.edu>",
     source = socket.smtp.message(mesgt),
-    server = "smtp.princeton.edu"
+    server = "mail.cs.princeton.edu"
 })

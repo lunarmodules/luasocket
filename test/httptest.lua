@@ -8,7 +8,7 @@ dofile("noglobals.lua")
 local host, proxy, request, response, index_file
 local ignore, expect, index, prefix, cgiprefix, index_crlf
 
-socket.http.TIMEOUT = 5
+socket.http.TIMEOUT = 10
 
 local t = socket.time()
 
@@ -49,7 +49,9 @@ local check_result = function(response, expect, ignore)
 	for i,v in response do
 		if not ignore[i] then
 			if v ~= expect[i] then 
-                print(string.sub(tostring(v), 1, 70))
+                local f = io.open("err", "w")
+                f:write(tostring(v), "\n\n versus\n\n", tostring(expect[i]))
+                f:close()
                 fail(i .. " differs!") 
             end
 		end
@@ -57,8 +59,10 @@ local check_result = function(response, expect, ignore)
 	for i,v in expect do
 		if not ignore[i] then
 			if v ~= response[i] then 
+                local f = io.open("err", "w")
+                f:write(tostring(response[i]), "\n\n versus\n\n", tostring(v))
                 v = string.sub(type(v) == "string" and v or "", 1, 70)
-                print(string.sub(tostring(v), 1, 70))
+                f:close()
                 fail(i .. " differs!") 
             end
 		end
@@ -67,12 +71,14 @@ local check_result = function(response, expect, ignore)
 end
 
 local check_request = function(request, expect, ignore)
+    local t
+    if not request.sink then
+        request.sink, t = ltn12.sink.table(t)
+    end
+    request.source = request.source or 
+        (request.body and ltn12.source.string(request.body))
 	local response = socket.http.request(request)
-    check_result(response, expect, ignore)
-end
-
-local check_request_cb = function(request, expect, ignore)
-	local response = socket.http.request_cb(request)
+    if t and table.getn(t) > 0 then response.body = table.concat(t) end
     check_result(response, expect, ignore)
 end
 
@@ -183,7 +189,7 @@ ignore = {
 	status = 1,
 	headers = 1
 }
-check_request_cb(request, expect, ignore)
+check_request(request, expect, ignore)
 back = readfile(index_file .. "-back")
 check(back == index)
 os.remove(index_file .. "-back")
@@ -225,18 +231,10 @@ ignore = {
 	status = 1,
 	headers = 1
 }
-check_request_cb(request, expect, ignore)
+check_request(request, expect, ignore)
 back = readfile(index_file .. "-back")
 check(back == index)
 os.remove(index_file .. "-back")
-
-------------------------------------------------------------------------
-io.write("testing simple post function with table args: ")
-back = socket.http.post {
-	url = "http://" .. host .. cgiprefix .. "/cat",
-	body = index
-}
-check(back == index)
 
 ------------------------------------------------------------------------
 io.write("testing http redirection: ")
@@ -436,15 +434,6 @@ check_request(request, expect, ignore)
 local body
 io.write("testing simple get function: ")
 body = socket.http.get("http://" .. host .. prefix .. "/index.html")
-check(body == index)
-
-------------------------------------------------------------------------
-io.write("testing simple get function with table args: ")
-body = socket.http.get {
-	url = "http://really:wrong@" .. host .. prefix .. "/auth/index.html",
-	user = "luasocket",
-	password = "password"
-}
 check(body == index)
 
 ------------------------------------------------------------------------

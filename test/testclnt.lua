@@ -17,14 +17,12 @@ function warn(...)
     io.stderr:write("WARNING: ", s, "\n")
 end
 
-pad = string.rep(" ", 8192)
-
 function remote(...)
     local s = string.format(unpack(arg))
     s = string.gsub(s, "\n", ";")
     s = string.gsub(s, "%s+", " ")
     s = string.gsub(s, "^%s*", "")
-    control:send(pad, s, "\n")
+    control:send(s, "\n")
     control:receive()
 end
 
@@ -122,7 +120,13 @@ remote (string.format("str = data:receive(%d)",
     sent, err = data:send(p1, p2, p3, p4)
     if err then fail(err) end
 remote "data:send(str); data:close()"
-    bp1, bp2, bp3, bp4, err = data:receive("*l", "*l", string.len(p3), "*a")
+    bp1, err = data:receive()
+    if err then fail(err) end
+    bp2, err = data:receive()
+    if err then fail(err) end
+    bp3, err = data:receive(string.len(p3))
+    if err then fail(err) end
+    bp4, err = data:receive("*a")
     if err then fail(err) end
     if bp1.."\n" == p1 and bp2.."\r\n" == p2 and bp3 == p3 and bp4 == p4 then
         pass("patterns match")
@@ -186,7 +190,7 @@ end
 ------------------------------------------------------------------------
 function test_totaltimeoutreceive(len, tm, sl)
     reconnect()
-    local str, err, total
+    local str, err, partial
     pass("%d bytes, %ds total timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
         data:settimeout(%d)
@@ -198,9 +202,9 @@ function test_totaltimeoutreceive(len, tm, sl)
         data:send(str)
     ]], 2*tm, len, sl, sl))
     data:settimeout(tm, "total")
-    str, err, elapsed = data:receive(2*len)
+    str, err, partial, elapsed = data:receive(2*len)
     check_timeout(tm, sl, elapsed, err, "receive", "total", 
-        string.len(str) == 2*len)
+        string.len(str or partial) == 2*len)
 end
 
 ------------------------------------------------------------------------
@@ -226,7 +230,7 @@ end
 ------------------------------------------------------------------------
 function test_blockingtimeoutreceive(len, tm, sl)
     reconnect()
-    local str, err, total
+    local str, err, partial
     pass("%d bytes, %ds blocking timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
         data:settimeout(%d)
@@ -238,9 +242,9 @@ function test_blockingtimeoutreceive(len, tm, sl)
         data:send(str)
     ]], 2*tm, len, sl, sl))
     data:settimeout(tm)
-    str, err, elapsed = data:receive(2*len)
+    str, err, partial, elapsed = data:receive(2*len)
     check_timeout(tm, sl, elapsed, err, "receive", "blocking", 
-        string.len(str) == 2*len)
+        string.len(str or partial) == 2*len)
 end
 
 ------------------------------------------------------------------------
@@ -298,7 +302,7 @@ end
 
 ------------------------------------------------------------------------
 function test_closed()
-    local back, err
+    local back, partial, err
     local str = 'little string'
     reconnect()
     pass("trying read detection")
@@ -308,10 +312,10 @@ function test_closed()
         data = nil
     ]], str))
     -- try to get a line 
-    back, err = data:receive()
-    if not err then fail("shold have gotten 'closed'.")
+    back, err, partial = data:receive()
+    if not err then fail("should have gotten 'closed'.")
     elseif err ~= "closed" then fail("got '"..err.."' instead of 'closed'.")
-    elseif str ~= back then fail("didn't receive partial result.")
+    elseif str ~= partial then fail("didn't receive partial result.")
     else pass("graceful 'closed' received") end
     reconnect()
     pass("trying write detection")
@@ -456,7 +460,6 @@ test_methods(socket.udp(), {
     "setpeername",
     "setsockname",
     "settimeout", 
-    "shutdown",
 })
 
 test("select function")
@@ -479,6 +482,7 @@ test_closed()
 test("accept function: ")
 accept_timeout()
 accept_errors()
+
 
 
 test("mixed patterns")
