@@ -153,7 +153,8 @@ static int meth_accept(lua_State *L) {
         /* initialize structure fields */
         sock_setnonblocking(&sock);
         clnt->sock = sock;
-        io_init(&clnt->io, (p_send)sock_send, (p_recv)sock_recv, &clnt->sock);
+        io_init(&clnt->io, (p_send)sock_send, (p_recv)sock_recv, 
+                (p_geterr) sock_geterr, &clnt->sock);
         tm_init(&clnt->tm, -1, -1);
         buf_init(&clnt->buf, &clnt->io, &clnt->tm);
         return 1;
@@ -169,14 +170,21 @@ static int meth_accept(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static const char *unix_trybind(p_unix unix, const char *path) {
     struct sockaddr_un local;
-    int len = strlen(path);
+    size_t len = strlen(path);
     const char *err;
-    if (len >= 92) return "path too long";
+    if (len >= sizeof(local.sun_path)) return "path too long";
     memset(&local, 0, sizeof(local));
     strcpy(local.sun_path, path);
     local.sun_family = AF_UNIX;
+#ifdef UNIX_HAS_SUN_LEN
+    local.sun_len = sizeof(local.sun_family) + sizeof(local.sun_len) 
+        + len + 1;
+    err = sock_bind(&unix->sock, (SA *) &local, local.sun_len);
+
+#else 
     err = sock_bind(&unix->sock, (SA *) &local, 
             sizeof(local.sun_family) + len);
+#endif
     if (err) sock_destroy(&unix->sock);
     return err; 
 }
@@ -201,14 +209,20 @@ static const char *unix_tryconnect(p_unix unix, const char *path)
 {
     struct sockaddr_un remote;
     const char *err;
-    int len = strlen(path);
-    if (len >= 92) return "path too long";
+    size_t len = strlen(path);
+    if (len >= sizeof(remote.sun_path)) return "path too long";
     memset(&remote, 0, sizeof(remote));
     strcpy(remote.sun_path, path);
     remote.sun_family = AF_UNIX;
     tm_markstart(&unix->tm);
+#ifdef UNIX_HAS_SUN_LEN
+    remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len) 
+        + len + 1;
+    err = sock_connect(&unix->sock, (SA *) &remote, remote.sun_len, &unix->tm);
+#else
     err = sock_connect(&unix->sock, (SA *) &remote, 
             sizeof(remote.sun_family) + len, &unix->tm);
+#endif
     if (err) sock_destroy(&unix->sock);
     return err;
 }
@@ -312,7 +326,8 @@ static int global_create(lua_State *L) {
         /* initialize remaining structure fields */
         sock_setnonblocking(&sock);
         unix->sock = sock;
-        io_init(&unix->io, (p_send) sock_send, (p_recv) sock_recv, &unix->sock);
+        io_init(&unix->io, (p_send) sock_send, (p_recv) sock_recv, 
+                (p_geterr) sock_geterr, &unix->sock);
         tm_init(&unix->tm, -1, -1);
         buf_init(&unix->buf, &unix->io, &unix->tm);
         return 1;
