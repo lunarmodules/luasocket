@@ -21,7 +21,7 @@ Filters can be seen as internal nodes in a network through which data flows, pot
 
 Finally, filters, chains, sources, and sinks are all passive entities: they need to be repeatedly called in order for something to happen.  ''Pumps'' provide the driving force that pushes data through the network, from a source to a sink.
 
- Hopefully, these concepts will become clear with examples. In the following sections, we start with simplified interfaces, which we improve several times until we can find no obvious shortcommings. The evolution we present is not contrived: it follows the steps we followed ourselves as we consolidated our understanding of these concepts. 
+ Hopefully, these concepts will become clear with examples. In the following sections, we start with simplified interfaces, which we improve several times until we can find no obvious shortcomings. The evolution we present is not contrived: it follows the steps we followed ourselves as we consolidated our understanding of these concepts. 
 
 == A concrete example ==
 
@@ -141,7 +141,7 @@ while 1 do
 end
 }}}
 
-The chaining factory is very simple. All it does is return a function that passes data through all filters and returns the result to the user.  It uses the simpler auxiliar function that knows how to chain two filters together. In the auxiliar function, special care must be taken if the chunk is final. This is because the final chunk notification has to be pushed through both filters in turn. Thanks to the chain factory, it is easy to perform the Quoted-Printable conversion, as the above example shows.
+The chaining factory is very simple. All it does is return a function that passes data through all filters and returns the result to the user.  It uses the simpler auxiliary function that knows how to chain two filters together. In the auxiliary function, special care must be taken if the chunk is final. This is because the final chunk notification has to be pushed through both filters in turn. Thanks to the chain factory, it is easy to perform the Quoted-Printable conversion, as the above example shows.
 
 ===Sources, sinks, and pumps===
 
@@ -179,9 +179,9 @@ io.write(process(nil))
 
 Notice that the last call to the filter obtains the last chunk of processed data. The loop terminates when the source returns {{nil}} and therefore we need that final call outside of the loop.
 
-==Mantaining state between calls==
+==Maintaining state between calls==
 
-It is often the case that a source needs to change its behaviour after some event. One simple example would be a file source that wants to make sure it returns {{nil}} regardless of how many times it is called after the end of file, avoiding attempts to read past the end of the file.  Another example would be a source that returns the contents of several files, as if they were concatenated, moving from one file to the next until the end of the last file is reached.
+It is often the case that a source needs to change its behavior after some event. One simple example would be a file source that wants to make sure it returns {{nil}} regardless of how many times it is called after the end of file, avoiding attempts to read past the end of the file.  Another example would be a source that returns the contents of several files, as if they were concatenated, moving from one file to the next until the end of the last file is reached.
 
 One way to implement this kind of source is to have the factory declare extra state variables that the source can use via lexical scoping. Our file source could set the file handle itself to {{nil}} when it detects the end-of-file.  Then, every time the source is called, it could check if the handle is still valid and act accordingly:
         {{{
@@ -250,7 +250,7 @@ function source.cat(...)
 end
 }}}
 
-The factory creates two functions. The first is an auxiliar that does all the work, in the form of a coroutine. It reads a chunk from one of the sources. If the chunk is {{nil}}, it moves to the next source, otherwise it just yields returning the chunk. When it is resumed, it continues from where it stopped and tries to read the next chunk.  The second function is the source itself, and just resumes the execution of the auxiliar coroutine, returning to the user whatever chunks it returns (skipping the first result that tells us if the coroutine terminated). Imagine writing the same function without coroutines and you will notice the simplicity of this implementation. We will use coroutines again when we make the filter interface more powerful. 
+The factory creates two functions. The first is an auxiliary that does all the work, in the form of a coroutine. It reads a chunk from one of the sources. If the chunk is {{nil}}, it moves to the next source, otherwise it just yields returning the chunk. When it is resumed, it continues from where it stopped and tries to read the next chunk.  The second function is the source itself, and just resumes the execution of the auxiliary coroutine, returning to the user whatever chunks it returns (skipping the first result that tells us if the coroutine terminated). Imagine writing the same function without coroutines and you will notice the simplicity of this implementation. We will use coroutines again when we make the filter interface more powerful. 
 
 ==Chaining Sources==
 
@@ -353,7 +353,7 @@ The way we split the filters here is not intuitive, on purpose.  Alternatively, 
 
 Turns out we still have a problem. When David Burgess was writing his gzip filter, he noticed that the decompression filter can explode a small input chunk into a huge amount of data. Although we wished we could ignore this problem, we soon agreed we couldn't. The only solution is to allow filters to return partial results, and that is what we chose to do.  After invoking the filter to pass input data, the user now has to loop invoking the filter to find out if it has more output data to return.  Note that these extra calls can't pass more data to the filter. 
 
-More specifically, after passing a chunk of input data to a filter and collecting the first chunk of output data, the user invokes the filter repeatedly, passing the empty string, to get extra output chunks. When the filter itself returns an empty string, the user knows there is no more output data, and can proceed to pass the next input chunk. In the end, after the user passes a {{nil}} notifying the filter that there is no more input data, the filter might still have produced too much output data to return in a single chunk. The user has to loop again, this time passing {{nil}} each time, until the filter itself returns {{nil}} to notify the user it is finaly done.
+More specifically, after passing a chunk of input data to a filter and collecting the first chunk of output data, the user invokes the filter repeatedly, passing the empty string, to get extra output chunks. When the filter itself returns an empty string, the user knows there is no more output data, and can proceed to pass the next input chunk. In the end, after the user passes a {{nil}} notifying the filter that there is no more input data, the filter might still have produced too much output data to return in a single chunk. The user has to loop again, this time passing {{nil}} each time, until the filter itself returns {{nil}} to notify the user it is finally done.
 
 Most filters won't need this extra freedom. Fortunately, the new filter interface is easy to implement. In fact, the end-of-line translation filter we created in the introduction already conforms to it. On the other hand, the chaining function becomes much more complicated. If it wasn't for coroutines, I wouldn't be happy to implement it. Let me know if you can find a simpler implementation that does not use coroutines!
         {{{
@@ -380,7 +380,7 @@ local function chain2(f1, f2)
 end
 }}}
 
-Chaining sources also becomes more complicated, but a similar solution is possible with coroutines. Chaining sinks is just as simple as it has always been. Interstingly, these modifications do not have a measurable negative impact in the the performance of filters that didn't need the added flexibility. They do severely improve the efficiency of filters like the gzip filter, though, and that is why we are keeping them.
+Chaining sources also becomes more complicated, but a similar solution is possible with coroutines. Chaining sinks is just as simple as it has always been. Interestingly, these modifications do not have a measurable negative impact in the the performance of filters that didn't need the added flexibility. They do severely improve the efficiency of filters like the gzip filter, though, and that is why we are keeping them.
 
 ===Final considerations===
 
