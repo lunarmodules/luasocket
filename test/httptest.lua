@@ -55,12 +55,12 @@ end
 
 local check_request = function(request, expect, ignore)
     local t
-    if not request.sink then
-        request.sink, t = ltn12.sink.table(t)
-    end
+    if not request.sink then request.sink, t = ltn12.sink.table() end
     request.source = request.source or 
         (request.body and ltn12.source.string(request.body))
-	local response = http.request(request)
+	local response = {}
+    response.code, response.headers, response.status = 
+        socket.skip(1, http.request(request))
     if t and table.getn(t) > 0 then response.body = table.concat(t) end
     check_result(response, expect, ignore)
 end
@@ -68,8 +68,8 @@ end
 ------------------------------------------------------------------------
 io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
-local back, h, c, e = http.get("http://" .. host .. forth)
-if not back then fail(e) end
+local back, c, h = http.request("http://" .. host .. forth)
+if not back then fail(c) end
 back = url.parse(back)
 if similar(back.query, "this+is+the+query+string") then print("ok")
 else fail(back.query) end
@@ -77,7 +77,7 @@ else fail(back.query) end
 ------------------------------------------------------------------------
 io.write("testing query string correctness: ")
 forth = "this+is+the+query+string"
-back = http.get("http://" .. host .. cgiprefix .. 
+back = http.request("http://" .. host .. cgiprefix .. 
     "/query-string?" .. forth)
 if similar(back, forth) then print("ok")
 else fail("failed!") end
@@ -153,7 +153,7 @@ check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing simple post function: ")
-back = http.post("http://" .. host .. cgiprefix .. "/cat", index)
+back = http.request("http://" .. host .. cgiprefix .. "/cat", index)
 assert(back == index)
 
 ------------------------------------------------------------------------
@@ -378,19 +378,19 @@ check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 local body
-io.write("testing simple get function: ")
-body = http.get("http://" .. host .. prefix .. "/index.html")
+io.write("testing simple request function: ")
+body = http.request("http://" .. host .. prefix .. "/index.html")
 assert(body == index)
 print("ok")
 
 ------------------------------------------------------------------------
 io.write("testing HEAD method: ")
 http.TIMEOUT = 1
-response = http.request {
+local r, c, h = http.request {
   method = "HEAD",
   url = "http://www.cs.princeton.edu/~diego/"
 }
-assert(response and response.headers)
+assert(r and h and c == 200)
 print("ok")
 
 ------------------------------------------------------------------------
@@ -398,7 +398,7 @@ io.write("testing host not found: ")
 local c, e = socket.connect("wronghost", 80)
 local r, re = http.request{url = "http://wronghost/does/not/exist"}
 assert(r == nil and e == re) 
-r, re = http.get("http://wronghost/does/not/exist")
+r, re = http.request("http://wronghost/does/not/exist")
 assert(r == nil and e == re) 
 print("ok")
 
@@ -407,7 +407,7 @@ io.write("testing invalid url: ")
 local c, e = socket.connect("", 80)
 local r, re = http.request{url = host .. prefix}
 assert(r == nil and e == re) 
-r, re = http.get(host .. prefix)
+r, re = http.request(host .. prefix)
 assert(r == nil and e == re) 
 print("ok")
 

@@ -190,7 +190,7 @@ end
 --   corresponding absolute url
 -----------------------------------------------------------------------------
 function absolute(base_url, relative_url)
-    local base = parse(base_url)
+    local base = type(base_url) == "table" and base_url or parse(base_url)
     local relative = parse(relative_url)
     if not base then return relative_url
     elseif not relative then return base_url

@@ -143,117 +143,111 @@ local function adjustheaders(headers, host)
     return lower
 end
 
+local default = {
+    host = "",
+    port = PORT,
+    path ="/",
+    scheme = "http"
+}
+
 local function adjustrequest(reqt)
-    -- parse url with default fields
-    local parsed = url.parse(reqt.url or "", {
-        host = "",
-        port = PORT,
-        path ="/",
-        scheme = "http"
-    })
-    -- explicit info in reqt overrides that given by the URL
-    for i,v in reqt do parsed[i] = v end 
+    -- parse url if provided
+    if reqt.url then
+        local parsed = url.parse(reqt.url, default)
+        -- explicit components override url
+        for i,v in parsed do reqt[i] = reqt[i] or v end
+    end
+    socket.try(reqt.host, "invalid host '" .. tostring(reqt.host) .. "'")
+    socket.try(reqt.path, "invalid path '" .. tostring(reqt.path) .. "'")
     -- compute uri if user hasn't overriden
-    parsed.uri = parsed.uri or uri(parsed)
+    reqt.uri = reqt.uri or uri(reqt)
     -- adjust headers in request
-    parsed.headers = adjustheaders(parsed.headers, parsed.host)
-    return parsed
+    reqt.headers = adjustheaders(reqt.headers, reqt.host)
+    return reqt
 end
 
-local function shouldredirect(reqt, respt)
+local function shouldredirect(reqt, code)
     return (reqt.redirect ~= false) and
-           (respt.code == 301 or respt.code == 302) and
+           (code == 301 or code == 302) and
            (not reqt.method or reqt.method == "GET" or reqt.method == "HEAD")
            and (not reqt.nredirects or reqt.nredirects < 5)
 end
 
-local function shouldauthorize(reqt, respt)
+local function shouldauthorize(reqt, code)
     -- if there has been an authorization attempt, it must have failed
     if reqt.headers and reqt.headers["authorization"] then return nil end
     -- if last attempt didn't fail due to lack of authentication,
     -- or we don't have authorization information, we can't retry
-    return respt.code == 401 and reqt.user and reqt.password
+    return code == 401 and reqt.user and reqt.password
 end
 
-local function shouldreceivebody(reqt, respt)
+local function shouldreceivebody(reqt, code)
     if reqt.method == "HEAD" then return nil end
-    local code = respt.code
     if code == 204 or code == 304 then return nil end
     if code >= 100 and code < 200 then return nil end
     return 1
 end
 
-local requestp, authorizep, redirectp
+-- forward declarations
+local trequest, tauthorize, tredirect
 
-function requestp(reqt)
-    local reqt = adjustrequest(reqt)
-    local respt = {}
-    local con = open(reqt.host, reqt.port)
-    con:sendrequestline(reqt.method, reqt.uri)
-    con:sendheaders(reqt.headers)
-    con:sendbody(reqt.headers, reqt.source, reqt.step)
-    respt.code, respt.status = con:receivestatusline()
-    respt.headers = con:receiveheaders()
-    if shouldredirect(reqt, respt) then 
-        con:close()
-        return redirectp(reqt, respt)
-    elseif shouldauthorize(reqt, respt) then 
-        con:close()
-        return authorizep(reqt, respt)
-    elseif shouldreceivebody(reqt, respt) then
-        con:receivebody(respt.headers, reqt.sink, reqt.step)
-    end
-    con:close()
-    return respt
-end
-
-function authorizep(reqt, respt)
+function tauthorize(reqt)
     local auth = "Basic " ..  (mime.b64(reqt.user .. ":" .. reqt.password))
     reqt.headers["authorization"] = auth
-    return requestp(reqt)
+    return trequest(reqt)
 end
 
-function redirectp(reqt, respt)
-    -- we create a new table to get rid of anything we don't 
-    -- absolutely need, including authentication info
-    local redirt = {
-        method = reqt.method,
-        -- the RFC says the redirect URL has to be absolute, but some
-        -- servers do not respect that
-        url = url.absolute(reqt.url, respt.headers["location"]),
+function tredirect(reqt, headers)
+    -- the RFC says the redirect URL has to be absolute, but some
+    -- servers do not respect that
+    return trequest {
+        url = url.absolute(reqt, headers["location"]),
         source = reqt.source,
         sink = reqt.sink,
         headers = reqt.headers,
         proxy = reqt.proxy,
         nredirects = (reqt.nredirects or 0) + 1
     }
-    respt = requestp(redirt)
-    -- we pass the location header as a clue we redirected
-    if respt.headers then respt.headers.location = redirt.url end
-    return respt
 end
 
-request = socket.protect(requestp)
+function trequest(reqt)
+    reqt = adjustrequest(reqt)
+    local con = open(reqt.host, reqt.port)
+    con:sendrequestline(reqt.method, reqt.uri)
+    con:sendheaders(reqt.headers)
+    con:sendbody(reqt.headers, reqt.source, reqt.step)
+    local code, headers, status
+    code, status = con:receivestatusline()
+    headers = con:receiveheaders()
+    if shouldredirect(reqt, code) then 
+        con:close()
+        return tredirect(reqt, headers)
+    elseif shouldauthorize(reqt, code) then 
+        con:close()
+        return tauthorize(reqt)
+    elseif shouldreceivebody(reqt, code) then
+        con:receivebody(headers, reqt.sink, reqt.step)
+    end
+    con:close()
+    return 1, code, headers, status
+end
 
-get = socket.protect(function(u)
+local function srequest(u, body)
     local t = {}
-    local respt = requestp {
+    local reqt = { 
         url = u,
         sink = ltn12.sink.table(t)
     }
-    return (table.getn(t) > 0 or nil) and table.concat(t), respt.headers,
-        respt.code
-end)
+    if body then 
+        reqt.source = ltn12.source.string(body) 
+        reqt.headers = { ["content-length"] = string.len(body) }
+        reqt.method = "POST"
+    end
+    local code, headers, status = socket.skip(1, trequest(reqt))
+    return table.concat(t), code, headers, status
+end
 
-post = socket.protect(function(u, body)
-    local t = {}
-    local respt = requestp {
-        url = u,
-        method = "POST",
-        source = ltn12.source.string(body),
-        sink = ltn12.sink.table(t),
-        headers = { ["content-length"] = string.len(body) }
-    }
-    return (table.getn(t) > 0 or nil) and table.concat(t),
-        respt.headers, respt.code
+request = socket.protect(function(reqt, body)
+    if type(reqt) == "string" then return srequest(reqt, body)
+    else return trequest(reqt) end
 end)
