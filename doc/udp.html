@@ -153,11 +153,12 @@ there are more than <tt>size</tt> bytes available in the datagram,
 the excess bytes are discarded. If there are less then
 <tt>size</tt> bytes available in the current datagram, the
 available bytes are returned. If <tt>size</tt> is omitted, the
-maximum datagram size is used.
+maximum datagram size is used (which is currently limited by the
+implementation to 8192 bytes).
 </p>
 
 <p class="return">
-In case of success, the method return the
+In case of success, the method returns the
 received datagram. In case of timeout, the method returns
 <b><tt>nil</tt></b> followed by the string '<tt>timeout</tt>'.
 </p>
@@ -187,13 +188,14 @@ Sends a datagram to the UDP peer of a connected object.
 
 <p class="parameters">
 <tt>Datagram</tt> is a string with the datagram contents. 
-Beware that the maximum datagram size for UDP is 576 bytes.
+The maximum datagram size for UDP is 64K minus IP layer overhead.
+However datagrams larger than the link layer packet size will be
+fragmented, which may deteriorate performance and/or reliability.
 </p>
 
 <p class="return">
 If successful, the method returns 1. In case of
-error, the method returns <b><tt>nil</tt></b> followed by the
-'<tt>refused</tt>' message.
+error, the method returns <b><tt>nil</tt></b> followed by an error message.
 </p>
 
 <p class="note">
@@ -215,16 +217,19 @@ Sends a datagram to the specified IP address and port number.
 
 <p class="parameters">
 <tt>Datagram</tt> is a string with the
-datagram contents. Beware that the maximum datagram size for UDP is
-576 bytes. <tt>Ip</tt> is the IP address of the recipient. Host
-names are <em>not</em> allowed for performance reasons.
+datagram contents. 
+The maximum datagram size for UDP is 64K minus IP layer overhead.
+However datagrams larger than the link layer packet size will be
+fragmented, which may deteriorate performance and/or reliability.
+<tt>Ip</tt> is the IP address of the recipient. 
+Host names are <em>not</em> allowed for performance reasons.
+
 <tt>Port</tt> is the port number at the recipient.
 </p>
 
 <p class="return">
 If successful, the method returns 1. In case of
-error, the method returns <b><tt>nil</tt></b> followed by the
-'<tt>refused</tt>' message.
+error, the method returns <b><tt>nil</tt></b> followed by an error message.
 </p>
 
 <p class="note">
