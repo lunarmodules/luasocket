@@ -4,8 +4,8 @@
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
-local http = require("http")
-local url = require("url")
+local http = require("socket.http")
+local url = require("socket.url")
 http.TIMEOUT = 10
 
 function readfile(path)

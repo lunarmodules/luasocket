@@ -10,7 +10,9 @@
 -----------------------------------------------------------------------------
 local socket = require("socket")
 local ltn12 = require("ltn12")
-local url = require("url")
+local url = require("socket.url")
+
+module("socket.tftp")
 
 -----------------------------------------------------------------------------
 -- Program constants

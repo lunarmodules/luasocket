@@ -1,2 +1,4 @@
 gettime returns time since Unix Epoch 1/1/1970 (UTC)
 sleep is robust to interrupts
+select had a stupid bug
+http.PROXY etc wasn't working

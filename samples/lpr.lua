@@ -1,4 +1,4 @@
-local lp = require("lp")
+local lp = require("socket.lp")
 
 local function usage()
   print('\nUsage: lua lptest.lua [filename] [keyword=val...]\n')

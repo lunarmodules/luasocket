@@ -113,8 +113,9 @@ end
 -----------------------------------------------------------------------------
 -- High level HTTP API
 -----------------------------------------------------------------------------
-local function uri(reqt)
+local function adjusturi(reqt)
     local u = reqt
+    -- if there is a proxy, we need the full url. otherwise, just a part.
     if not reqt.proxy and not PROXY then
         u = {
            path = socket.try(reqt.path, "invalid path 'nil'"),
@@ -124,6 +125,16 @@ local function uri(reqt)
         }
     end
     return url.build(u)
+end
+
+local function adjustproxy(reqt)
+    local proxy = reqt.proxy or PROXY 
+    if proxy then
+        proxy = url.parse(proxy)
+        return proxy.host, proxy.port or 3128
+    else
+        return reqt.host, reqt.port
+    end
 end
 
 local function adjustheaders(headers, host)
@@ -152,7 +163,9 @@ local function adjustrequest(reqt)
     for i,v in reqt do nreqt[i] = reqt[i] end
     socket.try(nreqt.host, "invalid host '" .. tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
-    nreqt.uri = nreqt.uri or uri(nreqt)
+    nreqt.uri = reqt.uri or adjusturi(nreqt)
+    -- ajust host and port if there is a proxy
+    nreqt.host, nreqt.port = adjustproxy(nreqt)
     -- adjust headers in request
     nreqt.headers = adjustheaders(nreqt.headers, nreqt.host)
     return nreqt

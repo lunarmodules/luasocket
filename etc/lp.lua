@@ -39,7 +39,6 @@ local function connect(localhost, option)
         until localport > 731
         test(skt, err)
     else skt = test(socket.tcp()) end
-print("'" .. host .. "'")
     try(skt:connect(host, port))
     return { skt = skt, try = try }
 end

@@ -1,5 +1,5 @@
 -- load tftpclnt.lua
-local tftp = require("tftp")
+local tftp = require("socket.tftp")
 
 -- needs tftp server running on localhost, with root pointing to
 -- a directory with index.html in it

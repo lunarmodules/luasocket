@@ -8,7 +8,7 @@
 
 #include <lua.h>
 #include <lauxlib.h>
-#include <compat-5.1.h>
+#include "compat-5.1.h"
 
 #include "mime.h"
 

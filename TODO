@@ -1,6 +1,5 @@
+ftp.send/recv return bytes transfered?
 new scheme to choose family/protocol of object to create
-use new distribution scheme
-fix PROXY in http.lua
 change ltn13 to make sure drawbacks are obvious
     - check discussion
 make sure errors not thrown by try() are not caught by protect()
@@ -24,6 +23,8 @@ testar os options!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 
+*fix PROXY in http.lua
+*use new distribution scheme
 *create the getstats method. 
 *fix local domain socket kludge of name size
 *use TLS 

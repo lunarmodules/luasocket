@@ -9,8 +9,10 @@
 -- Load required modules
 -----------------------------------------------------------------------------
 local socket = require("socket")
-local url = require("url")
-local tp = require("tp")
+local url = require("socket.url")
+local tp = require("socket.tp")
+
+module("socket.dict")
 
 -----------------------------------------------------------------------------
 -- Globals 
