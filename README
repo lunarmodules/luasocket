@@ -1,5 +1,6 @@
 This directory  contains the implementation  of the protocols  FTP, HTTP
-and SMTP. The files provided are:
+and SMTP, the URL parsing and composition module and the Concat and Code
+auxiliary modules. The files provided are:
 
 	http.lua				-- HTTP protocol implementation
 
@@ -16,17 +17,22 @@ SMTP mail server. The implementation conforms to RFC 821.
 The module ftp.lua provides functions  to download and upload files from
 and to FTP servers. The implementation conforms to RFC 959.
 
-	base64.lua				-- base64 encoding implementation
+	url.lua					-- URL parsing and composition
 
-The base64.lua module provides base64  encoding and decoding. The module
-is used  for the HTTP Basic  Authentication Scheme, and conforms  to RFC
-1521.
+The module url.lua provides routines to  split a URL into its components
+and to compose a base URL and relative URL into an absolute URL.
 
-	buffer.lua				-- fast concatenation library
+	code.lua				-- some coding conversion routines
 
-The module buffer.lua implements, completely  in Lua, a set of functions
+The  code.lua module  provides  base64, hexa  and  escaped encoding  and
+decoding. The module  is used for the HTTP  Basic Authentication Scheme,
+and URL protection, conforming to RFC 1521.
+
+	concat.lua				-- fast concatenation library
+
+The module concat.lua implements, completely  in Lua, a set of functions
 that greatly improves the performance  of repeated concatenations of Lua
-strings. The module was created by Roberto Ierusalimschy.
+strings. The algorithm was inventd by Roberto Ierusalimschy.
 
 These  modules are  part of  the  LuaSocket library  and are  supported.
 Please send any comments to diego@tecgraf.puc-rio.br.
