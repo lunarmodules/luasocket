@@ -1,4 +1,5 @@
 assert(dofile("../lua/ftp.lua"))
+assert(dofile("../lua/buffer.lua"))
 assert(dofile("auxiliar.lua"))
 
 pdir = "/home/i/diego/public/html/luasocket/test/"
