@@ -1,4 +1,6 @@
+
 make sure standard libraries are "required" by modules before use.
+eliminate globals from namespaces created by module().
 ftp.send/recv return bytes transfered?
 new scheme to choose family/protocol of object to create
 change ltn13 to make sure drawbacks are obvious
