@@ -131,9 +131,9 @@ method or <tt>accept</tt> might block forever.
 </p>
 
 <p class=note>
-Interesting note: as mentioned in some manuals, calling select with both
+Interesting note: as mentioned in some Unix manuals, calling select with both
 sets empty and a non-null timeout is a fairly portable way to sleep with
-sub-second precision.
+sub-second precision (<b>except it doesn't work on Windows</b>).
 </p>
 
 
