@@ -1080,7 +1080,8 @@ static int set_option(lua_State *L, p_sock sock)
 	switch (luaL_findstring(option, optionnames)) {
 		case 0: {
 			int bool;
-			if (!lua_isnumber(L, -1)) return 0;
+			if (!lua_isnumber(L, -1)) 
+				lua_error(L, "invalid SO_KEEPALIVE value");
 		    bool = (int) lua_tonumber(L, -1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_KEEPALIVE, 
                 (char *) &bool, sizeof(bool));
@@ -1088,7 +1089,8 @@ static int set_option(lua_State *L, p_sock sock)
 		}
 		case 1: {
 			int bool;
-			if (!lua_isnumber(L, -1)) return 0;
+			if (!lua_isnumber(L, -1))
+				lua_error(L, "invalid SO_DONTROUTE value");
 		    bool = (int) lua_tonumber(L, -1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_DONTROUTE, 
                 (char *) &bool, sizeof(bool));
@@ -1096,7 +1098,8 @@ static int set_option(lua_State *L, p_sock sock)
 		}
 		case 2: {
 			int bool;
-			if (!lua_isnumber(L, -1)) return 0;
+			if (!lua_isnumber(L, -1))
+				lua_error(L, "invalid SO_BROADCAST value");
 		    bool = (int) lua_tonumber(L, -1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_BROADCAST, 
                 (char *) &bool, sizeof(bool));
@@ -1104,15 +1107,18 @@ static int set_option(lua_State *L, p_sock sock)
 		}
 		case 3: {
 			struct linger linger;
-			if (!lua_istable(L, -1)) return 0;
+			if (!lua_istable(L, -1))
+				lua_error(L, "invalid SO_LINGER value");
 			lua_pushstring(L, "l_onoff");
 			lua_gettable(L, -2);
-			if (!lua_isnumber(L, -1)) return 0;
+			if (!lua_isnumber(L, -1))
+				lua_error(L, "invalid SO_LINGER (l_onoff) value");
 			linger.l_onoff = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			lua_pushstring(L, "l_linger");
 			lua_gettable(L, -2);
-			if (!lua_isnumber(L, -1)) return 0;
+			if (!lua_isnumber(L, -1))
+				lua_error(L, "invalid SO_LINGER (l_linger) value");
 			linger.l_linger = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			err = setsockopt(sock->sock, SOL_SOCKET, SO_LINGER, 
