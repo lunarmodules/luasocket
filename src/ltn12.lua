@@ -26,28 +26,45 @@ function filter.cycle(low, ctx, extra)
     end
 end
 
+-- given the return of a filter, can it have pending data?
+local function pending(s)
+    return s ~= "" and s
+end
+
 -- chains two filters together
 local function chain2(f1, f2)
-    assert(f1 and f2)
-    local co = coroutine.create(function(chunk)
-        while true do
-            local filtered1 = f1(chunk)
-            local filtered2 = f2(filtered1)
-            local done2 = filtered1 and ""
-            while true do
-                if filtered2 == "" or filtered2 == nil then break end
-                coroutine.yield(filtered2)
-                filtered2 = f2(done2)
-            end
-            if filtered1 == "" then chunk = coroutine.yield(filtered1)
-            elseif filtered1 == nil then return nil
-            else chunk = chunk and "" end
-        end
-    end)
+    local cf1, cf2
     return function(chunk)
-        local ret, a, b  = coroutine.resume(co, chunk)
-        if ret then return a, b
-        else return nil, a end
+        -- if f2 has pending data, service it first, always
+        if pending(cf2) then
+            cf2 = f2(cf1)
+            if pending(cf2) then return cf2 end
+        end
+        -- here either f2 was already empty or we just found out it is
+        -- we get filtered data from f1
+        cf1 = f1(chunk)
+        -- make sure next time we call f1 to get pending data, 
+        -- we don't pass the same chunk again 
+        if chunk then chunk = "" end 
+        -- while there is data in f1
+        while pending(cf1) do
+            -- pass the new data to f2
+            cf2 = f2(cf1)
+            -- if f2 produced something, return it
+            if pending(cf2) then
+                -- make sure next time we call f2 to get pending data, 
+                -- we don't pass the same chunk again 
+                if cf1 then cf1 = "" end
+                return cf2
+            end
+            -- here f2 is still not satisfied with the amount of data
+            -- f1 produced. we keep trying.
+            cf1 = f1(chunk)
+        end
+        -- here f1 was empty or it became empty without managing
+        -- to produce enough data for f2 to produce something
+        cf2 = f2(cf1)
+        return cf2
     end
 end
 
