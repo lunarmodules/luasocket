@@ -11,11 +11,14 @@ decodet = {}
 wrapt = {}
 
 -- creates a function that chooses a filter by name from a given table 
-local function choose(table)
-    return function(name, opt)
+function choose(table)
+    return function(name, opt1, opt2)
+        if type(name) ~= "string" then 
+            name, opt1, opt2 = "default", name, opt1
+        end
         local f = table[name or "nil"]
-        if not f then error("unknown filter (" .. tostring(name) .. ")", 3)
-        else return f(opt) end
+        if not f then error("unknown key (" .. tostring(name) .. ")", 3)
+        else return f(opt1, opt2) end
     end
 end
 
@@ -44,6 +47,7 @@ wrapt['text'] = function(length)
     return ltn12.filter.cycle(wrp, length, length) 
 end
 wrapt['base64'] = wrapt['text']
+wrapt['default'] = wrapt['text']
 
 wrapt['quoted-printable'] = function()
     return ltn12.filter.cycle(qpwrp, 76, 76) 
@@ -52,15 +56,7 @@ end
 -- function that choose the encoding, decoding or wrap algorithm
 encode = choose(encodet) 
 decode = choose(decodet)
--- it's different because there is a default wrap filter
-local cwt = choose(wrapt)
-function wrap(mode_or_length, length)
-    if type(mode_or_length) ~= "string" then
-        length = mode_or_length
-        mode_or_length = "text"
-    end
-    return cwt(mode_or_length, length)
-end
+wrap = choose(wrapt)
 
 -- define the end-of-line normalization filter
 function normalize(marker)

@@ -27,6 +27,7 @@ falar sobre encodet/wrapt/decodet no manual sobre mime
 RECEIVE MUDOU!!! COLOCAR NO MANUAL.
 HTTP.lua mudou bastante também.
 
+fazer com que a socket.source e socket.sink sejam "selectable".
 
 change mime.eol to output marker on detection of first candidate, instead
 of on the second. that way it works in one pass for strings that end with 

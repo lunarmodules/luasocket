@@ -9,4 +9,4 @@ else
     convert = ltn12.filter.chain(base64, wrap)
 end
 source = ltn12.source.chain(source, convert)
-ltn12.pump(source, sink)
+repeat until not ltn12.pump(source, sink)

@@ -411,6 +411,7 @@ local body
 io.write("testing simple get function: ")
 body = socket.http.get("http://" .. host .. prefix .. "/index.html")
 assert(body == index)
+print("ok")
 
 ------------------------------------------------------------------------
 io.write("testing HEAD method: ")
@@ -420,6 +421,7 @@ response = socket.http.request {
   url = "http://www.cs.princeton.edu/~diego/"
 }
 assert(response and response.headers)
+print("ok")
 
 ------------------------------------------------------------------------
 print("passed all tests")
