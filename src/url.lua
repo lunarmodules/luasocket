@@ -86,7 +86,8 @@ function Public.build_url(parsed)
     if authority then url = "//" .. authority .. url end
     if parsed.scheme then url = parsed.scheme .. ":" .. url end
     if parsed.fragment then url = url .. "#" .. parsed.fragment end
-    return gsub(url, "%s", "")
+    url = gsub(url, "%s", "")
+    return url
 end
 
 -----------------------------------------------------------------------------
