@@ -42,7 +42,7 @@ provided for TCP and UDP, but there is work in progress to implement SSL,
 Local Domain, Pipes, File Descriptors etc. I/O objects provide a standard
 interface to I/O across different domains and operating systems.
 LuaSocket&nbsp;2.0 has been rewritten from scratch to simplify the future
-addition new domains.
+addition of new domains.
 </p>
 
 <p>
@@ -112,7 +112,7 @@ host OS  requires  for network access (Windows requires ws2_32.lib, for
 instance). LuaSocket is initialized in  the
 Lua state given as the argument  to  the  function
 <tt>luaopen_socket</tt>, the  only  C function  exported  by  the  library.
-After initialization, the scripts are free to use all LuaSocket API. 
+After initialization, scripts are free to use all of the LuaSocket API. 
 </p>
 
 <!-- tcp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -289,7 +289,7 @@ error message.
 host = "localhost" -- change here to the host you want to contact
 port = port or 13
 -- convert host name to ip address
-ip, err = socket.toip(host)
+ip, err = socket.dns.toip(host)
 assert(ip, err)
 -- create a new UDP object
 udp = socket.udp()
