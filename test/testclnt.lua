@@ -346,6 +346,39 @@ function test_selectbugs()
     pass("invalid input: ok")
 end
 
+------------------------------------------------------------------------
+function accept_timeout()
+    local s, e = socket.bind("*", 0, 0)
+    assert(s, e)
+    local t = socket.time()
+    s:settimeout(1)
+    local c, e = s:accept()
+    assert(not c, "should not accept") 
+    assert(e == "timeout", "wrong error message")
+    assert(socket.time() - t < 2, "took to long to give up")
+    s:close()
+    pass("good")
+end
+
+------------------------------------------------------------------------
+function connect_timeout()
+    local s, e = socket.bind("*", 0, 0)
+    assert(s, e)
+    i, p = s:getsockname()
+    assert(i, p)
+    local t = socket.time()
+    local c, e = socket.tcp()
+    assert(c, e)
+    c:settimeout(1)
+    local r, e = c:connect("localhost", p)
+    assert(not r and e == "timeout", "wrong error message")
+    assert(socket.time() - t < 2, "took to long to give up")
+    pass("good")
+    s:close()
+    c:close()
+end
+
+------------------------------------------------------------------------
 test("method registration")
 test_methods(socket.tcp(), {
     "connect",
@@ -376,6 +409,24 @@ test_methods(socket.udp(), {
     "shutdown",
     "close", 
 })
+
+test("select function")
+test_selectbugs()
+
+test("empty host connect: ")
+empty_connect()
+
+test("active close: ")
+active_close()
+
+test("closed connection detection: ")
+test_closed()
+
+test("accept with timeout (if it hangs, it failed:)")
+accept_timeout()
+
+test("accept with timeout (if it hangs, it failed:)")
+connect_timeout()
 
 test("mixed patterns")
 reconnect()
@@ -448,17 +499,6 @@ test_raw(200)
 test_raw(17)
 test_raw(1)
 
-test("select function")
-test_selectbugs()
-
-test("empty host connect: ")
-empty_connect()
-
-test("active close: ")
-active_close()
-
-test("closed connection detection: ")
-test_closed()
 
 a = [[
 test("total timeout on send")

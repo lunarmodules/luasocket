@@ -259,6 +259,7 @@ const char *inet_tryaccept(p_sock ps, p_tm tm, p_sock pc)
     /* loop until connection accepted or timeout happens */
     do err = sock_accept(ps, pc, (SA *) &addr, &addr_len, tm_getretry(tm));
     while (err == IO_RETRY && tm_getretry(tm) != 0);
+    if (err == IO_RETRY) err = IO_TIMEOUT;
     return io_strerror(err);
 }
 
