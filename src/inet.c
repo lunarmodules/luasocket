@@ -1,11 +1,11 @@
 /*=========================================================================*\
-* Internet socket methods implementation
+* Internet domain class
+* Lua methods:
+*   getpeername: gets socket peer ip address and port
+*   getsockname: gets local socket ip address and port
 * Global Lua fuctions:
-*   toip(hostname)
-*   tohostname(dotted-quad)
-* Socket table methods:
-*   getpeername()
-*   getsockname()
+*   toip: gets resolver info on host name
+*   tohostname: gets resolver info on dotted-quad
 \*=========================================================================*/
 #include <string.h>
 
@@ -46,7 +46,9 @@ void inet_open(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
-* Hook object methods to methods table.
+* Hook lua methods to methods table.
+* Input
+*   lsclass: class name
 \*-------------------------------------------------------------------------*/
 void inet_inherit(lua_State *L, cchar *lsclass)
 {
@@ -62,6 +64,9 @@ void inet_inherit(lua_State *L, cchar *lsclass)
     }
 }
 
+/*-------------------------------------------------------------------------*\
+* Constructs the object 
+\*-------------------------------------------------------------------------*/
 void inet_construct(lua_State *L, p_inet inet)
 {
     sock_construct(L, (p_sock) inet);
@@ -71,7 +76,8 @@ void inet_construct(lua_State *L, p_inet inet)
 * Global Lua functions
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
-* Returns the list of ip addresses associated with a host name
+* Returns all information provided by the resolver given a host name
+* or ip address
 * Lua Input: address
 *   address: ip address or hostname to dns lookup
 * Lua Returns
@@ -98,7 +104,8 @@ static int inet_lua_toip(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
-* Returns the list of host names associated with an ip address
+* Returns all information provided by the resolver given a host name
+* or ip address
 * Lua Input: address
 *   address: ip address or host name to reverse dns lookup
 * Lua Returns
@@ -124,7 +131,7 @@ static int inet_lua_tohostname(lua_State *L)
 }
 
 /*=========================================================================*\
-* Socket table methods
+* Lua methods
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Retrieves socket peer name
@@ -220,42 +227,28 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-cchar *inet_tryconnect(p_inet inet, cchar *address, ushort port, 
-        int type)
+cchar *inet_tryconnect(p_inet inet, cchar *address, ushort port)
 {
     struct sockaddr_in remote;
-    cchar *err = NULL;
     memset(&remote, 0, sizeof(remote));
-    if (strlen(address) && inet_aton(address, &remote.sin_addr)) {
-        remote.sin_family = AF_INET;
-        remote.sin_port = htons(port);
-        err = inet_trysocket(inet, type);
-        if (err) return err;
-        if (compat_connect(inet->fd, (SA *) &remote, sizeof(remote)) < 0) {
-            compat_close(inet->fd);
-            inet->fd = COMPAT_INVALIDFD;
-            return compat_connectstrerror();
-        } else return NULL;
-    /* go ahead and try by hostname resolution */
-    } else {
+    remote.sin_family = AF_INET;
+    remote.sin_port = htons(port);
+    if (!strlen(address) || !inet_aton(address, &remote.sin_addr)) {
         struct hostent *hp = gethostbyname(address);
         struct in_addr **addr;
         if (!hp) return compat_hoststrerror();
         addr = (struct in_addr **) hp->h_addr_list;
-        for (; *addr != NULL; addr++) {
-            memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
-            remote.sin_family = AF_INET;
-            remote.sin_port = htons(port);
-            err = inet_trysocket(inet, type);
-            if (err) return err;
-            if (compat_connect(inet->fd, (SA *)&remote, sizeof(remote)) < 0) {
-                compat_close(inet->fd);
-                inet->fd = COMPAT_INVALIDFD;
-            } else return NULL;
-            memset(&remote, 0, sizeof(remote));
-        }
-        return compat_connectstrerror();
+        memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
     }
+    compat_setblocking(inet->fd);
+    if (compat_connect(inet->fd, (SA *) &remote, sizeof(remote)) < 0) {
+        const char *err = compat_connectstrerror();
+        compat_close(inet->fd);
+        inet->fd = COMPAT_INVALIDFD;
+        return err;
+    } 
+    compat_setnonblocking(inet->fd);
+    return NULL;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -263,51 +256,34 @@ cchar *inet_tryconnect(p_inet inet, cchar *address, ushort port,
 * Input
 *   address: host name or ip address
 *   port: port number to bind to
-*   backlog: backlog to set
 * Returns
 *   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
-cchar *inet_trybind(p_inet inet, cchar *address, ushort port, 
-        int type)
+cchar *inet_trybind(p_inet inet, cchar *address, ushort port)
 {
     struct sockaddr_in local;
-    cchar *err = NULL;
     memset(&local, 0, sizeof(local));
     /* address is either wildcard or a valid ip address */
     local.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (!strcmp(address, "*") || 
-            (strlen(address) && inet_aton(address, &local.sin_addr))) {
-        local.sin_port = htons(port);
-        local.sin_family = AF_INET;
-        err = inet_trysocket(inet, type);
-        if (err) return err;
-        compat_setreuseaddr(inet->fd);
-        if (compat_bind(inet->fd, (SA *) &local, sizeof(local)) < 0) {
-            compat_close(inet->fd);
-            inet->fd = COMPAT_INVALIDFD;
-            return compat_bindstrerror();
-        } else return NULL;
-    /* otherwise, proceed with domain name resolution */
-    } else {
+    local.sin_port = htons(port);
+    local.sin_family = AF_INET;
+    if (strcmp(address, "*") && 
+            (!strlen(address) || !inet_aton(address, &local.sin_addr))) {
         struct hostent *hp = gethostbyname(address);
         struct in_addr **addr;
         if (!hp) return compat_hoststrerror();
         addr = (struct in_addr **) hp->h_addr_list;
-        for (; *addr != NULL; addr++) {
-            memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
-            local.sin_port = htons(port);
-            local.sin_family = AF_INET;
-            err = inet_trysocket(inet, type);
-            if (err) return err;
-            compat_setreuseaddr(inet->fd);
-            if (compat_bind(inet->fd, (SA *) &local, sizeof(local)) < 0) {
-                compat_close(inet->fd);
-                inet->fd = COMPAT_INVALIDFD;
-            } else return NULL;
-            memset(&local, 0, sizeof(local));
-        }
-        return compat_bindstrerror();
+        memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
     }
+    compat_setblocking(inet->fd);
+    if (compat_bind(inet->fd, (SA *) &local, sizeof(local)) < 0) {
+        const char *err = compat_bindstrerror();
+        compat_close(inet->fd);
+        inet->fd = COMPAT_INVALIDFD;
+        return err;
+    }
+    compat_setnonblocking(inet->fd);
+    return NULL;
 }
 
 /*-------------------------------------------------------------------------*\
