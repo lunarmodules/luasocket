@@ -207,7 +207,6 @@ function test_totaltimeoutreceive(len, tm, sl)
     data:settimeout(tm, "total")
 local t = socket.gettime()
     str, err, partial, elapsed = data:receive(2*len)
-    print(err, elapsed, socket.gettime() - t) 
     check_timeout(tm, sl, elapsed, err, "receive", "total", 
         string.len(str or partial) == 2*len)
 end
@@ -228,7 +227,6 @@ function test_totaltimeoutsend(len, tm, sl)
     data:settimeout(tm, "total")
     str = string.rep("a", 2*len)
     total, err, partial, elapsed = data:send(str)
-print(elapsed, "!")
     check_timeout(tm, sl, elapsed, err, "send", "total", 
         total == 2*len)
 end
