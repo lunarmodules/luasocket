@@ -20,49 +20,52 @@ if arg then
     port2 = arg[3] or port2
 end
 
-server1 = bind(host, port1)
+server1, error = bind(host, port1)
+if not server1 then print(error) exit() end
 server1:timeout(1)
-server1.is_server = 1
-server2 = bind(host, port2)
+server2, error = bind(host, port2)
+if not server2 then print(error) exit() end
 server2:timeout(1)
-server2.is_server = 1
 
-set = {server1, server2}
-number = 1
+sock_set = {server1, server2}
+
+sock_id = {}
+sock_id[server1] = 1
+sock_id[server2] = 2
+next_id = 3
 
 while 1 do
-    local r, s, e, l, n
-    r, _, e = select(set, nil)
-    for i, v in r do
-        if v.is_server then
-            s = v:accept()
-            if s then 
-                s:timeout(1)
-				s.number = number
-				number = number + 1
-                set_add(set, s) 
-                write("Added client number ", s.number, ". ", 
-					getn(set)-2, " total.\n")
+    local readable, _, error = select(sock_set, nil)
+    for _, sock in readable do
+        -- is it a server socket
+        if sock_id[sock] < 3 then
+            local incomming = sock:accept()
+            if incomming then 
+                incomming:timeout(1)
+				sock_id[incomming] = next_id
+                set_add(sock_set, incomming) 
+                write("Added client id ", next_id, ". ", 
+					getn(sock_set)-2, " total.\n")
+				next_id = next_id + 1
             end
+        -- it is a client socket
         else
-            l, e = v:receive()
-			n = v.number
-            if e then 
-                v:close()
-                set_remove(set, v) 
-                write("Removed client number ", n, ". ",
-					getn(set)-2, " total.\n")
+            local line, error = sock:receive()
+			local id = sock_id[sock]
+            if error then 
+                sock:close()
+                set_remove(sock_set, sock) 
+                write("Removed client number ", id, ". ",
+					getn(sock_set)-2, " total.\n")
             else
-            	write("Broadcasting line '", tostring(n), "> ", 
-					tostring(l), "'.\n")
-            	_, s, e = select(nil, set, 1)
-            	if not e then
-                	for i,v in s do
-                    	v:send(tostring(n), "> ", l, "\r\n")
+            	write("Broadcasting line '", id, "> ", line, "'.\n")
+            	_, writable, error = select(nil, sock_set, 1)
+            	if not error then
+                	for _, outgoing in writable do
+                        write("Sending to client ", sock_id[outgoing], "\n")
+                    	outgoing:send(id, "> ", line, "\r\n")
                 	end
-            	else
-                	write("No one ready to listen!!!\n")
-            	end
+            	else write("No one ready to listen!!!\n") end
 			end
         end
     end
