@@ -16,7 +16,6 @@ optmize aux_getgroupudata
     use one upvalue per string name of class/group
     make aux_checkgroup by upvalue (faster)
 
-fix local domain socket kludge of name size
 
 make sure all modules that can use it actually use socket.newtry
 adicionar exemplos de expansão: pipe, local, named pipe
@@ -27,4 +26,7 @@ testar os options!
   - proteger get*by*.* com um mutex GLOBAL!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
-- SSL
+
+
+*fix local domain socket kludge of name size
+*use TLS 

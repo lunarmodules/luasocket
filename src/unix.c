@@ -111,7 +111,7 @@ static int meth_receive(lua_State *L) {
 * Just call option handler
 \*-------------------------------------------------------------------------*/
 static int meth_setoption(lua_State *L) {
-    p_unix unix = aux_checkgroup(L, "unix{any}", 1);
+    p_unix unix = (p_unix) aux_checkgroup(L, "unix{any}", 1);
     return opt_meth_setoption(L, opt, &unix->sock);
 }
 
@@ -148,7 +148,7 @@ static int meth_accept(lua_State *L) {
     const char *err = sock_accept(&server->sock, &sock, NULL, NULL, tm);
     /* if successful, push client socket */
     if (!err) {
-        p_unix clnt = lua_newuserdata(L, sizeof(t_unix));
+        p_unix clnt = (p_unix) lua_newuserdata(L, sizeof(t_unix));
         aux_setclass(L, "unix{client}", -1);
         /* initialize structure fields */
         sock_setnonblocking(&sock);

@@ -4,8 +4,9 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lauxlib.h>
 #include <stdio.h>
+#include <lua.h>
+#include <lauxlib.h>
 
 #include "except.h"
 
@@ -14,7 +15,7 @@
 \*=========================================================================*/
 static int global_protect(lua_State *L);
 static int global_newtry(lua_State *L);
-static int protected(lua_State *L);
+static int protected_(lua_State *L);
 static int finalize(lua_State *L);
 static int do_nothing(lua_State *L);
 
@@ -53,7 +54,7 @@ static int global_newtry(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Protect factory
 \*-------------------------------------------------------------------------*/
-static int protected(lua_State *L) {
+static int protected_(lua_State *L) {
     lua_pushvalue(L, lua_upvalueindex(1));
     lua_insert(L, 1);
     if (lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0) != 0) {
@@ -64,7 +65,7 @@ static int protected(lua_State *L) {
 }
 
 static int global_protect(lua_State *L) {
-    lua_pushcclosure(L, protected, 1);
+    lua_pushcclosure(L, protected_, 1);
     return 1;
 }
 

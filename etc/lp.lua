@@ -1,6 +1,12 @@
-
+-----------------------------------------------------------------------------
+-- LPD support for the Lua language
+-- LuaSocket toolkit.
+-- Author: David Burgess
+-- Modified by Diego Nehab, but David is in charge
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 --[[
-     if you have any questions RFC 1179
+     if you have any questions: RFC 1179
 ]]
 -- make sure LuaSocket is loaded
 local socket = require("socket")
