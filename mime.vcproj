@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="luasocket"
-	ProjectGUID="{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}"
+	Name="mime"
+	ProjectGUID="{128E8BD0-174A-48F0-8771-92B1E8D18713}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MIME_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -31,12 +31,12 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/luasocket.dll"
+				OutputFile="$(OutDir)/mime.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/luasocket.pdb"
+				ProgramDatabaseFile="$(OutDir)/mime.pdb"
 				SubSystem="2"
-				ImportLibrary="$(OutDir)/luasocket.lib"
+				ImportLibrary="$(OutDir)/mime.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="H:\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport); LUASOCKET_COMPILED; LUASOCKET_DEBUG"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MIME_EXPORTS; MIME_API=__declspec(dllexport)"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -78,14 +78,13 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
-				OutputFile="$(OutDir)/luasocket.dll"
+				OutputFile="$(OutDir)/mime.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/luasocket.lib"
+				ImportLibrary="$(OutDir)/mime.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -117,43 +116,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\auxiliar.c">
-			</File>
-			<File
-				RelativePath=".\base.c">
-			</File>
-			<File
-				RelativePath=".\buffer.c">
-			</File>
-			<File
-				RelativePath=".\inet.c">
-			</File>
-			<File
-				RelativePath=".\io.c">
-			</File>
-			<File
-				RelativePath=".\luasocket.c">
-			</File>
-			<File
-				RelativePath=".\options.c">
-			</File>
-			<File
-				RelativePath=".\select.c">
-			</File>
-			<File
-				RelativePath=".\smtp.c">
-			</File>
-			<File
-				RelativePath=".\tcp.c">
-			</File>
-			<File
-				RelativePath=".\timeout.c">
-			</File>
-			<File
-				RelativePath=".\udp.c">
-			</File>
-			<File
-				RelativePath=".\wsocket.c">
+				RelativePath=".\mime.c">
 			</File>
 		</Filter>
 		<Filter
@@ -161,46 +124,7 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\auxiliar.h">
-			</File>
-			<File
-				RelativePath=".\base.h">
-			</File>
-			<File
-				RelativePath=".\buffer.h">
-			</File>
-			<File
-				RelativePath=".\inet.h">
-			</File>
-			<File
-				RelativePath=".\io.h">
-			</File>
-			<File
-				RelativePath=".\luasocket.h">
-			</File>
-			<File
-				RelativePath=".\options.h">
-			</File>
-			<File
-				RelativePath=".\select.h">
-			</File>
-			<File
-				RelativePath=".\smtp.h">
-			</File>
-			<File
-				RelativePath=".\socket.h">
-			</File>
-			<File
-				RelativePath=".\tcp.h">
-			</File>
-			<File
-				RelativePath=".\timeout.h">
-			</File>
-			<File
-				RelativePath=".\udp.h">
-			</File>
-			<File
-				RelativePath=".\wsocket.h">
+				RelativePath=".\mime.h">
 			</File>
 		</Filter>
 		<Filter

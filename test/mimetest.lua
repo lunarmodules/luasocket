@@ -8,7 +8,7 @@ local qptest = "qptest.bin"
 local eqptest = "qptest.bin2"
 local dqptest = "qptest.bin3"
 
-local b64test = "libluasocket.dylib"
+local b64test = "libluasocket.so"
 local eb64test = "b64test.bin"
 local db64test = "b64test.bin2"
 

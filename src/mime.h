@@ -12,7 +12,14 @@
 \*=========================================================================*/
 #include <lua.h>
 
-int luaopen_mime(lua_State *L);
+/*-------------------------------------------------------------------------*\
+* This macro prefixes all exported API functions
+\*-------------------------------------------------------------------------*/
+#ifndef MIME_API
+#define MIME_API extern
+#endif
+
+MIME_API int luaopen_mime(lua_State *L);
 
 /*-------------------------------------------------------------------------*\
 * Library's namespace

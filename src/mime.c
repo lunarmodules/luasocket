@@ -74,7 +74,7 @@ static UC b64unbase[256];
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int luaopen_mime(lua_State *L)
+MIME_API int luaopen_mime(lua_State *L)
 {
     lua_pushstring(L, MIME_LIBNAME);
     lua_setglobal(L, "MIME_LIBNAME");
