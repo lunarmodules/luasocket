@@ -1,3 +1,4 @@
+make sure all modules that can use socket.newtry
 make select interrupt safe
 adicionar exemplos de expansão: pipe, local, named pipe
 Add service name translation.
