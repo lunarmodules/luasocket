@@ -1,18 +1,4 @@
-function mysetglobal (varname, oldvalue, newvalue)
-    print("changing " .. varname)
-     %rawset(%globals(), varname, newvalue)
-end
-function mygetglobal (varname, newvalue)
-    print("checking " .. varname)
-     return %rawget(%globals(), varname)
-end
-settagmethod(tag(nil), "setglobal", mysetglobal)
-settagmethod(tag(nil), "getglobal", mygetglobal)
-
-assert(dofile("../lua/ftp.lua"))
-assert(dofile("../lua/url.lua"))
-assert(dofile("../lua/concat.lua"))
-assert(dofile("../lua/code.lua"))
+dofile("noglobals.lua")
 
 local similar = function(s1, s2)
     return strlower(gsub(s1, "%s", "")) == strlower(gsub(s2, "%s", ""))
@@ -50,9 +36,9 @@ local t = _time()
 index = readfile("index.html")
 
 write("testing file upload: ")
-remove("/home/ftp/dir1/index.up.html")
+remove("/var/ftp/dir1/index.up.html")
 err = FTP.put("ftp://localhost/dir1/index.up.html;type=i", index)
-saved = readfile("/home/ftp/dir1/index.up.html")
+saved = readfile("/var/ftp/dir1/index.up.html")
 check(not err and saved == index, err)
 
 write("testing file download: ")
@@ -78,7 +64,7 @@ back, err = FTP.get("ftp://luasocket:password@localhost/index.up.html;type=i")
 check(not err and back == index, err)
 
 write("testing weird-character translation: ")
-back, err = FTP.get("ftp://luasocket:password@localhost/%2fhome/ftp/dir1/index.html;type=i")
+back, err = FTP.get("ftp://luasocket:password@localhost/%2fvar/ftp/dir1/index.html;type=i")
 check(not err and back == index, err)
 
 write("testing parameter overriding: ")
@@ -100,12 +86,12 @@ local c, e = connect("", 21)
 check(not back and err == e, err)
 
 write("testing directory listing: ")
-expected = capture("ls -F /home/ftp/dir1 | grep -v /")
+expected = capture("ls -F /var/ftp/dir1 | grep -v /")
 back, err = FTP.get("ftp://localhost/dir1;type=d")
 check(similar(back, expected))
 
 write("testing home directory listing: ")
-expected = capture("ls -F /home/ftp | grep -v /")
+expected = capture("ls -F /var/ftp | grep -v /")
 back, err = FTP.get("ftp://localhost/")
 check(back and similar(back, expected), nil, err)
 
