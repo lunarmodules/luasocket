@@ -325,7 +325,7 @@ static int net_accept(lua_State *L)
 	int client_tag, server_tag;
 	p_sock server;
 	int client_sock = -1;
-	unsigned int client_len = sizeof(client_addr);
+	size_t client_len = sizeof(client_addr);
 	p_sock client;
 	pop_tags(L, &client_tag, &server_tag);
 	server = check_server(L, 1, server_tag);
@@ -364,7 +364,7 @@ static int net_bind(lua_State *L)
 	unsigned short port = (unsigned short) luaL_check_number(L, 2);
 	unsigned int backlog = (unsigned int) luaL_opt_number(L, 3, 1.0);	
 	struct sockaddr_in server;
-	int server_size = sizeof(server);
+	size_t server_size = sizeof(server);
 	int client_tag, server_tag;
 	p_sock sock = create_tcpsock();
 	pop_tags(L, &client_tag, &server_tag);
@@ -687,20 +687,10 @@ static int sock_gc(lua_State *L)
 static void handle_sigpipe(void);
 static void handle_sigpipe(void)
 {
-	struct sigaction old, new;
-	bzero(&new, sizeof new);
+	struct sigaction new;
+	memset(&new, 0, sizeof(new));
 	new.sa_handler = SIG_IGN;
-	sigaction(SIGPIPE, &new, &old);
-	/* test if the signal had been before, and restore it if so */
-	if (old.sa_handler != SIG_DFL) {
-#ifdef _DEBUG
-/* this is a somewhat dangerous situation. we can only hope the
-** installed signal handler understands that this signal can be
-** raised by a socket operation */
-printf("SIGPIPE ALREADY REDEFINED!!!\n");
-#endif
-		sigaction(SIGPIPE, &old, NULL);
-	}
+	sigaction(SIGPIPE, &new, NULL);
 }
 #endif
 
@@ -928,7 +918,7 @@ static int send_raw(p_sock sock, const char *data, int wanted,
 			return total;
 		}
 #ifdef _DEBUG_BLOCK
-printf("luasocket: sent %d bytes, %dms elapsed\n", put, time_since(start));
+printf("luasocket: sent %d, wanted %d, %dms elapsed\n", put, wanted, time_since(start));
 #endif
 		wanted -= put;
 		data += put;
