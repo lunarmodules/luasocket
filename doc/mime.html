@@ -55,7 +55,8 @@ follows the ideas presented in
 LTN012, Filters sources and sinks</a>. 
 </p>
 
-<p class=description> To obtain the <tt>mime</tt> namespace, run:
+<p> 
+To obtain the <tt>mime</tt> namespace, run:
 </p>
 
 <pre class=example>
@@ -109,10 +110,6 @@ Returns a filter that decodes data from a given transfer content
 encoding.
 </p>
 
-<p class=return>
-The function returns the created filter.
-</p>
-
 <!-- encode +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id="encode">
@@ -129,10 +126,6 @@ encoding.
 In the Quoted-Printable case, the user can specify whether the data is
 textual or binary, by passing the <tt>mode</tt> strings "<tt>text</tt>" or
 "<tt>binary</tt>". <tt>Mode</tt> defaults to "<tt>text</tt>".
-</p>
-
-<p class=return>
-The function returns the created filter.
 </p>
 
 <p class=note>
@@ -184,10 +177,6 @@ The "<tt>base64</tt>" line-wrap filter works just like the default
 The function can also wrap "<tt>quoted-printable</tt>" lines, taking care
 not to break lines in the middle of an escaped character. In that case, the
 line length is fixed at 76.
-</p>
-
-<p class=return>
-The function returns the created filter.
 </p>
 
 <p class=note>
@@ -260,9 +249,7 @@ the context is returned after each new chunk.
 ASCII value of the last character of the previous chunk, if it was a
 candidate for line break, or 0 otherwise. 
 <tt>B</tt> is the same as <tt>C</tt>, but for the current
-chunk.  If <tt>D</tt> is <tt><b>nil</b></tt>, <tt>A</tt> includes a
-new end-of-line marker, depending on <tt>C</tt>.
-<tt>Marker</tt> gives the new end-of-line marker and defaults to CRLF.
+chunk. <tt>Marker</tt> gives the new end-of-line marker and defaults to CRLF.
 </p>
 
 <pre class=example>

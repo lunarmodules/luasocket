@@ -50,11 +50,13 @@ implementation    conforms     to    the    HTTP/1.1     standard,
 The module exports functions that provide HTTP functionality in different
 levels of abstraction, from the simple 
 <a href="#get"><tt>get</tt></a> function, through the generic
-LTN12 based <a href="#request"><tt>request</tt></a> function, down to
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> based 
+<a href="#request"><tt>request</tt></a> function, down to
 even lower-level if you bother to look through the source code.
 </p>
 
-<p class=description> To obtain the <tt>ftp</tt> namespace, run:
+<p> 
+To obtain the <tt>http</tt> namespace, run:
 </p>
 
 <pre class=example>
@@ -85,12 +87,8 @@ MIME headers are represented as a Lua table in the form:
 headers = {<br>
 &nbsp;&nbsp;field-1-name = <i>field-1-value</i>,<br>
 &nbsp;&nbsp;field-2-name = <i>field-2-value</i>,<br>
-&nbsp;&nbsp;field-3-name = <i>field-3-value</i>,
-</tt></td></tr>
-<tr><td align=center><tt>
-&nbsp;&nbsp;...
-</tt></td></tr>
-<tr><td><tt>
+&nbsp;&nbsp;field-3-name = <i>field-3-value</i>,<br>
+&nbsp;&nbsp;...<br>
 &nbsp;&nbsp;field-n-name = <i>field-n-value</i><br>
 }
 </tt></td></tr>
@@ -188,7 +186,7 @@ Note: This function is also trivially implemented with the use of the
 <p class=name id=request>
 http.<b>request{</b><br>
 &nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;[sink = <i>LTN12 sink</i>],]<br>
+&nbsp;&nbsp;[sink = <i>LTN12 sink</i>,]<br>
 &nbsp;&nbsp;[method = <i>string</i>,]<br>
 &nbsp;&nbsp;[headers = <i>header-table</i>,]<br>
 &nbsp;&nbsp;[source = <i>LTN12 source</i>],<br>
@@ -203,7 +201,9 @@ Performs the generic HTTP request, controlled by a request table.
 </p>
 
 <p class=parameters>
-The most important parameters are the <tt>url</tt> and the <em>simple</em> LTN12 <tt>sink</tt> that will receive the downloaded content.  
+The most important parameters are the <tt>url</tt> and the <em>simple</em>
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
+<tt>sink</tt> that will receive the downloaded content.  
 Any part of the <tt>url</tt> can be overridden by including
 the appropriate field in the request table.
 If authentication information is provided, the function
@@ -215,11 +215,15 @@ following:
 <ul>
 <li><tt>method</tt>: The HTTP request method. Defaults to "GET"; 
 <li><tt>headers</tt>: Any additional HTTP headers to send with the request; 
-<li><tt>source</tt>: <em>simple</em> LTN12 source to provide the request body. If there
+<li><tt>source</tt>: <em>simple</em> 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
+source to provide the request body. If there
 is a body, you need to provide an appropriate "<tt>content-length</tt>"
 request header field, or the function will attempt to send the body as
 "<tt>chunked</tt>" (something few servers support). Defaults to the empty source; 
-<li><tt>step</tt>: LTN12 pump step function used to move data.  
+<li><tt>step</tt>: 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
+pump step function used to move data.  
 Defaults to the LTN12 <tt>pump.step</tt> function.
 <li><tt>proxy</tt>: The URL of a proxy server to use. Defaults to no proxy; 
 <li><tt>redirect</tt>: Set to <tt><b>false</b></tt> to prevent the 

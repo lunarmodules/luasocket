@@ -54,7 +54,8 @@ To really benefit from this module, a good understanding of
 LTN012, Filters sources and sinks</a> is necessary. 
 </p>
 
-<p class=description> To obtain the <tt>ftp</tt> namespace, run:
+<p> 
+To obtain the <tt>ftp</tt> namespace, run:
 </p>
 
 <pre class=example>
@@ -99,7 +100,7 @@ ftp.<b>get{</b><br>
 &nbsp;&nbsp;[command = <i>string</i>,]<br>
 &nbsp;&nbsp;[port = <i>number</i>,]<br>
 &nbsp;&nbsp;[type = <i>string</i>,]<br>
-&nbsp;&nbsp;[step = <i>LTN12 pump step</i>],<br>
+&nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
 <b>}</b>
 </p>
 
@@ -115,7 +116,9 @@ If the argument of the <tt>get</tt> function is a table, the function
 expects at least the fields <tt>host</tt>, <tt>sink</tt>, and one of 
 <tt>argument</tt> or <tt>path</tt> (<tt>argument</tt> takes
 precedence). <tt>Host</tt> is the server to connect to. <tt>Sink</tt> is
-the <em>simple</em> LTN12 sink that will receive the downloaded data. <tt>Argument</tt> or
+the <em>simple</em> 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+sink that will receive the downloaded data. <tt>Argument</tt> or
 <tt>path</tt> give the target path to the resource in the server. The
 optional arguments are the following:
 </p>
@@ -127,7 +130,9 @@ authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
 <li><tt>port</tt>: The port to used for the control connection. Defaults to 21;
 <li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
 "<tt>a</tt>". Defaults to whatever is the server default;
-<li><tt>step</tt>: LTN12 pump step function used to pass data from the
+<li><tt>step</tt>: 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+pump step function used to pass data from the
 server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function.
 </ul>
 
@@ -177,7 +182,7 @@ ftp.<b>put{</b><br>
 &nbsp;&nbsp;[command = <i>string</i>,]<br>
 &nbsp;&nbsp;[port = <i>number</i>,]<br>
 &nbsp;&nbsp;[type = <i>string</i>,]<br>
-&nbsp;&nbsp;[step = <i>LTN12 pump step</i>],<br>
+&nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
 <b>}</b>
 </p>
 
@@ -192,7 +197,9 @@ If the argument of the <tt>put</tt> function is a table, the function
 expects at least the fields <tt>host</tt>, <tt>source</tt>, and one of 
 <tt>argument</tt> or <tt>path</tt> (<tt>argument</tt> takes
 precedence). <tt>Host</tt> is the server to connect to. <tt>Source</tt> is
-the <em>simple</em> LTN12 source that will provide the contents to be uploaded. 
+the <em>simple</em> 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
+source that will provide the contents to be uploaded. 
 <tt>Argument</tt> or
 <tt>path</tt> give the target path to the resource in the server. The
 optional arguments are the following:
@@ -205,7 +212,9 @@ authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
 <li><tt>port</tt>: The port to used for the control connection. Defaults to 21;
 <li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
 "<tt>a</tt>". Defaults to whatever is the server default;
-<li><tt>step</tt>: LTN12 pump step function used to pass data from the
+<li><tt>step</tt>: 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
+pump step function used to pass data from the
 server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function.
 </ul>
 

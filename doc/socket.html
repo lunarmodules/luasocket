@@ -39,6 +39,16 @@
 The <tt>socket</tt> namespace contains the core functionality of LuaSocket. 
 </p>
 
+<p> 
+To obtain the <tt>socket</tt> namespace, run:
+</p>
+
+<pre class=example>
+-- loads the socket module 
+local socket = require("socket")
+</pre>
+
+
 <!-- debug ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=debug> 
@@ -62,13 +72,21 @@ Converts a function that throws exceptions into a safe function.
 </p>
 
 <p class=parameters>
-<tt>Funct</tt> is a function that calls 
-<a href=#try><tt>try</tt></a> to throw exceptions. 
+<tt>Func</tt> is a function that calls 
+<a href=#try><tt>try</tt></a> (or <tt>assert</tt>, or <tt>error</tt>) 
+to throw exceptions. 
 </p>
 
 <p class=return>
 Returns an equivalent function that instead of throwing exceptions,
 returns <tt><b>nil</b></tt> followed by an error message. 
+</p>
+
+<p class=note>
+Note: Beware that if your function performs some illegal operation that
+raises an error, the protected function will catch the error and return it
+as a string. This is because the <a href=#try><tt>try</tt></a> function
+uses errors as the mechanism to throw exceptions.  
 </p>
 
 <!-- select +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -88,8 +106,8 @@ see if it is OK to immediately write on them.  <tt>Timeout</tt> is the
 maximum amount of time (in seconds) to wait for a change in status.  A
 <tt><b>nil</b></tt>, negative or omitted <tt>timeout</tt> value allows the
 function to block indefinitely. <tt>Recvt</tt> and <tt>sendt</tt> can also
-be empty tables or <tt><b>nil</b></tt>. Non-socket values in the arrays
-will be silently ignored.
+be empty tables or <tt><b>nil</b></tt>. Non-socket values (or values with
+non-numeric indices) in the arrays will be silently ignored.
 </p>
 
 <p class=return> The function returns a table with the sockets ready for
@@ -186,7 +204,7 @@ The function returns a source with the appropriate behavior.
 <!-- try ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=try> 
-socket.<b>try(</b>ret<sub>1</sub>, ret<sub>2</sub> ... ret<sub>N</sub><b>)</b>
+socket.<b>try(</b>ret<sub>1</sub> [, ret<sub>2</sub> ... ret<sub>N</sub>]<b>)</b>
 </p>
 
 <p class=description>
@@ -194,16 +212,14 @@ Throws an exception in case of error.
 </p>
 
 <p class=parameters>
-<tt>Ret</tt><sub>1</sub>, <tt>ret</tt><sub>2</sub> ... <tt>ret</tt><sub>N</sub> can be arbitrary
-arguments, but are usually the return values of a function call that 
-nested with the call to <tt>try</tt>. 
+<tt>Ret</tt><sub>1</sub> to <tt>ret</tt><sub>N</sub> can be arbitrary
+arguments, but are usually the return values of a function call 
+nested with <tt>try</tt>. 
 </p>
 
 <p class=return> 
-The function returns <tt>ret</tt><sub>1</sub>, <tt>ret</tt><sub>2</sub> ...
-<tt>ret</tt><sub>N</sub> if
-<tt>ret</tt><sub>1</sub> is not <tt><b>nil</b></tt>. Otherwise, calls <tt>error</tt>
-passing <tt>ret</tt><sub>2</sub>.
+The function returns <tt>ret</tt><sub>1</sub> to <tt>ret</tt><sub>N</sub> if
+<tt>ret</tt><sub>1</sub> is not <tt><b>nil</b></tt>. Otherwise, it calls <tt>error</tt> passing <tt>ret</tt><sub>2</sub>.
 </p>
 
 <pre class=example>
@@ -211,7 +227,7 @@ passing <tt>ret</tt><sub>2</sub>.
 c = socket.try(socket.connect("localhost", 80))
 </pre>
 
-<!-- version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=version> 
 socket.<b>VERSION</b>
