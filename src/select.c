@@ -1,5 +1,7 @@
 /*=========================================================================*\
 * Select implementation
+* LuaSocket toolkit
+*
 * RCS ID: $Id$
 \*=========================================================================*/
 #include <string.h>
@@ -12,6 +14,9 @@
 #include "auxiliar.h"
 #include "select.h"
 
+/*=========================================================================*\
+* Internal function prototypes.
+\*=========================================================================*/
 static int meth_set(lua_State *L);
 static int meth_isset(lua_State *L);
 static int c_select(lua_State *L);
@@ -31,6 +36,12 @@ static luaL_reg func[] = {
     {NULL,     NULL}
 };
 
+/*=========================================================================*\
+* Internal function prototypes.
+\*=========================================================================*/
+/*-------------------------------------------------------------------------*\
+* Initializes module
+\*-------------------------------------------------------------------------*/
 void select_open(lua_State *L)
 {
     /* get select auxiliar lua function from lua code and register
@@ -45,6 +56,9 @@ void select_open(lua_State *L)
     aux_newclass(L, "select{fd_set}", set);
 }
 
+/*=========================================================================*\
+* Global Lua functions
+\*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Waits for a set of sockets until a condition is met or timeout.
 \*-------------------------------------------------------------------------*/
@@ -63,10 +77,10 @@ static int global_select(lua_State *L)
     lua_pushvalue(L, lua_upvalueindex(1)); 
     lua_insert(L, 1);
     /* pass fd_set objects */
-    read_fd_set = lua_newuserdata(L, sizeof(fd_set)); 
+    read_fd_set = (fd_set *) lua_newuserdata(L, sizeof(fd_set)); 
     FD_ZERO(read_fd_set);
     aux_setclass(L, "select{fd_set}", -1);
-    write_fd_set = lua_newuserdata(L, sizeof(fd_set)); 
+    write_fd_set = (fd_set *) lua_newuserdata(L, sizeof(fd_set)); 
     FD_ZERO(write_fd_set);
     aux_setclass(L, "select{fd_set}", -1);
     /* pass select auxiliar C function */
@@ -76,20 +90,9 @@ static int global_select(lua_State *L)
     return 3;
 }
 
-static int c_select(lua_State *L)
-{
-    int max_fd = (int) lua_tonumber(L, 1);
-    fd_set *read_fd_set = (fd_set *) aux_checkclass(L, "select{fd_set}", 2);
-    fd_set *write_fd_set = (fd_set *) aux_checkclass(L, "select{fd_set}", 3);
-    int timeout = lua_isnil(L, 4) ? -1 : (int)(lua_tonumber(L, 4) * 1000);
-    struct timeval tv;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    lua_pushnumber(L, select(max_fd, read_fd_set, write_fd_set, NULL, 
-                timeout < 0 ? NULL : &tv));
-    return 1;
-}
-
+/*=========================================================================*\
+* Lua methods
+\*=========================================================================*/
 static int meth_set(lua_State *L)
 {
     fd_set *set = (fd_set *) aux_checkclass(L, "select{fd_set}", 1);
@@ -104,6 +107,23 @@ static int meth_isset(lua_State *L)
     t_sock fd = (t_sock) lua_tonumber(L, 2);
     if (fd >= 0 && FD_ISSET(fd, set)) lua_pushnumber(L, 1);
     else lua_pushnil(L);
+    return 1;
+}
+
+/*=========================================================================*\
+* Internal functions
+\*=========================================================================*/
+static int c_select(lua_State *L)
+{
+    int max_fd = (int) lua_tonumber(L, 1);
+    fd_set *read_fd_set = (fd_set *) aux_checkclass(L, "select{fd_set}", 2);
+    fd_set *write_fd_set = (fd_set *) aux_checkclass(L, "select{fd_set}", 3);
+    int timeout = lua_isnil(L, 4) ? -1 : (int)(lua_tonumber(L, 4) * 1000);
+    struct timeval tv;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = (timeout % 1000) * 1000;
+    lua_pushnumber(L, select(max_fd, read_fd_set, write_fd_set, NULL, 
+                timeout < 0 ? NULL : &tv));
     return 1;
 }
 

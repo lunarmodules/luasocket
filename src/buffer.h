@@ -1,21 +1,31 @@
+#ifndef BUF_H
+#define BUF_H 
 /*=========================================================================*\
-* Buffered input/output routines
+* Input/Output interface for Lua programs
+* LuaSocket toolkit
+*
+* Line patterns require buffering. Reading one character at a time involves
+* too many system calls and is very slow. This module implements the
+* LuaSocket interface for input/output on connected objects, as seen by 
+* Lua programs. 
+*
+* Input is buffered. Output is *not* buffered because there was no simple
+* way of making sure the buffered output data would ever be sent.
+*
+* The module is built on top of the I/O abstraction defined in io.h and the
+* timeout management is done with the timeout.h interface.
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef BUF_H
-#define BUF_H 
-
 #include <lua.h>
+
 #include "io.h"
 #include "timeout.h"
 
 /* buffer size in bytes */
 #define BUF_SIZE 8192
 
-/*-------------------------------------------------------------------------*\
-* Buffer control structure
-\*-------------------------------------------------------------------------*/
+/* buffer control structure */
 typedef struct t_buf_ {
     p_io io;                /* IO driver used for this buffer */
     p_tm tm;                /* timeout management for this buffer */
@@ -24,9 +34,6 @@ typedef struct t_buf_ {
 } t_buf;
 typedef t_buf *p_buf;
 
-/*-------------------------------------------------------------------------*\
-* Exported functions
-\*-------------------------------------------------------------------------*/
 void buf_open(lua_State *L);
 void buf_init(p_buf buf, p_io io, p_tm tm);
 int buf_meth_send(lua_State *L, p_buf buf);

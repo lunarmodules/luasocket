@@ -1,4 +1,5 @@
 /*=========================================================================*\
+* LuaSocket toolkit
 * Networking support for the Lua language
 * Diego Nehab
 * 26/11/1999
@@ -7,7 +8,7 @@
 * connectivity  of  the Lua  language.  The  Lua interface  to  networking
 * functions follows the Sockets API  closely, trying to simplify all tasks
 * involved in setting up both  client and server connections. The provided
-* IO routines,  however, follow the Lua  style, being very similar  to the
+* IO routines, however, follow the Lua  style, being very similar  to the
 * standard Lua read and write functions.
 *
 * RCS ID: $Id$
@@ -24,6 +25,7 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
+#include "auxiliar.h"
 #include "timeout.h"
 #include "buffer.h"
 #include "socket.h"
@@ -38,23 +40,11 @@
 /*-------------------------------------------------------------------------*\
 * Initializes all library modules.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_socketlib(lua_State *L)
+LUASOCKET_API int luaopen_socket(lua_State *L)
 {
     if (!sock_open()) return 0;
-    /* create namespace table */
-    lua_pushstring(L, LUASOCKET_LIBNAME);
-    lua_newtable(L);
-#ifdef LUASOCKET_DEBUG
-    lua_pushstring(L, "debug");
-    lua_pushnumber(L, 1);
-    lua_settable(L, -3);
-#endif
-    lua_settable(L, LUA_GLOBALSINDEX);
-    /* make sure modules know what is our namespace */
-    lua_pushstring(L, "LUASOCKET_LIBNAME");
-    lua_pushstring(L, LUASOCKET_LIBNAME);
-    lua_settable(L, LUA_GLOBALSINDEX);
     /* initialize all modules */
+    aux_open(L);
     tm_open(L);
     buf_open(L);
     inet_open(L); 

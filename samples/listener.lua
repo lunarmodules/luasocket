@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- TCP sample: Little program to dump lines received at a given port
--- LuaSocket 1.5 sample files
+-- LuaSocket sample files
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------

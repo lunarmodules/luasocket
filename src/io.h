@@ -1,16 +1,30 @@
 #ifndef IO_H
 #define IO_H
-
+/*=========================================================================*\
+* Input/Output abstraction
+* LuaSocket toolkit
+*
+* This module defines the interface that LuaSocket expects from the
+* transport layer for streamed input/output. The idea is that if any
+* transport implements this interface, then the buffer.c functions
+* automatically work on it.
+*
+* The module socket.h implements this interface, and thus the module tcp.h
+* is very simple.
+*
+* RCS ID: $Id$
+\*=========================================================================*/
 #include <stdio.h>
+#include <lua.h>
 
 /* IO error codes */
 enum {
-    IO_DONE,         /* operation completed successfully */
-    IO_TIMEOUT,      /* operation timed out */
-    IO_CLOSED,       /* the connection has been closed */
-    IO_ERROR,        /* something wrong... */
-    IO_REFUSED,      /* transfer has been refused */
-    IO_LIMITED       /* maximum number of bytes reached */
+    IO_DONE,            /* operation completed successfully */
+    IO_TIMEOUT,         /* operation timed out */
+    IO_CLOSED,          /* the connection has been closed */
+    IO_ERROR,           /* something wrong... */
+    IO_REFUSED,         /* transfer has been refused */
+    IO_LIMITED          /* maximum number of bytes reached */
 };
 
 /* interface to send function */
@@ -39,6 +53,7 @@ typedef struct t_io_ {
 } t_io;
 typedef t_io *p_io;
 
+void io_pusherror(lua_State *L, int code);
 void io_init(p_io io, p_send send, p_recv recv, void *ctx);
 
 #endif /* IO_H */

@@ -1,12 +1,12 @@
 /*=========================================================================*\
-* Buffered input/output routines
+* Input/Output interface for Lua programs
+* LuaSocket toolkit
 *
 * RCS ID: $Id$
 \*=========================================================================*/
 #include <lua.h>
 #include <lauxlib.h>
 
-#include "error.h"
 #include "auxiliar.h"
 #include "buffer.h"
 
@@ -42,7 +42,7 @@ void buf_init(p_buf buf, p_io io, p_tm tm)
 }
 
 /*-------------------------------------------------------------------------*\
-* Send data through buffered object
+* object:send() interface
 \*-------------------------------------------------------------------------*/
 int buf_meth_send(lua_State *L, p_buf buf)
 {
@@ -59,7 +59,7 @@ int buf_meth_send(lua_State *L, p_buf buf)
         total += sent;
     }
     lua_pushnumber(L, total);
-    error_push(L, err);
+    io_pusherror(L, err);
 #ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
     lua_pushnumber(L, (tm_gettime() - tm_getstart(tm))/1000.0);
@@ -68,7 +68,7 @@ int buf_meth_send(lua_State *L, p_buf buf)
 }
 
 /*-------------------------------------------------------------------------*\
-* Receive data from a buffered object
+* object:receive() interface
 \*-------------------------------------------------------------------------*/
 int buf_meth_receive(lua_State *L, p_buf buf)
 {
@@ -101,13 +101,13 @@ int buf_meth_receive(lua_State *L, p_buf buf)
                     luaL_argcheck(L, 0, arg, "invalid receive pattern");
                     break;
             }
-        /* raw pattern */
+        /* get a fixed number of bytes */
         } else err = recvraw(L, buf, (size_t) lua_tonumber(L, arg));
     }
     /* push nil for each pattern after an error */
     for ( ; arg <= top; arg++) lua_pushnil(L);
     /* last return is an error code */
-    error_push(L, err);
+    io_pusherror(L, err);
 #ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
     lua_pushnumber(L, (tm_gettime() - tm_getstart(tm))/1000.0);
@@ -127,9 +127,10 @@ int buf_isempty(p_buf buf)
 * Internal functions
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
-* Sends a raw block of data through a buffered object.
+* Sends a block of data (unbuffered)
 \*-------------------------------------------------------------------------*/
-static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent)
+static 
+int sendraw(p_buf buf, const char *data, size_t count, size_t *sent)
 {
     p_io io = buf->io;
     p_tm tm = buf->tm;
@@ -145,7 +146,7 @@ static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent)
 }
 
 /*-------------------------------------------------------------------------*\
-* Reads a raw block of data from a buffered object.
+* Reads a fixed number of bytes (buffered)
 \*-------------------------------------------------------------------------*/
 static 
 int recvraw(lua_State *L, p_buf buf, size_t wanted)
@@ -167,7 +168,7 @@ int recvraw(lua_State *L, p_buf buf, size_t wanted)
 }
 
 /*-------------------------------------------------------------------------*\
-* Reads everything until the connection is closed
+* Reads everything until the connection is closed (buffered)
 \*-------------------------------------------------------------------------*/
 static 
 int recvall(lua_State *L, p_buf buf)
@@ -187,12 +188,12 @@ int recvall(lua_State *L, p_buf buf)
 
 /*-------------------------------------------------------------------------*\
 * Reads a line terminated by a CR LF pair or just by a LF. The CR and LF 
-* are not returned by the function and are discarded from the buffer. 
+* are not returned by the function and are discarded from the buffer
 \*-------------------------------------------------------------------------*/
 static 
 int recvline(lua_State *L, p_buf buf)
 {
-    int err = 0;
+    int err = IO_DONE;
     luaL_Buffer b;
     luaL_buffinit(L, &b);
     while (err == IO_DONE) {
@@ -215,7 +216,8 @@ int recvline(lua_State *L, p_buf buf)
 }
 
 /*-------------------------------------------------------------------------*\
-* Skips a given number of bytes in read buffer
+* Skips a given number of bytes from read buffer. No data is read from the
+* transport layer
 \*-------------------------------------------------------------------------*/
 static 
 void buf_skip(p_buf buf, size_t count)
@@ -227,7 +229,7 @@ void buf_skip(p_buf buf, size_t count)
 
 /*-------------------------------------------------------------------------*\
 * Return any data available in buffer, or get more data from transport layer
-* if buffer is empty.
+* if buffer is empty
 \*-------------------------------------------------------------------------*/
 static 
 int buf_get(p_buf buf, const char **data, size_t *count)
@@ -245,3 +247,4 @@ int buf_get(p_buf buf, const char **data, size_t *count)
     *data = buf->data + buf->first;
     return err;
 }
+

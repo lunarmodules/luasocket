@@ -1,11 +1,11 @@
+#ifndef TM_H
+#define TM_H
 /*=========================================================================*\
 * Timeout management functions
+* LuaSocket toolkit
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef TM_H
-#define TM_H
-
 #include <lua.h>
 
 /* timeout control structure */
@@ -28,4 +28,4 @@ int tm_get(p_tm tm);
 int tm_gettime(void);
 int tm_meth_timeout(lua_State *L, p_tm tm);
 
-#endif
+#endif /* TM_H */

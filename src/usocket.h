@@ -1,10 +1,11 @@
+#ifndef USOCKET_H
+#define USOCKET_H
 /*=========================================================================*\
 * Socket compatibilization module for Unix
+* LuaSocket toolkit
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef USOCKET_H
-#define USOCKET_H
 
 /*=========================================================================*\
 * BSD include files
@@ -30,9 +31,11 @@
 /* IP stuff*/
 #include <netinet/in.h>
 #include <arpa/inet.h>
+/* TCP options (nagle algorithm disable) */
+#include <netinet/tcp.h>
 
 #ifdef __APPLE__
-/* for some reason socklen_t is not defined in mac os x */
+/* for some reason socklen_t is not defined in Mac Os X */
 typedef int socklen_t;
 #endif
 

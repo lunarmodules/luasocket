@@ -8,7 +8,9 @@ a given domain/family and protocol. Then connect or bind if needed. Then
 use IO functions.
 
 All functions return a non-nil value as first return value if successful.
-All functions return nil followed by error message in case of error.
+All functions return whatever could be retrieved followed by error message 
+in case of error. The best way to check for errors is to check for the
+presence of an error message. 
 WARNING: The send function was affected.
 
 Better error messages and parameter checking.

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- FTP support for the Lua language
--- LuaSocket 1.5 toolkit.
+-- LuaSocket toolkit.
 -- Author: Diego Nehab
 -- Conforming to: RFC 959, LTN7
 -- RCS ID: $Id$

@@ -1,6 +1,21 @@
 #ifndef TCP_H
 #define TCP_H
-
+/*=========================================================================*\
+* TCP object
+* LuaSocket toolkit
+*
+* The tcp.h module is basicly a glue that puts together modules buffer.h,
+* timeout.h socket.h and inet.h to provide the LuaSocket TCP (AF_INET,
+* SOCK_STREAM) support.
+*
+* Three classes are defined: master, client and server. The master class is
+* a newly created tcp object, that has not been bound or connected. Server
+* objects are tcp objects bound to some local address. Client objects are
+* tcp objects either connected to some address or returned by the accept
+* method of a server object.
+*
+* RCS ID: $Id$
+\*=========================================================================*/
 #include <lua.h>
 
 #include "buffer.h"
@@ -17,4 +32,4 @@ typedef t_tcp *p_tcp;
 
 void tcp_open(lua_State *L);
 
-#endif
+#endif /* TCP_H */

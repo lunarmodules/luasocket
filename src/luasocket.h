@@ -1,17 +1,19 @@
+#ifndef LUASOCKET_H
+#define LUASOCKET_H
 /*=========================================================================*\
+* LuaSocket toolkit
 * Networking support for the Lua language
 * Diego Nehab
 * 9/11/1999
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef LUASOCKET_H
-#define LUASOCKET_H
+#include <lua.h>
 
 /*-------------------------------------------------------------------------*\
 * Current luasocket version
 \*-------------------------------------------------------------------------*/
-#define LUASOCKET_VERSION "LuaSocket 1.5 (alpha)"
+#define LUASOCKET_VERSION "LuaSocket 2.0 (alpha)"
 
 /*-------------------------------------------------------------------------*\
 * Library's namespace
@@ -28,6 +30,6 @@
 /*-------------------------------------------------------------------------*\
 * Initializes the library.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_socketlib(lua_State *L);
+LUASOCKET_API int luaopen_socket(lua_State *L);
 
 #endif /* LUASOCKET_H */

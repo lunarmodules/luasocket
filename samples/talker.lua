@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- TCP sample: Little program to send text lines to a given host/port
--- LuaSocket 1.5 sample files
+-- LuaSocket sample files
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------

@@ -1,16 +1,16 @@
+#ifndef WSOCKET_H
+#define WSOCKET_H
 /*=========================================================================*\
 * Socket compatibilization module for Win32
+* LuaSocket toolkit
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#ifndef WSOCKET_H
-#define WSOCKET_H
 
 /*=========================================================================*\
-* WinSock2 include files
+* WinSock include files
 \*=========================================================================*/
-#include <winsock2.h>
-#include <winbase.h>
+#include <winsock.h>
 
 typedef int socklen_t;
 typedef int ssize_t;

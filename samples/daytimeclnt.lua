@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- UDP sample: daytime protocol client
--- LuaSocket 1.5 sample files.
+-- LuaSocket sample files
 -- Author: Diego Nehab
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------

@@ -1,8 +1,10 @@
 /*=========================================================================*\
 * Internet domain functions
+* LuaSocket toolkit
 *
 * RCS ID: $Id$
 \*=========================================================================*/
+#include <stdio.h>
 #include <string.h>
 
 #include <lua.h>
@@ -16,7 +18,6 @@
 \*=========================================================================*/
 static int inet_global_toip(lua_State *L);
 static int inet_global_tohostname(lua_State *L);
-
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
 
 static luaL_reg func[] = {
@@ -43,11 +44,6 @@ void inet_open(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Returns all information provided by the resolver given a host name
 * or ip address
-* Lua Input: address
-*   address: ip address or hostname to dns lookup
-* Lua Returns
-*   On success: first IP address followed by a resolved table
-*   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
 static int inet_global_toip(lua_State *L)
 {
@@ -72,11 +68,6 @@ static int inet_global_toip(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Returns all information provided by the resolver given a host name
 * or ip address
-* Lua Input: address
-*   address: ip address or host name to reverse dns lookup
-* Lua Returns
-*   On success: canonic name followed by a resolved table
-*   On error: nil, followed by an error message
 \*-------------------------------------------------------------------------*/
 static int inet_global_tohostname(lua_State *L)
 {
@@ -102,11 +93,6 @@ static int inet_global_tohostname(lua_State *L)
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Retrieves socket peer name
-* Input: 
-*   sock: socket
-* Lua Returns
-*   On success: ip address and port of peer
-*   On error: nil
 \*-------------------------------------------------------------------------*/
 int inet_meth_getpeername(lua_State *L, p_sock ps)
 {
@@ -123,11 +109,6 @@ int inet_meth_getpeername(lua_State *L, p_sock ps)
 
 /*-------------------------------------------------------------------------*\
 * Retrieves socket local name
-* Input:
-*   sock: socket
-* Lua Returns
-*   On success: local ip address and port
-*   On error: nil
 \*-------------------------------------------------------------------------*/
 int inet_meth_getsockname(lua_State *L, p_sock ps)
 {
@@ -147,8 +128,6 @@ int inet_meth_getsockname(lua_State *L, p_sock ps)
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Passes all resolver information to Lua as a table
-* Input
-*   hp: hostent structure returned by resolver
 \*-------------------------------------------------------------------------*/
 static void inet_pushresolved(lua_State *L, struct hostent *hp)
 {
@@ -185,12 +164,6 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 
 /*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
-* Input
-*   ps: pointer to socket 
-*   address: host name or ip address
-*   port: port number to bind to
-* Returns
-*   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
 const char *inet_tryconnect(p_sock ps, const char *address, 
         unsigned short port)
@@ -224,12 +197,6 @@ const char *inet_tryconnect(p_sock ps, const char *address,
 
 /*-------------------------------------------------------------------------*\
 * Tries to bind socket to (address, port)
-* Input
-*   sock: pointer to socket
-*   address: host name or ip address
-*   port: port number to bind to
-* Returns
-*   NULL in case of success, error message otherwise
 \*-------------------------------------------------------------------------*/
 const char *inet_trybind(p_sock ps, const char *address, unsigned short port, 
         int backlog)
@@ -264,10 +231,6 @@ const char *inet_trybind(p_sock ps, const char *address, unsigned short port,
 
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
-* Input
-*   sock: pointer to socket
-* Returns
-*   NULL if successfull, error message on error
 \*-------------------------------------------------------------------------*/
 const char *inet_trycreate(p_sock ps, int type)
 {
@@ -299,3 +262,5 @@ int inet_aton(const char *cp, struct in_addr *inp)
     return 1;
 }
 #endif
+
+

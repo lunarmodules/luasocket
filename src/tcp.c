@@ -1,5 +1,6 @@
 /*=========================================================================*\
 * TCP object 
+* LuaSocket toolkit
 *
 * RCS ID: $Id$
 \*=========================================================================*/
@@ -13,7 +14,6 @@
 #include "auxiliar.h"
 #include "socket.h"
 #include "inet.h"
-#include "error.h"
 #include "tcp.h"
 
 /*=========================================================================*\
@@ -28,9 +28,13 @@ static int meth_getpeername(lua_State *L);
 static int meth_receive(lua_State *L);
 static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
+static int meth_setoption(lua_State *L);
 static int meth_timeout(lua_State *L);
 static int meth_fd(lua_State *L);
 static int meth_dirty(lua_State *L);
+static int opt_nodelay(lua_State *L);
+static int opt_keepalive(lua_State *L);
+static int opt_linger(lua_State *L);
 
 /* tcp object methods */
 static luaL_reg tcp[] = {
@@ -45,8 +49,18 @@ static luaL_reg tcp[] = {
     {"getsockname", meth_getsockname},
     {"timeout",     meth_timeout},
     {"close",       meth_close},
+    {"setoption",   meth_setoption},
+    {"__gc",        meth_close},
     {"fd",          meth_fd},
     {"dirty",       meth_dirty},
+    {NULL,          NULL}
+};
+
+/* socket option handlers */
+static luaL_reg opt[] = {
+    {"keepalive",   opt_keepalive},
+    {"nodelay",     opt_nodelay},
+    {"linger",      opt_linger},
     {NULL,          NULL}
 };
 
@@ -71,6 +85,7 @@ void tcp_open(lua_State *L)
     aux_add2group(L, "tcp{server}", "tcp{any}");
     aux_add2group(L, "tcp{client}", "tcp{client, server}");
     aux_add2group(L, "tcp{server}", "tcp{client, server}");
+    /* both server and client objects are selectable */
     aux_add2group(L, "tcp{client}", "select{able}");
     aux_add2group(L, "tcp{server}", "select{able}");
     /* define library functions */
@@ -97,18 +112,80 @@ static int meth_receive(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
+* Option handlers
+\*-------------------------------------------------------------------------*/
+static int meth_setoption(lua_State *L)
+{
+    return aux_meth_setoption(L, opt);
+}
+
+static int opt_boolean(lua_State *L, int level, int name)
+{
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    int val = aux_checkboolean(L, 2);
+    if (setsockopt(tcp->sock, level, name, (char *) &val, sizeof(val)) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "setsockopt failed");
+        return 2;
+    }
+    lua_pushnumber(L, 1);
+    return 1;
+}
+
+/* disables the Nagle algorithm */
+static int opt_nodelay(lua_State *L)
+{
+    struct protoent *pe = getprotobyname("TCP");
+    if (!pe) {
+        lua_pushnil(L);
+        lua_pushstring(L, "getprotobyname");
+        return 2;
+    }
+    return opt_boolean(L, pe->p_proto, TCP_NODELAY); 
+}
+
+static int opt_keepalive(lua_State *L)
+{
+    return opt_boolean(L, SOL_SOCKET, SO_KEEPALIVE); 
+}
+
+int opt_linger(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
+    struct linger li;
+    if (!lua_istable(L, 2)) 
+        luaL_typerror(L, 2, lua_typename(L, LUA_TTABLE));
+    lua_pushstring(L, "onoff");
+    lua_gettable(L, 2);
+    if (!lua_isnumber(L, -1)) luaL_argerror(L, 2, "invalid onoff field");
+    li.l_onoff = (int) lua_tonumber(L, -1);
+    lua_pushstring(L, "linger");
+    lua_gettable(L, 2);
+    if (!lua_isnumber(L, -1)) luaL_argerror(L, 2, "invalid linger field");
+    li.l_linger = (int) lua_tonumber(L, -1);
+    if (setsockopt(tcp->sock, SOL_SOCKET, SO_LINGER, 
+                (char *) &li, sizeof(li) < 0)) {
+        lua_pushnil(L);
+        lua_pushstring(L, "setsockopt failed");
+        return 2;
+    }
+    lua_pushnumber(L, 1);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
 * Select support methods
 \*-------------------------------------------------------------------------*/
 static int meth_fd(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client, server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client, server}", 1);
     lua_pushnumber(L, tcp->sock);
     return 1;
 }
 
 static int meth_dirty(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client, server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client, server}", 1);
     lua_pushboolean(L, !buf_isempty(&tcp->buf));
     return 1;
 }
@@ -207,7 +284,7 @@ static int meth_accept(lua_State *L)
         if (client->sock == SOCK_INVALID) {
            if (tm_get(tm) == 0) {
                 lua_pushnil(L);
-                error_push(L, IO_TIMEOUT);
+                io_pusherror(L, IO_TIMEOUT);
                 return 2;
            }
         } else break;

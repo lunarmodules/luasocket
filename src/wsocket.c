@@ -1,14 +1,21 @@
+/*=========================================================================*\
+* Socket compatibilization module for Win32
+* LuaSocket toolkit
+*
+* RCS ID: $Id$
+\*=========================================================================*/
 #include <string.h>
 
 #include "socket.h"
 
+/*-------------------------------------------------------------------------*\
+* Initializes module 
+\*-------------------------------------------------------------------------*/
 int sock_open(void)
 {
-    WORD wVersionRequested;
     WSADATA wsaData;
-    int err; 
-    wVersionRequested = MAKEWORD(2, 0); 
-    err = WSAStartup(wVersionRequested, &wsaData );
+    WORD wVersionRequested = MAKEWORD(2, 0); 
+    int err = WSAStartup(wVersionRequested, &wsaData );
     if (err != 0) return 0;
     if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) {
         WSACleanup();
@@ -17,38 +24,58 @@ int sock_open(void)
     return 1;
 }
 
+/*-------------------------------------------------------------------------*\
+* Close and inutilize socket
+\*-------------------------------------------------------------------------*/
 void sock_destroy(p_sock ps)
 {
     closesocket(*ps);
+    *ps = SOCK_INVALID;
 }
 
+/*-------------------------------------------------------------------------*\
+* Creates and sets up a socket
+\*-------------------------------------------------------------------------*/
 const char *sock_create(p_sock ps, int domain, int type, int protocol)
 {
+    int val = 1;
     t_sock sock = socket(domain, type, protocol);
     if (sock == SOCK_INVALID) return sock_createstrerror(); 
     *ps = sock;
     sock_setnonblocking(ps);
-    sock_setreuseaddr(ps);
+    setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(val));
     return NULL;
 }
 
+/*-------------------------------------------------------------------------*\
+* Connects or returns error message
+\*-------------------------------------------------------------------------*/
 const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len)
 {
     if (connect(*ps, addr, addr_len) < 0) return sock_connectstrerror();
     else return NULL;
 }
 
+/*-------------------------------------------------------------------------*\
+* Binds or returns error message
+\*-------------------------------------------------------------------------*/
 const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
 {
     if (bind(*ps, addr, addr_len) < 0) return sock_bindstrerror();
     else return NULL;
 }
 
+/*-------------------------------------------------------------------------*\
+* 
+\*-------------------------------------------------------------------------*/
 void sock_listen(p_sock ps, int backlog)
 {
     listen(*ps, backlog);
 }
 
+/*-------------------------------------------------------------------------*\
+* Accept with timeout
+\*-------------------------------------------------------------------------*/
 int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len, 
         int timeout)
 {
@@ -70,6 +97,9 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *addr_len,
     else return IO_DONE;
 }
 
+/*-------------------------------------------------------------------------*\
+* Send with timeout
+\*-------------------------------------------------------------------------*/
 int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, 
         int timeout)
 {
@@ -104,6 +134,9 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent,
     }
 }
 
+/*-------------------------------------------------------------------------*\
+* Sendto with timeout
+\*-------------------------------------------------------------------------*/
 int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent, 
         SA *addr, socklen_t addr_len, int timeout)
 {
@@ -138,6 +171,9 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
     }
 }
 
+/*-------------------------------------------------------------------------*\
+* Receive with timeout
+\*-------------------------------------------------------------------------*/
 int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
 {
     t_sock sock = *ps;
@@ -165,6 +201,9 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, int timeout)
     }
 }
 
+/*-------------------------------------------------------------------------*\
+* Recvfrom with timeout
+\*-------------------------------------------------------------------------*/
 int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got, 
         SA *addr, socklen_t *addr_len, int timeout)
 {
@@ -193,6 +232,27 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
     }
 }
 
+/*-------------------------------------------------------------------------*\
+* Put socket into blocking mode
+\*-------------------------------------------------------------------------*/
+void sock_setblocking(p_sock ps)
+{
+    u_long argp = 0;
+    ioctlsocket(*ps, FIONBIO, &argp);
+}
+
+/*-------------------------------------------------------------------------*\
+* Put socket into non-blocking mode
+\*-------------------------------------------------------------------------*/
+void sock_setnonblocking(p_sock ps)
+{
+    u_long argp = 1;
+    ioctlsocket(*ps, FIONBIO, &argp);
+}
+
+/*-------------------------------------------------------------------------*\
+* Error translation functions
+\*-------------------------------------------------------------------------*/
 const char *sock_hoststrerror(void)
 {
     switch (WSAGetLastError()) {
@@ -240,22 +300,4 @@ const char *sock_connectstrerror(void)
         case WSAENETUNREACH: return "network is unreachable";
         default: return "unknown error";
     }
-}
-
-void sock_setreuseaddr(p_sock ps)
-{
-    int val = 1;
-    setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
-}
-
-void sock_setblocking(p_sock ps)
-{
-    u_long argp = 0;
-    ioctlsocket(*ps, FIONBIO, &argp);
-}
-
-void sock_setnonblocking(p_sock ps)
-{
-    u_long argp = 1;
-    ioctlsocket(*ps, FIONBIO, &argp);
 }

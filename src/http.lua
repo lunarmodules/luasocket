@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- HTTP/1.1 client support for the Lua language.
--- LuaSocket 1.5 toolkit.
+-- LuaSocket toolkit.
 -- Author: Diego Nehab
 -- Conforming to: RFC 2616, LTN7
 -- RCS ID: $Id$

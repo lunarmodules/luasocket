@@ -17,12 +17,14 @@ function warn(...)
     io.write("WARNING: ", s, "\n")
 end
 
+pad = string.rep(" ", 8192)
+
 function remote(...)
     local s = string.format(unpack(arg))
     s = string.gsub(s, "\n", ";")
     s = string.gsub(s, "%s+", " ")
     s = string.gsub(s, "^%s*", "")
-    control:send(s, "\n")
+    control:send(pad, s, "\n")
     control:receive()
 end
 
@@ -82,16 +84,19 @@ function reconnect()
     remote [[
         if data then data:close() data = nil end
         data = server:accept()
+        data:setoption("nodelay", true)
     ]]
     data, err = socket.connect(host, port)
     if not data then fail(err) 
     else pass("connected!") end
+    data:setoption("nodelay", true)
 end
 
 pass("attempting control connection...")
 control, err = socket.connect(host, port)
 if err then fail(err)
 else pass("connected!") end
+control:setoption("nodelay", true)
 
 ------------------------------------------------------------------------
 test("method registration")
@@ -157,16 +162,21 @@ remote "data:send(str); data:close()"
 end
 
 
-test_mixed(1)
-test_mixed(17)
-test_mixed(200)
-test_mixed(4091)
-test_mixed(80199)
-test_mixed(4091)
-test_mixed(200)
-test_mixed(17)
-test_mixed(1)
+--test_mixed(1)
+--test_mixed(17)
+--test_mixed(200)
+--test_mixed(4091)
+--test_mixed(80199)
+--test_mixed(4091)
+--test_mixed(200)
+--test_mixed(17)
+--test_mixed(1)
 
+test_mixed(4091)
+test_mixed(4091)
+test_mixed(4091)
+test_mixed(4091)
+test_mixed(4091)
 ------------------------------------------------------------------------
 test("character line")
 reconnect()
