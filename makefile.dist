@@ -2,7 +2,7 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-1.3b
+DIST = luasocket-1.4
 
 SRC = ~diego/tec/luasocket
 
@@ -19,13 +19,14 @@ dist:
 	cp -vf lua/README $(DIST)/lua
 	cp -vf examples/*.lua $(DIST)/examples
 	cp -vf examples/README $(DIST)/examples
-	cp -vf html/manual.html $(DIST)/html
-	cp -vf html/lua.png $(DIST)/html
-	cp -vf html/vim.png $(DIST)/html
-	cp -vf html/anybrowser.png $(DIST)/html
+	cp -vf html/*.html $(DIST)/html
+	cp -vf html/*.png $(DIST)/html
 	cp -vf test/testclnt.lua $(DIST)/test
 	cp -vf test/testsrvr.lua $(DIST)/test
 	cp -vf test/testcmd.lua $(DIST)/test
+	cp -vf test/codetest.lua $(DIST)/test
+	cp -vf test/concattest.lua $(DIST)/test
+	cp -vf test/urltest.lua $(DIST)/test
 	cp -vf test/README $(DIST)/test
 	tar -zcvf $(DIST).tar.gz $(DIST)
 	zip -r $(DIST).zip $(DIST)
