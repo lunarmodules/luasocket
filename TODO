@@ -1,6 +1,7 @@
-get rid of a = socket.try() in the manual, except for protected cases.
-    replace it with assert.
 
+BUG NO SET DO TINYIRC!!! SINISTRO.
+talk about the non-blocking connect in the manual
+test it on Windows!!!
 
 think about a dispatcher.
     - it creates a server and receives a function that will do the work on
@@ -13,17 +14,9 @@ functions for non-blocking so they can be used in the context of the
 dispatcher!
 
 adjust manual for new sock:send returns.
-check all "require("http")" etc in the manual.
 _VERSION, _DEBUG, etc.
-get rid of "base." kludge
-make sure sock_gethostname.*  only return success if the hp is not 
-null!
-change 'l' prefix in C libraries to 'l-something'...
-    don't forget the declarations in luasocket.h and mime.h!!!
-leave code for losers that don't have nanosleep
 
-"foo.bar.baz" previously had to provide luaopen_foobarbaz() and now 
-should use luaopen_foo_bar_baz(). Change compat-5.1 and LuaSocket?
+leave code for losers that don't have nanosleep
 
 ftp.send/recv return bytes transfered?
 new scheme to choose family/protocol of object to create
@@ -47,27 +40,4 @@ testar os options!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 
-*eliminate globals from namespaces created by module().
-*make sure standard libraries are "required" by modules before use.
-*use wim's filter.chain or something better
-*close wasn't returning 1
-*make sure errors not thrown by try() are not caught by protect()
-*move wsocket.c:sock_send kludge to buffer.c:sendraw?
-*bug on UDP sendto.
-*fix PROXY in http.lua
-*use new distribution scheme
-*create the getstats method. 
-*fix local domain socket kludge of name size
-*use TLS 
-*sort out the wrap around of gettime...
- *use doubles all over
- *sock_send, sock_recv & sock_select use p_tm instead of timeout
- *make select interrupt safe (will be with tm stuff)
- *use GetSystemTimeAsFileTime in windows (WinCE will suffer document)
-*add getstats to the manual
-*Fazer compilar com g++
-*test associativity of socket.select
-* fix manual for send and receive
-* add thanks to mike
-* change sock:send to use indices just like string.sub?
-* change sendraw to send by chunks
+eliminate globals from namespaces created by module().

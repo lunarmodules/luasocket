@@ -220,7 +220,6 @@ const char *inet_tryconnect(p_sock ps, const char *address,
         }
     } else remote.sin_family = AF_UNSPEC;
     err = sock_connect(ps, (SA *) &remote, sizeof(remote), tm);
-    if (err != IO_DONE) sock_destroy(ps);
     return sock_strerror(err);
 }
 

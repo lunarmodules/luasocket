@@ -1,7 +1,7 @@
-local socket = require"socket"
+require"socket"
+local socket = require"socket.unix"
 
-host = host or "localhost"
-port = port or "8383"
+host = "luasocket"
 
 function pass(...)
     local s = string.format(unpack(arg))
@@ -33,6 +33,19 @@ function test(test)
     io.stderr:write("----------------------------------------------\n",
         "testing: ", test, "\n",
         "----------------------------------------------\n")
+end
+
+function uconnect(path)
+    local u = assert(socket.unix())
+    assert(u:connect(path))
+    return u
+end
+
+function ubind(path)
+    local u = assert(socket.unix())
+    assert(u:bind(path))
+    assert(u:listen(5))
+    return u
 end
 
 function check_timeout(tm, sl, elapsed, err, opp, mode, alldone)
@@ -83,21 +96,22 @@ function reconnect()
     io.stderr:write("attempting data connection... ")
     if data then data:close() end
     remote [[
+        i = i or 1
         if data then data:close() data = nil end
+        print("accepting")
         data = server:accept()
-        data:setoption("tcp-nodelay", true)
+        i = i + 1
+        print("done " .. i)
     ]]
-    data, err = socket.connect(host, port)
+    data, err = uconnect(host, port)
     if not data then fail(err) 
     else pass("connected!") end
-    data:setoption("tcp-nodelay", true)
 end
 
 pass("attempting control connection...")
-control, err = socket.connect(host, port)
+control, err = uconnect(host, port)
 if err then fail(err)
 else pass("connected!") end
-control:setoption("tcp-nodelay", true)
 
 ------------------------------------------------------------------------
 function test_methods(sock, methods)
@@ -480,7 +494,7 @@ remote(string.format([[
 remote(string.format([[
     str = data:receive(%d)
     socket.sleep(0.5)
-    str = data:receive(2*%d, str)
+    str = data:receive(%d, str)
     data:send(str)
 ]], size, size))
     data:settimeout(0)
@@ -498,17 +512,14 @@ end
 
 ------------------------------------------------------------------------
 
-
 test("method registration")
-test_methods(socket.tcp(), {
+test_methods(socket.unix(), {
     "accept",
     "bind",
     "close",
     "connect",
     "dirty",
     "getfd",
-    "getpeername",
-    "getsockname",
     "getstats",
     "setstats",
     "listen",
@@ -522,34 +533,13 @@ test_methods(socket.tcp(), {
     "shutdown",
 })
 
-test_methods(socket.udp(), {
-    "close", 
-    "getpeername",
-    "dirty",
-    "getfd",
-    "getpeername",
-    "getsockname",
-    "receive", 
-    "receivefrom", 
-    "send", 
-    "sendto", 
-    "setfd", 
-    "setoption",
-    "setpeername",
-    "setsockname",
-    "settimeout"
-})
-
-test("select function")
-test_selectbugs()
-
 test("connect function")
-connect_timeout()
-empty_connect()
-connect_errors()
+--connect_timeout()
+--empty_connect()
+--connect_errors()
 
-test("rebinding: ")
-rebind_test()
+--test("rebinding: ")
+--rebind_test()
 
 test("active close: ")
 active_close()
@@ -620,7 +610,7 @@ test_nonblocking(17)
 test_nonblocking(200)
 test_nonblocking(4091)
 test_nonblocking(80199)
-test_nonblocking(800000)
+test_nonblocking(8000000)
 test_nonblocking(80199)
 test_nonblocking(4091)
 test_nonblocking(200)

@@ -87,7 +87,7 @@ static int global_unload(lua_State *L) {
 static int base_open(lua_State *L) {
     if (sock_open()) {
         /* export functions (and leave namespace table on top of stack) */
-        luaL_module(L, "socket", func, 0);
+        luaL_openlib(L, "socket", func, 0);
 #ifdef LUASOCKET_DEBUG
         lua_pushstring(L, "DEBUG");
         lua_pushboolean(L, 1);
@@ -108,7 +108,7 @@ static int base_open(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Initializes all library modules.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_lsocket(lua_State *L) {
+LUASOCKET_API int luaopen_csocket(lua_State *L) {
     int i;
     base_open(L);
     for (i = 0; mod[i].name; i++) mod[i].func(L);

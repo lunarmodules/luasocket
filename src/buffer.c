@@ -123,7 +123,7 @@ int buf_meth_receive(lua_State *L, p_buf buf) {
         else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b); 
         else luaL_argcheck(L, 0, 2, "invalid receive pattern");
         /* get a fixed number of bytes */
-    } else err = recvraw(buf, (size_t) lua_tonumber(L, 2), &b);
+    } else err = recvraw(buf, (size_t) lua_tonumber(L, 2)-size, &b);
     /* check if there was an error */
     if (err != IO_DONE) {
         /* we can't push anyting in the stack before pushing the

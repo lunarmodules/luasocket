@@ -45,11 +45,15 @@ int sock_sendto(p_sock ps, const char *data, size_t count,
         size_t *sent, SA *addr, socklen_t addr_len, p_tm tm);
 int sock_recvfrom(p_sock ps, char *data, size_t count, 
         size_t *got, SA *addr, socklen_t *addr_len, p_tm tm);
+
 void sock_setnonblocking(p_sock ps);
 void sock_setblocking(p_sock ps);
+
+int sock_waitfd(int fd, int sw, p_tm tm);
 int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm);
 
 int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm); 
+int sock_connected(p_sock ps, p_tm tm);
 int sock_create(p_sock ps, int domain, int type, int protocol);
 int sock_bind(p_sock ps, SA *addr, socklen_t addr_len); 
 int sock_listen(p_sock ps, int backlog);

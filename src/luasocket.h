@@ -13,7 +13,7 @@
 /*-------------------------------------------------------------------------*\
 * Current luasocket version
 \*-------------------------------------------------------------------------*/
-#define LUASOCKET_VERSION    "LuaSocket 2.0 (beta3)"
+#define LUASOCKET_VERSION    "LuaSocket 2.0"
 #define LUASOCKET_COPYRIGHT  "Copyright (C) 2004-2005 Diego Nehab"
 #define LUASOCKET_AUTHORS    "Diego Nehab"
 
@@ -27,6 +27,6 @@
 /*-------------------------------------------------------------------------*\
 * Initializes the library.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_socket(lua_State *L);
+LUASOCKET_API int luaopen_csocket(lua_State *L);
 
 #endif /* LUASOCKET_H */

@@ -32,6 +32,8 @@ static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
+static int meth_getstats(lua_State *L);
+static int meth_setstats(lua_State *L);
 
 static const char *unix_tryconnect(p_unix un, const char *path);
 static const char *unix_trybind(p_unix un, const char *path);
@@ -46,6 +48,8 @@ static luaL_reg un[] = {
     {"connect",     meth_connect},
     {"dirty",       meth_dirty},
     {"getfd",       meth_getfd},
+    {"getstats",    meth_getstats},
+    {"setstats",    meth_setstats},
     {"listen",      meth_listen},
     {"receive",     meth_receive},
     {"send",        meth_send},
@@ -75,7 +79,7 @@ static luaL_reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int unix_open(lua_State *L) {
+int luaopen_socketunix(lua_State *L) {
     /* create classes */
     aux_newclass(L, "unix{master}", un);
     aux_newclass(L, "unix{client}", un);
@@ -84,11 +88,9 @@ int unix_open(lua_State *L) {
     aux_add2group(L, "unix{master}", "unix{any}");
     aux_add2group(L, "unix{client}", "unix{any}");
     aux_add2group(L, "unix{server}", "unix{any}");
-    aux_add2group(L, "unix{client}", "unix{client,server}");
-    aux_add2group(L, "unix{server}", "unix{client,server}");
     /* define library functions */
-    luaL_openlib(L, NULL, func, 0); 
-    return 0;
+    luaL_openlib(L, "socket", func, 0); 
+    return 1;
 }
 
 /*=========================================================================*\
@@ -105,6 +107,16 @@ static int meth_send(lua_State *L) {
 static int meth_receive(lua_State *L) {
     p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
     return buf_meth_receive(L, &un->buf);
+}
+
+static int meth_getstats(lua_State *L) {
+    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
+    return buf_meth_getstats(L, &un->buf);
+}
+
+static int meth_setstats(lua_State *L) {
+    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
+    return buf_meth_setstats(L, &un->buf);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -250,7 +262,8 @@ static int meth_close(lua_State *L)
 {
     p_unix un = (p_unix) aux_checkgroup(L, "unix{any}", 1);
     sock_destroy(&un->sock);
-    return 0;
+    lua_pushnumber(L, 1);
+    return 1;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -277,7 +290,7 @@ static int meth_listen(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_shutdown(lua_State *L)
 {
-    p_unix un = (p_unix) aux_checkgroup(L, "unix{client}", 1);
+    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
     const char *how = luaL_optstring(L, 2, "both");
     switch (how[0]) {
         case 'b':

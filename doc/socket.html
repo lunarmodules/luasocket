@@ -145,7 +145,10 @@ socket.<b>protect(</b>func<b>)</b>
 </p>
 
 <p class=description>
-Converts a function that throws exceptions into a safe function.
+Converts a function that throws exceptions into a safe function. This
+function only catches exceptions thrown by the <a href=#try><tt>try</tt></a>
+and <a href=#newtry><tt>newtry</tt></a> functions. It does not catch normal 
+Lua errors.
 </p>
 
 <p class=parameters>
@@ -346,7 +349,9 @@ socket.<b>try(</b>ret<sub>1</sub> [, ret<sub>2</sub> ... ret<sub>N</sub>]<b>)</b
 </p>
 
 <p class=description>
-Throws an exception in case of error. 
+Throws an exception in case of error. The exception can only be caught 
+by the <a href=#protect><tt>protect</tt></a> function. It does not explode
+into an error message.
 </p>
 
 <p class=parameters>

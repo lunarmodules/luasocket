@@ -182,7 +182,7 @@ program.
 -- load namespace
 local socket = require("socket")
 -- create a TCP socket and bind it to the local host, at any port
-local server = socket.try(socket.bind("*", 0))
+local server = assert(socket.bind("*", 0))
 -- find out which port the OS chose for us
 local ip, port = server:getsockname()
 -- print a message informing what's up
@@ -287,13 +287,13 @@ local host, port = "localhost", 13
 -- load namespace
 local socket = require("socket")
 -- convert host name to ip address
-local ip = socket.try(socket.dns.toip(host))
+local ip = assert(socket.dns.toip(host))
 -- create a new UDP object
-local udp = socket.try(socket.udp())
+local udp = assert(socket.udp())
 -- contact daytime host
-socket.try(udp:sendto("anything", ip, port))
+assert(udp:sendto("anything", ip, port))
 -- retrieve the answer and print results
-io.write(socket.try((udp:receive())))
+io.write(assert(udp:receive()))
 </pre>
 </blockquote>
 

@@ -20,6 +20,7 @@
 \*=========================================================================*/
 static int global_create(lua_State *L);
 static int meth_connect(lua_State *L);
+static int meth_connected(lua_State *L);
 static int meth_listen(lua_State *L);
 static int meth_bind(lua_State *L);
 static int meth_send(lua_State *L);
@@ -45,6 +46,7 @@ static luaL_reg tcp[] = {
     {"bind",        meth_bind},
     {"close",       meth_close},
     {"connect",     meth_connect},
+    {"connected",   meth_connected},
     {"dirty",       meth_dirty},
     {"getfd",       meth_getfd},
     {"getpeername", meth_getpeername},
@@ -113,12 +115,12 @@ static int meth_receive(lua_State *L) {
 }
 
 static int meth_getstats(lua_State *L) {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
     return buf_meth_getstats(L, &tcp->buf);
 }
 
 static int meth_setstats(lua_State *L) {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
     return buf_meth_setstats(L, &tcp->buf);
 }
 
@@ -216,6 +218,22 @@ static int meth_connect(lua_State *L)
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
+        return 2;
+    }
+    /* turn master object into a client object */
+    aux_setclass(L, "tcp{client}", 1);
+    lua_pushnumber(L, 1);
+    return 1;
+}
+
+static int meth_connected(lua_State *L)
+{
+    static t_tm tm = {-1, -1};
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
+    int err = sock_connected(&tcp->sock, &tm);
+    if (err != IO_DONE) {
+        lua_pushnil(L);
+        lua_pushstring(L, sock_strerror(err));
         return 2;
     }
     /* turn master object into a client object */

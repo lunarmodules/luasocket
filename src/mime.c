@@ -78,9 +78,9 @@ static UC b64unbase[256];
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-MIME_API int luaopen_lmime(lua_State *L)
+MIME_API int luaopen_cmime(lua_State *L)
 {
-    luaL_module(L, "mime", func, 0);
+    luaL_openlib(L, "mime", func, 0);
     /* initialize lookup tables */
     qpsetup(qpclass, qpunbase);
     b64setup(b64unbase);

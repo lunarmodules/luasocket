@@ -65,7 +65,7 @@ To obtain the <tt>ftp</tt> namespace, run:
 
 <pre class=example>
 -- loads the FTP module and any libraries it requires
-local ftp = require("ftp")
+local ftp = require("socket.ftp")
 </pre>
 
 <p>
@@ -150,7 +150,7 @@ error.
 
 <pre class=example>
 -- load the ftp support
-local ftp = require("ftp")
+local ftp = require("socket.ftp")
 
 -- Log as user "anonymous" on server "ftp.tecgraf.puc-rio.br",
 -- and get file "lua.tar.gz" from directory "pub/lua" as binary.
@@ -159,9 +159,9 @@ f, e = ftp.get("ftp://ftp.tecgraf.puc-rio.br/pub/lua/lua.tar.gz;type=i")
 
 <pre class=example>
 -- load needed modules
-local ftp = require("ftp")
+local ftp = require("socket.ftp")
 local ltn12 = require("ltn12")
-local url = require("url")
+local url = require("socket.url")
 
 -- a function that returns a directory listing
 function nlst(u)
@@ -230,7 +230,7 @@ message describing the reason for failure.
 
 <pre class=example>
 -- load the ftp support
-local ftp = require("ftp")
+local ftp = require("socket.ftp")
 
 -- Log as user "fulano" on server "ftp.example.com",
 -- using password "silva", and store a file "README" with contents 
@@ -241,7 +241,7 @@ f, e = ftp.put("ftp://fulano:silva@ftp.example.com/README",
 
 <pre class=example>
 -- load the ftp support
-local ftp = require("ftp")
+local ftp = require("socket.ftp")
 local ltn12 = require("ltn12")
 
 -- Log as user "fulano" on server "ftp.example.com",

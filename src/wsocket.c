@@ -45,7 +45,7 @@ int sock_close(void) {
 #define WAITFD_E        4
 #define WAITFD_C        (WAITFD_E|WAITFD_W)
 
-static int sock_waitfd(t_sock fd, int sw, p_tm tm) {
+int sock_waitfd(t_sock fd, int sw, p_tm tm) {
     int ret;
     fd_set rfds, wfds, efds, *rp = NULL, *wp = NULL, *ep = NULL;
     struct timeval tv, *tp = NULL;
@@ -118,7 +118,17 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
     /* make sure the system is trying to connect */
     err = WSAGetLastError();
     if (err != WSAEWOULDBLOCK && err != WSAEINPROGRESS) return err;
+    /* zero timeout case optimization */
+    if (tm_iszero(tm)) return IO_TIMEOUT;
     /* we wait until something happens */
+    return sock_connected(ps, tm);
+}
+
+/*-------------------------------------------------------------------------*\
+* Check if socket is connected
+\*-------------------------------------------------------------------------*/
+int sock_connected(p_sock ps) {
+    int err;
     if ((err = sock_waitfd(*ps, WAITFD_C, tm)) == IO_CLOSED) {
         int len = sizeof(err);
         /* give windows time to set the error (yes, disgusting) */
@@ -126,9 +136,8 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
         /* find out why we failed */
         getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *)&err, &len); 
         /* we KNOW there was an error. if why is 0, we will return
-         * "unknown error", but it's not really our fault */
+        * "unknown error", but it's not really our fault */
         return err > 0? err: IO_UNKNOWN; 
-    /* here we deal with the case in which it worked, timedout or weird errors */
     } else return err;
 }
 

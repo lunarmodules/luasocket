@@ -22,7 +22,7 @@
 #define WAITFD_R        POLLIN
 #define WAITFD_W        POLLOUT
 #define WAITFD_C        (POLLIN|POLLOUT)
-static int sock_waitfd(int fd, int sw, p_tm tm) {
+int sock_waitfd(int fd, int sw, p_tm tm) {
     int ret;
     struct pollfd pfd;
     pfd.fd = fd;
@@ -44,7 +44,7 @@ static int sock_waitfd(int fd, int sw, p_tm tm) {
 #define WAITFD_W        2
 #define WAITFD_C        (WAITFD_R|WAITFD_W)
 
-static int sock_waitfd(int fd, int sw, p_tm tm) {
+int sock_waitfd(int fd, int sw, p_tm tm) {
     int ret;
     fd_set rfds, wfds, *rp, *wp;
     struct timeval tv, *tp;
@@ -166,12 +166,20 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
     while ((err = errno) == EINTR);
     /* if connection failed immediately, return error code */
     if (err != EINPROGRESS && err != EAGAIN) return err; 
+    /* zero timeout case optimization */
+    if (tm_iszero(tm)) return IO_TIMEOUT;
     /* wait until we have the result of the connection attempt or timeout */
-    if ((err = sock_waitfd(*ps, WAITFD_C, tm)) == IO_CLOSED) { 
-        /* finaly find out if we succeeded connecting */
+    return sock_connected(ps, tm);
+}
+
+/*-------------------------------------------------------------------------*\
+* Checks if socket is connected, or return reason for failure
+\*-------------------------------------------------------------------------*/
+int sock_connected(p_sock ps, p_tm tm) {
+    int err;
+    if ((err = sock_waitfd(*ps, WAITFD_C, tm) == IO_CLOSED)) {
         if (recv(*ps, (char *) &err, 0, 0) == 0) return IO_DONE;
         else return errno;
-    /* timed out or some weirder error */
     } else return err;
 }
 
@@ -321,13 +329,17 @@ void sock_setnonblocking(p_sock ps) {
 int sock_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
     *hp = gethostbyaddr(addr, len, AF_INET);
     if (*hp) return IO_DONE;
-    else return h_errno;
+    else if (h_errno) return h_errno;
+    else if (errno) return errno;
+    else return IO_UNKNOWN;
 }
 
 int sock_gethostbyname(const char *addr, struct hostent **hp) {
     *hp = gethostbyname(addr);
     if (*hp) return IO_DONE;
-    else return h_errno;
+    else if (h_errno) return h_errno;
+    else if (errno) return errno;
+    else return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
