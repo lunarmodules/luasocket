@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+<title>LuaSocket: Network support for the Lua language</title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=header>
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align=center><a href="http://www.lua.org">
+<img border=0 alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align=center valign=top>Network support for the Lua language
+</td></tr>
+</table>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#download">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a> 
+</p>
+</center>
+<hr>
+</div>
+
+<!-- socket +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id=socket>The LuaSocket namespace</h2> 
+
+<p>
+The <tt>socket</tt> namespace contains the namespace tables for all
+LuaSocket modules as well as function that didn't belong in any specific 
+module, functions that are so commonly used that deserve a shortcut and a
+few constants.
+</p>
+
+<!-- debug ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=debug> 
+socket.<b>debug</b>
+</p>
+
+<p class=description>
+This constant is set to <tt><b>true</b></tt> if the library was compiled
+with debug support.
+</p>
+
+
+<!-- protect +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=protect> 
+socket.<b>protect(</b>function<b>)</b>
+</p>
+
+<p class=description>
+Converts a function that throws exceptions into a safe function.
+</p>
+
+<p class=parameters>
+<tt>Function</tt> is a function that calls 
+<a href=#try><tt>try</tt></a> to throw exceptions. 
+</p>
+
+<p class=return>
+The function an equivalent function that instead of throwing exceptoins,
+returns <tt><b>nil</b></tt> followed by an error message. 
+</p>
+
+<!-- toip +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=try> 
+socket.<b>try(</b>ret<sub>1</sub>, ret<sub>2</sub> ... ret<sub>N</sub><b>)</b>
+</p>
+
+<p class=description>
+Throws an exception in case of error. 
+</p>
+
+<p class=parameters>
+</b>Ret<sub>1</sub>, ret<sub>2</sub> ... ret<sub>N</sub> can be arbitrary
+arguments, but are usually the return values of a function call that 
+nested with the call to <tt>try</tt>. 
+</p>
+
+<p class=return> 
+The function returns ret<sub>1</sub>, ret<sub>2</sub> ... ret<sub>N</sub> if
+ret<sub>1</sub> is not <tt><b>nil</b></tt>. Otherwise, calls <tt>error</tt>
+passing ret<sub>2</sub>.
+</p>
+
+<pre class=example>
+-- connects or throws an exception with the appropriate error message
+c = socket.try(socket.connect("localhost", 80))
+</pre>
+
+<!-- version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=version> 
+socket.<b>version</b>
+</p>
+
+<p class=description>
+This constant has a string describing the current LuaSocket version. 
+</p>
+
+<!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class=footer>
+<hr>
+<center>
+<p class=bar>
+<a href="home.html">home</a> &middot;
+<a href="home.html#down">download</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+<p>
+<small>
+Last modified by Diego Nehab on <br>
+Sat Aug 9 01:00:41 PDT 2003
+</small>
+</p>
+</center>
+</div>
+
+</body>
+</html>
