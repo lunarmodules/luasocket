@@ -1,4 +1,4 @@
-require"socket"
+socket = require"socket"
 
 host = host or "localhost"
 port = port or "8080"
