@@ -125,12 +125,6 @@
 				RelativePath=".\buffer.c">
 			</File>
 			<File
-				RelativePath=".\code.c">
-			</File>
-			<File
-				RelativePath=".\error.c">
-			</File>
-			<File
 				RelativePath=".\inet.c">
 			</File>
 			<File
@@ -141,6 +135,9 @@
 			</File>
 			<File
 				RelativePath=".\luasocket.c">
+			</File>
+			<File
+				RelativePath=".\mime.c">
 			</File>
 			<File
 				RelativePath=".\select.c">

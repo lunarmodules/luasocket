@@ -21,6 +21,7 @@
 #include <sys/times.h>
 #include <unistd.h>
 #ifndef CLK_TCK
+/* CLI_TCK is now obsolete in Linux */
 #define CLK_TCK (sysconf(_SC_CLK_TCK));
 #endif
 #endif

@@ -53,33 +53,57 @@ void sock_shutdown(p_sock ps, int how)
 /*-------------------------------------------------------------------------*\
 * Creates and sets up a socket
 \*-------------------------------------------------------------------------*/
-const char *sock_create(p_sock ps, int domain, int type, int protocol)
+int sock_create(p_sock ps, int domain, int type, int protocol)
 {
     int val = 1;
     t_sock sock = socket(domain, type, protocol);
-    if (sock == SOCK_INVALID) return sock_createstrerror(); 
+    if (sock == SOCK_INVALID) return IO_ERROR; 
     *ps = sock;
     sock_setnonblocking(ps);
     setsockopt(*ps, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(val));
-    return NULL;
+    return IO_DONE;
 }
 
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-const char *sock_connect(p_sock ps, SA *addr, socklen_t addr_len)
+int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, int timeout)
 {
-    if (connect(*ps, addr, addr_len) < 0) return sock_connectstrerror();
-    else return NULL;
+    t_sock sock = *ps;
+    if (sock == SOCK_INVALID) return IO_CLOSED;
+    /* if connect fails, we have to find out why */
+    if (connect(sock, addr, addr_len) < 0) {
+        int err;
+        struct timeval tv;
+        fd_set efds, wfds;
+        /* make sure the system is trying to connect */
+        if (WSAGetLastError() != WSAEWOULDBLOCK) return IO_ERROR;
+        tv.tv_sec = timeout / 1000;
+        tv.tv_usec = (timeout % 1000) * 1000;
+        FD_ZERO(&wfds); FD_SET(sock, &wfds);
+        FD_ZERO(&efds); FD_SET(sock, &efds);
+        /* we run select to avoid busy waiting */
+        err = select(0, NULL, &wfds, &efds, timeout >= 0? &tv: NULL);
+        /* if select returned due to an event */
+        if (err > 0 ) {
+            /* the sets tell whether it was a sucess or failure */
+            if (FD_ISSET(sock,&efds) || !FD_ISSET(sock,&wfds)) return IO_ERROR; 
+            else return IO_DONE;
+        /* if nothing happened, we timed out */
+        } else if (err == 0) return IO_TIMEOUT;
+        /* otherwise, I don't know what happened */
+        else return IO_ERROR;
+    /* otherwise, it worked */
+    } else return IO_DONE;
 }
 
 /*-------------------------------------------------------------------------*\
 * Binds or returns error message
 \*-------------------------------------------------------------------------*/
-const char *sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
+int sock_bind(p_sock ps, SA *addr, socklen_t addr_len)
 {
-    if (bind(*ps, addr, addr_len) < 0) return sock_bindstrerror();
-    else return NULL;
+    if (bind(*ps, addr, addr_len) < 0) return IO_ERROR;
+    else return IO_DONE;
 }
 
 /*-------------------------------------------------------------------------*\

@@ -425,7 +425,7 @@ test_closed()
 test("accept with timeout (if it hangs, it failed:)")
 accept_timeout()
 
-test("accept with timeout (if it hangs, it failed:)")
+test("connect with timeout (if it hangs, it failed:)")
 connect_timeout()
 
 test("mixed patterns")
@@ -499,8 +499,6 @@ test_raw(200)
 test_raw(17)
 test_raw(1)
 
-
-a = [[
 test("total timeout on send")
 test_totaltimeoutsend(800091, 1, 3)
 test_totaltimeoutsend(800091, 2, 3)
@@ -524,6 +522,5 @@ test_blockingtimeoutreceive(800091, 1, 3)
 test_blockingtimeoutreceive(800091, 2, 3)
 test_blockingtimeoutreceive(800091, 3, 2)
 test_blockingtimeoutreceive(800091, 3, 1)
-]]
 
 test(string.format("done in %.2fs", socket.time() - start))
