@@ -26,10 +26,11 @@ local function connect(localhost, option)
     if option.localbind then
         -- bind to a local port (if we can)
         local localport = 721
+        local done, err
         repeat
             skt = test(socket.tcp())
             try(skt:settimeout(30))
-            local done, err = skt:bind(localhost, localport)
+            done, err = skt:bind(localhost, localport)
             if not done then
                 localport = localport + 1
                 skt:close()
@@ -38,6 +39,7 @@ local function connect(localhost, option)
         until localport > 731
         test(skt, err)
     else skt = test(socket.tcp()) end
+print("'" .. host .. "'")
     try(skt:connect(host, port))
     return { skt = skt, try = try }
 end

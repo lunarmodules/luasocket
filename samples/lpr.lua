@@ -27,16 +27,14 @@ if not arg or not arg[1] then
 end
 
 do
-    local s="opt = {"
-    for i = 2 , table.getn(arg), 1 do
-      s = s .. string.gsub(arg[i],"[%s%c%p]*([%w]*)=([\"]?[%w%s_!@#$%%^&*()<>:;]+[\"]\?\.?)","%1%=\"%2\",\n")
+    local opt = {}
+    local pat = "[%s%c%p]*([%w]*)=([\"]?[%w%s_!@#$%%^&*()<>:;]+[\"]\?\.?)"
+    for i = 2, table.getn(arg), 1 do
+      string.gsub(arg[i], pat, function(name, value) opt[name] = value end)
     end
-    s = s .. "};\n"
-    assert(loadstring(s))();
     if not arg[2] then
       return usage()
     end
-
     if arg[1] ~= "query" then
         r,e=lp.send(arg[1],opt)
         io.stdout:write(tostring(r or e),'\n')
