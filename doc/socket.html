@@ -106,8 +106,7 @@ writable even though the socket is <em>not</em> ready for sending.
 </p>
 
 <p class=note>
-<b>Another important note</b>: calling select with a server socket in the receive
-parameter before a call to accept does <em>not</em> guarantee
+<b>Another important note</b>: calling select with a server socket in the receive parameter before a call to accept does <em>not</em> guarantee
 <a href=tcp.html#accept><tt>accept</tt></a> will return immediately. 
 Use the <a href=tcp.html#settimeout><tt>settimeout</tt></a> 
 method or <tt>accept</tt> might block forever.  

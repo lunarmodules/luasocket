@@ -187,17 +187,17 @@ the changes that made it into version 2.0:
 </ul>
 
 <p>
-Lots of changes in the Lua modules, too. The new MIME and LTN12 modules
-make all other modules much more powerful. The main new functionality is
-the support for multipart messages in the SMTP module.
+Lots of changes in the Lua modules, too! 
 </p>
 
 <ul>
-
-<li> 
-
+<li> New MIME and LTN12 modules make all other modules much more powerful; 
+<li> Support for multipart messages in the SMTP module;
+<li> The old callback mechanism of FTP and HTTP has been replaced with LTN12 sources and sinks,
+with advantage; 
+<li> FTP, HTTP, and SMTP are implemented in multiple levels in such a way 
+that users will have no problems extending the functionality.
 </ul>
-
 
 <!-- incompatible +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -217,7 +217,11 @@ agree the new stuff is better;
 <tt>sendto</tt>, <tt>setpeername</tt> and <tt>setsockname</tt>, 
 return convention WILL break old code; 
 
-<li> Interface to options has changed;
+<li> To enable local binding before connect, the <tt>bind</tt> method 
+    does not call <tt>listen</tt> anymore. It is the new <tt>listen</tt>
+method that turns a TCP object into a server object; 
+
+<li> Interface to options has changed.
 
 </ul>
 

@@ -193,8 +193,7 @@ Performs the generic HTTP request, controled by a request table.
 </p>
 
 <p class=parameters>
-The most important parameters are the <tt>url</tt> and the LTN12 
-<tt>sink</tt> that will receive the downloaded content.  
+The most important parameters are the <tt>url</tt> and the <em>simple</em> LTN12 <tt>sink</tt> that will receive the downloaded content.  
 Any part of the <tt>url</tt> can be overriden by including
 the appropriate field in the request table.
 If authentication information is provided, the function
@@ -206,7 +205,7 @@ following:
 <ul>
 <li><tt>method</tt>: The HTTP request method. Defaults to "GET"; 
 <li><tt>headers</tt>: Any additional HTTP headers to send with the request; 
-<li><tt>source</tt>: LTN12 source to provide the request body. If there
+<li><tt>source</tt>: <em>simple</em> LTN12 source to provide the request body. If there
 is a body, you need to provide an appropriate "<tt>content-length</tt>"
 request header field, or the function will attempt to send the body as
 "<tt>chunked</tt>" (something few servers support). Defaults to the empty source; 

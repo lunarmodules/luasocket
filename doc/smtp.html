@@ -125,7 +125,7 @@ The sender is given by the e-mail address in the <tt>from</tt> field.
 <tt>Rcpt</tt> is a Lua table with one entry for each recipient e-mail
 address, or a string
 in case there is just one recipient. 
-The contents of the message are given by a LTN12 <tt>source</tt>. Several
+The contents of the message are given by a <em>simple</em> LTN12 <tt>source</tt>. Several
 arguments are optional:
 <ul>
 <li> <tt>server</tt>: Server to connect to. Defaults to "localhost";
@@ -292,10 +292,10 @@ and an epilogue.
 </p>
 
 <p class=return> 
-The function returns an LTN12 source that produces the message contents as
-defined by <tt>mesgt</tt>.  Hopefuly, the following example will make
-things clear. When in doubt, refer to the appropriate RFC as listed in the
-introduction.  </p>
+The function returns a <em>simple</em> LTN12 source that produces the
+message contents as defined by <tt>mesgt</tt>.  Hopefuly, the following
+example will make things clear. When in doubt, refer to the appropriate RFC
+as listed in the introduction.  </p>
 
 <pre class=example>
 -- load the smtp support and its friends
@@ -314,7 +314,7 @@ source = smtp.message{
   },
   body = {
     preamble = "If your client doesn't understand attachments, \r\n" ..
-               "it will still display the preamble and the epilogue.\r\n",
+               "it will still display the preamble and the epilogue.\r\n" ..
                "Preamble might show up even in a MIME enabled client.",
     -- first part: no headers means plain text, us-ascii.
     -- The mime.eol low-level filter normalizes end-of-line markers.
