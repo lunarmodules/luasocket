@@ -82,7 +82,7 @@ function metatable.__index:source(src, instr)
     while true do
         local chunk, err = src()
         if not chunk then return not err, err end
-        local ret, err = try_sending(self.sock, chunk)
+        local ret, err = self.sock:send(chunk)
         if not ret then return nil, err end
     end
 end
@@ -95,7 +95,7 @@ end
 -- connect with server and return sock object
 function connect(host, port)
     local sock, err = socket.connect(host, port)
-    if not sock then return nil, message end
+    if not sock then return nil, err end
     sock:settimeout(TIMEOUT)
     return setmetatable({sock = sock}, metatable)
 end

@@ -6,9 +6,9 @@ setmetatable(mime, { __index = _G })
 setfenv(1, mime)
 
 -- encode, decode and wrap algorithm tables
-local et = {}
-local dt = {}
-local wt = {}
+encodet = {}
+decodet = {}
+wrapt = {}
 
 -- creates a function that chooses a filter by name from a given table 
 local function choose(table)
@@ -20,40 +20,40 @@ local function choose(table)
 end
 
 -- define the encoding filters
-et['base64'] = function()
+encodet['base64'] = function()
     return ltn12.filter.cycle(b64, "")
 end
 
-et['quoted-printable'] = function(mode)
+encodet['quoted-printable'] = function(mode)
     return ltn12.filter.cycle(qp, "", 
         (mode == "binary") and "=0D=0A" or "\13\10")
 end
 
 -- define the decoding filters
-dt['base64'] = function()
+decodet['base64'] = function()
     return ltn12.filter.cycle(unb64, "")
 end
 
-dt['quoted-printable'] = function()
+decodet['quoted-printable'] = function()
     return ltn12.filter.cycle(unqp, "")
 end
 
 -- define the line-wrap filters
-wt['text'] = function(length)
+wrapt['text'] = function(length)
     length = length or 76
     return ltn12.filter.cycle(wrp, length, length) 
 end
-wt['base64'] = wt['text']
+wrapt['base64'] = wrapt['text']
 
-wt['quoted-printable'] = function()
+wrapt['quoted-printable'] = function()
     return ltn12.filter.cycle(qpwrp, 76, 76) 
 end
 
 -- function that choose the encoding, decoding or wrap algorithm
-encode = choose(et) 
-decode = choose(dt)
--- there is different because there is a default wrap filter
-local cwt = choose(wt)
+encode = choose(encodet) 
+decode = choose(decodet)
+-- it's different because there is a default wrap filter
+local cwt = choose(wrapt)
 function wrap(mode_or_length, length)
     if type(mode_or_length) ~= "string" then
         length = mode_or_length

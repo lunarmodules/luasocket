@@ -16,7 +16,7 @@ local function second(a, b)
     return b
 end
 
-local function skip(a, b, c)
+local function shift(a, b, c)
     return b, c
 end
 
@@ -69,7 +69,7 @@ function source.file(handle, io_err)
             if not chunk then handle:close() end
             return chunk
         end
-    else source.error(io_err or "unable to open file") end
+    else return source.error(io_err or "unable to open file") end
 end
 
 -- turns a fancy source into a simple source
@@ -114,6 +114,7 @@ function source.chain(src, f)
     local co = coroutine.create(function()
         while true do 
             local chunk, err = src()
+            if err then return nil, err end
             local filtered = f(chunk)
             local done = chunk and ""
             while true do
@@ -121,11 +122,10 @@ function source.chain(src, f)
                 if filtered == done then break end
                 filtered = f(done)
             end
-            if not chunk then return nil, err end
         end
     end)
     return function()
-        return skip(coroutine.resume(co))
+        return shift(coroutine.resume(co))
     end
 end
 
@@ -141,7 +141,7 @@ function source.cat(...)
         end
     end)
     return source.simplify(function()
-        return second(coroutine.resume(co))
+        return shift(coroutine.resume(co))
     end)
 end
 
