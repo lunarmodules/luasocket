@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- HTTP/1.1 client support for the Lua language.
--- LuaSocket 1.4 toolkit.
+-- LuaSocket 1.5 toolkit.
 -- Author: Diego Nehab
 -- Date: 26/12/2000
 -- Conforming to: RFC 2616, LTN7
@@ -18,16 +18,9 @@ Public.TIMEOUT = 60
 -- default port for document retrieval
 Public.PORT = 80
 -- user agent field sent in request
-Public.USERAGENT = "LuaSocket 1.4"
+Public.USERAGENT = "LuaSocket 1.5"
 -- block size used in transfers
 Public.BLOCKSIZE = 8192
-
------------------------------------------------------------------------------
--- Required libraries
------------------------------------------------------------------------------
-dofile "concat.lua"
-dofile "url.lua"
-dofile "code.lua"
 
 -----------------------------------------------------------------------------
 -- Tries to get a pattern from the server and closes socket on error
@@ -84,8 +77,8 @@ end
 -----------------------------------------------------------------------------
 function Private.receive_status(sock)
     local line, err
-    line, err = %Private.try_receive(sock)
-    if not err then return %Private.get_statuscode(line), line
+    line, err = Private.try_receive(sock)
+    if not err then return Private.get_statuscode(line), line
     else return nil, nil, err end
 end
 
@@ -104,7 +97,7 @@ function Private.receive_headers(sock, headers)
     local line, err
     local name, value, _
     -- get first line
-    line, err = %Private.try_receive(sock)
+    line, err = Private.try_receive(sock)
     if err then return nil, err end
     -- headers go until a blank line is found
     while line ~= "" do
@@ -116,12 +109,12 @@ function Private.receive_headers(sock, headers)
         end
         name = strlower(name)
         -- get next line (value might be folded)
-        line, err = %Private.try_receive(sock)
+        line, err = Private.try_receive(sock)
         if err then return nil, err end
         -- unfold any folded values
         while not err and strfind(line, "^%s") do
             value = value .. line
-            line, err = %Private.try_receive(sock)
+            line, err = Private.try_receive(sock)
             if err then return nil, err end
         end
         -- save pair in table
@@ -144,7 +137,7 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
     local chunk, size, line, err, go, uerr, _
     while 1 do
         -- get chunk size, skip extention
-        line, err = %Private.try_receive(sock)
+        line, err = Private.try_receive(sock)
         if err then 
             local go, uerr = receive_cb(nil, err)
             return uerr or err
@@ -159,7 +152,7 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
         -- was it the last chunk?
         if size <= 0 then break end
         -- get chunk
-        chunk, err = %Private.try_receive(sock, size) 
+        chunk, err = Private.try_receive(sock, size) 
         if err then 
             go, uerr = receive_cb(nil, err)
             return uerr or err
@@ -171,7 +164,7 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
             return uerr or "aborted by callback"
         end
         -- skip CRLF on end of chunk
-        _, err = %Private.try_receive(sock)
+        _, err = Private.try_receive(sock)
         if err then 
             go, uerr = receive_cb(nil, err)
             return uerr or err
@@ -180,7 +173,7 @@ function Private.receivebody_bychunks(sock, headers, receive_cb)
     -- the server should not send trailer  headers because we didn't send a
     -- header informing  it we know  how to deal with  them. we do not risk
     -- being caught unprepaired.
-    headers, err = %Private.receive_headers(sock, headers)
+    headers, err = Private.receive_headers(sock, headers)
     if err then
         go, uerr = receive_cb(nil, err)
         return uerr or err
@@ -202,7 +195,7 @@ end
 function Private.receivebody_bylength(sock, length, receive_cb)
     local uerr, go
     while length > 0 do
-        local size = min(%Public.BLOCKSIZE, length)
+        local size = min(Public.BLOCKSIZE, length)
         local chunk, err = sock:receive(size)
         if err then 
             go, uerr = receive_cb(nil, err)
@@ -230,7 +223,7 @@ end
 function Private.receivebody_untilclosed(sock, receive_cb)
     local err, go, uerr
     while 1 do
-        local chunk, err = sock:receive(%Public.BLOCKSIZE)
+        local chunk, err = sock:receive(Public.BLOCKSIZE)
         if err == "closed" or not err then 
             go, uerr = receive_cb(chunk)
             if not go then
@@ -260,14 +253,14 @@ function Private.receive_body(sock, headers, receive_cb)
     local te = headers["transfer-encoding"]
     if te and te ~= "identity" then 
         -- get by chunked transfer-coding of message body
-        return %Private.receivebody_bychunks(sock, headers, receive_cb)
+        return Private.receivebody_bychunks(sock, headers, receive_cb)
     elseif tonumber(headers["content-length"]) then
         -- get by content-length
         local length = tonumber(headers["content-length"])
-        return %Private.receivebody_bylength(sock, length, receive_cb)
+        return Private.receivebody_bylength(sock, length, receive_cb)
     else 
         -- get it all until connection closes
-        return %Private.receivebody_untilclosed(sock, receive_cb) 
+        return Private.receivebody_untilclosed(sock, receive_cb) 
     end
 end
 
@@ -280,7 +273,7 @@ end
 --    nil if successfull or an error message in case of error
 -----------------------------------------------------------------------------
 function Private.drop_body(sock, headers)
-    return %Private.receive_body(sock, headers, function (c, e) return 1 end)
+    return Private.receive_body(sock, headers, function (c, e) return 1 end)
 end
 
 -----------------------------------------------------------------------------
@@ -325,11 +318,11 @@ function Private.send_headers(sock, headers)
     headers = headers or {}
     -- send request headers 
     for i, v in headers do
-        err = %Private.try_send(sock, i .. ": " .. v .. "\r\n")
+        err = Private.try_send(sock, i .. ": " .. v .. "\r\n")
         if err then return err end
     end
     -- mark end of request headers
-    return %Private.try_send(sock, "\r\n")
+    return Private.try_send(sock, "\r\n")
 end
 
 -----------------------------------------------------------------------------
@@ -346,7 +339,7 @@ end
 function Private.send_request(sock, method, uri, headers, body_cb)
     local chunk, size, done, err
     -- send request line
-    err = %Private.try_send(sock, method .. " " .. uri .. " HTTP/1.1\r\n")
+    err = Private.try_send(sock, method .. " " .. uri .. " HTTP/1.1\r\n")
     if err then return err end
     -- if there is a request message body, add content-length header
     if body_cb then
@@ -360,11 +353,11 @@ function Private.send_request(sock, method, uri, headers, body_cb)
         end
     end 
     -- send request headers 
-    err = %Private.send_headers(sock, headers)
+    err = Private.send_headers(sock, headers)
     if err then return err end
     -- send request message body, if any
     if body_cb then 
-        return %Private.send_indirect(sock, body_cb, chunk, size) 
+        return Private.send_indirect(sock, body_cb, chunk, size) 
     end
 end
 
@@ -395,7 +388,7 @@ function Private.fill_headers(headers, parsed)
     local lower = {}
     headers = headers or {}
     -- set default headers
-    lower["user-agent"] = %Public.USERAGENT
+    lower["user-agent"] = Public.USERAGENT
     -- override with user values
     for i,v in headers do
         lower[strlower(i)] = v
@@ -442,7 +435,7 @@ function Private.authorize(request, parsed, response)
         body_cb = request.body_cb,
         headers = request.headers
     }
-    return %Public.request_cb(authorize, response)
+    return Public.request_cb(authorize, response)
 end
 
 -----------------------------------------------------------------------------
@@ -482,7 +475,7 @@ function Private.redirect(request, response)
         body_cb = request.body_cb,
         headers = request.headers
     }
-    local response = %Public.request_cb(redirect, response)
+    local response = Public.request_cb(redirect, response)
     -- we pass the location header as a clue we tried to redirect
     if response.headers then response.headers.location = redirect.url end
     return response
@@ -544,7 +537,7 @@ end
 function Public.request_cb(request, response)
     local parsed = URL.parse_url(request.url, {
         host = "",
-        port = %Public.PORT, 
+        port = Public.PORT, 
         path ="/",
 		scheme = "http"
     })
@@ -558,35 +551,43 @@ function Public.request_cb(request, response)
     -- default method
     request.method = request.method or "GET"
     -- fill default headers
-    request.headers = %Private.fill_headers(request.headers, parsed)
+    request.headers = Private.fill_headers(request.headers, parsed)
     -- try to connect to server
     local sock
     sock, response.error = connect(parsed.host, parsed.port)
     if not sock then return response end
     -- set connection timeout so that we do not hang forever
-    sock:timeout(%Public.TIMEOUT)
+    sock:timeout(Public.TIMEOUT)
     -- send request message
-    response.error = %Private.send_request(sock, request.method, 
-        %Private.request_uri(parsed), request.headers, request.body_cb)
+    response.error = Private.send_request(sock, request.method, 
+        Private.request_uri(parsed), request.headers, request.body_cb)
     if response.error then return response end
     -- get server response message
     response.code, response.status, response.error = 
-        %Private.receive_status(sock)
+        Private.receive_status(sock)
     if response.error then return response end
+    -- deal with 1xx status
+    if response.code == 100 then
+        response.headers, response.error = Private.receive_headers(sock, {})
+        if response.error then return response end
+        response.code, response.status, response.error = 
+            Private.receive_status(sock)
+        if response.error then return response end
+    end
     -- receive all headers
-    response.headers, response.error = %Private.receive_headers(sock, {})
+    response.headers, response.error = Private.receive_headers(sock, {})
     if response.error then return response end
     -- decide what to do based on request and response parameters
-    if %Private.should_redirect(request, response) then
-        %Private.drop_body(sock, response.headers)
+    if Private.should_redirect(request, response) then
+        Private.drop_body(sock, response.headers)
         sock:close()
-        return %Private.redirect(request, response)
-    elseif %Private.should_authorize(request, parsed, response) then
-        %Private.drop_body(sock, response.headers)
+        return Private.redirect(request, response)
+    elseif Private.should_authorize(request, parsed, response) then
+        Private.drop_body(sock, response.headers)
         sock:close()
-        return %Private.authorize(request, parsed, response)
-    elseif %Private.has_body(request, response) then
-        response.error = %Private.receive_body(sock, response.headers,
+        return Private.authorize(request, parsed, response)
+    elseif Private.has_body(request, response) then
+        response.error = Private.receive_body(sock, response.headers,
             response.body_cb)
         if response.error then return response end
         sock:close()
@@ -618,15 +619,15 @@ function Public.request(request)
     local response = {}
     if request.body then 
         request.body_cb = function() 
-            return %request.body, strlen(%request.body) 
+            return request.body, strlen(request.body) 
         end
     end
     local cat = Concat.create()
     response.body_cb = function(chunk, err)
-        if chunk then %cat:addstring(chunk) end
+        if chunk then cat:addstring(chunk) end
         return 1
     end
-    response = %Public.request_cb(request, response)
+    response = Public.request_cb(request, response)
     response.body = cat:getresult()
     response.body_cb = nil
     return response
@@ -646,9 +647,9 @@ end
 --   error: error message if any
 -----------------------------------------------------------------------------
 function Public.get(url_or_request)
-    local request = %Private.build_request(url_or_request)
+    local request = Private.build_request(url_or_request)
     request.method = "GET"
-    local response = %Public.request(request)
+    local response = Public.request(request)
     return response.body, response.headers, 
         response.code, response.error
 end
@@ -669,10 +670,10 @@ end
 --   error: error message, or nil if successfull
 -----------------------------------------------------------------------------
 function Public.post(url_or_request, body)
-    local request = %Private.build_request(url_or_request)
+    local request = Private.build_request(url_or_request)
     request.method = "POST"
     request.body = request.body or body
-    local response = %Public.request(request)
+    local response = Public.request(request)
     return response.body, response.headers, 
         response.code, response.error
 end
