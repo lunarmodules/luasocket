@@ -396,11 +396,11 @@ function Private.fill_headers(headers, parsed)
     headers = headers or {}
     -- set default headers
     lower["user-agent"] = %Public.USERAGENT
-    lower["host"] = parsed.host
     -- override with user values
     for i,v in headers do
         lower[strlower(i)] = v
     end
+    lower["host"] = parsed.host
     -- this cannot be overriden
     lower["connection"] = "close"
     return lower
@@ -482,7 +482,10 @@ function Private.redirect(request, response)
         body_cb = request.body_cb,
         headers = request.headers
     }
-    return %Public.request_cb(redirect, response)
+    local response = %Public.request_cb(redirect, response)
+    -- we pass the location header as a clue we tried to redirect
+    if response.headers then response.headers.location = redirect.url end
+    return response
 end
 
 -----------------------------------------------------------------------------
@@ -542,8 +545,13 @@ function Public.request_cb(request, response)
     local parsed = URL.parse_url(request.url, {
         host = "",
         port = %Public.PORT, 
-        path ="/"
+        path ="/",
+		scheme = "http"
     })
+	if parsed.scheme ~= "http" then
+		response.error = format("unknown scheme '%s'", parsed.scheme)
+		return response
+	end
     -- explicit authentication info overrides that given by the URL
     parsed.user = request.user or parsed.user
     parsed.password = request.password or parsed.password
