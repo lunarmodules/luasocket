@@ -276,4 +276,4 @@ function pump.all(src, snk, step)
     end
 end
 
-base.getmetatable(_M).__index = nil
+getmetatable(_M).__index = nil

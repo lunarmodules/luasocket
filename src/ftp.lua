@@ -278,4 +278,4 @@ get = socket.protect(function(gett)
     else return tget(gett) end
 end)
 
-base.getmetatable(_M).__index = nil
+getmetatable(_M).__index = nil

@@ -245,4 +245,4 @@ send = socket.protect(function(mailt)
     return s:close()
 end)
 
-base.getmetatable(_M).__index = nil
+getmetatable(_M).__index = nil

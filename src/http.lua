@@ -259,4 +259,4 @@ request = socket.protect(function(reqt, body)
     else return trequest(reqt) end
 end)
 
-base.getmetatable(_M).__index = nil
+getmetatable(_M).__index = nil

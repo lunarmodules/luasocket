@@ -120,4 +120,4 @@ function connect(host, port, timeout)
     return base.setmetatable({c = c}, metat)
 end
 
-base.getmetatable(_M).__index
+getmetatable(_M).__index = nil
