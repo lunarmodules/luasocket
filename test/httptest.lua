@@ -3,7 +3,7 @@
 -- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
 -- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
-dofile("noglobals.lua")
+dofile("testsupport.lua")
 
 local host, proxy, request, response, index_file
 local ignore, expect, index, prefix, cgiprefix, index_crlf
@@ -18,32 +18,8 @@ prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
 index_file = "test/index.html"
 
-local readfile = function(name)
-	local f = io.open(name, "r")
-	if not f then return nil end
-	local s = f:read("*a")
-	f:close()
-	return s
-end
-
 -- read index with CRLF convention
 index = readfile(index_file)
-
-local similar = function(s1, s2)
-	return string.lower(string.gsub(s1 or "", "%s", "")) == 
-        string.lower(string.gsub(s2 or "", "%s", ""))
-end
-
-local fail = function(s)
-	s = s or "failed!"
-	print(s)
-	os.exit()
-end
-
-local check = function (v, e)
-	if v then print("ok")
-	else fail(e) end
-end
 
 local check_result = function(response, expect, ignore)
 	for i,v in response do
@@ -171,7 +147,7 @@ check_request(request, expect, ignore)
 ------------------------------------------------------------------------
 io.write("testing simple post function: ")
 back = socket.http.post("http://" .. host .. cgiprefix .. "/cat", index)
-check(back == index)
+assert(back == index)
 
 ------------------------------------------------------------------------
 io.write("testing ltn12.(sink|source).file: ")
@@ -191,7 +167,7 @@ ignore = {
 }
 check_request(request, expect, ignore)
 back = readfile(index_file .. "-back")
-check(back == index)
+assert(back == index)
 os.remove(index_file .. "-back")
 
 ------------------------------------------------------------------------
@@ -233,7 +209,7 @@ ignore = {
 }
 check_request(request, expect, ignore)
 back = readfile(index_file .. "-back")
-check(back == index)
+assert(back == index)
 os.remove(index_file .. "-back")
 
 ------------------------------------------------------------------------
@@ -434,7 +410,7 @@ check_request(request, expect, ignore)
 local body
 io.write("testing simple get function: ")
 body = socket.http.get("http://" .. host .. prefix .. "/index.html")
-check(body == index)
+assert(body == index)
 
 ------------------------------------------------------------------------
 io.write("testing HEAD method: ")
@@ -443,7 +419,7 @@ response = socket.http.request {
   method = "HEAD",
   url = "http://www.cs.princeton.edu/~diego/"
 }
-check(response and response.headers)
+assert(response and response.headers)
 
 ------------------------------------------------------------------------
 print("passed all tests")

@@ -22,6 +22,7 @@ end
 
 -- returns a high level filter that cycles a cycles a low-level filter
 function filter.cycle(low, ctx, extra)
+    if type(low) ~= 'function' then error('invalid low-level filter', 2) end 
     return function(chunk)
         local ret
         ret, ctx = low(ctx, chunk, extra)
@@ -31,6 +32,8 @@ end
 
 -- chains two filters together
 local function chain2(f1, f2)
+    if type(f1) ~= 'function' then error('invalid filter', 2) end 
+    if type(f2) ~= 'function' then error('invalid filter', 2) end 
     return function(chunk)
         return f2(f1(chunk))
     end
@@ -40,6 +43,7 @@ end
 function filter.chain(...)
     local f = arg[1]
     for i = 2, table.getn(arg) do
+        if type(arg[i]) ~= 'function' then error('invalid filter', 2) end 
         f = chain2(f, arg[i])
     end
     return f
@@ -74,6 +78,7 @@ end
 
 -- turns a fancy source into a simple source
 function source.simplify(src)
+    if type(src) ~= 'function' then error('invalid source', 2) end 
     return function()
         local chunk, err_or_new = src()
         src = err_or_new or src
@@ -97,6 +102,7 @@ end
 
 -- creates rewindable source
 function source.rewind(src)
+    if type(src) ~= 'function' then error('invalid source', 2) end 
     local t = {}
     return function(chunk)
         if not chunk then
@@ -111,6 +117,8 @@ end
 
 -- chains a source with a filter
 function source.chain(src, f)
+    if type(src) ~= 'function' then error('invalid source', 2) end
+    if type(f) ~= 'function' then error('invalid filter', 2) end
     local co = coroutine.create(function()
         while true do 
             local chunk, err = src()
@@ -157,6 +165,7 @@ end
 
 -- turns a fancy sink into a simple sink
 function sink.simplify(snk)
+    if type(snk) ~= 'function' then error('invalid sink', 2) end
     return function(chunk, err)
         local ret, err_or_new = snk(chunk, err)
         if not ret then return nil, err_or_new end
@@ -195,6 +204,8 @@ end
 
 -- chains a sink with a filter 
 function sink.chain(f, snk)
+    if type(snk) ~= 'function' then error('invalid sink', 2) end
+    if type(f) ~= 'function' then error('invalid filter', 2) end
     return function(chunk, err)
         local filtered = f(chunk)
         local done = chunk and ""
@@ -209,6 +220,8 @@ end
 
 -- pumps all data from a source to a sink
 function pump(src, snk)
+    if type(src) ~= 'function' then error('invalid source', 2) end
+    if type(snk) ~= 'function' then error('invalid sink', 2) end
     while true do
         local chunk, src_err = src()
         local ret, snk_err = snk(chunk, src_err)

@@ -14,8 +14,9 @@ host = socket.dns.toip(host)
 udp = socket.udp()
 print("Using host '" ..host.. "' and port " ..port.. "...")
 udp:setpeername(host, port)
+udp:settimeout(3)
 sent, err = udp:send("anything")
-if err then print(err) exit() end
+if err then print(err) os.exit() end
 dgram, err = udp:receive()
-if not dgram then print(err) exit() end
+if not dgram then print(err) os.exit() end
 io.write(dgram)

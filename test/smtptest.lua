@@ -16,7 +16,7 @@ local err
 
 dofile("mbox.lua")
 local parse = mbox.parse
-dofile("noglobals.lua")
+dofile("testsupport.lua")
 
 local total = function()
 	local t = 0

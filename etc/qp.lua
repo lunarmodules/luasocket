@@ -2,17 +2,15 @@ local convert
 arg = arg or {}
 local mode = arg and arg[1] or "-et"
 if mode == "-et" then
-    local normalize = socket.mime.normalize()
-    local qp = socket.mime.encode("quoted-printable")
-    local wrap = socket.mime.wrap("quoted-printable")
-    convert = socket.mime.chain(normalize, qp, wrap)
+    local normalize = mime.normalize()
+    local qp = mime.encode("quoted-printable")
+    local wrap = mime.wrap("quoted-printable")
+    convert = ltn12.filter.chain(normalize, qp, wrap)
 elseif mode == "-eb" then
-    local qp = socket.mime.encode("quoted-printable", "binary")
-    local wrap = socket.mime.wrap("quoted-printable")
-    convert = socket.mime.chain(qp, wrap)
-else convert = socket.mime.decode("quoted-printable") end
-while 1 do
-    local chunk = io.read(4096)
-    io.write(convert(chunk))
-    if not chunk then break end
-end
+    local qp = mime.encode("quoted-printable", "binary")
+    local wrap = mime.wrap("quoted-printable")
+    convert = ltn12.filter.chain(qp, wrap)
+else convert = mime.decode("quoted-printable") end
+local source = ltn12.source.chain(ltn12.source.file(io.stdin), convert)
+local sink = ltn12.sink.file(io.stdout)
+ltn12.pump(source, sink)

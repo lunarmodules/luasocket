@@ -20,16 +20,17 @@ DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default time zone (means we don't know)
 ZONE = "-0000"
 
-function stuff()
-    return ltn12.filter.cycle(dot, 2)
-end
-
 local function shift(a, b, c)
     return b, c
 end
 
+-- high level stuffing filter
+function stuff()
+    return ltn12.filter.cycle(dot, 2)
+end
+
 -- send message or throw an exception
-function psend(control, mailt) 
+local function send_p(control, mailt) 
     socket.try(control:check("2.."))
     socket.try(control:command("EHLO", mailt.domain or DOMAIN))
     socket.try(control:check("2.."))
@@ -61,11 +62,11 @@ local function newboundary()
         math.random(0, 99999), seqno)
 end
 
--- sendmessage forward declaration
-local sendmessage
+-- send_message forward declaration
+local send_message
 
 -- yield multipart message body from a multipart message table
-local function sendmultipart(mesgt)
+local function send_multipart(mesgt)
     local bd = newboundary()
     -- define boundary and finish headers
     coroutine.yield('content-type: multipart/mixed; boundary="' .. 
@@ -75,7 +76,7 @@ local function sendmultipart(mesgt)
     -- send each part separated by a boundary
     for i, m in ipairs(mesgt.body) do
         coroutine.yield("\r\n--" .. bd .. "\r\n")
-        sendmessage(m)
+        send_message(m)
     end
     -- send last boundary 
     coroutine.yield("\r\n--" .. bd .. "--\r\n\r\n")
@@ -84,7 +85,7 @@ local function sendmultipart(mesgt)
 end
 
 -- yield message body from a source
-local function sendsource(mesgt)
+local function send_source(mesgt)
     -- set content-type if user didn't override
     if not mesgt.headers or not mesgt.headers["content-type"] then
         coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n')
@@ -101,7 +102,7 @@ local function sendsource(mesgt)
 end
 
 -- yield message body from a string
-local function sendstring(mesgt)
+local function send_string(mesgt)
     -- set content-type if user didn't override
     if not mesgt.headers or not mesgt.headers["content-type"] then
         coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n')
@@ -114,7 +115,7 @@ local function sendstring(mesgt)
 end
 
 -- yield the headers one by one
-local function sendheaders(mesgt)
+local function send_headers(mesgt)
     if mesgt.headers then
         for i,v in pairs(mesgt.headers) do
             coroutine.yield(i .. ':' .. v .. "\r\n")
@@ -123,15 +124,15 @@ local function sendheaders(mesgt)
 end
 
 -- message source
-function sendmessage(mesgt)
-    sendheaders(mesgt)
-    if type(mesgt.body) == "table" then sendmultipart(mesgt)
-    elseif type(mesgt.body) == "function" then sendsource(mesgt)
-    else sendstring(mesgt) end
+function send_message(mesgt)
+    send_headers(mesgt)
+    if type(mesgt.body) == "table" then send_multipart(mesgt)
+    elseif type(mesgt.body) == "function" then send_source(mesgt)
+    else send_string(mesgt) end
 end
 
 -- set defaul headers
-local function adjustheaders(mesgt)
+local function adjust_headers(mesgt)
     mesgt.headers = mesgt.headers or {}
     mesgt.headers["mime-version"] = "1.0" 
     mesgt.headers["date"] = mesgt.headers["date"] or 
@@ -140,16 +141,16 @@ local function adjustheaders(mesgt)
 end
 
 function message(mesgt)
-    adjustheaders(mesgt)
+    adjust_headers(mesgt)
     -- create and return message source
-    local co = coroutine.create(function() sendmessage(mesgt) end)
+    local co = coroutine.create(function() send_message(mesgt) end)
     return function() return shift(coroutine.resume(co)) end
 end
 
 function send(mailt)
     local c, e = socket.tp.connect(mailt.server or SERVER, mailt.port or PORT)
     if not c then return nil, e end
-    local s, e = pcall(psend, c, mailt)
+    local s, e = pcall(send_p, c, mailt)
     c:close()
     if s then return true
     else return nil, e end

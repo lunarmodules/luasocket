@@ -93,7 +93,7 @@ function getbyhttp(url, file)
     local save = ltn12.sink.file(file or io.stdout)
     -- only print feedback if output is not stdout
     if file then save = ltn12.sink.chain(stats(gethttpsize(url)), save) end
-    local respt = socket.http.request_cb({url = url, sink = save})
+    local respt = socket.http.request {url = url, sink = save }
 	if respt.code ~= 200 then print(respt.status or respt.error) end
 end
 
@@ -103,7 +103,7 @@ function getbyftp(url, file)
     -- only print feedback if output is not stdout
     -- and we don't know how big the file is
     if file then save = ltn12.sink.chain(stats(), save) end
-    local ret, err = socket.ftp.get_cb {url = url, sink = save, type = "i"}
+    local ret, err = socket.ftp.get {url = url, sink = save, type = "i"}
 	if err then print(err) end
 end
 

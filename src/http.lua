@@ -2,7 +2,7 @@
 -- HTTP/1.1 client support for the Lua language.
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- Conforming to: RFC 2616, LTN7
+-- Conforming to RFC 2616
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 -- make sure LuaSocket is loaded
@@ -39,21 +39,18 @@ local function third(a, b, c)
     return c
 end
 
-local function shift(a, b, c, d)
-    return c, d
-end
-
--- resquest_p forward declaration
-local request_p
-
-local function receive_headers(sock, headers)
-    local line, name, value
+local function receive_headers(reqt, respt)
+    local headers = {}
+    local sock = respt.tmp.sock
+    local line, name, value, _
+    -- store results
+    respt.headers = headers
     -- get first line
     line = socket.try(sock:receive())
     -- headers go until a blank line is found
     while line ~= "" do
         -- get field-name and value
-        name, value = shift(string.find(line, "^(.-):%s*(.*)"))
+        _, _, name, value = string.find(line, "^(.-):%s*(.*)")
         assert(name and value, "malformed reponse headers")
         name = string.lower(name)
         -- get next line (value might be folded)
@@ -100,7 +97,10 @@ local function receive_body_bychunks(sock, sink)
     -- let callback know we are done
     hand(sink, nil)
     -- servers shouldn't send trailer headers, but who trusts them?
-    receive_headers(sock, {})
+    local line = socket.try(sock:receive())
+    while line ~= "" do
+        line = socket.try(sock:receive())
+    end
 end
 
 local function receive_body_bylength(sock, length, sink)
@@ -245,7 +245,7 @@ local function open(reqt, respt)
     socket.try(sock:connect(host, port))
 end
 
-function adjust_headers(reqt, respt)
+local function adjust_headers(reqt, respt)
     local lower = {}
     local headers = reqt.headers or {}
     -- set default headers
@@ -261,7 +261,7 @@ function adjust_headers(reqt, respt)
     respt.tmp.headers = lower
 end
 
-function parse_url(reqt, respt)
+local function parse_url(reqt, respt)
     -- parse url with default fields
     local parsed = socket.url.parse(reqt.url, {
         host = "",
@@ -280,11 +280,16 @@ function parse_url(reqt, respt)
     respt.tmp.parsed = parsed
 end
 
+-- forward declaration
+local request_p
+
 local function should_authorize(reqt, respt)
     -- if there has been an authorization attempt, it must have failed
     if reqt.headers and reqt.headers["authorization"] then return nil end
-    -- if we don't have authorization information, we can't retry
-    return respt.tmp.parsed.user and respt.tmp.parsed.password 
+    -- if last attempt didn't fail due to lack of authentication,
+    -- or we don't have authorization information, we can't retry
+    return respt.code == 401 and 
+        respt.tmp.parsed.user and respt.tmp.parsed.password 
 end
 
 local function clone(headers)
@@ -338,14 +343,14 @@ local function redirect(reqt, respt)
     if respt.headers then respt.headers.location = redirt.url end
 end
 
+-- execute a request of through an exception
 function request_p(reqt, respt)
     parse_url(reqt, respt)
     adjust_headers(reqt, respt)
     open(reqt, respt)
     send_request(reqt, respt)
     receive_status(reqt, respt)
-    respt.headers = {}
-    receive_headers(respt.tmp.sock, respt.headers)
+    receive_headers(reqt, respt)
     if should_redirect(reqt, respt) then
         respt.tmp.sock:close()
         redirect(reqt, respt)

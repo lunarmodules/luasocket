@@ -1,9 +1,6 @@
-marker = {['-u'] = '\10', ['-d'] = '\13\10'}
-arg = arg or {'-u'}
-marker = marker[arg[1]] or marker['-u']
-local convert = socket.mime.normalize(marker)
-while 1 do
-    local chunk = io.read(1)
-    io.write(convert(chunk))
-    if not chunk then break end
-end
+local marker = '\n'
+if arg and arg[1] == '-d' then marker = '\r\n' end
+local filter = mime.normalize(marker)
+local source = ltn12.source.chain(ltn12.source.file(io.stdin), filter)
+local sink = ltn12.sink.file(io.stdout)
+ltn12.pump(source, sink)
