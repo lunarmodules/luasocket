@@ -79,13 +79,6 @@ MIME_API int luaopen_mime(lua_State *L)
     /* whoever is loading the library replaced the global environment
      * with the namespace table */
     lua_pushvalue(L, LUA_GLOBALSINDEX);
-    /* make sure library is still "requirable" if initialized staticaly */
-    lua_pushstring(L, "_LOADEDLIB");
-    lua_gettable(L, -2);
-    lua_pushstring(L, MIME_LIBNAME);
-    lua_pushcfunction(L, (lua_CFunction) luaopen_mime);
-    lua_settable(L, -3);
-    lua_pop(L, 1);
     /* export functions */
     luaL_openlib(L, NULL, func, 0);
     /* initialize lookup tables */

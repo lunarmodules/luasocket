@@ -71,8 +71,6 @@ static int global_select(lua_State *L) {
         lua_pushstring(L, "timeout");
         return 3;
     } else {
-        lua_pushnil(L);
-        lua_pushnil(L);
         lua_pushstring(L, "error");
         return 3;
     }
@@ -89,7 +87,7 @@ static int getfd(lua_State *L) {
         lua_pushvalue(L, -2);
         lua_call(L, 1, 1);
         if (lua_isnumber(L, -1)) 
-            fd = lua_tonumber(L, -1); 
+            fd = (int) lua_tonumber(L, -1); 
     } 
     lua_pop(L, 1);
     return fd;

@@ -7,6 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mime", "mime.vcproj", "{128
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smtp", "smtp.vcproj", "{128E8BD0-174A-48F0-8771-92B1E8D18713}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -17,6 +21,10 @@ Global
 		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Debug.Build.0 = Debug|Win32
 		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Release.ActiveCfg = Release|Win32
 		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Release.Build.0 = Release|Win32
+		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Debug.ActiveCfg = Debug|Win32
+		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Debug.Build.0 = Debug|Win32
+		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Release.ActiveCfg = Release|Win32
+		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Release.Build.0 = Release|Win32
 		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Debug.ActiveCfg = Debug|Win32
 		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Debug.Build.0 = Debug|Win32
 		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Release.ActiveCfg = Release|Win32

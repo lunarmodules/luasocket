@@ -13,7 +13,7 @@
 #include "auxiliar.h"
 #include "timeout.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <time.h>
@@ -133,7 +133,7 @@ p_tm tm_markstart(p_tm tm)
 * Returns
 *   time in ms.
 \*-------------------------------------------------------------------------*/
-#ifdef WIN32
+#ifdef _WIN32
 int tm_gettime(void) 
 {
     return GetTickCount();
@@ -198,7 +198,7 @@ static int tm_lua_time(lua_State *L)
 int tm_lua_sleep(lua_State *L)
 {
     double n = luaL_checknumber(L, 1);
-#ifdef WIN32
+#ifdef _WIN32
     Sleep((int)n*1000);
 #else
     sleep((int)n);

@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="H:\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport); LUASOCKET_COMPILED; LUASOCKET_DEBUG"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport);  LUASOCKET_DEBUG"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -120,10 +120,10 @@
 				RelativePath=".\auxiliar.c">
 			</File>
 			<File
-				RelativePath=".\base.c">
+				RelativePath=".\buffer.c">
 			</File>
 			<File
-				RelativePath=".\buffer.c">
+				RelativePath=".\except.c">
 			</File>
 			<File
 				RelativePath=".\inet.c">
@@ -139,9 +139,6 @@
 			</File>
 			<File
 				RelativePath=".\select.c">
-			</File>
-			<File
-				RelativePath=".\smtp.c">
 			</File>
 			<File
 				RelativePath=".\tcp.c">

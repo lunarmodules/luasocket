@@ -20,7 +20,7 @@
 #include "socket.h"
 #include "timeout.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define INET_ATON
 #endif
 

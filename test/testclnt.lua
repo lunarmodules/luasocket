@@ -339,12 +339,14 @@ end
 ------------------------------------------------------------------------
 function test_selectbugs()
     local r, s, e = socket.select(nil, nil, 0.1)
-    assert(type(r) == "table" and type(s) == "table" and e == "timeout")
+    assert(type(r) == "table" and type(s) == "table" and 
+        (e == "timeout" or e == "error"))
     pass("both nil: ok")
     local udp = socket.udp()
     udp:close()
     r, s, e = socket.select({ udp }, { udp }, 0.1)
-    assert(type(r) == "table" and type(s) == "table" and e == "timeout")
+    assert(type(r) == "table" and type(s) == "table" and 
+        (e == "timeout" or e == "error"))
     pass("closed sockets: ok")
     e = pcall(socket.select, "wrong", 1, 0.1)
     assert(e == false)

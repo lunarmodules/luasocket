@@ -16,7 +16,7 @@
 /*=========================================================================*\
 * Platform specific compatibilization
 \*=========================================================================*/
-#ifdef WIN32
+#ifdef _WIN32
 #include "wsocket.h"
 #else
 #include "usocket.h"
