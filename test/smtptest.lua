@@ -209,27 +209,27 @@ insert(sent, {
 
 io.write("testing host not found: ")
 local c, e = socket.connect("wrong.host", 25)
-local err = socket.smtp.mail{
+local ret, err = socket.smtp.mail{
 	from = from,
 	rcpt = rcpt,
 	server = "wrong.host"
 }
-if e ~= err then fail("wrong error message")
+if ret or e ~= err then fail("wrong error message")
 else print("ok") end
 
 io.write("testing invalid from: ")
-local err = socket.smtp.mail{
+local ret, err = socket.smtp.mail{
 	from = ' " " (( _ * ', 
 	rcpt = rcpt,
 }
-if not err then fail("wrong error message")
+if ret or not err then fail("wrong error message")
 else print(err) end
 
 io.write("testing no rcpt: ")
-local err = socket.smtp.mail{
+local ret, err = socket.smtp.mail{
 	from = from, 
 }
-if not err then fail("wrong error message")
+if ret or not err then fail("wrong error message")
 else print(err) end
 
 io.write("clearing mailbox: ")
@@ -238,8 +238,8 @@ print("ok")
 
 io.write("sending messages: ")
 for i = 1, table.getn(sent) do
-    err = socket.smtp.mail(sent[i])
-    if err then fail(err) end
+    ret, err = socket.smtp.mail(sent[i])
+    if not ret then fail(err) end
     io.write("+")
     io.stdout:flush()
 end

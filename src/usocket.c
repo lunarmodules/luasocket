@@ -26,8 +26,10 @@ int sock_open(void)
 \*-------------------------------------------------------------------------*/
 void sock_destroy(p_sock ps)
 {
-    close(*ps);
-    *ps = SOCK_INVALID;
+    if (*ps != SOCK_INVALID) {
+        close(*ps);
+        *ps = SOCK_INVALID;
+    }
 }
 
 /*-------------------------------------------------------------------------*\

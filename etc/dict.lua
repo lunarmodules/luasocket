@@ -32,7 +32,7 @@ end
 function dict_open()
 	local sock, err = socket.connect("dict.org", 2628)
 	if not sock then return nil, err end
-	sock:timeout(10)
+	sock:settimeout(10)
   	local code, par = get_status(sock, 220)
 	if code then return nil, code end
 	return sock

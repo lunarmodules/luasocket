@@ -82,8 +82,8 @@ function Public.get(url)
 	local udp, err = socket.udp()
 	if not udp then return nil, err end
     -- convert from name to ip if needed
-	parsed.host = socket.toip(parsed.host)
-	udp:timeout(1)
+	parsed.host = socket.dns.toip(parsed.host)
+	udp:settimeout(1)
     -- first packet gives data host/port to be used for data transfers
     retries = 0
 	repeat 

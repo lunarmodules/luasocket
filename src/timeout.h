@@ -26,6 +26,6 @@ void tm_markstart(p_tm tm);
 int tm_getstart(p_tm tm);
 int tm_get(p_tm tm);
 int tm_gettime(void);
-int tm_meth_timeout(lua_State *L, p_tm tm);
+int tm_meth_settimeout(lua_State *L, p_tm tm);
 
 #endif /* TM_H */

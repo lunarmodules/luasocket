@@ -20,6 +20,7 @@ static int inet_global_toip(lua_State *L);
 static int inet_global_tohostname(lua_State *L);
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
 
+/* DNS functions */
 static luaL_reg func[] = {
     { "toip", inet_global_toip },
     { "tohostname", inet_global_tohostname },
@@ -34,7 +35,19 @@ static luaL_reg func[] = {
 \*-------------------------------------------------------------------------*/
 void inet_open(lua_State *L)
 {
-    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0);
+    lua_pushstring(L, LUASOCKET_LIBNAME);
+    lua_gettable(L, LUA_GLOBALSINDEX);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushstring(L, LUASOCKET_LIBNAME);
+        lua_pushvalue(L, -2);
+        lua_settable(L, LUA_GLOBALSINDEX);
+    }
+    lua_pushstring(L, "dns");
+    lua_newtable(L);
+    luaL_openlib(L, NULL, func, 0);
+    lua_settable(L, -3);
     lua_pop(L, 1);
 }
 
@@ -100,10 +113,11 @@ int inet_meth_getpeername(lua_State *L, p_sock ps)
     socklen_t peer_len = sizeof(peer);
     if (getpeername(*ps, (SA *) &peer, &peer_len) < 0) {
         lua_pushnil(L);
-        return 1;
+        lua_pushstring(L, "getpeername failed");
+    } else {
+        lua_pushstring(L, inet_ntoa(peer.sin_addr));
+        lua_pushnumber(L, ntohs(peer.sin_port));
     }
-    lua_pushstring(L, inet_ntoa(peer.sin_addr));
-    lua_pushnumber(L, ntohs(peer.sin_port));
     return 2;
 }
 
@@ -116,10 +130,11 @@ int inet_meth_getsockname(lua_State *L, p_sock ps)
     socklen_t local_len = sizeof(local);
     if (getsockname(*ps, (SA *) &local, &local_len) < 0) {
         lua_pushnil(L);
-        return 1;
+        lua_pushstring(L, "getsockname failed");
+    } else {
+        lua_pushstring(L, inet_ntoa(local.sin_addr));
+        lua_pushnumber(L, ntohs(local.sin_port));
     }
-    lua_pushstring(L, inet_ntoa(local.sin_addr));
-    lua_pushnumber(L, ntohs(local.sin_port));
     return 2;
 }
 

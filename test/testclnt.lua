@@ -121,7 +121,7 @@ test_methods(socket.tcp(), {
     "getpeername",
     "getsockname",
     "setoption",
-    "timeout",
+    "settimeout",
     "close",
 })
 
@@ -135,7 +135,7 @@ test_methods(socket.udp(), {
     "receive", 
     "receivefrom", 
     "setoption",
-    "timeout", 
+    "settimeout", 
     "close", 
 })
 
@@ -278,7 +278,7 @@ reconnect()
 
 -- the value is not important, we only want 
 -- to test non-blockin I/O anyways
-data:timeout(200)
+data:settimeout(200)
 test_raw(1)
 test_raw(17)
 test_raw(200)
@@ -298,7 +298,7 @@ function test_totaltimeoutreceive(len, tm, sl)
     reconnect()
     pass("%d bytes, %ds total timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
-        data:timeout(%d)
+        data:settimeout(%d)
         str = string.rep('a', %d)
         data:send(str)
         print('server: sleeping for %ds')
@@ -306,7 +306,7 @@ function test_totaltimeoutreceive(len, tm, sl)
         print('server: woke up')
         data:send(str)
     ]], 2*tm, len, sl, sl))
-    data:timeout(tm, "total")
+    data:settimeout(tm, "total")
     str, err, elapsed = data:receive(2*len)
     check_timeout(tm, sl, elapsed, err, "receive", "total", 
         string.len(str) == 2*len)
@@ -323,14 +323,14 @@ function test_totaltimeoutsend(len, tm, sl)
     reconnect()
     pass("%d bytes, %ds total timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
-        data:timeout(%d)
+        data:settimeout(%d)
         str = data:receive(%d)
         print('server: sleeping for %ds')
         socket.sleep(%d)
         print('server: woke up')
         str = data:receive(%d)
     ]], 2*tm, len, sl, sl, len))
-    data:timeout(tm, "total")
+    data:settimeout(tm, "total")
     str = string.rep("a", 2*len)
     total, err, elapsed = data:send(str)
     check_timeout(tm, sl, elapsed, err, "send", "total", 
@@ -348,7 +348,7 @@ function test_blockingtimeoutreceive(len, tm, sl)
     reconnect()
     pass("%d bytes, %ds blocking timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
-        data:timeout(%d)
+        data:settimeout(%d)
         str = string.rep('a', %d)
         data:send(str)
         print('server: sleeping for %ds')
@@ -356,7 +356,7 @@ function test_blockingtimeoutreceive(len, tm, sl)
         print('server: woke up')
         data:send(str)
     ]], 2*tm, len, sl, sl))
-    data:timeout(tm)
+    data:settimeout(tm)
     str, err, elapsed = data:receive(2*len)
     check_timeout(tm, sl, elapsed, err, "receive", "blocking", 
         string.len(str) == 2*len)
@@ -373,14 +373,14 @@ function test_blockingtimeoutsend(len, tm, sl)
     reconnect()
     pass("%d bytes, %ds blocking timeout, %ds pause", len, tm, sl)
     remote (string.format ([[
-        data:timeout(%d)
+        data:settimeout(%d)
         str = data:receive(%d)
         print('server: sleeping for %ds')
         socket.sleep(%d)
         print('server: woke up')
         str = data:receive(%d)
     ]], 2*tm, len, sl, sl, len))
-    data:timeout(tm)
+    data:settimeout(tm)
     str = string.rep("a", 2*len)
     total, err,  elapsed = data:send(str)
     check_timeout(tm, sl, elapsed, err, "send", "blocking",

@@ -29,10 +29,10 @@ static int meth_receive(lua_State *L);
 static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_setoption(lua_State *L);
-static int meth_timeout(lua_State *L);
+static int meth_settimeout(lua_State *L);
 static int meth_fd(lua_State *L);
 static int meth_dirty(lua_State *L);
-static int opt_nodelay(lua_State *L);
+static int opt_tcp_nodelay(lua_State *L);
 static int opt_keepalive(lua_State *L);
 static int opt_linger(lua_State *L);
 
@@ -47,7 +47,7 @@ static luaL_reg tcp[] = {
     {"setsockname", meth_bind},
     {"getpeername", meth_getpeername},
     {"getsockname", meth_getsockname},
-    {"timeout",     meth_timeout},
+    {"settimeout",  meth_settimeout},
     {"close",       meth_close},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
@@ -59,7 +59,7 @@ static luaL_reg tcp[] = {
 /* socket option handlers */
 static luaL_reg opt[] = {
     {"keepalive",   opt_keepalive},
-    {"nodelay",     opt_nodelay},
+    {"tcp-nodelay",     opt_tcp_nodelay},
     {"linger",      opt_linger},
     {NULL,          NULL}
 };
@@ -83,8 +83,8 @@ void tcp_open(lua_State *L)
     aux_add2group(L, "tcp{master}", "tcp{any}");
     aux_add2group(L, "tcp{client}", "tcp{any}");
     aux_add2group(L, "tcp{server}", "tcp{any}");
-    aux_add2group(L, "tcp{client}", "tcp{client, server}");
-    aux_add2group(L, "tcp{server}", "tcp{client, server}");
+    aux_add2group(L, "tcp{client}", "tcp{client,server}");
+    aux_add2group(L, "tcp{server}", "tcp{client,server}");
     /* both server and client objects are selectable */
     aux_add2group(L, "tcp{client}", "select{able}");
     aux_add2group(L, "tcp{server}", "select{able}");
@@ -121,7 +121,7 @@ static int meth_setoption(lua_State *L)
 
 static int opt_boolean(lua_State *L, int level, int name)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
     int val = aux_checkboolean(L, 2);
     if (setsockopt(tcp->sock, level, name, (char *) &val, sizeof(val)) < 0) {
         lua_pushnil(L);
@@ -132,8 +132,8 @@ static int opt_boolean(lua_State *L, int level, int name)
     return 1;
 }
 
-/* disables the Nagle algorithm */
-static int opt_nodelay(lua_State *L)
+/* disables the Naggle algorithm */
+static int opt_tcp_nodelay(lua_State *L)
 {
     struct protoent *pe = getprotobyname("TCP");
     if (!pe) {
@@ -155,13 +155,13 @@ int opt_linger(lua_State *L)
     struct linger li;
     if (!lua_istable(L, 2)) 
         luaL_typerror(L, 2, lua_typename(L, LUA_TTABLE));
-    lua_pushstring(L, "onoff");
+    lua_pushstring(L, "on");
     lua_gettable(L, 2);
-    if (!lua_isnumber(L, -1)) luaL_argerror(L, 2, "invalid onoff field");
-    li.l_onoff = (int) lua_tonumber(L, -1);
-    lua_pushstring(L, "linger");
+    if (!lua_isboolean(L, -1)) luaL_argerror(L, 2, "invalid 'on' field");
+    li.l_onoff = lua_toboolean(L, -1);
+    lua_pushstring(L, "timeout");
     lua_gettable(L, 2);
-    if (!lua_isnumber(L, -1)) luaL_argerror(L, 2, "invalid linger field");
+    if (!lua_isnumber(L, -1)) luaL_argerror(L, 2, "invalid 'timeout' field");
     li.l_linger = (int) lua_tonumber(L, -1);
     if (setsockopt(tcp->sock, SOL_SOCKET, SO_LINGER, 
                 (char *) &li, sizeof(li) < 0)) {
@@ -178,90 +178,15 @@ int opt_linger(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_fd(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client, server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
     lua_pushnumber(L, tcp->sock);
     return 1;
 }
 
 static int meth_dirty(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client, server}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
     lua_pushboolean(L, !buf_isempty(&tcp->buf));
-    return 1;
-}
-
-/*-------------------------------------------------------------------------*\
-* Just call inet methods
-\*-------------------------------------------------------------------------*/
-static int meth_getpeername(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
-    return inet_meth_getpeername(L, &tcp->sock);
-}
-
-static int meth_getsockname(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client, server}", 1);
-    return inet_meth_getsockname(L, &tcp->sock);
-}
-
-/*-------------------------------------------------------------------------*\
-* Just call tm methods
-\*-------------------------------------------------------------------------*/
-static int meth_timeout(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
-    return tm_meth_timeout(L, &tcp->tm);
-}
-
-/*-------------------------------------------------------------------------*\
-* Closes socket used by object 
-\*-------------------------------------------------------------------------*/
-static int meth_close(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
-    sock_destroy(&tcp->sock);
-    return 0;
-}
-
-/*-------------------------------------------------------------------------*\
-* Turns a master tcp object into a client object.
-\*-------------------------------------------------------------------------*/
-static int meth_connect(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
-    const char *address =  luaL_checkstring(L, 2);
-    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    const char *err = inet_tryconnect(&tcp->sock, address, port);
-    if (err) {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
-    }
-    /* turn master object into a client object */
-    aux_setclass(L, "tcp{client}", 1);
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
-/*-------------------------------------------------------------------------*\
-* Turns a master object into a server object
-\*-------------------------------------------------------------------------*/
-static int meth_bind(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
-    const char *address =  luaL_checkstring(L, 2);
-    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    int backlog = (int) luaL_optnumber(L, 4, 1);
-    const char *err = inet_trybind(&tcp->sock, address, port, backlog);
-    if (err) {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
-    }
-    /* turn master object into a server object */
-    aux_setclass(L, "tcp{server}", 1);
-    lua_pushnumber(L, 1);
     return 1;
 }
 
@@ -294,6 +219,81 @@ static int meth_accept(lua_State *L)
     tm_init(&client->tm, -1, -1);
     buf_init(&client->buf, &client->io, &client->tm);
     return 1;
+}
+
+/*-------------------------------------------------------------------------*\
+* Turns a master object into a server object
+\*-------------------------------------------------------------------------*/
+static int meth_bind(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
+    const char *address =  luaL_checkstring(L, 2);
+    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
+    int backlog = (int) luaL_optnumber(L, 4, 1);
+    const char *err = inet_trybind(&tcp->sock, address, port, backlog);
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    /* turn master object into a server object */
+    aux_setclass(L, "tcp{server}", 1);
+    lua_pushnumber(L, 1);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
+* Turns a master tcp object into a client object.
+\*-------------------------------------------------------------------------*/
+static int meth_connect(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
+    const char *address =  luaL_checkstring(L, 2);
+    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
+    const char *err = inet_tryconnect(&tcp->sock, address, port);
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    /* turn master object into a client object */
+    aux_setclass(L, "tcp{client}", 1);
+    lua_pushnumber(L, 1);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
+* Closes socket used by object 
+\*-------------------------------------------------------------------------*/
+static int meth_close(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
+    sock_destroy(&tcp->sock);
+    return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Just call inet methods
+\*-------------------------------------------------------------------------*/
+static int meth_getpeername(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
+    return inet_meth_getpeername(L, &tcp->sock);
+}
+
+static int meth_getsockname(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
+    return inet_meth_getsockname(L, &tcp->sock);
+}
+
+/*-------------------------------------------------------------------------*\
+* Just call tm methods
+\*-------------------------------------------------------------------------*/
+static int meth_settimeout(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{client,server}", 1);
+    return tm_meth_settimeout(L, &tcp->tm);
 }
 
 /*=========================================================================*\

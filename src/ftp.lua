@@ -224,7 +224,7 @@ function Private.port(control)
 	local server, ctl_ip
 	ctl_ip, answer = control:getsockname()
 	server, answer = socket.bind(ctl_ip, 0)
-	server:timeout(Public.TIMEOUT)
+	server:settimeout(Public.TIMEOUT)
 	local ip, p, ph, pl
 	ip, p = server:getsockname()
 	pl = math.mod(p, 256)
@@ -404,7 +404,7 @@ function Private.open(parsed)
 	local control, err = socket.connect(parsed.host, parsed.port)
 	if not control then return nil, err end
 	-- make sure we don't block forever
-	control:timeout(Public.TIMEOUT)
+	control:settimeout(Public.TIMEOUT)
 	-- check greeting
 	local code, answer = Private.greet(control)
 	if not code then return nil, answer end

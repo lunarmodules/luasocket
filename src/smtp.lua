@@ -243,7 +243,7 @@ function Private.open(server)
 	-- connect to server and make sure we won't hang
     local sock, err = socket.connect(server, Public.PORT)
     if not sock then return nil, err end
-    sock:timeout(Public.TIMEOUT)
+    sock:settimeout(Public.TIMEOUT)
     -- initial server greeting
     code, answer = Private.check_answer(sock, 220)
     if not code then return nil, answer end
@@ -305,10 +305,10 @@ end
 -----------------------------------------------------------------------------
 function Public.mail(message)
     local sock, err = Private.open(message.server)
-    if not sock then return err end
+    if not sock then return nil, err end
     local code, answer = Private.send(sock, message)
-    if not code then return answer end
-    code, answer = Private.close(sock)
-    if code then return nil end
-    return answer
+    if not code then return nil, answer end
+	code, answer = Private.close(sock)
+	if code then return 1
+	else return nil, answer end
 end

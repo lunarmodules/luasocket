@@ -29,8 +29,10 @@ int sock_open(void)
 \*-------------------------------------------------------------------------*/
 void sock_destroy(p_sock ps)
 {
-    closesocket(*ps);
-    *ps = SOCK_INVALID;
+    if (*ps != SOCK_INVALID) {
+        closesocket(*ps);
+        *ps = SOCK_INVALID;
+    }
 }
 
 /*-------------------------------------------------------------------------*\

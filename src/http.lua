@@ -553,7 +553,7 @@ function Public.request_cb(request, response)
     sock, response.error = socket.connect(parsed.host, parsed.port)
     if not sock then return response end
     -- set connection timeout so that we do not hang forever
-    sock:timeout(Public.TIMEOUT)
+    sock:settimeout(Public.TIMEOUT)
     -- send request message
     response.error = Private.send_request(sock, request.method, 
         Private.request_uri(parsed), request.headers, request.body_cb)

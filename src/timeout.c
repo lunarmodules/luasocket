@@ -125,7 +125,7 @@ void tm_open(lua_State *L)
 *   time: time out value in seconds
 *   mode: "b" for block timeout, "t" for total timeout. (default: b)
 \*-------------------------------------------------------------------------*/
-int tm_meth_timeout(lua_State *L, p_tm tm)
+int tm_meth_settimeout(lua_State *L, p_tm tm)
 {
     int ms = lua_isnil(L, 2) ? -1 : (int) (luaL_checknumber(L, 2)*1000.0);
     const char *mode = luaL_optstring(L, 3, "b");

@@ -30,7 +30,7 @@ static int meth_setsockname(lua_State *L);
 static int meth_setpeername(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_setoption(lua_State *L);
-static int meth_timeout(lua_State *L);
+static int meth_settimeout(lua_State *L);
 static int meth_fd(lua_State *L);
 static int meth_dirty(lua_State *L);
 static int opt_dontroute(lua_State *L);
@@ -46,7 +46,7 @@ static luaL_reg udp[] = {
     {"sendto",      meth_sendto},
     {"receive",     meth_receive},
     {"receivefrom", meth_receivefrom},
-    {"timeout",     meth_timeout},
+    {"settimeout",  meth_settimeout},
     {"close",       meth_close},
     {"setoption",   meth_setoption},
     {"__gc",        meth_close},
@@ -252,10 +252,10 @@ static int opt_broadcast(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Just call tm methods
 \*-------------------------------------------------------------------------*/
-static int meth_timeout(lua_State *L)
+static int meth_settimeout(lua_State *L)
 {
     p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
-    return tm_meth_timeout(L, &udp->tm);
+    return tm_meth_settimeout(L, &udp->tm);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -297,7 +297,7 @@ static int meth_close(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_setsockname(lua_State *L)
 {
-    p_udp udp = (p_udp) aux_checkclass(L, "udp{master}", 1);
+    p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
     const char *err = inet_trybind(&udp->sock, address, port, -1);

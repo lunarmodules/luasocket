@@ -12,11 +12,12 @@ if arg then
 end
 print("Binding to host '" ..host.. "' and port " ..port.. "...")
 udp, err = socket.udp()
-if not udp then print(err) os.exit() end
-err = udp:setsockname(host, port)
-if err then print(err) os.exit() end
-udp:timeout(5)
+assert(udp, err)
+ret, err = udp:setsockname(host, port)
+assert(ret, err) 
+udp:settimeout(5)
 ip, port = udp:getsockname()
+assert(ip, port)
 print("Waiting packets on " .. ip .. ":" .. port .. "...")
 while 1 do
 	dgram, ip, port = udp:receivefrom()

@@ -15,10 +15,10 @@ end
 
 server1, error = socket.bind(host, port1)
 assert(server1, error)
-server1:timeout(1) -- make sure we don't block in accept
+server1:settimeout(1) -- make sure we don't block in accept
 server2, error = socket.bind(host, port2)
 assert(server2, error)
-server2:timeout(1) -- make sure we don't block in accept
+server2:settimeout(1) -- make sure we don't block in accept
 
 io.write("Servers bound\n")
 
@@ -55,7 +55,7 @@ while 1 do
             io.write("Waiting for clients\n")
             local new = input:accept()
             if new then 
-                new:timeout(1)
+                new:settimeout(1)
                 io.write("Inserting client in set\n")
                 set:insert(new) 
             end
