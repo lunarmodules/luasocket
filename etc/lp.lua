@@ -318,4 +318,4 @@ query = socket.protect(function(p)
   return data
 end)
 
-getmetatable(_M).__index = nil
+--getmetatable(_M).__index = nil

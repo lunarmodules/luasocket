@@ -13,7 +13,9 @@
 /*-------------------------------------------------------------------------*\
 * Current luasocket version
 \*-------------------------------------------------------------------------*/
-#define LUASOCKET_VERSION "LuaSocket 2.0 (beta3)"
+#define LUASOCKET_VERSION    "LuaSocket 2.0 (beta3)"
+#define LUASOCKET_COPYRIGHT  "Copyright (C) 2004-2005 Diego Nehab"
+#define LUASOCKET_AUTHORS    "Diego Nehab"
 
 /*-------------------------------------------------------------------------*\
 * This macro prefixes all exported API functions

@@ -12,13 +12,13 @@ if arg then
     port = arg[2] or port
 end
 host = socket.dns.toip(host)
-udp = socket.try(socket.udp())
-socket.try(udp:setpeername(host, port))
+udp = assert(socket.udp())
+assert(udp:setpeername(host, port))
 print("Using remote host '" ..host.. "' and port " .. port .. "...")
 while 1 do
 	line = io.read()
-	if not line then os.exit() end
-	socket.try(udp:send(line))
-	dgram = socket.try(udp:receive())
+	if not line or line == "" then os.exit() end
+	assert(udp:send(line))
+	dgram = assert(udp:receive())
 	print(dgram)
 end

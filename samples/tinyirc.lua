@@ -14,8 +14,8 @@ if arg then
     port2 = arg[3] or port2
 end
 
-server1 = socket.try(socket.bind(host, port1))
-server2 = socket.try(socket.bind(host, port2))
+server1 = assert(socket.bind(host, port1))
+server2 = assert(socket.bind(host, port2))
 server1:settimeout(1) -- make sure we don't block in accept
 server2:settimeout(1)
 

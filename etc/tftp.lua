@@ -153,4 +153,4 @@ get = socket.protect(function(gett)
     else return tget(gett) end
 end)
 
-getmetatable(_M).__index = nil
+--getmetatable(_M).__index = nil

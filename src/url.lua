@@ -273,4 +273,4 @@ function build_path(parsed, unsafe)
 	return path
 end
 
-getmetatable(_M).__index = nil
+--getmetatable(_M).__index = nil

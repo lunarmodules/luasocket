@@ -12,10 +12,11 @@ if arg then
 	port = arg[2] or port
 end
 print("Binding to host '" ..host.. "' and port " ..port.. "...")
-s = socket.try(socket.bind(host, port))
-i, p  = socket.try(s:getsockname())
+s = assert(socket.bind(host, port))
+i, p   = s:getsockname()
+assert(i, p)
 print("Waiting connection from talker on " .. i .. ":" .. p .. "...")
-c = socket.try(s:accept())
+c = assert(s:accept())
 print("Connected. Here is the stuff:")
 l, e = c:receive()
 while not e do

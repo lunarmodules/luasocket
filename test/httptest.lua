@@ -23,7 +23,7 @@ http.TIMEOUT = 10
 local t = socket.gettime()
 
 host = host or "diego.student.princeton.edu"
-proxy = proxy or "http://localhost:3128"
+proxy = proxy or "http://dell-diego:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
 index_file = "test/index.html"
@@ -399,7 +399,6 @@ print("ok")
 
 ------------------------------------------------------------------------
 io.write("testing HEAD method: ")
-http.TIMEOUT = 1
 local r, c, h = http.request {
   method = "HEAD",
   url = "http://www.cs.princeton.edu/~diego/"

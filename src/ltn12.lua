@@ -170,20 +170,16 @@ end
 
 -- creates a source that produces contents of several sources, one after the
 -- other, as if they were concatenated
+-- (thanks to Wim Couwenberg)
 function source.cat(...)
-    local co = coroutine.create(function()
-        local i = 1
-        while i <= table.getn(arg) do
-            local chunk, err = arg[i]()
-            if chunk then coroutine.yield(chunk)
-            elseif err then return nil, err 
-            else i = i + 1 end 
-        end
-    end)
+    local src = table.remove(arg, 1)
     return function()
-        local ret, a, b  = coroutine.resume(co)
-        if ret then return a, b
-        else return nil, a end
+        while src do
+            local chunk, err = src()
+            if chunk then return chunk end
+            if err then return nil, err end
+            src = table.remove(arg, 1)
+        end
     end
 end
 
@@ -276,4 +272,4 @@ function pump.all(src, snk, step)
     end
 end
 
-getmetatable(_M).__index = nil
+--getmetatable(_M).__index = nil

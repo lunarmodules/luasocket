@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="h:\include"
+				AdditionalIncludeDirectories="..\..\include, compat-5.1r2"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport)"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -69,7 +69,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../include"
+				AdditionalIncludeDirectories="../../include, compat-5.1r2"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport);  LUASOCKET_DEBUG"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="0"
@@ -125,7 +125,7 @@
 				RelativePath=".\buffer.c">
 			</File>
 			<File
-				RelativePath=".\compat-5.1.c">
+				RelativePath=".\compat-5.1r2\compat-5.1.c">
 			</File>
 			<File
 				RelativePath=".\except.c">

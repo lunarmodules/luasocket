@@ -4,6 +4,8 @@
 
 DIST = luasocket-2.0-beta3
 
+COMPAT = compat-5.1r2
+
 LUA = \
 	ftp.lua \
 	http.lua \
@@ -11,7 +13,6 @@ LUA = \
 	mime.lua \
 	smtp.lua \
 	socket.lua \
-	compat-5.1.lua \
 	tp.lua \
 	url.lua
 
@@ -72,9 +73,7 @@ CORE = \
 	usocket.c \
 	usocket.h \
 	wsocket.c \
-	wsocket.h \
-	compat-5.1.c \
-	compat-5.1.h
+	wsocket.h
 
 MAKE = \
 	makefile.Darwin \
@@ -92,7 +91,7 @@ MANUAL = \
 	manual/ltn12.html \
 	manual/luasocket.png \
 	manual/mime.html \
-	manual/instalation.html \
+	manual/installation.html \
 	manual/reference.css \
 	manual/reference.html \
 	manual/smtp.html \
@@ -107,6 +106,7 @@ dist:
 	mkdir -p $(DIST)/etc
 	mkdir -p $(DIST)/lua
 	mkdir -p $(DIST)/manual
+	cp -vfr $(COMPAT) $(DIST)
 	cp -vf TODO $(DIST)
 	cp -vf $(CORE) $(DIST)
 	cp -vf README $(DIST)

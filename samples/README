@@ -7,7 +7,7 @@ is not supported.
 listener.lua and talker.lua are about  the simplest applications you can
 write  using  LuaSocket.  Run   
 
-	'lua listen.lua'  and  'lua talk.lua'
+	'lua listener.lua'  and  'lua talker.lua'
 
 on different terminals. Whatever you type on talk.lua will be
 printed by listen.lua.

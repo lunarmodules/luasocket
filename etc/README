@@ -1,11 +1,6 @@
 This directory contains code that is more useful than the examples. This code
 *is* supported.
 
-    lua.lua                 -- new require and requirelib implementations
-
-This is to support dynamic loading of LuaSocket. Check the INSTALL
-file for more information.
-
     tftp.lua                -- Trivial FTP client
 
 This module implements file retrieval by the TFTP protocol. Its main use

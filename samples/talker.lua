@@ -12,10 +12,10 @@ if arg then
 	port = arg[2] or port
 end
 print("Attempting connection to host '" ..host.. "' and port " ..port.. "...")
-c = socket.try(socket.connect(host, port))
+c = assert(socket.connect(host, port))
 print("Connected! Please type stuff (empty line to stop):")
 l = io.read()
 while l and l ~= "" and not e do
-	socket.try(c:send(l, "\n"))
+	assert(c:send(l .. "\n"))
 	l = io.read()
 end
