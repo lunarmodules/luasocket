@@ -70,6 +70,7 @@ io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
 local back, c, h = http.request("http://" .. host .. forth)
 if not back then fail(c) end
+print(back)
 back = url.parse(back)
 if similar(back.query, "this+is+the+query+string") then print("ok")
 else fail(back.query) end

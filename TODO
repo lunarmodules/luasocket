@@ -2,13 +2,14 @@
 ajeitar os README.*
 ajeitar as referencias a RFCS e LTNS em todos os arquivos.
 
-smtp.o goes to mime.dll
 make sure sockets are closed when exceptions are raised
 
 check garbage collection in test*.lua
 
 
 manual
+    socket.skip
+    send return convention changed.
     * compatibility: select sets are associative
     * add socket.connect and socket.bind to the manual
     * add shutdown
@@ -157,3 +158,4 @@ these are done
 * use coroutines instead of fancy filters
 * add socket.TIMEOUT to be default timeout?  no.
 * use gethostname it in SMTP
+* smtp.o goes to mime.dll

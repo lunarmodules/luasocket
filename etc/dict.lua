@@ -140,7 +140,6 @@ local function sget(u)
     return tget(gett)
 end
 
---function socket.protect(f) return f end
 get = socket.protect(function(gett)
     if type(gett) == "string" then return sget(gett)
     else return tget(gett) end
