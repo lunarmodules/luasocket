@@ -1,5 +1,14 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
+/*=========================================================================*\
+* Common option interface 
+* LuaSocket toolkit
+*
+* This module provides a common interface to socket options, used mainly by
+* modules UDP and TCP. 
+*
+* RCS ID: $Id$
+\*=========================================================================*/
 
 #include <lua.h>
 #include "socket.h"

@@ -1,5 +1,5 @@
 /*=========================================================================*\
-* Encoding support functions
+* MIME support functions
 * LuaSocket toolkit
 *
 * RCS ID: $Id$
@@ -653,7 +653,7 @@ static int mime_global_eol(lua_State *L)
     const char *marker = luaL_optstring(L, 3, CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
-    /* if the last character was a candidate, we output a new line */ 
+    /* end of input blackhole */
     if (!input) {
        lua_pushnil(L);
        lua_pushnumber(L, 0);

@@ -1,7 +1,7 @@
 #ifndef MIME_H 
 #define MIME_H 
 /*=========================================================================*\
-* Mime support functions
+* MIME support functions
 * LuaSocket toolkit
 *
 * This module provides functions to implement transfer content encodings

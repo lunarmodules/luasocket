@@ -166,5 +166,3 @@ end
 socket.sourcet["default"] = socket.sourcet["until-closed"]
 
 socket.source = socket.choose(socket.sourcet)
-
-return socket

@@ -2,7 +2,6 @@
 -- URI parsing, composition and relative URL resolution
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- Conforming to: RFC 2396, LTN7
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 
@@ -269,5 +268,3 @@ function build_path(parsed, unsafe)
 	if parsed.is_absolute then path = "/" .. path end
 	return path
 end
-
-return url

@@ -14,7 +14,7 @@ source = smtp.message{
   },
   body = {
     preamble = "If your client doesn't understand attachments, \r\n" ..
-               "it will still display the preamble and the epilogue.\r\n",
+               "it will still display the preamble and the epilogue.\r\n" ..
                "Preamble might show up even in a MIME enabled client.",
     -- first part: No headers means plain text, us-ascii.
     -- The mime.eol low-level filter normalizes end-of-line markers.
@@ -55,3 +55,5 @@ r, e = smtp.send{
     source = source,
     server = "mail.cs.princeton.edu"
 }
+
+print(r, e)

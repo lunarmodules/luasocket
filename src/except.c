@@ -1,12 +1,22 @@
+/*=========================================================================*\
+* Simple exception support
+* LuaSocket toolkit
+*
+* RCS ID: $Id$
+\*=========================================================================*/
 #include <lauxlib.h>
 #include <stdio.h>
 
 #include "except.h"
 
+/*=========================================================================*\
+* Internal function prototypes.
+\*=========================================================================*/
 static int global_try(lua_State *L);
 static int global_protect(lua_State *L);
 static int protected(lua_State *L);
 
+/* except functions */
 static luaL_reg func[] = {
     {"try",      global_try},
     {"protect",  global_protect},

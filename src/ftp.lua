@@ -2,7 +2,6 @@
 -- FTP support for the Lua language
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- Conforming to: RFC 959, LTN7
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 
@@ -244,5 +243,3 @@ get = socket.protect(function(gett)
     if type(gett) == "string" then return sget(gett)
     else return tget(gett) end
 end)
-
-return ftp

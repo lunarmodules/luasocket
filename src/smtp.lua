@@ -2,14 +2,13 @@
 -- SMTP client support for the Lua language.
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- Conforming to RFC 2821
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
 -- Load required modules
 -----------------------------------------------------------------------------
-local smtp = requirelib("smtp")
+local smtp = requirelib("smtp", "luaopen_smtp", getfenv(1))
 local socket = require("socket")
 local ltn12 = require("ltn12")
 local tp = require("tp")
@@ -206,6 +205,7 @@ end
 ---------------------------------------------------------------------------
 -- High level SMTP API
 -----------------------------------------------------------------------------
+socket.protect = function(a) return a end
 send = socket.protect(function(mailt)
     local con = open(mailt.server, mailt.port)
     con:greet(mailt.domain)
@@ -213,5 +213,3 @@ send = socket.protect(function(mailt)
     con:quit()
     return con:close()
 end)
-
-return smtp

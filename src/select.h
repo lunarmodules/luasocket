@@ -4,13 +4,10 @@
 * Select implementation
 * LuaSocket toolkit
 *
-* To make the code as simple as possible, the select function is
-* implemented int Lua, with a few helper functions written in C.
-*
-* Each object that can be passed to the select function has to export two
-* methods: fd() and dirty(). Fd returns the descriptor to be passed to the
-* select function. Dirty() should return true if there is data ready for
-* reading (required for buffered input).
+* Each object that can be passed to the select function has to export 
+* method getfd() which returns the descriptor to be passed to the
+* underlying select function. Another method, dirty(), should return 
+* true if there is data ready for reading (required for buffered input).
 *
 * RCS ID: $Id$
 \*=========================================================================*/

@@ -1,3 +1,9 @@
+/*=========================================================================*\
+* Common option interface 
+* LuaSocket toolkit
+*
+* RCS ID: $Id$
+\*=========================================================================*/
 #include <lauxlib.h> 
 #include <string.h> 
 
@@ -5,6 +11,10 @@
 #include "options.h"
 #include "inet.h"
 
+
+/*=========================================================================*\
+* Internal functions prototypes
+\*=========================================================================*/
 static int opt_setmembership(lua_State *L, p_sock ps, int level, int name);
 static int opt_setboolean(lua_State *L, p_sock ps, int level, int name);
 static int opt_set(lua_State *L, p_sock ps, int level, int name, 

@@ -2,7 +2,6 @@
 -- HTTP/1.1 client support for the Lua language.
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- Conforming to RFC 2616
 -- RCS ID: $Id$
 -----------------------------------------------------------------------------
 
@@ -23,7 +22,7 @@ _LOADED["http"] = getfenv(1)
 -- Program constants
 -----------------------------------------------------------------------------
 -- connection timeout in seconds
-TIMEOUT = 4 
+TIMEOUT = 60 
 -- default port for document retrieval
 PORT = 80
 -- user agent field sent in request
@@ -146,7 +145,7 @@ end
 
 local function adjustrequest(reqt)
     -- parse url with default fields
-    local parsed = url.parse(reqt.url, {
+    local parsed = url.parse(reqt.url or "", {
         host = "",
         port = PORT,
         path ="/",
@@ -258,5 +257,3 @@ post = socket.protect(function(u, body)
     return (table.getn(t) > 0 or nil) and table.concat(t),
         respt.headers, respt.code
 end)
-
-return http

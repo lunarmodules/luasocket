@@ -1,52 +1,31 @@
 ajeitar os README.*
-ajeitar select. upvalue nao tem nada a ver...
-make sure filter.chain fails gracefully.
-ajeitar o manual sobre select, mais liberal agora
-falar sobre o novo esquema de namespace
-tirar socket.url socket.ftp etc do manual. agora os namespaces estao
-liberados.
 ajeitar as referencias a RFCS e LTNS em todos os arquivos.
-proxy no ftp
-ajeitar < e-mail > no smtp?
-ajeitar referencias a LTN12 nos manuais
 
 make sure sockets are closed when exceptions are raised
 
-falar sobre encodet/wrapt/decodet no manual sobre mime
-
-RECEIVE MUDOU!!! (partial stuff) COLOCAR NO MANUAL.
-HTTP.lua mudou bastante também.
-pump.step usado em todo mundo que recebe source ou sink
-
-sources ans sinks are always simple in http and ftp and smtp
-expose encode/decode tables to provide extensibility for mime module
-use coroutines instead of fancy filters
-
 check garbage collection in test*.lua
 
-add socket.TIMEOUT to be default timeout? 
 
 manual
-    compatibility: select sets are associative
-    add socket.connect and socket.bind to the manual
-    say what a nil callback does for http
+    * compatibility: select sets are associative
+    * add socket.connect and socket.bind to the manual
+    * add shutdown
+    * add gethostname
     check all occurences of it's
-    - add shutdown
-    - add gethostname
-    the need of a content-length header in the post method...
-    notice the change in callback conventions
-    the callback.lua module and the new mime module.
-    escape and unescape in url, not in code!
-    add timeout and proxy to request table
-    change stay to redirect 
-    socket.time and socket.sleep
-    - connect with timeout
+    * the need of a content-length header in the post method...
+    * notice the change in callback conventions
+    * the callback.lua module and the new mime module.
+    * escape and unescape in url, not in code!
+    * add timeout and proxy to request table
+    * change stay to redirect 
+    * socket.time and socket.sleep
+    * - connect with timeout
     local connect 
-    add thanks to 'carlos cassino' and 'david burgess'
-    add new ip- options and reuseaddr option
-    - add listen to manual
-    bind method doesn't do listen anymore
-    bind doesn't turn an object into a server object: listen does.
+    * add thanks to 'carlos cassino' and 'david burgess'
+    * add new ip- options and reuseaddr option
+    * - add listen to manual
+    * bind method doesn't do listen anymore
+    * bind doesn't turn an object into a server object: listen does.
 
 tests
     checar todos os metodos
@@ -59,9 +38,6 @@ wrp can't break lines in the middle of a line break.
 add comments into each C module.
 testar os options!
 
-use gethostname it in SMTP
-
-make sure modules know if their dependencies are there.
 
 Read about
 250-ENHANCEDSTATUSCODES
@@ -108,6 +84,12 @@ Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
 these are done
 --------------
 
+* tirar socket.url socket.ftp etc do manual. agora os namespaces 
+    estao liberados.
+* falar sobre o novo esquema de namespace
+* ajeitar o manual sobre select, mais liberal agora
+* make sure filter.chain fails gracefully.
+* ajeitar select. upvalue nao tem nada a ver...
 * should be interrupt-safe
 * notice the change in callback conventions
 * new mime module replacing old code module (faster, more functionality)
@@ -161,3 +143,15 @@ these are done
 * change all modules to use the new namespace scheme
 * write some utilities that use the code.lua module and put them 
 * in etc, modify the README.etc file and makefile.dist (eol.lua is done)
+* proxy no ftp? no
+* ajeitar < e-mail > no smtp? no
+* ajeitar referencias a LTN12 nos manuais
+* RECEIVE MUDOU!!! (partial stuff) COLOCAR NO MANUAL.
+* HTTP.lua mudou bastante também.
+* falar sobre encodet/wrapt/decodet no manual sobre mime? no.
+* pump.step usado em todo mundo que recebe source ou sink
+* sources ans sinks are always simple in http and ftp and smtp
+* expose encode/decode tables to provide extensibility for mime module
+* use coroutines instead of fancy filters
+* add socket.TIMEOUT to be default timeout?  no.
+* use gethostname it in SMTP

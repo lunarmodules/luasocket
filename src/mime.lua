@@ -73,5 +73,3 @@ wrap = choose(wrapt)
 function normalize(marker)
     return ltn12.filter.cycle(eol, 0, marker)
 end
-
-return mime

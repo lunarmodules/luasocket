@@ -254,5 +254,3 @@ function pump.all(src, snk, step)
         if not ret then return not err, err end
     end
 end
-
-return ltn12

@@ -49,7 +49,6 @@ local metat = { __index = {} }
 
 function metat.__index:check(ok)
     local code, reply = get_reply(self.control)
-print(reply)
     if not code then return nil, reply end
     if type(ok) ~= "function" then
         if type(ok) == "table" then 
@@ -65,7 +64,6 @@ print(reply)
 end
 
 function metat.__index:command(cmd, arg)
-print(cmd, arg)
     if arg then return self.control:send(cmd .. " " .. arg.. "\r\n")
     else return self.control:send(cmd .. "\r\n") end
 end
@@ -113,5 +111,3 @@ connect = socket.protect(function(host, port, timeout)
     socket.try(control:connect(host, port))
     return setmetatable({control = control}, metat)
 end)
-
-return tp
