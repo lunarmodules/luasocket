@@ -37,12 +37,12 @@
 
 <p>
 Communication in LuaSocket is performed via I/O objects. These can
-represent different network domains. Currently, support is
-provided for TCP and UDP, but there is work in progress to implement SSL,
-Local Domain, Pipes, File Descriptors etc. I/O objects provide a standard
+represent different network domains. Currently, support is provided for TCP
+and UDP, but nothing prevents other developers from implementing SSL, Local
+Domain, Pipes, File Descriptors etc. I/O objects provide a standard
 interface to I/O across different domains and operating systems.
 LuaSocket&nbsp;2.0 has been rewritten from scratch to simplify the future
-addition of new domains.
+addition of new domains.  
 </p>
 
 <p>
@@ -93,7 +93,7 @@ Previous versions of LuaSocket provided global functions for operating on
 I/O objects. To give the library a Lua 5.0 feel, these have been eliminated
 from LuaSocket 2.0. I/O operations are only available as methods of the
 corresponding I/O objects.  Naturally, different I/O objects accept
-different operations. The core functionality for TCP and UDP objects is
+different operations. The TCP and UDP objects are
 introduced in the following sections, following a few words about
 initialization. 
 </p>
@@ -103,17 +103,22 @@ initialization.
 <h3>Initializing the library</h3>
 
 <p>
+The core LuaSocket functionality is implemented in C, and usually available as 
+a dynamic library which the interpreter can load when required. 
 Beginning with version 2.0 and following the Lua 5.0 trend, all LuaSocket
-functionality is defined inside a table (or rather a namespace) stored with
-the global name <tt>socket</tt>.  To  have this table created and its
-contents made available to a Lua script, the interpreter running the script
-must  be linked to the LuaSocket library, and  to whatever libraries  the
-host OS  requires  for network access (Windows requires ws2_32.lib, for
-instance). LuaSocket is initialized in  the
-Lua state given as the argument  to  the  function
-<tt>luaopen_socket</tt>, the  only  C function  exported  by  the  library.
-After initialization, scripts are free to use all of the LuaSocket API. 
+functionality is defined inside a tables (or rather a namespaces). No global
+variables are ever created.
+Namespaces are obtained with the <tt>require</tt> Lua function, which loads
+and initializes any required libraries and return the namespace. 
+For example, the core functionality or LuaSocket is usually available
+from the "<tt>socket</tt>" namespace. 
 </p>
+
+<pre class="example">
+socket = require("socket")
+print(socket.VERSION)
+-- LuaSocket 2.0
+</pre>
 
 <!-- tcp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -185,29 +190,25 @@ program.
 </p>
 
 <pre class=example>
--- create a new TCP object
-server, err = socket.tcp()
-assert(server, err)
--- bind it to the local host, at any port
-ret, err = server:bind("*", 0)
-assert(ret, err)
+-- load namespace
+local socket = require("socket")
+-- create a TCP socket and bind it to the local host, at any port
+local server = socket.try(socket.bind("*", 0))
 -- find out which port the OS chose for us
-ip, port = server:getsockname()
+local ip, port = server:getsockname()
 -- print a message informing what's up
 print("Please telnet to localhost on port " .. port)
 print("After connecting, you have 10s to enter a line to be echoed")
 -- loop forever waiting for clients
 while 1 do
   -- wait for a conection from any client
-  client, err = server:accept()
+  local client = server:accept()
   -- make sure we don't block waiting for this client's line
   client:settimeout(10)
   -- receive the line
-  line, err = client:receive()
+  local line, err = client:receive()
   -- if there was no error, send it back to the client
-  if not err then 
-    client:send(line .. "\n") 
-  end
+  if not err then client:send(line .. "\n") end
   -- done with client, close the object
   client:close()
 end
@@ -286,21 +287,19 @@ error message.
 </p>
 
 <pre class=example>
-host = "localhost" -- change here to the host you want to contact
-port = port or 13
+-- change here to the host an port you want to contact
+host = "localhost" 
+port = 13
+-- load namespace
+local socket = require("socket")
 -- convert host name to ip address
-ip, err = socket.dns.toip(host)
-assert(ip, err)
+local ip = socket.try(socket.dns.toip(host))
 -- create a new UDP object
-udp = socket.udp()
+local udp = socket.udp()
 -- contact daytime host
-nsent, err = udp:sendto("anything", ip, port)
-assert(not err, err)
--- retrieve the answer
-dgram, err = udp:receive()
-assert(dgram, err)
--- display to user
-print(dgram)
+socket.try(udp:sendto("anything", ip, port))
+-- retrieve the answer and print results
+io.write(socket.try((udp:receive())))
 </pre>
 </blockquote>
 

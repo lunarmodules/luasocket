@@ -98,36 +98,36 @@ Note: MIME headers are independent of order. Therefore, there is no problem
 in representing them in a Lua table. 
 </p>
 
+<p>
+The following constants can be set to control the default behaviour of
+the HTTP module: 
+</p>
+
+<ul>
+<li> <tt>PORT</tt>: default port used for connections; 
+<li> <tt>PROXY</tt>: default proxy used for connections; 
+<li> <tt>TIMEOUT</tt>: sets the timeout for all I/O operations;
+<li> <tt>USERAGENT</tt>: default user agent reported to server.
+</ul>
+
 <!-- http.get +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=get>
-socket.http.<b>get(</b>url<b>)</b><br>
-socket.http.<b>get{</b><br>
-&nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;headers = <i>header-table</i>,<br>
-&nbsp;&nbsp;user = <i>string</i>,<br>
-&nbsp;&nbsp;password = <i>string</i>,<br>
-&nbsp;&nbsp;stay = <i>bool</i>,<br>
-<b>}</b>
+http.<b>get(</b>url<b>)</b><br>
 </p>
 
 <p class=description>
-Performs  the HTTP method <tt>GET</tt>. 
+Performs the HTTP method <tt>GET</tt>. 
 </p>
 
 <p class=parameters>
-The  function can  be
-called either directly with a <tt>url</tt>  or with a <em>request table</em>. 
-The use of  a request table allows  complete control over the  components of
-the  request.  Values  passed explicitly  as fields of the request table
-override those given by the <tt>url</tt>. For a description of the fields,
-see the <a href=#request><tt>request</tt></a> function.
+<tt>Url</tt> identifies the entity to retrieve. 
 </p>
 
 <p class=return>
-The function  returns the response  message body, the mime  headers, the
-status  code and  an  error message (if  any). In  case  of failure,  the
-function returns all information it managed to gather.
+If successful, the function  returns the response  message body, the mime
+headers, and the status  code. In  case  of failure,  the
+function returns <tt><b>nil</b></tt> followed by an error message. 
 </p>
 
 <p class=note>
@@ -136,35 +136,30 @@ Note: The function is trivially implemented with the use of the
 </p>
 
 <pre class=example>
+-- load the http module
+http = require("http")
+
 -- connect to server "www.tecgraf.puc-rio.br" and retrieves this manual
 -- file from "/luasocket/http.html"
-b, h, c, e = socket.http.get("http://www.tecgraf.puc-rio.br/luasocket/http.html")
+b, h, c = http.get("http://www.tecgraf.puc-rio.br/luasocket/http.html")
 
 -- connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
 -- "~diego/auth/index.html". Fails because authentication is needed.
-b, h, c, e = socket.http.get("http://www.tecgraf.puc-rio.br/~diego/auth/index.html")
+b, h, c = http.get("http://www.tecgraf.puc-rio.br/~diego/auth/index.html")
 -- b returns some useless page telling about the denied access, 
 -- h returns authentication information
 -- and c returns with value 401 (Authentication Required)
 
 -- tries to connect to server "wrong.host" to retrieve "/"
 -- and fails because the host does not exist.
-b, h, c, e = socket.http.get("http://wrong.host/")
--- b, h, c are nil, and e returns with value "host not found"
+r, e = http.get("http://wrong.host/")
+-- r is nil, and e returns with value "host not found"
 </pre>
 
 <!-- http.post ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=post>
-socket.http.<b>post(</b>url, body<b>)</b><br>
-socket.http.<b>post{</b><br>
-&nbsp;&nbsp; url = <i>string</i>,<br>
-&nbsp;&nbsp; headers = <i>header-table</i>,<br>
-&nbsp;&nbsp; body = <i>string</i>,<br>
-&nbsp;&nbsp; user = <i>string</i>,<br>
-&nbsp;&nbsp; password = <i>string</i>,<br>
-&nbsp;&nbsp; stay = <i>bool</i>,<br>
-<b>}</b>
+http.<b>post(</b>url, body<b>)</b><br>
 </p>
 
 <p class=description>
@@ -181,50 +176,64 @@ Note: This function is also trivially implemented with the use of the
 <!-- http.request ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=request>
-socket.http.<b>request{</b><br>
-&nbsp;&nbsp;method = <i>string</i>,<br>
+http.<b>request{</b><br>
 &nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;headers = <i>header-table</i>,<br>
-&nbsp;&nbsp;body = <i>string</i>,<br>
-&nbsp;&nbsp;user = <i>string</i>,<br>
-&nbsp;&nbsp;password = <i>string</i>,<br>
-&nbsp;&nbsp;stay = <i>string</i>,<br>
+&nbsp;&nbsp;[sink = <i>LTN12 sink</i>],]<br>
+&nbsp;&nbsp;[method = <i>string</i>,]<br>
+&nbsp;&nbsp;[headers = <i>header-table</i>,]<br>
+&nbsp;&nbsp;[source = <i>LTN12 source</i>],<br>
+&nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
+&nbsp;&nbsp;[proxy = <i>string</i>,]<br>
+&nbsp;&nbsp;[redirect = <i>boolean</i>]<br>
 <b>}</b>
 </p>
 
 <p class=description>
-Performs the generic HTTP  request using.
+Performs the generic HTTP request, controled by a request table.
 </p>
 
 <p class=parameters>
-The request uses <tt>method</tt> on <tt>url</tt>
-sending the  request <tt>headers</tt>  and request <tt>body</tt>  in the
-request message. If authentication information is provided, the function
+The most important parameters are the <tt>url</tt> and the LTN12 
+<tt>sink</tt> that will receive the downloaded content.  
+Any part of the <tt>url</tt> can be overriden by including
+the appropriate field in the request table.
+If authentication information is provided, the function
 uses the  Basic Authentication Scheme (see  <a href="#authentication">note</a>)
-to retrieve  the document. <tt>User</tt> and  <tt>password</tt> provided
-explicitly override  those given by the  <tt>url</tt>. The <tt>stay</tt>
-parameter, when set to anything  but <b><tt>nil</tt></b>, prevents the function
-from automatically following 301 or 302 server redirect messages. 
+to retrieve  the document. If <tt>sink</tt> is <tt><b>nil</b></tt>, the
+function discards the downloaded data. The optional parameters are the
+following:
 </p>
+<ul>
+<li><tt>method</tt>: The HTTP request method. Defaults to "GET"; 
+<li><tt>headers</tt>: Any additional HTTP headers to send with the request; 
+<li><tt>source</tt>: LTN12 source to provide the request body. If there
+is a body, you need to provide an appropriate "<tt>content-length</tt>"
+request header field, or the function will attempt to send the body as
+"<tt>chunked</tt>" (something few servers support). Defaults to the empty source; 
+<li><tt>step</tt>: LTN12 pump step function used to move data.  
+Defaults to the LTN12 <tt>pump.step</tt> function.
+<li><tt>proxy</tt>: The URL of a proxy server to use. Defaults to no proxy; 
+<li><tt>redirect</tt>: Set to <tt><b>false</b></tt> to prevent the 
+function from  automatically following 301 or 302 server redirect messages. 
+</ul>
 
 <p class=return>
-The function returns a table with all components of the response message
-it managed to retrieve. The response table has the following form:
+In case of failure, the function returns <tt><b>nil</b></tt> followed by an
+error message. If successful, the function returns a table 
+with all components of the response message. The response table has the following form:
 </p>
 
 <blockquote><tt>
-response = {<br>
-&nbsp;&nbsp;body = <i>string</i>,<br>
+respt = {<br>
 &nbsp;&nbsp;headers = <i>header-table</i>,<br>
 &nbsp;&nbsp;status = <i>string</i>,<br>
 &nbsp;&nbsp;code = <i>number</i>,<br>
-&nbsp;&nbsp;error = <i>string</i><br>
 }
 </tt></blockquote>
 
 <p class=return>
 Even  when there  was failure  (URL not  found, for  example), the
-function may succeed retrieving a message body (a web page informing the
+function usually succeeds retrieving a message body (a web page informing the
 URL  was  not found  or  some  other useless  page).  To  make sure  the
 operation was successful, check  the returned status <tt>code</tt>. For
 a  list  of  the  possible  values  and  their  meanings,  refer  to  <a
@@ -233,15 +242,18 @@ href="http://www.cs.princeton.edu/~diego/rfc/rfc2616.txt">RFC
 </p>
 
 <pre class=example>
+-- load the http module
+http = require("http")
+
 -- Requests information about a document, without downloading it.
 -- Useful, for example, if you want to display a download gauge and need
 -- to know the size of the document in advance
-response = socket.http.request {
+respt = http.request {
   method = "HEAD",
   url = "http://www.tecgraf.puc-rio.br/~diego"
 }
 -- Would return the following headers:
--- response.headers = {
+-- respt.headers = {
 --   date = "Tue, 18 Sep 2001 20:42:21 GMT",
 --   server = "Apache/1.3.12 (Unix)  (Red Hat/Linux)",
 --   ["last-modified"] = "Wed, 05 Sep 2001 06:11:20 GMT",
@@ -276,10 +288,14 @@ authentication is required.
 </p>
 
 <pre class=example>
+-- load required modules
+http = require("http")
+mime = require("mime")
+
 -- Connect to server "www.tecgraf.puc-rio.br" and tries to retrieve
 -- "~diego/auth/index.html", using the provided name and password to
 -- authenticate the request
-response = socket.http.request{
+respt = http.request{
   url = "http://www.tecgraf.puc-rio.br/~diego/auth/index.html",
   user = "diego",
   password = "password"
@@ -287,82 +303,11 @@ response = socket.http.request{
 
 -- Alternatively, one could fill the appropriate header and authenticate
 -- the request directly.
-headers = {
-  authentication = "Basic " .. socket.code.base64("diego:password")
-}
-response = socket.http.request {
+respt = http.request {
   url = "http://www.tecgraf.puc-rio.br/~diego/auth/index.html",
-  headers = headers
+  headers = { authentication = "Basic " .. (mime.b64("diego:password")) }
 }
 </pre>
-
-<!-- request_cb +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<p class=name id=request_cb>
-socket.http.<b>request_cb(</b>request, response<b>)</b>
-</p>
-
-<p class=description>
-Performs the generic HTTP  request.
-</p>
-
-<p class=parameters>
-The function receives two tables as parameters. The <tt>request</tt> table
-provides information about the request: 
-</p>
-
-<blockquote><tt>
-request = {<br>
-&nbsp;&nbsp;method = <i>string</i>,<br>
-&nbsp;&nbsp;url = <i>string</i>,<br>
-&nbsp;&nbsp;headers = <i>header-table</i>,<br>
-&nbsp;&nbsp;body_cb = <i>send-callback</i>,<br>
-&nbsp;&nbsp;user = <i>string</i>,<br>
-&nbsp;&nbsp;password = <i>string</i>,<br>
-&nbsp;&nbsp;stay = <i>string</i>,<br>
-}</tt>
-</blockquote>
-
-<p class=parameters>
-The function uses the HTTP method specified in 
-<tt>request.method</tt> on the URL <tt>request.url</tt>,
-sending <tt>request.headers</tt> along with the request. The request
-message  body  is sent  via the send  callback <tt>request.body_cb</tt>.
-If authentication information is provided, the function    uses   the Basic
-Authentication    Scheme   (see    <a href="#authentication">note</a>)  to
-retrieve  the document.  <tt>Request.user</tt> and
-<tt>request.password</tt>  override  those  given  by the
-<tt>request.url</tt>.  The <tt>request.stay</tt>  parameter,  when set  to
-anything but <b><tt>nil</tt></b>, prevents the function  from automatically
-following 301 or 302 server redirect messages.  
-</p>
-
-<p class=parameters>
-The <tt>response</tt> table specifies information about the desired
-response:
-</p>
-
-<blockquote><tt>
-response = {<br>
-&nbsp;&nbsp;body_cb = <i>receive-callback</i><br>
-}</tt>
-</blockquote>
-
-<p class=return>
-The function  returns the same  response table  as that returned  by the
-<tt>socket.http.request</tt>  function, except  the  response  message body  is
-returned    to    the    receive   callback   given    by    the
-<tt>response.body_cb</tt> field. 
-</p>
-
-<p class=note>
-Note: For more information on callbacks, please refer to 
-<a href="stream.html#stream">Streaming with callbacks</a>.
-</p>
-
-<p class=note>
-Note: Method names are case <em>sensitive</em>
-</p>
 
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
