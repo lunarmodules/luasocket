@@ -6,13 +6,19 @@
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load required modules
+-- Declare module and import dependencies
 -----------------------------------------------------------------------------
 local socket = require("socket")
+local tp = require("socket.tp")
+
 local ltn12 = require("ltn12")
 local mime = require("mime")
-local tp = require("tp")
 
+module("socket.smtp")
+
+-----------------------------------------------------------------------------
+-- Program constants
+-----------------------------------------------------------------------------
 -- timeout for connection
 TIMEOUT = 60
 -- default server used to send e-mails

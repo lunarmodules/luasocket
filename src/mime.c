@@ -8,6 +8,7 @@
 
 #include <lua.h>
 #include <lauxlib.h>
+#include <compat-5.1.h>
 
 #include "mime.h"
 
@@ -77,13 +78,9 @@ static UC b64unbase[256];
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-MIME_API int luaopen_mime(lua_State *L)
+MIME_API int luaopen_lmime(lua_State *L)
 {
-    /* whoever is loading the library replaced the global environment
-     * with the namespace table */
-    lua_pushvalue(L, LUA_GLOBALSINDEX);
-    /* export functions */
-    luaL_openlib(L, NULL, func, 0);
+    luaL_module(L, "mime", func, 0);
     /* initialize lookup tables */
     qpsetup(qpclass, qpunbase);
     b64setup(b64unbase);

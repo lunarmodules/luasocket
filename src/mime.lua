@@ -6,9 +6,10 @@
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load other required modules
+-- Declare module and import dependencies
 -----------------------------------------------------------------------------
-local mime = requirelib("mime", "luaopen_mime", getfenv(1))
+module("mime")
+local mime = require("lmime")
 local ltn12 = require("ltn12")
 
 -- encode, decode and wrap algorithm tables

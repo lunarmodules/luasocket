@@ -6,12 +6,15 @@
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load required modules
+-- Declare module and import dependencies
 -----------------------------------------------------------------------------
 local socket = require("socket")
+local url = require("socket.url")
+local tp = require("socket.tp")
+
 local ltn12 = require("ltn12")
-local url = require("url")
-local tp = require("tp")
+
+module("socket.ftp")
 
 -----------------------------------------------------------------------------
 -- Program constants

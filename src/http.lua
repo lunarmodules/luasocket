@@ -6,12 +6,14 @@
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
--- Load required modules
+-- Declare module and import dependencies
 -------------------------------------------------------------------------------
 local socket = require("socket")
+local url = require("socket.url")
 local ltn12 = require("ltn12")
 local mime = require("mime")
-local url = require("url")
+
+module("socket.http")
 
 -----------------------------------------------------------------------------
 -- Program constants

@@ -19,6 +19,7 @@
 \*=========================================================================*/
 #include <lua.h>
 #include <lauxlib.h>
+#include <compat-5.1.h>
 
 /*=========================================================================*\
 * LuaSocket includes
@@ -85,9 +86,8 @@ static int global_unload(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int base_open(lua_State *L) {
     if (sock_open()) {
-        /* whoever is loading the library replaced the global environment
-         * with the namespace table */
-        lua_pushvalue(L, LUA_GLOBALSINDEX);
+        /* export functions (and leave namespace table on top of stack) */
+        luaL_module(L, "socket", func, 0);
 #ifdef LUASOCKET_DEBUG
         lua_pushstring(L, "DEBUG");
         lua_pushboolean(L, 1);
@@ -97,8 +97,6 @@ static int base_open(lua_State *L) {
         lua_pushstring(L, "VERSION");
         lua_pushstring(L, LUASOCKET_VERSION);
         lua_rawset(L, -3);
-        /* export other functions */
-        luaL_openlib(L, NULL, func, 0);
         return 1;
     } else {
         lua_pushstring(L, "unable to initialize library");
@@ -110,7 +108,7 @@ static int base_open(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Initializes all library modules.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_socket(lua_State *L) {
+LUASOCKET_API int luaopen_lsocket(lua_State *L) {
     int i;
     base_open(L);
     for (i = 0; mod[i].name; i++) mod[i].func(L);
