@@ -1,3 +1,5 @@
+change 'l' prefix in C libraries to 'l-something'...
+
 "foo.bar.baz" previously had to provide luaopen_foobarbaz() and now 
 should use luaopen_foo_bar_baz(). Change compat-5.1 and LuaSocket?
 
