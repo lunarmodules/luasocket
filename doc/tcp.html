@@ -213,10 +213,12 @@ The method returns a string with local IP address and a number with
 the port. In case of error, the method returns <b><tt>nil</tt></b>.
 </p>
 
-<!-- getsockname ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- getstats +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=getstats>
+master:<b>getstats()</b><br>
 client:<b>getstats()</b><br>
+server:<b>getstats()</b><br>
 </p>
 
 <p class=description>
@@ -412,6 +414,29 @@ The method returns 1 in case of success, or <b><tt>nil</tt></b> otherwise.
 
 <p class=note>
 Note: The descriptions above come from the man pages.
+</p>
+
+<!-- setstats +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=setstats>
+master:<b>setstats(</b>received, sent, age<b>)</b><br>
+client:<b>setstats(</b>received, sent, age<b>)</b><br>
+server:<b>setstats(</b>received, sent, age<b>)</b><br>
+</p>
+
+<p class=description>
+Resets accounting information on the socket, useful for throttling
+of bandwidth. 
+</p>
+
+<p class=parameters>
+<tt>Received</tt> is a number with the new number of bytes received.
+<tt>Sent</tt> is a number with the new number of bytes sent.
+<tt>Age</tt> is the new age in seconds</tt>
+</p>
+
+<p class=return>
+The method returns 1 in case of success and <tt><b>nil</b></tt> otherwise. 
 </p>
 
 <!-- settimeout +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
