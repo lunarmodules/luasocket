@@ -26,7 +26,7 @@ and to compose a base URL and relative URL into an absolute URL.
 
 The  code.lua module  provides  base64, hexa  and  escaped encoding  and
 decoding. The module  is used for the HTTP  Basic Authentication Scheme,
-and URL protection, conforming to RFC 1521.
+and URL protection, conforming to RFC 2045.
 
 	concat.lua				-- fast concatenation library
 
