@@ -198,6 +198,7 @@ local function encode_b64test()
     local sp2 = mime.wrap("base64", 30)
     local sp1 = mime.wrap(27)
     local chain = ltn12.filter.chain(e1, sp1, e2, sp2, e3, sp3, e4, sp4)
+    chain = socket.protect(chain)
     transform(b64test, eb64test, chain)
 end
 
