@@ -7,7 +7,7 @@ ack = "\n"
 while 1 do
     print("server: waiting for client connection...");
     control = server:accept()
-    control:setoption("nodelay", true)
+    -- control:setoption("nodelay", true)
     while 1 do 
         command, error = control:receive()
         if error then

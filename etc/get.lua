@@ -63,13 +63,13 @@ end
 -- kind of copied from luasocket's manual callback examples
 function receive2disk(file, size)
 	local aux = {
-        start = socket._time(),
+        start = socket.time(),
         got = 0,
         file = io.open(file, "wb"),
 		size = size
     }
     local receive_cb = function(chunk, err)
-        local dt = socket._time() - aux.start  -- elapsed time since start
+        local dt = socket.time() - aux.start  -- elapsed time since start
         if not chunk or chunk == "" then
 			io.write("\n")
             aux.file:close()
