@@ -153,7 +153,7 @@ static int opt_keepalive(lua_State *L)
     return opt_boolean(L, SOL_SOCKET, SO_KEEPALIVE); 
 }
 
-int opt_linger(lua_State *L)
+static int opt_linger(lua_State *L)
 {
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
     struct linger li;
@@ -334,7 +334,7 @@ static int meth_settimeout(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Creates a master tcp object 
 \*-------------------------------------------------------------------------*/
-int global_create(lua_State *L)
+static int global_create(lua_State *L)
 {
     t_sock sock;
     const char *err = inet_trycreate(&sock, SOCK_STREAM);

@@ -417,7 +417,7 @@ static int meth_setsockname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Creates a master udp object 
 \*-------------------------------------------------------------------------*/
-int global_create(lua_State *L)
+static int global_create(lua_State *L)
 {
     t_sock sock;
     const char *err = inet_trycreate(&sock, SOCK_DGRAM);

@@ -5,14 +5,15 @@
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
 dofile("noglobals.lua")
 
-local host, proxyhost, proxyport, request, response
+local host, proxy, request, response
 local ignore, expect, index, prefix, cgiprefix
+
+socket.http.TIMEOUT = 5
 
 local t = socket.time()
 
-host = host or "diego.princeton.edu"
-proxyhost = proxyhost or "localhost"
-proxyport = proxyport or 3128
+host = host or "diego.student.dyn.cs.princeton.edu"
+proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
 
@@ -66,6 +67,7 @@ end
 io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
 local back, h, c, e = socket.http.get("http://" .. host .. forth)
+if not back then fail(e) end
 back = socket.url.parse(back)
 if similar(back.query, "this+is+the+query+string") then print("ok")
 else fail() end
@@ -129,8 +131,7 @@ request = {
 	method = "POST",
 	body = index,
     headers = { ["content-length"] = string.len(index) },
-    proxyport = proxyport,
-    proxyhost = proxyhost
+    proxy= proxy
 }
 expect = {
 	body = index,
@@ -170,8 +171,7 @@ check_request(request, expect, ignore)
 io.write("testing proxy with redirection: ")
 request = {
 	url = "http://" .. host .. prefix,
-    proxyhost = proxyhost,
-    proxyport = proxyport
+    proxy = proxy
 }
 expect = {
 	body = index,

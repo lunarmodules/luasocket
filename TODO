@@ -1,48 +1,37 @@
+manual
+    add shutdown
+    add gethostname
+    the need of a content-length header in the post method...
+    notice the change in callback conventions
+    the callback.lua module and the new mime module.
+    escape and unescape in url, not in code!
+    add timeout and proxy to request table
+    change stay to redirect 
+    socket.time and socket.sleep
+    connect with timeout
+    local connect 
+    add thanks to 'carlos cassino' and 'david burgess'
+    add new ip- options and reuseaddr option
 
-comment the need of a content-length header in the post method...
+tests
+    checar todos os metodos
+    checar todas as globais
+    checar garbage collection
+    check for interrupts
 
-comment the callback.lua module and the new mime module.
-    escape and unescape are missing!
-
+new option.c module to put all options (TCP and UDP share...)?
+testar os options!
 add _tostring methods!
-add callback module to manual
-change stay to redirect in http.lua and in manual
-add timeout to request table
-
-change code to mime
-change *all* modules to be namespace independent
+change all modules to use the new namespace scheme
 
 write some utilities that use the code.lua module and put them 
 in etc, modify the README.etc file and makefile.dist (eol.lua is done)
 
-check for interrupt compliance
-add connect with timeout
-add gethostname and use it in HTTP, SMTP etc, and add manual entry.
-add thanks for cassino and david burgess
-
-add local connect, and manual entry
-
-add shutdown manual entry
-
-only allocate in case of success
-only call select if io fails...
-Proxy support pro http
-
-make REUSEADDR an option...
+use gethostname it in SMTP
 
 make sure modules know if their dependencies are there.
-_
-one thing i noticed in usocket.c is that it doesn't check for EINTR
-after write(), sendto(), read(), recvfrom() etc. ?  the usual trick is
-to loop while you get EINTR:
-
-        do
-                ret = write(...);
-        while(ret < 0 && errno == EINTR)
-
 
 Read about
-
 250-ENHANCEDSTATUSCODES
 250-PIPELINING
 250-8BITMIME
@@ -62,29 +51,30 @@ Make sure nobody can fuck up with the metatables...
 
 Create a passive mode option for the FTP (good for firewall).
 
-Use environments in module definitions or declare all local and create the
-function with exported symbols later?
-
-local P = {}
-complex = P
-setfenv(1, P)
-
 Modules should return their namespace table in the end of the chunk.
 
 Adjust dates in all files
 
 Test the library on every system possible
 
-Document socket.time and socket.sleep
-
-Implement time critical stuff from code module in C.
 Add service name translation.
-
 Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
 
-- testar os options!
+
 - adicionar exemplos de expansão: pipe, local, named pipe
 
+* should be interrupt-safe
+* notice the change in callback conventions
+* new mime module replacing old code module (faster, more functionality)
+* new socket options (many)
+* only allocate in case of success
+* optimize for success (only call select if fails) 
+* add proxy support to http
+* add gethostname 
+* local connect 
+* connect with timeout
+* change code to mime
+* change stay to redirect 
 * add shutdown
 * change send/recv to avoid using select
 * O location do "redirect" pode ser relativo ao servidor atual (não pode,
@@ -93,24 +83,13 @@ Ajeitar o protocolo da luaopen_socket()... sei lá qual é.
 * Padronizar os retornos de funccao
 * Separar as classes em arquivos
 * Retorno de sendto em datagram sockets pode ser refused
-* Fazer compilar com g++
 
+- Fazer compilar com g++
 - Thread-safe
   - proteger gethostby*.* com um mutex GLOBAL!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 - SSL
 
-- checar operações em closed sockets
-- checar teste de writable socket com select
-
-
-- checar todos os metodos
-- checar options em UDP
-- checar todas as globais
-- checar os metodos virtuais
-- checar garbage collection
-
 - unix 92 bytes maximo no endereço, incluindo o zero
 - unix 9216 maximo de datagram size
-

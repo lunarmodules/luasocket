@@ -36,8 +36,63 @@
 #include "mime.h"
 
 /*=========================================================================*\
-* Exported functions
+* Declarations
 \*=========================================================================*/
+static int global_gethostname(lua_State *L);
+static int base_open(lua_State *L);
+
+/* functions in library namespace */
+static luaL_reg func[] = {
+    {"gethostname", global_gethostname},
+    {NULL, NULL}
+};
+
+/*-------------------------------------------------------------------------*\
+* Setup basic stuff.
+\*-------------------------------------------------------------------------*/
+static int base_open(lua_State *L)
+{
+    /* create namespace table */
+    lua_pushstring(L, LUASOCKET_LIBNAME);
+    lua_newtable(L);
+#ifdef LUASOCKET_DEBUG
+    lua_pushstring(L, "debug");
+    lua_pushnumber(L, 1);
+    lua_rawset(L, -3);
+#endif
+    /* make version string available so scripts */
+    lua_pushstring(L, "version");
+    lua_pushstring(L, LUASOCKET_VERSION);
+    lua_rawset(L, -3);
+    /* store namespace as global */
+    lua_settable(L, LUA_GLOBALSINDEX);
+    /* make sure modules know what is our namespace */
+    lua_pushstring(L, "LUASOCKET_LIBNAME");
+    lua_pushstring(L, LUASOCKET_LIBNAME);
+    lua_settable(L, LUA_GLOBALSINDEX);
+    /* define library functions */
+    luaL_openlib(L, LUASOCKET_LIBNAME, func, 0); 
+    lua_pop(L, 1);
+    return 0;
+}
+
+/*-------------------------------------------------------------------------*\
+* Gets the host name
+\*-------------------------------------------------------------------------*/
+static int global_gethostname(lua_State *L)
+{
+    char name[257];
+    name[256] = '\0';
+    if (gethostname(name, 256) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "gethostname failed");
+        return 2;
+    } else {
+        lua_pushstring(L, name);
+        return 1;
+    }
+}
+
 /*-------------------------------------------------------------------------*\
 * Initializes all library modules.
 \*-------------------------------------------------------------------------*/
@@ -45,6 +100,7 @@ LUASOCKET_API int luaopen_socket(lua_State *L)
 {
     if (!sock_open()) return 0;
     /* initialize all modules */
+    base_open(L);
     aux_open(L);
     tm_open(L);
     buf_open(L);

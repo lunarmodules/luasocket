@@ -25,7 +25,7 @@ TIMEOUT = 60
 -- default port for document retrieval
 PORT = 80
 -- user agent field sent in request
-USERAGENT = "LuaSocket 2.0"
+USERAGENT = socket.version
 -- block size used in transfers
 BLOCKSIZE = 8192
 
@@ -429,8 +429,7 @@ local function authorize(reqt, parsed, respt)
         body_cb = reqt.body_cb,
         headers = reqt.headers,
         timeout = reqt.timeout,
-        proxyhost = reqt.proxyhost,
-        proxyport = reqt.proxyport
+        proxy = reqt.proxy,
     }
     return request_cb(autht, respt)
 end
@@ -471,8 +470,7 @@ local function redirect(reqt, respt)
         body_cb = reqt.body_cb,
         headers = reqt.headers,
         timeout = reqt.timeout,
-        proxyhost = reqt.proxyhost,
-        proxyport = reqt.proxyport
+        proxy = reqt.proxy
     }
     respt = request_cb(redirt, respt)
     -- we pass the location header as a clue we tried to redirect
@@ -491,7 +489,7 @@ end
 -----------------------------------------------------------------------------
 local function request_uri(reqt, parsed)
     local url
-    if not reqt.proxyhost and not reqt.proxyport then
+    if not reqt.proxy then
         url = { 
            path = parsed.path, 
            params = parsed.params, 
@@ -520,6 +518,39 @@ local function build_request(data)
 		end
     else reqt.url = data end
     return reqt
+end
+
+-----------------------------------------------------------------------------
+-- Connects to a server, be it a proxy or not
+-- Input
+--   reqt: the request table
+--   parsed: the parsed request url
+-- Returns
+--   sock: connection socket, or nil in case of error
+--   err: error message
+-----------------------------------------------------------------------------
+local function try_connect(reqt, parsed)
+    reqt.proxy = reqt.proxy or PROXY
+    local host, port
+    if reqt.proxy then 
+        local pproxy = socket.url.parse(reqt.proxy) 
+        if not pproxy.port or not pproxy.host then
+            return nil, "invalid proxy"
+        end
+        host, port = pproxy.host, pproxy.port
+    else 
+        host, port = parsed.host, parsed.port 
+    end
+    local sock, ret, err
+    sock, err = socket.tcp()
+    if not sock then return nil, err end
+    sock:settimeout(reqt.timeout or TIMEOUT)
+    ret, err = sock:connect(host, port)
+    if not ret then 
+        sock:close()
+        return nil, err 
+    end
+    return sock
 end
 
 -----------------------------------------------------------------------------
@@ -562,18 +593,8 @@ function request_cb(reqt, respt)
     -- fill default headers
     reqt.headers = fill_headers(reqt.headers, parsed)
     -- try to connect to server
-    sock, respt.error = socket.tcp()
+    sock, respt.error = try_connect(reqt, parsed)
     if not sock then return respt end
-    -- set connection timeout so that we do not hang forever
-    sock:settimeout(reqt.timeout or TIMEOUT)
-    ret, respt.error = sock:connect(
-        reqt.proxyhost or PROXYHOST or parsed.host, 
-        reqt.proxyport or PROXYPORT or parsed.port
-    )
-    if not ret then 
-        sock:close()
-        return respt 
-    end
     -- send request message
     respt.error = send_request(sock, reqt.method, 
         request_uri(reqt, parsed), reqt.headers, reqt.body_cb)
