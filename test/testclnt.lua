@@ -59,7 +59,7 @@ end
 -----------------------------------------------------------------------------
 function reconnect()
 	if data then 
-		close(data) 
+		data:close() 
 		send_command(CLOSE)
 		data = nil
 	end
@@ -105,9 +105,9 @@ function test_asciiline(len)
 	str10 = strrep("aZb.c#dAe?", floor(len/10))
 	str = str .. str10
 	write("testing ", len, " byte(s) line\n")
-	err = send(data, str, "\n")
+	err = data:send(str, "\n")
 	if err then fail(err) end
-	back, err = receive(data)
+	back, err = data:receive()
 	if err then fail(err) end
 	if back == str then pass("lines match")
 	else fail("lines don't match") end
@@ -123,10 +123,10 @@ function test_closed()
 	reconnect()
 	print("testing close while reading line")
 	send_command(ECHO_BLOCK, len)
-	send(data, str)
+	data:send(str)
 	send_command(CLOSE)
 	-- try to get a line 
-	back, err = receive(data)
+	back, err = data:receive()
 	if not err then fail("shold have gotten 'closed'.")
 	elseif err ~= "closed" then fail("got '"..err.."' instead of 'closed'.")
 	elseif str ~= back then fail("didn't receive what i should 'closed'.")
@@ -134,10 +134,10 @@ function test_closed()
 	reconnect()
 	print("testing close while reading block")
 	send_command(ECHO_BLOCK, len)
-	send(data, str)
+	data:send(str)
 	send_command(CLOSE)
 	-- try to get a line 
-	back, err = receive(data, 2*len)
+	back, err = data:receive(2*len)
 	if not err then fail("shold have gotten 'closed'.")
 	elseif err ~= "closed" then fail("got '"..err.."' instead of 'closed'.")
 	elseif str ~= back then fail("didn't receive what I should.")
@@ -157,9 +157,9 @@ function test_rawline(len)
 	str10 = strrep(strchar(120,21,77,4,5,0,7,36,44,100), floor(len/10))
 	str = str .. str10
 	write("testing ", len, " byte(s) line\n")
-	err = send(data, str, "\n")
+	err = data:send(str, "\n")
 	if err then fail(err) end
-	back, err = receive(data)
+	back, err = data:receive()
 	if err then fail(err) end
 	if back == str then pass("lines match")
 	else fail("lines don't match") end
@@ -177,12 +177,12 @@ function test_block(len)
 	send_command(ECHO_BLOCK, len)
 	write("testing ", len, " byte(s) block\n")
 	s1 = strrep("x", half)
-	err = send(data, s1)
+	err = data:send(s1)
 	if err then fail(err) end
 	s2 = strrep("y", len-half)
-	err = send(data, s2)
+	err = data:send(s2)
 	if err then fail(err) end
-	back, err = receive(data, len)
+	back, err = data:receive(len)
 	if err then fail(err) end
 	if back == s1..s2 then pass("blocks match")
 	else fail("blocks don't match") end
@@ -229,15 +229,15 @@ function test_blockedtimeout(len, t, s)
 	send_command(RECEIVE_BLOCK, len)
 	write("testing ", len, " bytes, ", t, 
 		"s block timeout, ", s, "s sleep\n")
-	timeout(data, t)
+	data:timeout(t)
 	str = strrep("a", 2*len)
-	err, total = send(data, str)
+	err, total = data:send(str)
 	if blockedtimed_out(t, s, err, "send") then return end
 	if err then fail(err) end
 	send_command(SEND_BLOCK)
 	send_command(SLEEP, s)
 	send_command(SEND_BLOCK)
-	back, err = receive(data, 2*len)
+	back, err = data:receive(2*len)
 	if blockedtimed_out(t, s, err, "receive") then return end
 	if err then fail(err) end
 	if back == str then pass("blocks match")
@@ -278,16 +278,16 @@ function test_returntimeout(len, t, s)
 	send_command(RECEIVE_BLOCK, len)
 	write("testing ", len, " bytes, ", t, 
 		"s return timeout, ", s, "s sleep\n")
-	timeout(data, t, "return")
+	data:timeout(t, "return")
 	str = strrep("a", 2*len)
-	err, total, delta = send(data, str)
+	err, total, delta = data:send(str)
 	print("sent in " .. delta .. "s")
 	if returntimed_out(delta, t, err) then return end
 	if err then fail("unexpected error: " .. err) end
 	send_command(SEND_BLOCK)
 	send_command(SLEEP, s)
 	send_command(SEND_BLOCK)
-	back, err, delta = receive(data, 2*len)
+	back, err, delta = data:receive(2*len)
 	print("received in " .. delta .. "s")
 	if returntimed_out(delta, t, err) then return end
 	if err then fail("unexpected error: " .. err) end
@@ -308,37 +308,37 @@ function test_patterns()
     block = block .. unix_line1 .. "\n" .. unix_line2 .. "\n"
 	block = block .. block
 	send_command(ECHO_BLOCK, strlen(block))
-	err = send(data, block)
+	err = data:send(block)
 	if err then fail(err) end
-	local back = receive(data, "*l")
+	local back = data:receive("*l")
 	if back ~= dos_line1 then fail("'*l' failed") end
-	back = receive(data, "*l")
+	back = data:receive("*l")
 	if back ~= dos_line2 then fail("'*l' failed") end
-	back = receive(data, "*lu")
+	back = data:receive("*lu")
 	if back ~= unix_line1 then fail("'*lu' failed") end
-	back = receive(data, "*lu")
+	back = data:receive("*lu")
 	if back ~= unix_line2 then fail("'*lu' failed") end
-	back = receive(data)
+	back = data:receive()
 	if back ~= dos_line1 then fail("default failed") end
-	back = receive(data)
+	back = data:receive()
 	if back ~= dos_line2 then fail("default failed") end
-	back = receive(data, "*lu")
+	back = data:receive("*lu")
 	if back ~= unix_line1 then fail("'*lu' failed") end
-	back = receive(data, "*lu")
+	back = data:receive("*lu")
 	if back ~= unix_line2 then fail("'*lu' failed") end
 	pass("line patterns are ok")
 	send_command(ECHO_BLOCK, strlen(block))
-	err = send(data, block)
+	err = data:send(block)
 	if err then fail(err) end
-	back = receive(data, strlen(block))
+	back = data:receive(strlen(block))
 	if back ~= block then fail("number failed") end
 	pass("number is ok")
 	send_command(ECHO_BLOCK, strlen(block))
 	send_command(SLEEP, 1)
 	send_command(CLOSE)
-	err = send(data, block)
+	err = data:send(block)
 	if err then fail(err) end
-	back = receive(data, "*a")
+	back = data:receive("*a")
 	if back ~= block then fail("'*a' failed") end
 	pass("'*a' is ok")
 end
@@ -390,7 +390,7 @@ test_block(800000)
 new_test("non-blocking transfer test")
 -- the value is not important, we only want 
 -- to test non-blockin I/O anyways
-timeout(data, 200)
+data:timeout(200)
 test_block(1)
 test_block(17)
 test_block(200)
@@ -421,7 +421,7 @@ test_returntimeout(800000, 2, 1)
 print("client: closing connection with server")
 send_command(CLOSE)
 send_command(EXIT)
-close(control)
+control:close()
 
 new_test("the library has passed all tests")
 print(format("time elapsed: %6.2fs", time() - start))

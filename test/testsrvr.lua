@@ -30,7 +30,7 @@ if not server then
 	exit(1)
 end
 print("server: waiting for control connection...")
-control = accept(server)
+control = server:accept()
 print("server: control connection stablished!")
 
 -----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ print("server: control connection stablished!")
 function execute_command(cmd, par)
 	if cmd == CONNECT then
 		print("server: waiting for data connection...")
-		data = accept(server)
+		data = server:accept()
 		if not data then
 			fail("server: unable to start data connection!")
 		else
@@ -51,31 +51,31 @@ function execute_command(cmd, par)
 	elseif cmd == CLOSE then
 		print("server: closing connection with client...")
 		if data then 
-			close(data)
+			data:close()
 			data = nil
 		end
 	elseif cmd == ECHO_LINE then
-		str, err = receive(data)
+		str, err = data:receive()
 		if err then fail("server: " .. err) end
-		err = send(data, str, "\n")
+		err = data:send(str, "\n")
 		if err then fail("server: " .. err) end
 	elseif cmd == ECHO_BLOCK then
-		str, err = receive(data, par)
+		str, err = data:receive(par)
 		print(format("server: received %d bytes", strlen(str)))
 		if err then fail("server: " .. err) end
 		print(format("server: sending %d bytes", strlen(str)))
-		err = send(data, str)
+		err = data:send(str)
 		if err then fail("server: " .. err) end
 	elseif cmd == RECEIVE_BLOCK then
-		str, err = receive(data, par)
+		str, err = data:receive(par)
 		print(format("server: received %d bytes", strlen(str)))
 	elseif cmd == SEND_BLOCK then
 		print(format("server: sending %d bytes", strlen(str)))
-		err = send(data, str)
+		err = data:send(str)
 	elseif cmd == ECHO_TIMEOUT then
-		str, err = receive(data, par)
+		str, err = data:receive(par)
 		if err then fail("server: " .. err) end
-		err = send(data, str)
+		err = data:send(str)
 		if err then fail("server: " .. err) end
 	elseif cmd == COMMAND then
 		cmd, par = get_command()
