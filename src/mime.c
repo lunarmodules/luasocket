@@ -113,22 +113,23 @@ void mime_open(lua_State *L)
 static int mime_global_fmt(lua_State *L)
 {
     size_t size = 0;
-    const UC *input = lua_isnil(L, 1)? NULL: luaL_checklstring(L, 1, &size);
+    const UC *input = (UC *) (lua_isnil(L, 1)? NULL: 
+            luaL_checklstring(L, 1, &size));
     const UC *last = input + size;
     int length = (int) luaL_checknumber(L, 2);
     int left = (int) luaL_optnumber(L, 3, length);
-    const UC *marker = luaL_optstring(L, 4, CRLF);
+    const UC *marker = (UC *) luaL_optstring(L, 4, (char *) CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last) {
         luaL_putchar(&buffer, *input++);
         if (--left <= 0) {
-            luaL_addstring(&buffer, marker);
+            luaL_addstring(&buffer, (char *) marker);
             left = length;
         }
     }
     if (!input && left < length) {
-        luaL_addstring(&buffer, marker);
+        luaL_addstring(&buffer, (char *) marker);
         left = length;
     }
     luaL_pushresult(&buffer);
@@ -166,7 +167,7 @@ static size_t b64encode(UC c, UC *input, size_t size,
         code[2] = b64base[value & 0x3f]; value >>= 6;
         code[1] = b64base[value & 0x3f]; value >>= 6;
         code[0] = b64base[value];
-        luaL_addlstring(buffer, code, 4);
+        luaL_addlstring(buffer, (char *) code, 4);
         size = 0;
     }
     return size;
@@ -187,7 +188,7 @@ static size_t b64pad(const UC *input, size_t size,
             value = input[0] << 4;
             code[1] = b64base[value & 0x3f]; value >>= 6;
             code[0] = b64base[value];
-            luaL_addlstring(buffer, code, 4);
+            luaL_addlstring(buffer, (char *) code, 4);
             break;
         case 2:
             value = input[0]; value <<= 8; 
@@ -195,7 +196,7 @@ static size_t b64pad(const UC *input, size_t size,
             code[2] = b64base[value & 0x3f]; value >>= 6;
             code[1] = b64base[value & 0x3f]; value >>= 6;
             code[0] = b64base[value];
-            luaL_addlstring(buffer, code, 4);
+            luaL_addlstring(buffer, (char *) code, 4);
             break;
         case 0: /* fall through */
         default:
@@ -229,7 +230,7 @@ static size_t b64decode(UC c, UC *input, size_t size,
         decoded[0] = (UC) value;
         /* take care of paddding */
         valid = (input[2] == '=') ? 1 : (input[3] == '=') ? 2 : 3; 
-        luaL_addlstring(buffer, decoded, valid);
+        luaL_addlstring(buffer, (char *) decoded, valid);
         return 0;
     /* need more data */
     } else return size;
@@ -248,13 +249,13 @@ static int mime_global_b64(lua_State *L)
 {
     UC atom[3];
     size_t isize = 0, asize = 0;
-    const UC *input = luaL_checklstring(L, 1, &isize);
+    const UC *input = (UC *) luaL_checklstring(L, 1, &isize);
     const UC *last = input + isize;
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last) 
         asize = b64encode(*input++, atom, asize, &buffer);
-    input = luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last) 
@@ -262,7 +263,7 @@ static int mime_global_b64(lua_State *L)
     } else 
         asize = b64pad(atom, asize, &buffer);
     luaL_pushresult(&buffer);
-    lua_pushlstring(L, atom, asize);
+    lua_pushlstring(L, (char *) atom, asize);
     return 2;
 }
 
@@ -276,20 +277,20 @@ static int mime_global_unb64(lua_State *L)
 {
     UC atom[4];
     size_t isize = 0, asize = 0;
-    const UC *input = luaL_checklstring(L, 1, &isize);
+    const UC *input = (UC *) luaL_checklstring(L, 1, &isize);
     const UC *last = input + isize;
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last) 
         asize = b64decode(*input++, atom, asize, &buffer);
-    input = luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last) 
             asize = b64decode(*input++, atom, asize, &buffer);
     } 
     luaL_pushresult(&buffer);
-    lua_pushlstring(L, atom, asize);
+    lua_pushlstring(L, (char *) atom, asize);
     return 2;
 }
 
@@ -361,7 +362,7 @@ static size_t qpencode(UC c, UC *input, size_t size,
             case QP_CR:
                 if (size < 2) return size;
                 if (input[1] == LF) {
-                    luaL_addstring(buffer, marker);
+                    luaL_addstring(buffer, (char *) marker);
                     return 0;
                 } else qpquote(input[0], buffer);
                 break;
@@ -371,7 +372,7 @@ static size_t qpencode(UC c, UC *input, size_t size,
                 /* if it is the last, quote it and we are done */
                 if (input[1] == CR && input[2] == LF) {
                     qpquote(input[0], buffer);
-                    luaL_addstring(buffer, marker);
+                    luaL_addstring(buffer, (char *) marker);
                     return 0;
                 } else luaL_putchar(buffer, input[0]);
                 break;
@@ -400,7 +401,7 @@ static void qppad(UC *input, size_t size, luaL_Buffer *buffer)
         if (qpclass[input[i]] == QP_PLAIN) luaL_putchar(buffer, input[i]);
         else qpquote(input[i], buffer);
     }
-    luaL_addstring(buffer, EQCRLF);
+    luaL_addstring(buffer, (char *) EQCRLF);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -416,21 +417,22 @@ static int mime_global_qp(lua_State *L)
 
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = lua_isnil(L, 1) ? NULL: luaL_checklstring(L, 1, &isize);
+    const UC *input = (UC *) (lua_isnil(L, 1) ? NULL: 
+            luaL_checklstring(L, 1, &isize));
     const UC *last = input + isize;
-    const UC *marker = luaL_optstring(L, 3, CRLF);
+    const UC *marker = (UC *) luaL_optstring(L, 3, (char *) CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpencode(*input++, atom, asize, marker, &buffer);
-    input = luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)
             asize = qpencode(*input++, atom, asize, marker, &buffer);
     } else qppad(atom, asize, &buffer);
     luaL_pushresult(&buffer);
-    lua_pushlstring(L, atom, asize);
+    lua_pushlstring(L, (char *) atom, asize);
     return 2;
 }
 
@@ -454,12 +456,12 @@ static size_t qpdecode(UC c, UC *input, size_t size,
                 /* decode quoted representation */
                 c = qpunbase[input[1]]; d = qpunbase[input[2]];
                 /* if it is an invalid, do not decode */
-                if (c > 15 || d > 15) luaL_addlstring(buffer, input, 3);
+                if (c > 15 || d > 15) luaL_addlstring(buffer, (char *)input, 3);
                 else luaL_putchar(buffer, (c << 4) + d);
                 return 0;
             case CR:
                 if (size < 2) return size; 
-                if (input[1] == LF) luaL_addlstring(buffer, input, 2);
+                if (input[1] == LF) luaL_addlstring(buffer, (char *)input, 2);
                 return 0;
             default:
                 if (input[0] == HT || (input[0] > 31 && input[0] < 127))
@@ -484,20 +486,21 @@ static int mime_global_unqp(lua_State *L)
 
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = lua_isnil(L, 1) ? NULL: luaL_checklstring(L, 1, &isize);
+    const UC *input = (UC *) (lua_isnil(L, 1) ? NULL: 
+            luaL_checklstring(L, 1, &isize));
     const UC *last = input + isize;
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpdecode(*input++, atom, asize, &buffer);
-    input = luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)
             asize = qpdecode(*input++, atom, asize, &buffer);
     } 
     luaL_pushresult(&buffer);
-    lua_pushlstring(L, atom, asize);
+    lua_pushlstring(L, (char *) atom, asize);
     return 2;
 }
 
@@ -513,7 +516,8 @@ static int mime_global_unqp(lua_State *L)
 static int mime_global_qpfmt(lua_State *L)
 {
     size_t size = 0;
-    const UC *input = lua_isnil(L, 1)? NULL: luaL_checklstring(L, 1, &size);
+    const UC *input = (UC *) (lua_isnil(L, 1)? NULL: 
+            luaL_checklstring(L, 1, &size));
     const UC *last = input + size;
     int length = (int) luaL_checknumber(L, 2);
     int left = (int) luaL_optnumber(L, 3, length);
@@ -526,7 +530,7 @@ static int mime_global_qpfmt(lua_State *L)
                 /* if there's no room in this line for the quoted char, 
                  * output a soft line break now */
                 if (left <= 3) {
-                    luaL_addstring(&buffer, EQCRLF);
+                    luaL_addstring(&buffer, (char *) EQCRLF);
                     left = length;
                 }
                 break;
@@ -539,7 +543,7 @@ static int mime_global_qpfmt(lua_State *L)
             default:
                 /* if in last column, output a soft line break */
                 if (left <= 1) {
-                    luaL_addstring(&buffer, EQCRLF);
+                    luaL_addstring(&buffer, (char *) EQCRLF);
                     left = length;
                 }
         }
@@ -547,7 +551,7 @@ static int mime_global_qpfmt(lua_State *L)
         input++;
     }
     if (!input && left < length) {
-        luaL_addstring(&buffer, EQCRLF);
+        luaL_addstring(&buffer, (char *) EQCRLF);
         left = length;
     }
     luaL_pushresult(&buffer);
@@ -571,9 +575,9 @@ static size_t eolconvert(UC c, UC *input, size_t size,
     /* deal with all characters we can deal */
     if (eolcandidate(input[0])) {
         if (size < 2) return size; 
-        luaL_addstring(buffer, marker);
+        luaL_addstring(buffer, (char *) marker);
         if (eolcandidate(input[1])) {
-            if (input[0] == input[1]) luaL_addstring(buffer, marker);
+            if (input[0] == input[1]) luaL_addstring(buffer, (char *) marker);
         } else luaL_putchar(buffer, input[1]);
         return 0;
     } else {
@@ -593,22 +597,23 @@ static int mime_global_eol(lua_State *L)
 {
     size_t asize = 0, isize = 0;
     UC atom[2];
-    const UC *input = lua_isnil(L, 1)? NULL: luaL_checklstring(L, 1, &isize);
+    const UC *input = (UC *) (lua_isnil(L, 1)? NULL: 
+            luaL_checklstring(L, 1, &isize));
     const UC *last = input + isize;
-    const UC *marker = luaL_optstring(L, 3, CRLF);
+    const UC *marker = (UC *) luaL_optstring(L, 3, (char *) CRLF);
     luaL_Buffer buffer;
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = eolconvert(*input++, atom, asize, marker, &buffer);
-    input = luaL_optlstring(L, 2, NULL, &isize);
+    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     if (input) {
         last = input + isize;
         while (input < last)
             asize = eolconvert(*input++, atom, asize, marker, &buffer);
     /* if there is something in atom, it's one character, and it
      * is a candidate. so we output a new line */
-    } else if (asize > 0) luaL_addstring(&buffer, marker);
+    } else if (asize > 0) luaL_addstring(&buffer, (char *) marker);
     luaL_pushresult(&buffer);
-    lua_pushlstring(L, atom, asize);
+    lua_pushlstring(L, (char *) atom, asize);
     return 2;
 }

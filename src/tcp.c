@@ -203,8 +203,9 @@ static int meth_accept(lua_State *L)
     p_tcp server = (p_tcp) aux_checkclass(L, "tcp{server}", 1);
     p_tm tm = &server->tm;
     t_sock sock;
+    const char *err;
     tm_markstart(tm);
-    const char *err = inet_tryaccept(&server->sock, tm, &sock);
+    err = inet_tryaccept(&server->sock, tm, &sock);
     /* if successful, push client socket */
     if (!err) {
         p_tcp clnt = lua_newuserdata(L, sizeof(t_tcp));
