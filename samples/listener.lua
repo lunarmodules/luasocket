@@ -1,4 +1,4 @@
-host = host or "localhost"
+host = host or "*"
 port = port or 8080
 if arg then
 	host = arg[1] or host
