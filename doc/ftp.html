@@ -35,11 +35,32 @@
 
 <p>
 FTP  (File Transfer  Protocol)  is a  protocol  used  to transfer  files
-between hosts.  The module  <tt>ftp.lua</tt> offers simple  FTP support.
-Applications can easily download and upload files. 
-The implementation conforms to
+between hosts.  The <tt>ftp</tt> namespace offers thorough support
+to FTP, under a simple interface. The implementation conforms to
 <a href="http://www.cs.princeton.edu/~diego/rfc/rfc0959.txt">RFC 959</a>.
 </p>
+
+<p>
+High level functions are provided supporting the most common operations.
+These high level functions are implemented on top of a lower level
+interface. Using the low-level interface, users can easily create their
+own functions to access <em>any</em> operation supported by the FTP
+protocol.  For that, check the implementation.  
+</p>
+
+<p>
+To really benefit from this module, a good understanding of 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">
+LTN012, Filters sources and sinks</a> is necessary. 
+</p>
+
+<p class=description> To obtain the <tt>ftp</tt> namespace, run:
+</p>
+
+<pre class=example>
+-- loads the FTP module and any libraries it requires
+local ftp = require("ftp")
+</pre>
 
 <p>
 URLs MUST conform to
@@ -53,21 +74,7 @@ URLs MUST conform to
 </blockquote>
 
 <p>
-High level functions are provided supporting the most common operations.
-These high level functions are implemented on top of a lower level
-interface. By using the low-level interface, users can easily create their
-own functions to access <em>any</em> operation supported by the FTP
-protocol.  For that, check the implementation.  
-</p>
-
-<p>
-To use some of the functions in this module, a good understanding of 
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">
-LTN012, Filters sources and sinks</a> is necessary. 
-</p>
-
-<p>
-The following constants can be set to control the default behaviour of
+The following constants in the namespace can be set to control the default behavior of
 the FTP module: 
 </p>
 
@@ -77,6 +84,7 @@ the FTP module:
 <li> <tt>TIMEOUT</tt>: sets the timeout for all I/O operations;
 <li> <tt>USER</tt>: default anonymous user;
 </ul>
+
 
 <!-- ftp.get ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -116,7 +124,7 @@ optional arguments are the following:
 authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
 <li><tt>command</tt>: The FTP command used to obtain data. Defaults to
 "<tt>retr</tt>", but see example below;
-<li><tt>port</tt>: The port to contacct the server at. Defaults to 21;
+<li><tt>port</tt>: The port to used for the control connection. Defaults to 21;
 <li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
 "<tt>a</tt>". Defaults to whatever is the server default;
 <li><tt>step</tt>: LTN12 pump step function used to pass data from the
@@ -192,9 +200,9 @@ optional arguments are the following:
 <ul>
 <li><tt>user</tt>, <tt>password</tt>: User name and password used for
 authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
-<li><tt>command</tt>: The FTP command used to obtain data. Defaults to
-"<tt>retr</tt>", but see example below;
-<li><tt>port</tt>: The port to contacct the server at. Defaults to 21;
+<li><tt>command</tt>: The FTP command used to send data. Defaults to
+"<tt>stor</tt>", but see example below;
+<li><tt>port</tt>: The port to used for the control connection. Defaults to 21;
 <li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
 "<tt>a</tt>". Defaults to whatever is the server default;
 <li><tt>step</tt>: LTN12 pump step function used to pass data from the
@@ -213,7 +221,8 @@ local ftp = require("ftp")
 -- Log as user "diego" on server "ftp.tecgraf.puc-rio.br",
 -- using password "nehab", and store a file "README" with contents 
 -- "wrong password, of course"
-f, e = ftp.put("ftp://diego:nehab@ftp.tecgraf.puc-rio.br/README", "wrong password, of course")
+f, e = ftp.put("ftp://diego:nehab@ftp.tecgraf.puc-rio.br/README", 
+    "wrong password, of course")
 </pre>
 
 <pre class=example>
@@ -222,8 +231,8 @@ local ftp = require("ftp")
 local ltn12 = require("ltn12")
 
 -- Log as user "diego" on server "ftp.tecgraf.puc-rio.br",
--- using password "nehab", and append to the file "LOG", sending the
--- contents of a local file 
+-- using password "nehab", and append to the remote file "LOG", sending the
+-- contents of the local file "LOCAL-LOG"
 f, e = ftp.put{
   host = "ftp.tecgraf.puc-rio.br", 
   user = "diego",

@@ -36,13 +36,21 @@
 <h2>Introduction</h2>
 
 <p>
+LuaSocket  is a  <a href="http://www.lua.org">Lua</a>  extension library
+that is composed by two parts: a C core that provides  support for the TCP
+and UDP transport layers, and a set of Lua modules that add support for
+the SMTP (sending  e-mails),  HTTP  (WWW access)  and  FTP  (uploading  and
+downloading files) protocols and other functionality commonly needed by
+applications that deal with the Internet. This introduction is about the C
+core.
+</p>
+
+<p>
 Communication in LuaSocket is performed via I/O objects. These can
 represent different network domains. Currently, support is provided for TCP
 and UDP, but nothing prevents other developers from implementing SSL, Local
 Domain, Pipes, File Descriptors etc. I/O objects provide a standard
 interface to I/O across different domains and operating systems.
-LuaSocket&nbsp;2.0 has been rewritten from scratch to simplify the future
-addition of new domains.  
 </p>
 
 <p>
@@ -52,8 +60,17 @@ Second, the simplicity and the feel of the Lua language should be
 preserved. To achieve these goals, the LuaSocket API keeps the function names and semantics the C API whenever possible, but their usage in Lua has been greatly simplified.  
 </p>
 
+
 <p>
-One of the  simplifications is the timeout control
+One of the simplifications is the receive pattern capability.
+Applications can read  data from stream domains (such as TCP) 
+line  by line, block  by block, or until the connection  is closed.
+All I/O reads are buffered and the performance differences between
+different receive patterns are negligible.  
+</p>
+
+<p>
+Another advantage is the flexible timeout control
 mechanism. As in C, all I/O  operations are blocking by default. For
 example, the  <a href=tcp.html#send><tt>send</tt></a>,  
 <a href=tcp.html#receive><tt>receive</tt></a> and 
@@ -70,14 +87,6 @@ call might perform several OS calls, so that the two timeout values are
 </p>
 
 <p>
-Another important difference is the receive pattern capability.
-Applications can read  data from stream domains (such as TCP) 
-line  by line, block  by block, or until the connection  is closed.
-All I/O reads are buffered and the performance differences between
-different receive patterns are negligible.  
-</p>
-
-<p>
 Finally,  the host  name  resolution   is  transparent,  meaning  that  most
 functions and methods accept both  IP addresses and host names. In  case a
 host name is given, the  library  queries the  system's  resolver  and
@@ -89,13 +98,8 @@ functions from the DNS module are provided to convert between host names and IP 
 </p>
 
 <p>
-Previous versions of LuaSocket provided global functions for operating on
-I/O objects. To give the library a Lua 5.0 feel, these have been eliminated
-from LuaSocket 2.0. I/O operations are only available as methods of the
-corresponding I/O objects.  Naturally, different I/O objects accept
-different operations. The TCP and UDP objects are
-introduced in the following sections, following a few words about
-initialization. 
+Together, these changes make network programming in LuaSocket much simpler
+than it is in C, as the following sections will show.
 </p>
 
 <!-- initializing +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -103,13 +107,14 @@ initialization.
 <h3>Initializing the library</h3>
 
 <p>
-The core LuaSocket functionality is implemented in C, and usually available as 
-a dynamic library which the interpreter can load when required. 
+The core LuaSocket is almost entirely implemented in C. It is 
+usually available as a dynamic library which the interpreter can load 
+with the help of a loader module written in Lua. 
 Beginning with version 2.0 and following the Lua 5.0 trend, all LuaSocket
-functionality is defined inside a tables (or rather a namespaces). No global
+functionality is defined inside tables (or rather a namespaces). No global
 variables are ever created.
 Namespaces are obtained with the <tt>require</tt> Lua function, which loads
-and initializes any required libraries and return the namespace. 
+and initializes any required library and returns the namespace. 
 For example, the core functionality or LuaSocket is usually available
 from the "<tt>socket</tt>" namespace. 
 </p>
@@ -130,13 +135,14 @@ words, applications communicating through TCP  can send and receive data as
 an  error free  stream  of  bytes. Data  is  split  in one  end  and
 reassembled transparently on  the other end. There are  no boundaries in
 the  data transfers.  The library  allows users  to read  data from  the
-sockets in  several different granularity: patterns  are available for
+sockets in  several different granularities: patterns  are available for
 lines, arbitrary sized blocks  or "read up to connection closed", all with
 good performance. 
 </p>
 
 <p>
-The library distinguishes  three types of TCP sockets:  master, client and server sockets. 
+The library distinguishes  three types of TCP sockets:  <em>master</em>, 
+<em>client</em> and <em>server</em> sockets. 
 </p>
 
 <p>
@@ -144,10 +150,11 @@ Master sockets are newly created TCP sockets returned by the function
 <a href=tcp.html#tcp><tt>socket.tcp</tt></a>. A master socket is 
 transformed into a server socket
 after it is associated with a <em>local</em> address by a call to the
-<a href=tcp.html#bind><tt>bind</tt></a> method. Conversely, it 
+<a href=tcp.html#bind><tt>bind</tt></a> method followed by a call to the 
+<a href=tcp.html#listen><tt>listen</tt></a>. Conversely, a master socket 
 can be changed into a client socket with the method 
 <a href=tcp.html#connect><tt>connect</tt></a>, 
-that associates it with a <em>remote</em> address. 
+which associates it with a <em>remote</em> address. 
 </p>
 
 <p>
@@ -158,7 +165,7 @@ client socket object  is  returned representing  this  connection.  The
 other methods available   for   server   socket  objects   are
 <a href=tcp.html#getsockname><tt>getsockname</tt></a>,  
 <a href=tcp.html#setoption><tt>setoption</tt></a>,
-<a href=tcp.html#settimeout><tt>settimeout</tt></a> and 
+<a href=tcp.html#settimeout><tt>settimeout</tt></a>, and 
 <a href=tcp.html#close><tt>close</tt></a>. 
 </p>
 
@@ -172,7 +179,8 @@ available for  client socket objects are
 <a href=tcp.html#getsockname><tt>getsockname</tt></a>,
 <a href=tcp.html#getpeername><tt>getpeername</tt></a>, 
 <a href=tcp.html#setoption><tt>setoption</tt></a>,
-<a href=tcp.html#settimeout><tt>settimeout</tt></a> and
+<a href=tcp.html#settimeout><tt>settimeout</tt></a>,
+<a href=tcp.html#shutdown><tt>shutdown</tt></a>, and
 <a href=tcp.html#close><tt>close</tt></a>.
 </p>
 
@@ -185,7 +193,7 @@ A simple echo server, using LuaSocket. The program binds to an ephemeral
 port (one that is chosen by the  operating system) on the local host and
 awaits client connections on that port. When a connection is established,
 the program reads a line from the  remote end and sends it back, closing
-the  connection immediately  after. You  can  test it  using the  telnet
+the  connection immediately. You  can  test it  using the  telnet
 program. 
 </p>
 
@@ -229,6 +237,12 @@ only  part of  a  datagram discards  the  rest, so  that  the following read
 operation  will  act  on  the  next  datagram.  The  advantages  are  in
 simplicity (no connection  setup) and performance (no  error checking or
 error correction). 
+</p>
+
+<p>
+Note that although no guarantees are made, these days
+networks are so good that, under normal circumstances, few errors 
+happen in practice.
 </p>
 
 <p>
@@ -288,14 +302,13 @@ error message.
 
 <pre class=example>
 -- change here to the host an port you want to contact
-host = "localhost" 
-port = 13
+local host, port = "localhost", 13
 -- load namespace
 local socket = require("socket")
 -- convert host name to ip address
 local ip = socket.try(socket.dns.toip(host))
 -- create a new UDP object
-local udp = socket.udp()
+local udp = socket.try(socket.udp())
 -- contact daytime host
 socket.try(udp:sendto("anything", ip, port))
 -- retrieve the answer and print results

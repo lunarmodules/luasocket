@@ -37,19 +37,27 @@
 
 <p>
 LuaSocket  is a  <a href="http://www.lua.org">Lua</a>  extension library
-that is composed by two parts: a C layer that provides  support for the TCP
+that is composed by two parts: a C core that provides  support for the TCP
 and UDP transport layers, and a set of Lua modules that add support for
-the SMTP (sending  e-mails),  HTTP  (WWW access)  and  FTP  (uploading  and
-downloading files) protocols and other functionality commonly needed by
-applications that deal with the Internet. 
+functionality commonly needed by applications that deal with the Internet. 
 </p>
 
 <p>
-Network support has been  implemented so that it  is both efficient and
-simple to use.  LuaSocket can be used by any Lua application once it has
+The core support has been  implemented so that it  is both efficient and
+simple to use.  The core can be used by any Lua application once it has
 been properly initialized by the interpreter running the
 Lua application.  The code has been tested and runs well on several Windows
 and Unix platforms. 
+</p>
+
+<p>
+The most used modules implement the SMTP (sending  e-mails),  HTTP
+(WWW access)  and  FTP  (uploading  and downloading files) client
+protocols. These provide a very natural and generic interface to the e
+functionality covered by the protocols. 
+In addition, you will find that the MIME (common encodings), URL (anything you
+could possible want to do with one) and LTN12 (filters, sinks, sources
+and pumps) modules can be very handy. 
 </p>
 
 <p>
@@ -112,10 +120,10 @@ option, and  should be able to run the automatic test procedures.
 <h2 id=thanks>Special thanks</h2>
 
 <p>
-Throughout LuaSocket's history, many people gave sugestions that helped
-improve it. For that, I thank the Lua comunity. 
+Throughout LuaSocket's history, many people gave suggestions that helped
+improve it. For that, I thank the Lua community. 
 Special thanks go to
-David Burgess, who has pushed the library to a new level of quality and
+David Burgess, who has helped push the library to a new level of quality and
 from whom I have learned a lot of stuff that doesn't show up in RFCs.
 Special thanks also to Carlos Cassino, who played a big part in the 
 extensible design seen in the C core of LuaSocket 2.0. 
@@ -127,28 +135,47 @@ extensible design seen in the C core of LuaSocket 2.0.
 
 
 <p>
-Everything is new! Many changes for  2.0 happened in the C layer, which
-has been almost completely rewritten. The code has been ported to Lua 5.0
-and greatly improved.  There have also been some API changes
+<em>Everything</em> is new! Many changes for  2.0 happened in the C layer, 
+which has been almost completely rewritten. The code has been ported to 
+Lua 5.0 and greatly improved.  There have also been some API changes
 that made  the interface simpler and  more consistent. Here are  some of
 the changes that made it into version 2.0: 
 </p>
 
 <ul>
-<li> Major C code rewrite. Code is modular and extensible. Hopefully, next
-     versions will include code for local domain sockets, file descriptors,
-     pipes (on Unix) and named pipes (on windows) as a bonus;
+<li> Major C code rewrite. Code is modular and extensible. Hopefully, other
+     developers will be motivated to provide code for SSL, local domain 
+     sockets, file descriptors, pipes (on Unix) and named pipes etc;
 
-<li> Following the Lua 5.0 trend, all functions provided by the library are
-     in namespaces. These should be obtained with calls to the
-    <tt>require</tt> function. Functions such as
+<li> Everything that is exported by the library is exported inside 
+     namespaces. These should be obtained with calls to the
+    <tt>require</tt> function; 
+
+<li> Functions such as
      send/receive/timeout/close etc do not exist anymore as stand-alone
      functions. They are now only available as methods of the appropriate
      objects;
 
 <li> All functions return a non-nil value as first return value if successful.
      All functions return <b><tt>nil</tt></b> followed by error message
-     in case of error; 
+     in case of error. This made the library much easier to use; 
+
+<li> Greatly reduced the number of times the C select is called 
+     during data transfers, by calling only on failure. This might 
+     improve a lot the maximum throughput;
+
+<li> TCP has been changed to become more uniform.  It's possible to first
+     create a TCP object,
+     then connect or bind if needed, and finally use I/O functions. 
+     <tt>socket.connect</tt> and <tt>socket.bind</tt> functions are still
+     provided for simplicity; 
+
+<li> This allows for setting a timeout value before connecting;
+
+<li> And also allows binding to a local address before connecting; 
+
+<li> New <tt>socket.dns.gethostname</tt> function and <tt>shutdown</tt>
+     method;
 
 <li> Better error messages and parameter checking;
 
@@ -157,20 +184,9 @@ the changes that made it into version 2.0:
 <li> UDP connected sockets can break association with peer by calling
      <tt>setpeername</tt> with address '<tt>*</tt>';
 
-<li> TCP has been changed to become more uniform.  First create an object,
-     then connect or bind if needed, and finally use I/O functions. The
-     <tt>socket.connect</tt> and <tt>socket.bind</tt> functions are still
-     provided for simplicity, but they just call <tt>socket.tcp</tt> followed 
-     by the <tt>connect</tt> or <tt>bind/listen</tt> methods;
+<li> Sets returned by <tt>socket.select</tt> are associative;
 
-<li> Greatly reduced the number of times select is called during data
-     transfers, by calling only on failure;
-
-<li> TCP can set timeout value before connecting and also bind to local
-     address before connecting; 
-
-<li> <tt>socket.select</tt> returns associative sets and checks if 
-     sockets had buffered data; 
+<li> Select checks if sockets have buffered data and returns immediately; 
 
 <li> <tt>socket.sleep</tt> and <tt>socket.time</tt> are now part of the
      library and are supported. They used to be available only when
@@ -182,7 +198,7 @@ the changes that made it into version 2.0:
      high-level modules; 
 
 <li> Socket options interface has been improved. TCP objects also 
-     support socket options and many other options were added.
+     support socket options and many new options were added.
 
 </ul>
 
@@ -191,12 +207,23 @@ Lots of changes in the Lua modules, too!
 </p>
 
 <ul>
+<li> Every module loads only the modules that it needs. There is no waste
+of memory. LuaSocket core takes only 20k of memory;
+
 <li> New MIME and LTN12 modules make all other modules much more powerful; 
+
 <li> Support for multipart messages in the SMTP module;
-<li> The old callback mechanism of FTP and HTTP has been replaced with LTN12 sources and sinks,
-with advantage; 
+
+<li> The old callback mechanism of FTP and HTTP has been replaced with LTN12 sources and sinks, with advantage; 
+
+<li> Common implementation for low-level FTP and SMTP;
+
 <li> FTP, HTTP, and SMTP are implemented in multiple levels in such a way 
-that users will have no problems extending the functionality.
+that users will have no problems extending the functionality to satisfy
+personal needs; 
+
+<li> SMTP knows how to perform LOGIN and PLAIN authentication. 
+
 </ul>
 
 <!-- incompatible +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -208,7 +235,7 @@ that users will have no problems extending the functionality.
 <li> The introduction of namespaces affects all programs that use LuaSocket,
 specially code that relies on global functions. These are no longer
 available. Note that even the support modules (<tt>http</tt>, <tt>smtp</tt>
-etc) are independent now and should be "<tt>require</tt>ed"; 
+etc) are independent now and should be "<tt>require</tt>"d; 
 
 <li> FTP, SMTP and HTTP are completely new; I am sure you will
 agree the new stuff is better; 

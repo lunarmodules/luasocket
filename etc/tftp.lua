@@ -71,7 +71,7 @@ local function get_ERROR(dgram)
 end
 
 -----------------------------------------------------------------------------
--- High level TFTP API
+-- The real work 
 -----------------------------------------------------------------------------
 local function tget(gett)
     local retries, dgram, sent, datahost, dataport, code

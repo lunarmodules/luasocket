@@ -11,6 +11,7 @@
 local smtp = requirelib("smtp", "luaopen_smtp", getfenv(1))
 local socket = require("socket")
 local ltn12 = require("ltn12")
+local mime = require("mime")
 local tp = require("tp")
 
 -----------------------------------------------------------------------------
@@ -43,7 +44,7 @@ local metat = { __index = {} }
 function metat.__index:greet(domain)
     socket.try(self.tp:check("2.."))
     socket.try(self.tp:command("EHLO", domain or DOMAIN))
-    return socket.try(self.tp:check("2.."))
+    return socket.skip(1, socket.try(self.tp:check("2..")))
 end 
 
 function metat.__index:mail(from)
@@ -71,6 +72,32 @@ end
 
 function metat.__index:close()
     return socket.try(self.tp:close())
+end
+
+function metat.__index:login(user, password)
+    socket.try(self.tp:command("AUTH", "LOGIN"))
+    socket.try(self.tp:check("3.."))
+    socket.try(self.tp:command(mime.b64(user)))
+    socket.try(self.tp:check("3.."))
+    socket.try(self.tp:command(mime.b64(password)))
+    return socket.try(self.tp:check("2.."))
+end
+
+function metat.__index:plain(user, password)
+    local auth = "PLAIN " .. mime.b64("\0" .. user .. "\0" .. password)
+    socket.try(self.tp:command("AUTH", auth))
+    return socket.try(self.tp:check("2.."))
+end
+
+function metat.__index:auth(user, password, ext)
+    if not user or not password then return 1 end
+    if string.find(ext, "AUTH[^\n]+LOGIN") then
+        return self:login(user, password)
+    elseif string.find(ext, "AUTH[^\n]+PLAIN") then
+        return self:plain(user, password)
+    else
+        socket.try(nil, "authentication not supported")
+    end
 end
 
 -- send message or throw an exception
@@ -205,10 +232,10 @@ end
 ---------------------------------------------------------------------------
 -- High level SMTP API
 -----------------------------------------------------------------------------
-socket.protect = function(a) return a end
 send = socket.protect(function(mailt)
     local con = open(mailt.server, mailt.port)
-    con:greet(mailt.domain)
+    local ext = con:greet(mailt.domain)
+    con:auth(mailt.user, mailt.password, ext)
     con:send(mailt)
     con:quit()
     return con:close()

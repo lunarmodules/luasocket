@@ -1,3 +1,9 @@
+-----------------------------------------------------------------------------
+-- Little program to convert to and from Base64
+-- LuaSocket sample files
+-- Author: Diego Nehab
+-- RCS ID: $Id$
+-----------------------------------------------------------------------------
 local ltn12 = require("ltn12")
 local mime = require("mime")
 local source = ltn12.source.file(io.stdin)

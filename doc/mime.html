@@ -36,7 +36,7 @@
 <h2 id=mime>MIME</h2> 
 
 <p>
-The MIME module offers filters that apply and remove common
+The <tt>mime</tt> namespace offers filters that apply and remove common
 content transfer encodings, such as Base64 and Quoted-Printable.
 It also provides functions to break text into lines and change
 the end-of-line convention.
@@ -54,6 +54,15 @@ follows the ideas presented in
 <a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">
 LTN012, Filters sources and sinks</a>. 
 </p>
+
+<p class=description> To obtain the <tt>mime</tt> namespace, run:
+</p>
+
+<pre class=example>
+-- loads the MIME module and everything it requires
+local mime = require("mime")
+</pre>
+
 
 <!-- High-level +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -108,7 +117,7 @@ The function returns the created filter.
 
 <p class=name id="encode">
 mime.<b>encode(</b>"base64"<b>)</b><br>
-mime.<b>encode(</b>"quoted-printable" [, mode])</b>
+mime.<b>encode(</b>"quoted-printable" [, mode]<b>)</b>
 </p>
 
 <p class=description>
@@ -278,7 +287,7 @@ that can be encoded unambiguously. <tt>B</tt> has the remaining bytes of
 <tt>C..D</tt>, <em>before</em> encoding. 
 If <tt>D</tt> is <tt><b>nil</b></tt>, <tt>A</tt> is padded with 
 the encoding of the remaining bytes of <tt>C</tt>. 
-Throughout encoding, occurences of CRLF are replaced by the 
+Throughout encoding, occurrences of CRLF are replaced by the 
 <tt>marker</tt>, which itself defaults to CRLF.
 </p>
 

@@ -105,6 +105,8 @@ smtp.<b>send{</b><br>
 &nbsp;&nbsp;from = <i>string</i>,<br>
 &nbsp;&nbsp;rcpt = <i>string</i> or <i>string-table</i>,<br>
 &nbsp;&nbsp;source = <i>LTN12 source</i>,<br>
+&nbsp;&nbsp;[user = <i>string</i>],<br>
+&nbsp;&nbsp;[password = <i>string</i>],<br>
 &nbsp;&nbsp;[server = <i>string</i>],<br>
 &nbsp;&nbsp;[port = <i>string</i>]<br>
 &nbsp;&nbsp;[domain = <i>string</i>],<br>
@@ -127,7 +129,11 @@ address, or a string
 in case there is just one recipient. 
 The contents of the message are given by a <em>simple</em> LTN12 <tt>source</tt>. Several
 arguments are optional:
+</p>
 <ul>
+<li> <tt>user</tt>, <tt>password</tt>: User and password for
+authentication. The function will attempt LOGIN and PLAIN authentication
+methods if supported by the server (both are unsafe);
 <li> <tt>server</tt>: Server to connect to. Defaults to "localhost";
 <li> <tt>port</tt>: Port to connect to. Defaults to 25;
 <li> <tt>domain</tt>: Domain name used to greet the server; Defaults to the
@@ -135,7 +141,6 @@ local machine host name;
 <li> <tt>step</tt>: LTN12 pump step function used to pass data from the
 source to the server. Defaults to the LTN12 <tt>pump.step</tt> function.
 </ul>
-</p>
 
 <p class=return> 
 If  successful, the function returns 1. Otherwise, the function returns
@@ -293,7 +298,7 @@ and an epilogue.
 
 <p class=return> 
 The function returns a <em>simple</em> LTN12 source that produces the
-message contents as defined by <tt>mesgt</tt>.  Hopefuly, the following
+message contents as defined by <tt>mesgt</tt>.  Hopefully, the following
 example will make things clear. When in doubt, refer to the appropriate RFC
 as listed in the introduction.  </p>
 

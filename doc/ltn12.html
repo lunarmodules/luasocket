@@ -35,12 +35,20 @@
 
 <h2 id=ltn12>LTN12</h2> 
 
-<p> The LTN12 module implements the ideas described in
+<p> The <tt>ltn12</tt> namespace implements the ideas described in
 <a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">
-LTN012, Filters sources and sinks</a>. This manual simply describe the
+LTN012, Filters sources and sinks</a>. This manual simply describes the
 functions. Please refer to the LTN for a deeper explanation of the
 functionality provided by this module.
 </p>
+
+<p class=description> To obtain the <tt>ltn12</tt> namespace, run:
+</p>
+
+<pre class=example>
+-- loads the LTN21 module
+local ltn12 = require("ltn12")
+</pre>
 
 <!-- filters ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -68,15 +76,15 @@ The function returns the chained filter.
 </p>
 
 <p class=note>
-The nesting of filters can be arbritrary. For instance, the useless filter
+The nesting of filters can be arbitrary. For instance, the useless filter
 below doesn't do anything but return the data that was passed to it,
 unaltered.
 </p>
 
 <pre class=example>
 -- load required modules
-ltn12 = require("ltn12")
-mime = require("mime")
+local ltn12 = require("ltn12")
+local mime = require("mime")
 
 -- create a silly identity filter
 id = ltn12.filter.chain(
@@ -165,12 +173,7 @@ ltn12.sink.<b>chain(</b>filter, sink<b>)</b>
 </p>
 
 <p class=description>
-Creates a new sink that passes data through a <tt>filter</tt> before sending 
-it to a given <tt>sink</tt>. 
-</p>
-
-<p class=return>
-The function returns the new sink.
+Creates and returns a new sink that passes data through a <tt>filter</tt> before sending it to a given <tt>sink</tt>. 
 </p>
 
 <!-- error ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -180,7 +183,7 @@ ltn12.sink.<b>error(</b>message<b>)</b>
 </p>
 
 <p class=description>
-Creates and returns a sink that aborts transmission with an error
+Creates and returns a sink that aborts transmission with the error
 <tt>message</tt>.
 </p>
 
@@ -202,7 +205,7 @@ Creates a sink that sends data to a file.
 <p class=return>
 The function returns a sink that sends all data to the given <tt>handle</tt>
 and closes the file when done, or a sink that aborts the transmission with
-an error <tt>message</tt>
+the error <tt>message</tt>
 </p>
 
 <p class=note>
@@ -258,7 +261,7 @@ efficiently concatenated into a single string.
 </p>
 
 <p class=return>
-The function returns the sink and the table. 
+The function returns the sink and the table used to store the chunks. 
 </p>
 
 <pre class=example>
@@ -266,14 +269,14 @@ The function returns the sink and the table.
 local http = require("http")
 local ltn12 = require("ltn12")
 
--- the http.get function
-function get(u)
+-- a simplified http.get function
+function http.get(u)
   local t = {}
   local respt = request{
     url = u,
     sink = ltn12.sink.table(t)
   }
-  return table.concat(t), respt.headers, respt.code, respt.error
+  return table.concat(t), respt.headers, respt.code
 end
 </pre>
 
@@ -334,7 +337,7 @@ ltn12.source.<b>error(</b>message<b>)</b>
 </p>
 
 <p class=description>
-Creates and returns a source that aborts transmission with an error
+Creates and returns a source that aborts transmission with the error
 <tt>message</tt>.
 </p>
 
@@ -357,7 +360,7 @@ Creates a source that produces the contents of a file.
 The function returns a source that reads chunks of data from 
 given <tt>handle</tt> and returns it to the user,
 closing the file when done, or a source that aborts the transmission with
-an error <tt>message</tt>
+the error <tt>message</tt>
 </p>
 
 <p class=note>

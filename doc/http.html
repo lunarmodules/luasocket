@@ -37,8 +37,9 @@
 
 <p>
 HTTP (Hyper Text  Transfer Protocol) is the protocol  used to exchange
-information  between  web-browsers and  servers.  The  <tt>http.lua</tt>
-module offers  support for the client  side of the HTTP  protocol (i.e.,
+information  between  web-browsers and  servers.  The  <tt>http</tt>
+namespace offers  full support for the client  side of the HTTP  
+protocol (i.e.,
 the facilities that would be  used by a web-browser implementation). The
 implementation    conforms     to    the    HTTP/1.1     standard,
 <a href="http://www.cs.princeton.edu/~diego/rfc/rfc2616.txt">RFC
@@ -47,10 +48,19 @@ implementation    conforms     to    the    HTTP/1.1     standard,
 
 <p>
 The module exports functions that provide HTTP functionality in different
-levels of abstraction, from the simple <a
-href="#get"><tt>get</tt></a> function to the generic, LTN12 based <a
-href="#request"><tt>request</tt></a> function.
+levels of abstraction, from the simple 
+<a href="#get"><tt>get</tt></a> function, through the generic
+LTN12 based <a href="#request"><tt>request</tt></a> function, down to
+even lower-level if you bother to look through the source code.
 </p>
+
+<p class=description> To obtain the <tt>ftp</tt> namespace, run:
+</p>
+
+<pre class=example>
+-- loads the HTTP module and any libraries it requires
+local http = require("http")
+</pre>
 
 <p>
 URLs must conform to
@@ -189,12 +199,12 @@ http.<b>request{</b><br>
 </p>
 
 <p class=description>
-Performs the generic HTTP request, controled by a request table.
+Performs the generic HTTP request, controlled by a request table.
 </p>
 
 <p class=parameters>
 The most important parameters are the <tt>url</tt> and the <em>simple</em> LTN12 <tt>sink</tt> that will receive the downloaded content.  
-Any part of the <tt>url</tt> can be overriden by including
+Any part of the <tt>url</tt> can be overridden by including
 the appropriate field in the request table.
 If authentication information is provided, the function
 uses the  Basic Authentication Scheme (see  <a href="#authentication">note</a>)
@@ -231,8 +241,8 @@ respt = {<br>
 </tt></blockquote>
 
 <p class=return>
-Even  when there  was failure  (URL not  found, for  example), the
-function usually succeeds retrieving a message body (a web page informing the
+Even  when the server fails to provide the contents of the requested URL (URL not  found, for  example), the
+it usually returns a message body (a web page informing the
 URL  was  not found  or  some  other useless  page).  To  make sure  the
 operation was successful, check  the returned status <tt>code</tt>. For
 a  list  of  the  possible  values  and  their  meanings,  refer  to  <a
@@ -261,7 +271,6 @@ respt = http.request {
 --   ["content-Type"] = "text/html"
 -- }
 </pre>
-</blockquote>
 
 <p class=note id=authentication> 
 Note: Some URLs are protected by their
