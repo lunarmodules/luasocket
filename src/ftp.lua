@@ -32,143 +32,153 @@ local metat = { __index = {} }
 
 function open(server, port)
     local tp = socket.try(tp.connect(server, port or PORT, TIMEOUT))
-    return setmetatable({tp = tp}, metat)
+    local f = { tp = tp }
+    -- make sure everything gets closed in an exception
+    f.try = socket.newtry(function() 
+        tp:close() 
+        if f.data then f.data:close() end
+        if f.server then f.server:close() end
+    end)
+    return setmetatable(f, metat)
 end
 
-local function port(portt)
-    return portt.server:accept()
+function metat.__index:portconnect()
+    self.try(self.server:settimeout(TIMEOUT))
+    self.data = self.try(self.server:accept())
+    self.try(self.data:settimeout(TIMEOUT))
 end
 
-local function pasv(pasvt)
-    local data = socket.try(socket.tcp())
-    socket.try(data:settimeout(TIMEOUT))
-    socket.try(data:connect(pasvt.ip, pasvt.port))
-    return data
+function metat.__index:pasvconnect()
+    self.data = self.try(socket.tcp())
+    self.try(self.data:settimeout(TIMEOUT))
+    self.try(self.data:connect(self.pasvt.ip, self.pasvt.port))
 end
 
 function metat.__index:login(user, password)
-    socket.try(self.tp:command("user", user or USER))
-    local code, reply = socket.try(self.tp:check{"2..", 331})
+    self.try(self.tp:command("user", user or USER))
+    local code, reply = self.try(self.tp:check{"2..", 331})
     if code == 331 then
-        socket.try(self.tp:command("pass", password or PASSWORD))
-        socket.try(self.tp:check("2.."))
+        self.try(self.tp:command("pass", password or PASSWORD))
+        self.try(self.tp:check("2.."))
     end
     return 1
 end
 
 function metat.__index:pasv()
-    socket.try(self.tp:command("pasv"))
-    local code, reply = socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("pasv"))
+    local code, reply = self.try(self.tp:check("2.."))
     local pattern = "(%d+)%D(%d+)%D(%d+)%D(%d+)%D(%d+)%D(%d+)"
     local a, b, c, d, p1, p2 = socket.skip(2, string.find(reply, pattern))
-    socket.try(a and b and c and d and p1 and p2, reply)
+    self.try(a and b and c and d and p1 and p2, reply)
     self.pasvt = { 
         ip = string.format("%d.%d.%d.%d", a, b, c, d), 
         port = p1*256 + p2
     }
-    if self.portt then 
-        self.portt.server:close()
-        self.portt = nil
+    if self.server then 
+        self.server:close()
+        self.server = nil
     end
     return self.pasvt.ip, self.pasvt.port 
 end
 
 function metat.__index:port(ip, port)
     self.pasvt = nil
-    local server
     if not ip then 
-        ip, port = socket.try(self.tp:getcontrol():getsockname())
-        server = socket.try(socket.bind(ip, 0))
-        ip, port = socket.try(server:getsockname())
-        socket.try(server:settimeout(TIMEOUT))
+        ip, port = self.try(self.tp:getcontrol():getsockname())
+        self.server = self.try(socket.bind(ip, 0))
+        ip, port = self.try(self.server:getsockname())
+        self.try(server:settimeout(TIMEOUT))
     end
     local pl = math.mod(port, 256)
     local ph = (port - pl)/256
     local arg = string.gsub(string.format("%s,%d,%d", ip, ph, pl), "%.", ",")
-    socket.try(self.tp:command("port", arg))
-    socket.try(self.tp:check("2.."))
-    self.portt = server and {ip = ip, port = port, server = server}
+    self.try(self.tp:command("port", arg))
+    self.try(self.tp:check("2.."))
     return 1
 end
 
 function metat.__index:send(sendt)
-    local data
-    socket.try(self.pasvt or self.portt, "need port or pasv first")
-    if self.pasvt then data = socket.try(pasv(self.pasvt)) end
+    self.try(self.pasvt or self.server, "need port or pasv first")
+    -- if there is a pasvt table, we already sent a PASV command 
+    -- we just get the data connection into self.data
+    if self.pasvt then self:pasvconnect() end
+    -- get the transfer argument and command 
     local argument = sendt.argument or string.gsub(sendt.path, "^/", "")
     if argument == "" then argument = nil end
-    local command =  sendt.command or "stor"
-    socket.try(self.tp:command(command, argument))
-    local code, reply = socket.try(self.tp:check{"2..", "1.."})
-    if self.portt then data = socket.try(port(self.portt)) end
+    local command = sendt.command or "stor"
+    -- send the transfer command and check the reply
+    self.try(self.tp:command(command, argument))
+    local code, reply = self.try(self.tp:check{"2..", "1.."})
+    -- if there is not a a pasvt table, then there is a server
+    -- and we already sent a PORT command
+    if not self.pasvt then self:portconnect() end
+    -- get the sink, source and step for the transfer
     local step = sendt.step or ltn12.pump.step
     local checkstep = function(src, snk)
+        -- check status in control connection while downloading
         local readyt = socket.select(readt, nil, 0)
-        if readyt[tp] then
-            code, reply = self.tp:check("2..")
-            if not code then 
-                data:close()
-                return nil, reply 
-            end
-        end
-        local ret, err = step(src, snk)
-        if err then data:close() end
-        return ret, err
+        if readyt[tp] then self.try(self.tp:check("2..")) end
+        return step(src, snk)
     end
-    local sink = socket.sink("close-when-done", data)
-    socket.try(ltn12.pump.all(sendt.source, sink, checkstep))
-    if string.find(code, "1..") then socket.try(self.tp:check("2..")) end
+    local sink = socket.sink("close-when-done", self.data)
+    -- transfer all data and check error
+    self.try(ltn12.pump.all(sendt.source, sink, checkstep))
+    if string.find(code, "1..") then self.try(self.tp:check("2..")) end
+    -- done with data connection
+    self.data:close()
+    self.data = nil
     return 1
 end
 
 function metat.__index:receive(recvt)
-    local data
-    socket.try(self.pasvt or self.portt, "need port or pasv first")
-    if self.pasvt then data = socket.try(pasv(self.pasvt)) end
+    self.try(self.pasvt or self.server, "need port or pasv first")
+    if self.pasvt then self:pasvconnect() end
     local argument = recvt.argument or string.gsub(recvt.path, "^/", "")
     if argument == "" then argument = nil end
-    local command =  recvt.command or "retr"
-    socket.try(self.tp:command(command, argument))
-    local code = socket.try(self.tp:check{"1..", "2.."})
-    if self.portt then data = socket.try(port(self.portt)) end
-    local source = socket.source("until-closed", data)
+    local command = recvt.command or "retr"
+    self.try(self.tp:command(command, argument))
+    local code = self.try(self.tp:check{"1..", "2.."})
+    if not self.pasvt then self:portconnect() end
+    local source = socket.source("until-closed", self.data)
     local step = recvt.step or ltn12.pump.step
-    local checkstep = function(src, snk)
-        local ret, err = step(src, snk)
-        if err then data:close() end
-        return ret, err
-    end
-    socket.try(ltn12.pump.all(source, recvt.sink, checkstep))
-    if string.find(code, "1..") then socket.try(self.tp:check("2..")) end
+    self.try(ltn12.pump.all(source, recvt.sink, step))
+    if string.find(code, "1..") then self.try(self.tp:check("2..")) end
+    self.data:close()
+    self.data = nil
     return 1
 end
 
 function metat.__index:cwd(dir)
-    socket.try(self.tp:command("cwd", dir))
-    socket.try(self.tp:check(250))
+    self.try(self.tp:command("cwd", dir))
+    self.try(self.tp:check(250))
     return 1
 end
 
 function metat.__index:type(type)
-    socket.try(self.tp:command("type", type))
-    socket.try(self.tp:check(200))
+    self.try(self.tp:command("type", type))
+    self.try(self.tp:check(200))
     return 1
 end
 
 function metat.__index:greet()
-    local code = socket.try(self.tp:check{"1..", "2.."})
-    if string.find(code, "1..") then socket.try(self.tp:check("2..")) end
+    local code = self.try(self.tp:check{"1..", "2.."})
+    if string.find(code, "1..") then self.try(self.tp:check("2..")) end
     return 1
 end
 
 function metat.__index:quit()
-    socket.try(self.tp:command("quit"))
-    socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("quit"))
+    self.try(self.tp:check("2.."))
     return 1
 end
 
 function metat.__index:close()
-    socket.try(self.tp:close())
+    self.tp:close()
+    if self.data then self.data:close() end
+    if self.server then self.server:close() end
+    self.tp = nil
+    self.data = nil
+    self.server = nil
     return 1
 end
 
@@ -176,14 +186,14 @@ end
 -- High level FTP API
 -----------------------------------------------------------------------------
 local function tput(putt)
-    local con = open(putt.host, putt.port)
-    con:greet()
-    con:login(putt.user, putt.password)
-    if putt.type then con:type(putt.type) end
-    con:pasv()
-    con:send(putt)
-    con:quit()
-    return con:close()
+    local f = open(putt.host, putt.port)
+    f:greet()
+    f:login(putt.user, putt.password)
+    if putt.type then f:type(putt.type) end
+    f:pasv()
+    f:send(putt)
+    f:quit()
+    return f:close()
 end
 
 local default = {
@@ -216,14 +226,14 @@ put = socket.protect(function(putt, body)
 end)
 
 local function tget(gett)
-    local con = open(gett.host, gett.port)
-    con:greet()
-    con:login(gett.user, gett.password)
-    if gett.type then con:type(gett.type) end
-    con:pasv()
-    con:receive(gett)
-    con:quit()
-    return con:close()
+    local f = open(gett.host, gett.port)
+    f:greet()
+    f:login(gett.user, gett.password)
+    if gett.type then f:type(gett.type) end
+    f:pasv()
+    f:receive(gett)
+    f:quit()
+    return f:close()
 end
 
 local function sget(u)

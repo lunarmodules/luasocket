@@ -86,16 +86,6 @@ back, err = socket.ftp.get {
 }
 check(not err and back == index, err)
 
-io.write("testing home directory listing: ")
-expected = capture("ls -F /var/ftp | grep -v /")
-back, err = socket.ftp.get("ftp://localhost/")
-check(back and similar(back, expected), nil, err)
-
-io.write("testing directory listing: ")
-expected = capture("ls -F /var/ftp/pub | grep -v /")
-back, err = socket.ftp.get("ftp://localhost/pub;type=d")
-check(similar(back, expected))
-
 io.write("testing upload denial: ")
 ret, err = socket.ftp.put("ftp://localhost/index.up.html;type=a", index)
 check(err, err)

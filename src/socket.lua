@@ -156,8 +156,8 @@ socket.sourcet["http-chunked"] = function(sock)
             else
                 -- get chunk and skip terminating CRLF
                 local chunk, err = sock:receive(size)
-                if err or socket.skip(2, sock:receive()) then return nil, err 
-                else return chunk end
+                if chunk then sock:receive() end 
+                return chunk, err
             end
         end
     })

@@ -169,6 +169,49 @@ socket, leaving it open when done.
 The function returns a sink with the appropriate behavior. 
 </p>
 
+<!-- skip ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=skip> 
+socket.<b>skip(</b>d [, ret<sub>1</sub>, ret<sub>2</sub> ...  ret<sub>N</sub>]<b>)</b>
+</p>
+
+<p class=description>
+Drops a number of arguments and returns the remaining.
+</p>
+
+<p class=parameters>
+<tt>D</tt> is the number of arguments to drop. <tt>Ret<sub>1</sub></tt> to
+<tt>ret<sub>N</sub></tt> are the arguments.
+</p>
+
+<p class=return> 
+The function returns <tt>ret<sub>d+1</sub></tt> to <tt>ret<sub>N</sub></tt>.
+</p>
+
+<p class=note>
+Note: This function is useful to avoid creation of dummy variables:
+</p>
+
+<pre class=example>
+-- get the status code and separator from SMTP server reply 
+local code, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
+</pre>
+
+<!-- sleep ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=sleep> 
+socket.<b>sleep(</b>time<b>)</b>
+</p>
+
+<p class=description>
+Freezes the program execution during a given amount of time.
+</p>
+
+<p class=parameters> 
+<tt>Time</tt> is the number of seconds to sleep for. 
+The function truncates <tt>time</tt> to the nearest integer. 
+</p>
+
 <!-- source +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=source> 
@@ -201,6 +244,27 @@ side closes the connection.
 The function returns a source with the appropriate behavior. 
 </p>
 
+<!-- time ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=time> 
+socket.<b>time()</b>
+</p>
+
+<p class=description>
+Returns the time in seconds, relative to the origin of the 
+universe. Only time differences are meaninful. 
+</p>
+
+<p class=return> 
+The function returns the time as a number.
+</p>
+
+<pre class=example>
+t = socket.time()
+-- do stuff
+print(socket.time() - t .. " seconds elapsed")
+</pre>
+
 <!-- try ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=try> 
@@ -212,7 +276,7 @@ Throws an exception in case of error.
 </p>
 
 <p class=parameters>
-<tt>Ret</tt><sub>1</sub> to <tt>ret</tt><sub>N</sub> can be arbitrary
+<tt>Ret<sub>1</sub></tt> to <tt>ret<sub>N</sub></tt> can be arbitrary
 arguments, but are usually the return values of a function call 
 nested with <tt>try</tt>. 
 </p>

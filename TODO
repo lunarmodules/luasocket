@@ -1,4 +1,5 @@
 
+
 ajeitar os README.*
 ajeitar as referencias a RFCS e LTNS em todos os arquivos.
 
@@ -8,8 +9,9 @@ check garbage collection in test*.lua
 
 
 manual
-    socket.skip
-    send return convention changed.
+    socket.newtry
+    *socket.skip
+    *send return convention changed.
     * compatibility: select sets are associative
     * add socket.connect and socket.bind to the manual
     * add shutdown

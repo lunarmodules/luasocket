@@ -31,51 +31,51 @@ ZONE = "-0000"
 local metat = { __index = {} }
 
 function metat.__index:greet(domain)
-    socket.try(self.tp:check("2.."))
-    socket.try(self.tp:command("EHLO", domain or DOMAIN))
-    return socket.skip(1, socket.try(self.tp:check("2..")))
+    self.try(self.tp:check("2.."))
+    self.try(self.tp:command("EHLO", domain or DOMAIN))
+    return socket.skip(1, self.try(self.tp:check("2..")))
 end 
 
 function metat.__index:mail(from)
-    socket.try(self.tp:command("MAIL", "FROM:" .. from))
-    return socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("MAIL", "FROM:" .. from))
+    return self.try(self.tp:check("2.."))
 end 
 
 function metat.__index:rcpt(to)
-    socket.try(self.tp:command("RCPT", "TO:" .. to))
-    return socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("RCPT", "TO:" .. to))
+    return self.try(self.tp:check("2.."))
 end
 
 function metat.__index:data(src, step)
-    socket.try(self.tp:command("DATA"))
-    socket.try(self.tp:check("3.."))
-    socket.try(self.tp:source(src, step))
-    socket.try(self.tp:send("\r\n.\r\n"))
-    return socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("DATA"))
+    self.try(self.tp:check("3.."))
+    self.try(self.tp:source(src, step))
+    self.try(self.tp:send("\r\n.\r\n"))
+    return self.try(self.tp:check("2.."))
 end
 
 function metat.__index:quit()
-    socket.try(self.tp:command("QUIT"))
-    return socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("QUIT"))
+    return self.try(self.tp:check("2.."))
 end
 
 function metat.__index:close()
-    return socket.try(self.tp:close())
+    return self.try(self.tp:close())
 end
 
 function metat.__index:login(user, password)
-    socket.try(self.tp:command("AUTH", "LOGIN"))
-    socket.try(self.tp:check("3.."))
-    socket.try(self.tp:command(mime.b64(user)))
-    socket.try(self.tp:check("3.."))
-    socket.try(self.tp:command(mime.b64(password)))
-    return socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("AUTH", "LOGIN"))
+    self.try(self.tp:check("3.."))
+    self.try(self.tp:command(mime.b64(user)))
+    self.try(self.tp:check("3.."))
+    self.try(self.tp:command(mime.b64(password)))
+    return self.try(self.tp:check("2.."))
 end
 
 function metat.__index:plain(user, password)
     local auth = "PLAIN " .. mime.b64("\0" .. user .. "\0" .. password)
-    socket.try(self.tp:command("AUTH", auth))
-    return socket.try(self.tp:check("2.."))
+    self.try(self.tp:command("AUTH", auth))
+    return self.try(self.tp:check("2.."))
 end
 
 function metat.__index:auth(user, password, ext)
@@ -85,7 +85,7 @@ function metat.__index:auth(user, password, ext)
     elseif string.find(ext, "AUTH[^\n]+PLAIN") then
         return self:plain(user, password)
     else
-        socket.try(nil, "authentication not supported")
+        self.try(nil, "authentication not supported")
     end
 end
 
@@ -104,7 +104,9 @@ end
 
 function open(server, port)
     local tp = socket.try(tp.connect(server or SERVER, port or PORT, TIMEOUT))
-    return setmetatable({tp = tp}, metat)
+    -- make sure tp is closed if we get an exception
+    local try = socket.newtry(function() tp:close() end)
+    return setmetatable({ tp = tp, try = try}, metat)
 end
 
 ---------------------------------------------------------------------------
@@ -222,10 +224,10 @@ end
 -- High level SMTP API
 -----------------------------------------------------------------------------
 send = socket.protect(function(mailt)
-    local con = open(mailt.server, mailt.port)
-    local ext = con:greet(mailt.domain)
-    con:auth(mailt.user, mailt.password, ext)
-    con:send(mailt)
-    con:quit()
-    return con:close()
+    local s = open(mailt.server, mailt.port)
+    local ext = s:greet(mailt.domain)
+    s:auth(mailt.user, mailt.password, ext)
+    s:send(mailt)
+    s:quit()
+    return s:close()
 end)

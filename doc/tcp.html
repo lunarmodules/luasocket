@@ -277,9 +277,10 @@ the transmission.
 <p class=note>
 <b>Important note</b>: This function was changed <em>severely</em>. It used
 to support multiple patterns (but I have never seen this feature used) and
-partial results used to be returned in the same way as successful results.
-This last feature violated the idea that all functions should return
-<tt><b>nil</b></tt> on error.  Thus the change.  
+now it doesn't anymore.  Partial results used to be returned in the same 
+way as successful results. This last feature violated the idea that all
+functions should return <tt><b>nil</b></tt> on error.  Thus it was changed
+too. 
 </p>
 
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -300,20 +301,25 @@ result to LuaSocket instead of passing several independent strings.
 </p>
 
 <p class=return>
-The method returns the number of bytes accepted by the transport layer,
-followed by an error code. The error code is <b><tt>nil</tt></b> if the operation
-completed with no errors, the string '<tt>closed</tt>' in case
+If successful, the method returns the number of bytes accepted by 
+the transport layer. In case of error, the method returns 
+<b><tt>nil</tt></b>, followed by an error message, followed by the
+partial number of bytes accepted by the transport layer.  
+The error message can be '<tt>closed</tt>' in case
 the connection was  closed before the transmission was  completed or the
 string  '<tt>timeout</tt>'  in  case  there was  a  timeout  during  the
 operation.
 </p>
 
 <p class=note>
-Note: The return values for the <tt>send</tt> method have been changed in
-LuaSocket 2.0! In previous versions, the method returned only the
-error message. Since returning <b><tt>nil</tt></b> in case of success goes 
-against all other LuaSocket methods and functions, the 
-<tt>send</tt> method been changed for the sake of uniformity. 
+<b>Important note</b>: 
+The return values for the <tt>send</tt> method have been changed in
+LuaSocket 2.0 alpha <b>and again</b> in the beta (sorry)! 
+In previous versions, the method returned only the
+error message. Since returning <b><tt>nil</tt></b> in case of success was
+nonsense, in alpha the first return value became the number of bytes sent.
+Alas, it wasn't returning <tt><b>nil</b></tt> in case of
+error. So it was changed again in beta. 
 </p>
 
 <!-- setoption ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

@@ -31,24 +31,25 @@ BLOCKSIZE = 2048
 local metat = { __index = {} }
 
 function open(host, port)
-    local con = socket.try(socket.tcp()) 
-    socket.try(con:settimeout(TIMEOUT))
-    port = port or PORT
-    socket.try(con:connect(host, port))
-    return setmetatable({ con = con }, metat)
+    local c = socket.try(socket.tcp()) 
+    -- make sure the connection gets closed on exception
+    local try = socket.newtry(function() c:close() end)
+    try(c:settimeout(TIMEOUT))
+    try(c:connect(host, port or PORT))
+    return setmetatable({ c = c, try = try }, metat)
 end
 
 function metat.__index:sendrequestline(method, uri)
     local reqline = string.format("%s %s HTTP/1.1\r\n", method or "GET", uri) 
-    return socket.try(self.con:send(reqline))
+    return self.try(self.c:send(reqline))
 end
 
 function metat.__index:sendheaders(headers)
     for i, v in pairs(headers) do
-        socket.try(self.con:send(i .. ": " .. v .. "\r\n"))
+        self.try(self.c:send(i .. ": " .. v .. "\r\n"))
     end
     -- mark end of request headers
-    socket.try(self.con:send("\r\n"))
+    self.try(self.c:send("\r\n"))
     return 1
 end
 
@@ -59,32 +60,32 @@ function metat.__index:sendbody(headers, source, step)
     local mode
     if headers["content-length"] then mode = "keep-open"
     else mode = "http-chunked" end
-    return socket.try(ltn12.pump.all(source, socket.sink(mode, self.con), step))
+    return self.try(ltn12.pump.all(source, socket.sink(mode, self.c), step))
 end
 
 function metat.__index:receivestatusline()
-    local status = socket.try(self.con:receive())
+    local status = self.try(self.c:receive())
     local code = socket.skip(2, string.find(status, "HTTP/%d*%.%d* (%d%d%d)"))
-    return socket.try(tonumber(code), status)
+    return self.try(tonumber(code), status)
 end
 
 function metat.__index:receiveheaders()
     local line, name, value
     local headers = {}
     -- get first line
-    line = socket.try(self.con:receive())
+    line = self.try(self.c:receive())
     -- headers go until a blank line is found
     while line ~= "" do
         -- get field-name and value
         name, value = socket.skip(2, string.find(line, "^(.-):%s*(.*)"))
-        socket.try(name and value, "malformed reponse headers")
+        self.try(name and value, "malformed reponse headers")
         name = string.lower(name)
         -- get next line (value might be folded)
-        line  = socket.try(self.con:receive())
+        line  = self.try(self.c:receive())
         -- unfold any folded values
         while string.find(line, "^%s") do
             value = value .. line
-            line = socket.try(self.con:receive())
+            line = self.try(self.c:receive())
         end
         -- save pair in table
         if headers[name] then headers[name] = headers[name] .. ", " .. value
@@ -102,12 +103,12 @@ function metat.__index:receivebody(headers, sink, step)
     if TE and TE ~= "identity" then mode = "http-chunked"
     elseif tonumber(headers["content-length"]) then mode = "by-length"
     else mode = "default" end
-    return socket.try(ltn12.pump.all(socket.source(mode, self.con, length), 
+    return self.try(ltn12.pump.all(socket.source(mode, self.c, length), 
         sink, step))
 end
 
 function metat.__index:close()
-    return self.con:close()
+    return self.c:close()
 end
 
 -----------------------------------------------------------------------------
@@ -204,23 +205,23 @@ end
 
 function trequest(reqt)
     reqt = adjustrequest(reqt)
-    local con = open(reqt.host, reqt.port)
-    con:sendrequestline(reqt.method, reqt.uri)
-    con:sendheaders(reqt.headers)
-    con:sendbody(reqt.headers, reqt.source, reqt.step)
+    local h = open(reqt.host, reqt.port)
+    h:sendrequestline(reqt.method, reqt.uri)
+    h:sendheaders(reqt.headers)
+    h:sendbody(reqt.headers, reqt.source, reqt.step)
     local code, headers, status
-    code, status = con:receivestatusline()
-    headers = con:receiveheaders()
+    code, status = h:receivestatusline()
+    headers = h:receiveheaders()
     if shouldredirect(reqt, code) then 
-        con:close()
+        h:close()
         return tredirect(reqt, headers)
     elseif shouldauthorize(reqt, code) then 
-        con:close()
+        h:close()
         return tauthorize(reqt)
     elseif shouldreceivebody(reqt, code) then
-        con:receivebody(headers, reqt.sink, reqt.step)
+        h:receivebody(headers, reqt.sink, reqt.step)
     end
-    con:close()
+    h:close()
     return 1, code, headers, status
 end
 
