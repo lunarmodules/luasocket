@@ -230,15 +230,15 @@ static int meth_bind(lua_State *L)
     p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    int backlog = (int) luaL_optnumber(L, 4, 0);
+    int backlog = (int) luaL_optnumber(L, 4, 1);
     const char *err = inet_trybind(&tcp->sock, address, port, backlog);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
         return 2;
     }
-    /* turn master object into a server object */
-    aux_setclass(L, "tcp{server}", 1);
+    /* turn master object into a server object if there was a listen */
+    if (backlog > 0) aux_setclass(L, "tcp{server}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }

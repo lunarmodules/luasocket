@@ -1,3 +1,10 @@
+add callback module to manual
+change stay to redirect in http.lua and in manual
+add timeout to request table
+
+change code to mime
+change *all* modules to be namespace independent
+
 write some utilities that use the code.lua module and put them 
 in etc, modify the README.etc file and makefile.dist (eol.lua is done)
 

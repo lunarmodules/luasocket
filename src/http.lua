@@ -40,6 +40,7 @@ BLOCKSIZE = 8192
 local function try_receiving(sock, pattern)
     local data, err = sock:receive(pattern)
     if not data then sock:close() end
+--print(data)
     return data, err
 end
 
@@ -53,6 +54,7 @@ end
 local function try_sending(sock, ...)
     local sent, err = sock:send(unpack(arg))
     if not sent then sock:close() end
+--io.write(unpack(arg))
     return err
 end
 
@@ -425,7 +427,10 @@ local function authorize(reqt, parsed, respt)
         method = reqt.method,
         url = reqt.url,
         body_cb = reqt.body_cb,
-        headers = reqt.headers
+        headers = reqt.headers,
+        timeout = reqt.timeout,
+        host = reqt.host,
+        port = reqt.port
     }
     return request_cb(autht, respt)
 end
@@ -439,11 +444,10 @@ end
 --   1 if we should redirect, nil otherwise
 -----------------------------------------------------------------------------
 local function should_redirect(reqt, respt)
-    local follow = not reqt.stay
-    follow = follow and (respt.code == 301 or respt.code == 302)
-    follow = follow and (reqt.method == "GET" or reqt.method == "HEAD")
-    follow = follow and not (reqt.nredirects and reqt.nredirects >= 5)
-    return follow
+    return (reqt.redirect ~= false) and 
+           (respt.code == 301 or respt.code == 302) and 
+           (reqt.method == "GET" or reqt.method == "HEAD") and
+            not (reqt.nredirects and reqt.nredirects >= 5)
 end
 
 -----------------------------------------------------------------------------
@@ -465,7 +469,10 @@ local function redirect(reqt, respt)
         -- servers do not respect that 
         url = socket.url.absolute(reqt.url, respt.headers["location"]),
         body_cb = reqt.body_cb,
-        headers = reqt.headers
+        headers = reqt.headers,
+        timeout = reqt.timeout,
+        host = reqt.host,
+        port = reqt.port
     }
     respt = request_cb(redirt, respt)
     -- we pass the location header as a clue we tried to redirect
@@ -475,18 +482,24 @@ end
 
 -----------------------------------------------------------------------------
 -- Computes the request URI from the parsed request URL
+-- If host and port are given in the request table, we use he
+-- absoluteURI format. Otherwise, we use the abs_path format.
 -- Input
 --   parsed: parsed URL
 -- Returns
 --   uri: request URI for parsed URL
 -----------------------------------------------------------------------------
-local function request_uri(parsed)
-    local uri = ""
-    if parsed.path then uri = uri .. parsed.path end
-    if parsed.params then uri = uri .. ";" .. parsed.params end
-    if parsed.query then uri = uri .. "?" .. parsed.query end
-    if parsed.fragment then uri = uri .. "#" .. parsed.fragment end
-    return uri
+local function request_uri(reqt, parsed)
+    local url
+    if not reqt.host and not reqt.port then
+        url = { 
+           path = parsed.path, 
+           params = parsed.params, 
+           query = parsed.query, 
+           fragment = parsed.fragment
+        }
+    else url = parsed end
+    return socket.url.build(url)
 end
 
 -----------------------------------------------------------------------------
@@ -519,7 +532,7 @@ end
 --     user, password: authentication information
 --     headers: request headers to send, or nil if none
 --     body_cb: request message body send-callback, or nil if none
---     stay: should we refrain from following a server redirect message?
+--     redirect: should we refrain from following a server redirect message?
 --   respt: a table with the following fields:
 --     body_cb: response method body receive-callback
 -- Returns
@@ -552,16 +565,17 @@ function request_cb(reqt, respt)
     sock, respt.error = socket.tcp()
     if not sock then return respt end
     -- set connection timeout so that we do not hang forever
-    sock:settimeout(TIMEOUT)
+    sock:settimeout(reqt.timeout or TIMEOUT)
     local ret
-    ret, respt.error = sock:connect(parsed.host, parsed.port)
+    ret, respt.error = sock:connect(reqt.host or parsed.host, 
+        reqt.port or parsed.port)
     if not ret then 
         sock:close()
         return respt 
     end
     -- send request message
     respt.error = send_request(sock, reqt.method, 
-        request_uri(parsed), reqt.headers, reqt.body_cb)
+        request_uri(reqt, parsed), reqt.headers, reqt.body_cb)
     if respt.error then 
         sock:close()
         return respt 
@@ -570,7 +584,7 @@ function request_cb(reqt, respt)
     respt.code, respt.status, respt.error = receive_status(sock)
     if respt.error then return respt end
     -- deal with continue 100 
-    -- servers should not send them, but they might
+    -- servers should not send them, but some do!
     if respt.code == 100 then
         respt.headers, respt.error = receive_headers(sock, {})
         if respt.error then return respt end
@@ -612,7 +626,7 @@ end
 --     user, password: authentication information
 --     headers: request header fields, or nil if none
 --     body: request message body as a string, or nil if none
---     stay: should we refrain from following a server redirect message?
+--     redirect: should we refrain from following a server redirect message?
 -- Returns
 --   respt: a table with the following fields:
 --     body: response message body, or nil if failed
@@ -623,9 +637,9 @@ end
 -----------------------------------------------------------------------------
 function request(reqt)
     local respt = {}
-    reqt.body_cb = socket.callback.send_string(reqt.body) 
+    reqt.body_cb = socket.callback.send.string(reqt.body) 
     local concat = socket.concat.create()
-    respt.body_cb = socket.callback.receive_concat(concat)
+    respt.body_cb = socket.callback.receive.concat(concat)
     respt = request_cb(reqt, respt)
     respt.body = concat:getresult()
     respt.body_cb = nil

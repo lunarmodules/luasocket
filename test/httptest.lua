@@ -3,6 +3,29 @@
 -- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
 -- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
 -- needs "AllowOverride AuthConfig" on /home/c/diego/tec/luasocket/test/auth
+dofile("noglobals.lua")
+
+local host, proxyh, proxyp, request, response
+local ignore, expect, index, prefix, cgiprefix
+
+local t = socket.time()
+
+host = host or "diego.princeton.edu"
+proxyh = proxyh or "localhost"
+proxyp = proxyp or 3128
+prefix = prefix or "/luasocket-test"
+cgiprefix = cgiprefix or "/luasocket-test-cgi"
+
+local readfile = function(name)
+	local f = io.open(name, "r")
+	if not f then return nil end
+	local s = f:read("*a")
+	f:close()
+	return s
+end
+
+index = readfile("test/index.html")
+
 local similar = function(s1, s2)
 	return string.lower(string.gsub(s1 or "", "%s", "")) == 
         string.lower(string.gsub(s2 or "", "%s", ""))
@@ -12,14 +35,6 @@ local fail = function(s)
 	s = s or "failed!"
 	print(s)
 	os.exit()
-end
-
-local readfile = function(name)
-	local f = io.open(name, "r")
-	if not f then return nil end
-	local s = f:read("*a")
-	f:close()
-	return s
 end
 
 local check = function (v, e)
@@ -48,23 +63,12 @@ local check_request = function(request, expect, ignore)
 	print("ok")
 end
 
-local host, request, response, ignore, expect, index, prefix, cgiprefix
-
-local t = socket.time()
-
-host = host or "localhost"
-prefix = prefix or "/luasocket-test"
-cgiprefix = cgiprefix or "/luasocket-test-cgi"
-index = readfile("test/index.html")
-
 io.write("testing request uri correctness: ")
 local forth = cgiprefix .. "/request-uri?" .. "this+is+the+query+string"
 local back, h, c, e = socket.http.get("http://" .. host .. forth)
-if similar(back, forth) then print("ok")
-else 
-print(h, c, e)
-fail()
-end
+back = socket.url.parse(back)
+if similar(back.query, "this+is+the+query+string") then print("ok")
+else fail() end
 
 io.write("testing query string correctness: ")
 forth = "this+is+the+query+string"
@@ -86,7 +90,19 @@ ignore = {
 }
 check_request(request, expect, ignore)
 
-socket.http.get("http://" .. host .. prefix .. "/lixo.html")
+io.write("testing redirect loop: ")
+request = {
+    url = "http://" .. host .. cgiprefix .. "/redirect-loop"
+}
+expect = {
+    code = 302
+}
+ignore = {
+	status = 1,
+	headers = 1,
+	body = 1
+}
+check_request(request, expect, ignore)
 
 io.write("testing post method: ")
 -- wanted to test chunked post, but apache doesn't support it...
@@ -107,20 +123,55 @@ ignore = {
 }
 check_request(request, expect, ignore)
 
+io.write("testing proxy with post method: ")
+request = {
+	url = "http://" .. host .. cgiprefix .. "/cat",
+	method = "POST",
+	body = index,
+    headers = { ["content-length"] = string.len(index) },
+    port = proxyp,
+    host = proxyh
+}
+expect = {
+	body = index,
+	code = 200
+}
+ignore = {
+	status = 1,
+	headers = 1
+}
+check_request(request, expect, ignore)
+
 io.write("testing simple post function: ")
-body = socket.http.post("http://" .. host .. cgiprefix .. "/cat", index)
-check(body == index)
+back = socket.http.post("http://" .. host .. cgiprefix .. "/cat", index)
+check(back == index)
 
 io.write("testing simple post function with table args: ")
-body = socket.http.post {
+back = socket.http.post {
 	url = "http://" .. host .. cgiprefix .. "/cat",
 	body = index
 }
-check(body == index)
+check(back == index)
 
 io.write("testing http redirection: ")
 request = {
 	url = "http://" .. host .. prefix
+}
+expect = {
+	body = index,
+	code = 200
+}
+ignore = {
+	status = 1,
+	headers = 1
+}
+check_request(request, expect, ignore)
+
+io.write("testing proxy with redirection: ")
+request = {
+	url = "http://" .. host .. prefix,
+    host = proxyh,
+    port = proxyp
 }
 expect = {
 	body = index,
@@ -150,7 +201,7 @@ check_request(request, expect, ignore)
 io.write("testing http redirection failure: ")
 request = {
 	url = "http://" .. host .. prefix,
-	stay = 1
+	redirect = false
 }
 expect = {
     code = 301
@@ -270,20 +321,6 @@ expect = {
 ignore = {
 	status = 1,
 	headers = 1
-}
-check_request(request, expect, ignore)
-
-io.write("testing redirect loop: ")
-request = {
-    url = "http://" .. host .. cgiprefix .. "/redirect-loop"
-}
-expect = {
-    code = 302
-}
-ignore = {
-	status = 1,
-	headers = 1,
-	body = 1
 }
 check_request(request, expect, ignore)
 
