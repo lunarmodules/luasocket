@@ -1,7 +1,9 @@
+_VERSION, _DEBUG, etc.
 get rid of "base." kludge
 make sure sock_gethostname.*  only return success if the hp is not 
 null!
 change 'l' prefix in C libraries to 'l-something'...
+leave code for losers that don't have nanosleep
 
 "foo.bar.baz" previously had to provide luaopen_foobarbaz() and now 
 should use luaopen_foo_bar_baz(). Change compat-5.1 and LuaSocket?
