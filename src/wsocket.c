@@ -87,8 +87,14 @@ int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, int timeout)
         /* if select returned due to an event */
         if (err > 0 ) {
             /* the sets tell whether it was a sucess or failure */
-            if (FD_ISSET(sock,&efds) || !FD_ISSET(sock,&wfds)) return IO_ERROR; 
-            else return IO_DONE;
+            if (FD_ISSET(sock,&efds) || !FD_ISSET(sock,&wfds)) {
+                int why; 
+                int len = sizeof(why);
+                /* find out why it failed */
+                getsockopt(sock, SOL_SOCKET, SO_ERROR, (char *)&why, &len); 
+                WSASetLastError(why);
+                return IO_ERROR; 
+            } else return IO_DONE;
         /* if nothing happened, we timed out */
         } else if (err == 0) return IO_TIMEOUT;
         /* otherwise, I don't know what happened */
