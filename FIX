@@ -1,3 +1,13 @@
+automated tests for ftp now in use
+new compat-5.1 distribution
+    instalation should use new directory structure
+    namespace hierarchy is in now back in use (socket.url instead of url)
+    globals not visible from inside namespaces
+    all modules call "require" even for standard libraries
+kludge on wsocket.c:sock_send for windows moved to buffer.c:sendraw
+socket.protect only catches errors thrown by socke.try
+udp:sendto was calling sock_send
+close wasn't returning 1
 gettime returns time since Unix Epoch 1/1/1970 (UTC)
 sleep is robust to interrupts
 select had a stupid bug

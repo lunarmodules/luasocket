@@ -16,7 +16,7 @@
 /*-------------------------------------------------------------------------*\
 * Wait for readable/writable/connected socket with timeout
 \*-------------------------------------------------------------------------*/
-#ifdef SOCK_POLL
+#ifndef SOCK_SELECT
 #include <sys/poll.h>
 
 #define WAITFD_R        POLLIN
