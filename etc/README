@@ -5,18 +5,17 @@ This directory contains code that is more useful than the examples. This code
 
 These are modules to suport dynamic loading of LuaSocket by the stand alone
 Lua Interpreter with the use of the "require" function. For my Mac OS X
-system, I place lua.lua in /usr/local/lua, luasocket.lua and the
-libluasocket.dylib in /usr/local/lua/luasocket and set the following
-environment variables:
+system, I place all files in /Users/diego/tec/luasocket
+and set the following environment variables:
 
-    LUA_PATH=/usr/local/lua/?/?.lua
-    LUA_INIT=@/usr/local/lua/lua.lua
-    LUA_FUNCNAME=_?
-    LUA_LIBNAME=/usr/local/lua/?/lib?.dylib
+    LUA_PATH=/Users/diego/tec/luasocket/?.lua
+    LUA_INIT=@/Users/diego/tec/luasocket/lua.lua
+    LUA_FUNCNAME=?
+    LUA_LIBNAME=/Users/diego/tec/luasocket/?.dylib
 
 With that, I can run any luasocket application with the command line:
 
-    lua -l luasocket <script>
+    lua -l socket <script>
 
 Much nicer than having to build a new executable just to initialize
 LuaSocket!
@@ -32,7 +31,7 @@ is to test the UDP code, but someone might find it usefull.
 This little  program is  a client  that uses  the FTP  and HTTP  code to
 implement a  command line  file graber. Just  run 
 
-	lua -l luasocket get.lua <remote-file> [<local-file>]
+	lua -l socket get.lua <remote-file> [<local-file>]
 
 to download  a remote file (either  ftp:// or http://) to  the specified
 local file.  The program  also prints  the download  throughput, elapsed
@@ -45,14 +44,9 @@ similar to check-links.pl by Jamie Zawinski, but uses all facilities of
 the LuaSocket library and the Lua language. It has not been thoroughly
 tested, but it should work. Just run
 
-	lua -l luasocket check-links.lua {<url>} > output
+	lua -l socket check-links.lua {<url>} > output
 
 and open the result to see a list of broken links. 
-
-    cl-compat.lua
-
-This module implements an old (and higher level) interface to SMTP provided
-by the CGILUA toolkit. It runs on top of the LuaSocket SMTP interface.
 
 Good luck,
 Diego.
