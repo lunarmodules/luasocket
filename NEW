@@ -1,0 +1,5 @@
+Socket structures are independent
+UDPBUFFERSIZE is now internal
+Better treatment of closed connections: test!!!
+HTTP post now deals with 1xx codes
+connect, bind etc only try first address returned by resolver

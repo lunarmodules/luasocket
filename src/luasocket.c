@@ -44,11 +44,11 @@
 \*-------------------------------------------------------------------------*/
 LUASOCKET_API int lua_socketlibopen(lua_State *L)
 {
+    compat_open(L);
     priv_open(L);
     select_open(L);
     base_open(L);
     tm_open(L);
-    compat_open(L);
     fd_open(L);
     sock_open(L);
     inet_open(L); 

@@ -13,7 +13,7 @@ function fail(...)
 end
 
 function warn(...)
-    local s = format(unpack(arg))
+    local s = string.format(unpack(arg))
     io.write("WARNING: ", s, "\n")
 end
 

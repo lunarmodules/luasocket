@@ -1,0 +1,38 @@
+- Inicializaccao das classes pode falhar?
+
+* Como mostrar um erro em lua_socketlibopen()...
+* O location do "redirect" pode ser relativo ao servidor atual (não pode,
+  mas os servidores fazem merda...)
+* - Ajeitar para Lua 4.1
+
+- Padronizar os retornos de funccao
+- Thread-safe
+  - proteger gethostby*.* com um mutex GLOBAL!
+  - proteger o atomizar o conjunto (timedout, receive), (timedout, send)
+- Usar "require" nos módulos
+- SSL
+- Fazer compilar com g++
+- usar lua_verror
+- separar as classes em arquivos
+- criar mais uma classe, a de stream, entre p_sock e p_client
+- criar um internal include file ls.h
+- impedir que voe quando chamar accept(udpsocket())
+- trocar recv and send por read e write (ver se funciona)
+
+- checar operações em closed sockets
+- checar teste de writable socket com select
+
+- trocar IPv4 para networking ou ipc
+
+- checar todos os metodos
+- checar options em UDP
+- checar todas as globais
+- checar os metodos virtuais
+- checar garbage collection
+
+- unix 92 bytes maximo no endereço, incluindo o zero
+- unix 9216 maximo de datagram size
+
+- retorno de send/receive em datagram sockets pode ser refused...
+
+- adicionar um método sock:setoption???

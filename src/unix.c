@@ -1,8 +1,6 @@
 /*=========================================================================*\
 * Network compatibilization module
 \*=========================================================================*/
-#include <string.h>
-
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -17,14 +15,14 @@ static cchar *try_setbooloption(lua_State *L, COMPAT_FD sock, int name);
 /*=========================================================================*\
 * Exported functions.
 \*=========================================================================*/
-void compat_open(lua_State *L)
+int compat_open(lua_State *L)
 {
-    /* Instals a handler to ignore sigpipe. This function is not 
-       needed on the WinSock2, since it's sockets don't raise signals. */
+    /* Instals a handler to ignore sigpipe. */
     struct sigaction new;
     memset(&new, 0, sizeof(new));
     new.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &new, NULL);
+    return 1;
 }
 
 COMPAT_FD compat_accept(COMPAT_FD s, struct  sockaddr  *addr,  
@@ -59,7 +57,7 @@ int compat_send(COMPAT_FD c, cchar *data, size_t count, size_t *sent,
            err = PRIV_CLOSED;
 #ifdef __CYGWIN__
            /* this is for CYGWIN, which is like Unix but has Win32 bugs */
-           if (sent < 0 && errno == EWOULDBLOCK) err = PRIV_DONE;
+           if (errno == EWOULDBLOCK) err = PRIV_DONE;
 #endif
            *sent = 0;
        } else {

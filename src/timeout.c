@@ -151,9 +151,9 @@ int tm_lua_sleep(lua_State *L)
 {
     double n = luaL_checknumber(L, 1);
 #ifdef WIN32
-    Sleep(n*1000);
+    Sleep((int)n*1000);
 #else
-    sleep(n);
+    sleep((int)n);
 #endif
     return 0;
 }
