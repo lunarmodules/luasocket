@@ -122,7 +122,7 @@ local function uri(reqt)
     local u = reqt
     if not reqt.proxy and not PROXY then
         u = {
-           path = reqt.path,
+           path = socket.try(reqt.path, "invalid path 'nil'"),
            params = reqt.params,
            query = reqt.query,
            fragment = reqt.fragment
@@ -152,18 +152,15 @@ local default = {
 
 local function adjustrequest(reqt)
     -- parse url if provided
-    if reqt.url then
-        local parsed = url.parse(reqt.url, default)
-        -- explicit components override url
-        for i,v in parsed do reqt[i] = reqt[i] or v end
-    end
-    socket.try(reqt.host, "invalid host '" .. tostring(reqt.host) .. "'")
-    socket.try(reqt.path, "invalid path '" .. tostring(reqt.path) .. "'")
+    local nreqt = reqt.url and url.parse(reqt.url, default) or {}
+    -- explicit components override url
+    for i,v in reqt do nreqt[i] = reqt[i] end
+    socket.try(nreqt.host, "invalid host '" .. tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
-    reqt.uri = reqt.uri or uri(reqt)
+    nreqt.uri = nreqt.uri or uri(nreqt)
     -- adjust headers in request
-    reqt.headers = adjustheaders(reqt.headers, reqt.host)
-    return reqt
+    nreqt.headers = adjustheaders(nreqt.headers, nreqt.host)
+    return nreqt
 end
 
 local function shouldredirect(reqt, code)

@@ -87,9 +87,9 @@ end
 
 -- determines the size of a http file
 function gethttpsize(u)
-	local respt = http.request {method = "HEAD", url = u}
-	if respt.code == 200 then
-		return tonumber(respt.headers["content-length"])
+	local r, c, h = http.request {method = "HEAD", url = u}
+	if c == 200 then
+		return tonumber(h["content-length"])
 	end
 end
 
@@ -98,8 +98,8 @@ function getbyhttp(u, file)
     local save = ltn12.sink.file(file or io.stdout)
     -- only print feedback if output is not stdout
     if file then save = ltn12.sink.chain(stats(gethttpsize(u)), save) end
-    local respt = http.request {url = u, sink = save }
-	if respt.code ~= 200 then print(respt.status or respt.error) end
+    local r, c, h, s = http.request {url = u, sink = save }
+	if c ~= 200 then io.stderr:write(s or c, "\n") end
 end
 
 -- downloads a file using the ftp protocol

@@ -115,7 +115,8 @@ end
 -----------------------------------------------------------------------------
 function parse(url, default)
     -- initialize default parameters
-    local parsed = default or {}
+    local parsed = {}
+    for i,v in (default or parsed) do parsed[i] = v end
     -- empty url is parsed to nil
     if not url or url == "" then return nil, "invalid url" end
     -- remove whitespace

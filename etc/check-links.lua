@@ -8,8 +8,6 @@ local http = require("http")
 local url = require("url")
 http.TIMEOUT = 10
 
-cache = {}
-
 function readfile(path)
 	path = url.unescape(path)
 	local file, error = io.open(path, "r")
@@ -22,22 +20,14 @@ end
 
 function getstatus(u)
 	local parsed = url.parse(u, {scheme = "file"})
-	if cache[u] then return cache[u] end
-	local res
     if parsed.scheme == "http" then
-        local request = {url = u, method = "HEAD"}
-        local response = http.request(request)
-        if response.code == 200 then res = nil
-        else res = response.status or response.error end
+        local r, c, h, s = http.request{url = u, method = "HEAD"}
+        if c ~= 200 then return s or c end
     elseif parsed.scheme == "file" then
         local file, error = io.open(url.unescape(parsed.path), "r")
-        if file then
-             file:close()
-             res = nil
-        else res = error end
-    else res = string.format("unhandled scheme '%s'", parsed.scheme) end
-    cache[u] = res
-	return res
+        if file then file:close()
+        else return error end 
+    else return string.format("unhandled scheme '%s'", parsed.scheme) end
 end
 
 function retrieve(u)
@@ -45,9 +35,12 @@ function retrieve(u)
     local body, headers, code, error
     local base = u
 	if parsed.scheme == "http" then 
-        body, headers, code, error = http.get(u)
+        body, code, headers = http.request(u)
         if code == 200 then 
             base = base or headers.location
+        end
+        if not body then 
+            error = code
         end
     elseif parsed.scheme == "file" then 
         body, error = readfile(parsed.path) 
