@@ -7,15 +7,15 @@ end
 host = toip(host)
 udp, err = udpsocket()
 if not udp then print(err) exit() end
-err = setpeername(udp, host, port)
+err = udp:setpeername(host, port)
 if err then print(err) exit() end
-print("Using host '" ..host.. "' and port " ..port.. "...")
+print("Using host '" ..host.. "' and port " .. port .. "...")
 while 1 do
 	line = read()
 	if not line then exit() end
-	err = send(udp, line)
+	err = udp:send(line)
 	if err then print(err) exit() end
-	dgram, err = receive(udp)
+	dgram, err = udp:receive()
 	if not dgram then print(err) exit() end
 	print(dgram)
 end

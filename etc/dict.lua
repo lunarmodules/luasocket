@@ -17,13 +17,13 @@ while 1 do
  if w=="=" then
   w=read"*l"
   verbose(">>>",w,"\n")
-  send(s,w,"\r\n")
+  s:send(w,"\r\n")
  else
   verbose(">>> looking up `",w,"'\n")
-  send(s,"DEFINE wn ",w,"\r\n")
+  s:send("DEFINE wn ",w,"\r\n")
  end
  while 1 do
-  local l=receive(s)
+  local l=s:receive()
   if l==nil then break end
   if strfind(l,"^[0-9]") then
    write("<<< ",l,"\n")
@@ -34,6 +34,6 @@ while 1 do
  end
 end
 
-send(s,"QUIT\r\n")
-verbose("<<< ",receive(s),"\n")
-close(s)
+s:send("QUIT\r\n")
+verbose("<<< ",s:receive(),"\n")
+s:close()

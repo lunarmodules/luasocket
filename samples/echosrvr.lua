@@ -7,16 +7,16 @@ end
 print("Binding to host '" ..host.. "' and port " ..port.. "...")
 udp, err = udpsocket()
 if not udp then print(err) exit() end
-err = setsockname(udp, host, port)
+err = udp:setsockname(host, port)
 if err then print(err) exit() end
-timeout(udp, 5)
-ip, port = getsockname(udp)
+udp:timeout(5)
+ip, port = udp:getsockname()
 print("Waiting packets on " .. ip .. ":" .. port .. "...")
 while 1 do
-	dgram, ip, port = receivefrom(udp)
+	dgram, ip, port = udp:receivefrom()
 	if not dgram then print(ip) 
 	else 
 		print("Echoing from " .. ip .. ":" .. port)
-		sendto(udp, dgram, ip, port)
+		udp:sendto(dgram, ip, port)
 	end
 end
