@@ -12,8 +12,18 @@ settagmethod(tag(nil), "getglobal", mygetglobal)
 assert(dofile "../lua/code.lua")
 assert(dofile "../lua/url.lua")
 
-local check_protect = function(parsed, path)
-	local built = URL.build_path(parsed)
+local check_build_url = function(parsed)
+	local built = URL.build_url(parsed)
+    if built ~= parsed.url then
+	    print("built is different from expected")
+		print(built)
+		print(expected)
+		exit()
+	end
+end
+
+local check_protect = function(parsed, path, unsafe)
+	local built = URL.build_path(parsed, unsafe)
 	if built ~= path then
 		print(built, path)
 	    print("path composition failed.")
@@ -306,6 +316,140 @@ check_parse_url{
 	path = "path",
 }
 
+print("testing URL building")
+check_build_url {
+	url = "scheme://user:password@host:port/path;params?query#fragment",
+	scheme = "scheme", 
+	host = "host",
+	port = "port",
+	user = "user",
+	password = "password",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://user:password@host/path;params?query#fragment",
+	scheme = "scheme", 
+	host = "host",
+	user = "user",
+	password = "password",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://user@host/path;params?query#fragment",
+	scheme = "scheme", 
+	host = "host",
+	user = "user",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://host/path;params?query#fragment",
+	scheme = "scheme", 
+	host = "host",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://host/path;params#fragment",
+	scheme = "scheme", 
+	host = "host",
+	path = "/path",
+	params = "params",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://host/path#fragment",
+	scheme = "scheme", 
+	host = "host",
+	path = "/path",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://host/path",
+	scheme = "scheme", 
+	host = "host",
+	path = "/path",
+}
+
+check_build_url {
+	url = "//host/path",
+	host = "host",
+	path = "/path",
+}
+
+check_build_url {
+	url = "/path",
+	path = "/path",
+}
+
+check_build_url {
+	url = "scheme://user:password@host:port/path;params?query#fragment",
+	scheme = "scheme", 
+	host = "host",
+	port = "port",
+	user = "user",
+    userinfo = "not used",
+	password = "password",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://user:password@host:port/path;params?query#fragment",
+	scheme = "scheme", 
+	host = "host",
+	port = "port",
+	user = "user",
+    userinfo = "not used",
+    authority = "not used",
+	password = "password",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://user:password@host:port/path;params?query#fragment",
+	scheme = "scheme", 
+	host = "host",
+	port = "port",
+    userinfo = "user:password",
+    authority = "not used",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
+check_build_url {
+	url = "scheme://user:password@host:port/path;params?query#fragment",
+	scheme = "scheme", 
+    authority = "user:password@host:port",
+	path = "/path",
+	params = "params",
+	query = "query",
+	fragment = "fragment"
+}
+
 -- standard RFC tests
 print("testing absolute resolution")
 check_absolute_url("http://a/b/c/d;p?q#f", "g:h", "g:h")
@@ -369,6 +513,10 @@ check_protect({ "eu ", "~diego" }, "eu%20/~diego")
 check_protect({ "/eu>", "<diego?" }, "%2feu%3e/%3cdiego%3f")
 check_protect({ "\\eu]", "[diego`" }, "%5ceu%5d/%5bdiego%60")
 check_protect({ "{eu}", "|diego\127" }, "%7beu%7d/%7cdiego%7f")
+check_protect({ "eu ", "~diego" }, "eu /~diego", 1)
+check_protect({ "/eu>", "<diego?" }, "/eu>/<diego?", 1)
+check_protect({ "\\eu]", "[diego`" }, "\\eu]/[diego`", 1)
+check_protect({ "{eu}", "|diego\127" }, "{eu}/|diego\127", 1)
 
 print("testing inversion")
 check_invert("http:")
