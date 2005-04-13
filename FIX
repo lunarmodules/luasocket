@@ -9,3 +9,4 @@ check all "require("http")" etc in the manual.
 make sure sock_gethostname.*  only return success if the hp is not null!
 change 'l' prefix in C libraries to 'l-something'...
     don't forget the declarations in luasocket.h and mime.h!!!
+setpeername was using udp{unconnected}

@@ -262,7 +262,7 @@ static int meth_settimeout(lua_State *L) {
 * Turns a master udp object into a client object.
 \*-------------------------------------------------------------------------*/
 static int meth_setpeername(lua_State *L) {
-    p_udp udp = (p_udp) aux_checkclass(L, "udp{unconnected}", 1);
+    p_udp udp = (p_udp) aux_checkgroup(L, "udp{any}", 1);
     p_tm tm = &udp->tm;
     const char *address =  luaL_checkstring(L, 2);
     int connecting = strcmp(address, "*");
