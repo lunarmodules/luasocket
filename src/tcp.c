@@ -20,7 +20,6 @@
 \*=========================================================================*/
 static int global_create(lua_State *L);
 static int meth_connect(lua_State *L);
-static int meth_connected(lua_State *L);
 static int meth_listen(lua_State *L);
 static int meth_bind(lua_State *L);
 static int meth_send(lua_State *L);
@@ -46,7 +45,6 @@ static luaL_reg tcp[] = {
     {"bind",        meth_bind},
     {"close",       meth_close},
     {"connect",     meth_connect},
-    {"connected",   meth_connected},
     {"dirty",       meth_dirty},
     {"getfd",       meth_getfd},
     {"getpeername", meth_getpeername},
@@ -226,25 +224,6 @@ static int meth_connect(lua_State *L)
     return 1;
 }
 
-static int meth_connected(lua_State *L)
-{
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
-    int err;
-    t_tm tm;
-    tm_init(&tm, 0.1, -1); 
-    tm_markstart(&tm); 
-    err = sock_connected(&tcp->sock, &tm);
-    if (err != IO_DONE) {
-        lua_pushnil(L);
-        lua_pushstring(L, sock_strerror(err));
-        return 2;
-    }
-    /* turn master object into a client object */
-    aux_setclass(L, "tcp{client}", 1);
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
 /*-------------------------------------------------------------------------*\
 * Closes socket used by object 
 \*-------------------------------------------------------------------------*/
@@ -308,7 +287,7 @@ error:
 \*-------------------------------------------------------------------------*/
 static int meth_getpeername(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{client}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     return inet_meth_getpeername(L, &tcp->sock);
 }
 

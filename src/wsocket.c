@@ -332,6 +332,7 @@ const char *sock_strerror(int err) {
     switch (err) {
         case WSAEADDRINUSE: return "address already in use";
         case WSAECONNREFUSED: return "connection refused";
+        case WSAEISCONN: return "already connected";
         case WSAEACCES: return "permission denied";
         case WSAECONNABORTED: return "closed";
         case WSAECONNRESET: return "closed";

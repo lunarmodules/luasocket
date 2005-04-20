@@ -77,11 +77,11 @@ print("trying to connect peer", who, host, port)
     if not ret and err == "timeout" then
 print("got timeout, will wait", who)
         wait(who, "output") 
-        ret, err = who:connected()
+        ret, err = who:connect(host, port)
 print("connection results arrived", who, ret, err)
     end
     if not ret then 
-print("connection failed", who)
+print("connection failed", who, err)
         kick(who)
         kick(context[who].peer)
     else
