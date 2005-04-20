@@ -72,16 +72,12 @@ end
 -- starts a connection in a non-blocking way
 function connect(who, host, port)
     who:settimeout(0)
-print("trying to connect peer", who, host, port)
     local ret, err = who:connect(host, port)
     if not ret and err == "timeout" then
-print("got timeout, will wait", who)
         wait(who, "output") 
         ret, err = who:connect(host, port)
-print("connection results arrived", who, ret, err)
     end
     if not ret then 
-print("connection failed", who, err)
         kick(who)
         kick(context[who].peer)
     else
@@ -104,7 +100,6 @@ function accept(server)
     while true do
         -- accept a new connection and start a new coroutine to deal with it
         local client = server:accept()
-print("accepted ", client)
         if client then
             -- create contexts for client and peer. 
             local peer, err = socket.tcp() 
@@ -139,7 +134,6 @@ end
 
 -- forwards all data arriving to the appropriate peer
 function forward(who)
-print("starting to foward", who)
     who:settimeout(0)
     while true do
         -- wait until we have something to read
@@ -173,24 +167,8 @@ end
 -- what happened, and routing it to wait until something else happens
 function go()
     while true  do
-print("will select for reading")
-for i,v in ipairs(receiving) do
-    print(i, v)
-end
-print("will select for sending")
-for i,v in ipairs(sending) do
-    print(i, v)
-end
         -- check which sockets are interesting and act on them
-        readable, writable = socket.select(receiving, sending, 3)
-print("was readable")
-for i,v in ipairs(readable) do
-    print(i, v)
-end
-print("was writable")
-for i,v in ipairs(writable) do
-    print(i, v)
-end
+        readable, writable = socket.select(receiving, sending)
         -- for all readable connections, resume its thread 
         for _, who in ipairs(readable) do
             receiving:remove(who)
