@@ -2,7 +2,7 @@
 local socket = require"socket"
 
 -- creates a new set data structure
-function newset()
+function newset(a)
     local reverse = {}
     local set = {}
     return setmetatable(set, {__index = {
@@ -29,7 +29,7 @@ end
 -- timeout before an inactive thread is kicked
 local TIMEOUT = 10
 -- set of connections waiting to receive data
-local receiving = newset()
+local receiving = newset(1)
 -- set of sockets waiting to send data
 local sending = newset() 
 -- context for connections and servers
@@ -77,8 +77,8 @@ function connect(who, host, port)
         wait(who, "output") 
         ret, err = who:connect(host, port)
         if not ret and err ~= "already connected" then 
-            kick(who)
             kick(context[who].peer)
+            kick(who)
             return
         end
     end
@@ -87,11 +87,11 @@ end
 
 -- gets rid of a client
 function kick(who)
-    if who and context[who] then
+    if who then
         sending:remove(who)
         receiving:remove(who)
-        context[who] = nil
         who:close()
+        context[who] = nil
     end
 end
 
@@ -159,6 +159,7 @@ function forward(who)
         if not rec_err then 
             kick(who) 
             kick(peer)
+            break
         end
     end
 end
@@ -171,13 +172,17 @@ function go()
         readable, writable = socket.select(receiving, sending)
         -- for all readable connections, resume its thread 
         for _, who in ipairs(readable) do
-            receiving:remove(who)
-            coroutine.resume(context[who].thread, who)
+            if context[who] then
+                receiving:remove(who)
+                coroutine.resume(context[who].thread, who)
+            end
         end
         -- for all writable connections, do the same
         for _, who in ipairs(writable) do
-            sending:remove(who)
-            coroutine.resume(context[who].thread, who)
+            if context[who] then
+                sending:remove(who)
+                coroutine.resume(context[who].thread, who)
+            end
         end
         -- put all inactive threads in death row
         local now = socket.gettime()

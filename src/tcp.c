@@ -213,13 +213,14 @@ static int meth_connect(lua_State *L)
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
     p_tm tm = tm_markstart(&tcp->tm);
     const char *err = inet_tryconnect(&tcp->sock, address, port, tm);
+    /* have to set the class even if it failed due to non-blocking connects */
+    aux_setclass(L, "tcp{client}", 1);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
         return 2;
     }
     /* turn master object into a client object */
-    aux_setclass(L, "tcp{client}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }
