@@ -24,20 +24,29 @@ io.write("Servers bound\n")
 -- simple set implementation
 -- the select function doesn't care about what is passed to it as long as
 -- it behaves like a table
+-- creates a new set data structure
 function newset()
     local reverse = {}
     local set = {}
-    setmetatable(set, { __index = {
-        insert = function(set, value) 
-            table.insert(set, value)
-            reverse[value] = table.getn(set)
+    return setmetatable(set, {__index = {
+        insert = function(set, value)
+            if not reverse[value] then
+                table.insert(set, value)
+                reverse[value] = table.getn(set)
+            end
         end,
         remove = function(set, value)
-            table.remove(set, reverse[value])
-            reverse[value] = nil
-        end,
+            local index = reverse[value]
+            if index then
+                reverse[value] = nil
+                local top = table.remove(set)
+                if top ~= value then
+                    reverse[top] = index
+                    set[index] = top
+                end
+            end
+        end
     }})
-    return set
 end
 
 set = newset()

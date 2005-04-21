@@ -208,7 +208,7 @@ static int meth_bind(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_connect(lua_State *L)
 {
-    p_tcp tcp = (p_tcp) aux_checkclass(L, "tcp{master}", 1);
+    p_tcp tcp = (p_tcp) aux_checkgroup(L, "tcp{any}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
     p_tm tm = tm_markstart(&tcp->tm);

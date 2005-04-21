@@ -1,5 +1,4 @@
 
-BUG NO SET DO TINYIRC!!! SINISTRO.
 talk about the non-blocking connect in the manual
 test it on Windows!!!
 
@@ -41,3 +40,5 @@ testar os options!
   - inet_ntoa também é uma merda.
 
 eliminate globals from namespaces created by module().
+
+* BUG NO SET DO TINYIRC!!! SINISTRO.

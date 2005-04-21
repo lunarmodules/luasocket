@@ -76,13 +76,13 @@ function connect(who, host, port)
     if not ret and err == "timeout" then
         wait(who, "output") 
         ret, err = who:connect(host, port)
+        if not ret and err ~= "already connected" then 
+            kick(who)
+            kick(context[who].peer)
+            return
+        end
     end
-    if not ret then 
-        kick(who)
-        kick(context[who].peer)
-    else
-        return forward(who)
-    end
+    return forward(who)
 end
 
 -- gets rid of a client
