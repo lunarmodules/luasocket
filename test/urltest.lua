@@ -75,7 +75,7 @@ local check_parse_url = function(gaba)
 		if v ~= parsed[i] then
 			io.write("parse: In test for '", url, "' expected ", i, " = '", 
            	    v, "' but got '", tostring(parsed[i]), "'\n")
-			for i,v in parsed do print(i,v) end
+			for i,v in pairs(parsed) do print(i,v) end
 			exit()
 		end
 	end
@@ -83,7 +83,7 @@ local check_parse_url = function(gaba)
 		if v ~= gaba[i] then
 			io.write("parse: In test for '", url, "' expected ", i, " = '", 
            	    tostring(gaba[i]), "' but got '", v, "'\n")
-			for i,v in parsed do print(i,v) end
+			for i,v in pairs(parsed) do print(i,v) end
 			exit()
 		end
 	end

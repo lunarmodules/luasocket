@@ -124,7 +124,7 @@ static int collect_fd(lua_State *L, int tab, int max_fd,
             break;
         }
         fd = getfd(L);
-        if (fd > 0) {
+        if (fd >= 0) {
             FD_SET(fd, set);
             if (max_fd < fd) max_fd = fd;
             lua_pushnumber(L, fd);
@@ -150,7 +150,7 @@ static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set) {
             break;
         }
         fd = getfd(L);
-        if (fd > 0 && dirty(L)) {
+        if (fd >= 0 && dirty(L)) {
             lua_pushnumber(L, ++ndirty);
             lua_pushvalue(L, -2);
             lua_settable(L, dtab);

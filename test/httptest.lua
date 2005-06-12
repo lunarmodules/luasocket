@@ -32,7 +32,7 @@ index_file = "test/index.html"
 index = readfile(index_file)
 
 local check_result = function(response, expect, ignore)
-	for i,v in response do
+	for i,v in pairs(response) do
 		if not ignore[i] then
 			if v ~= expect[i] then 
                 local f = io.open("err", "w")
@@ -42,7 +42,7 @@ local check_result = function(response, expect, ignore)
             end
 		end
 	end
-	for i,v in expect do
+	for i,v in pairs(expect) do
 		if not ignore[i] then
 			if v ~= response[i] then 
                 local f = io.open("err", "w")

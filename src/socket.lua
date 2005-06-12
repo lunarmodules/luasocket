@@ -62,19 +62,6 @@ socket.sinkt = {}
 
 socket.BLOCKSIZE = 2048
 
-socket.sinkt["http-chunked"] = function(sock)
-    return base.setmetatable({
-        getfd = function() return sock:getfd() end,
-        dirty = function() return sock:dirty() end
-    }, { 
-        __call = function(self, chunk, err)
-            if not chunk then return sock:send("0\r\n\r\n") end
-            local size = string.format("%X\r\n", string.len(chunk))
-            return sock:send(size ..  chunk .. "\r\n")
-        end
-    })
-end
-
 socket.sinkt["close-when-done"] = function(sock)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
@@ -140,34 +127,6 @@ socket.sourcet["until-closed"] = function(sock)
     })
 end
 
-socket.sourcet["http-chunked"] = function(sock)
-    return base.setmetatable({
-        getfd = function() return sock:getfd() end,
-        dirty = function() return sock:dirty() end
-    }, { 
-        __call = function()
-            -- get chunk size, skip extention
-            local line, err = sock:receive()
-            if err then return nil, err end 
-            local size = base.tonumber(string.gsub(line, ";.*", ""), 16)
-            if not size then return nil, "invalid chunk size" end
-            -- was it the last chunk?
-            if size <= 0 then 
-                -- skip trailer headers, if any
-                local line, err = sock:receive()
-                while not err and line ~= "" do
-                    line, err = sock:receive()
-                end
-                return nil, err
-            else
-                -- get chunk and skip terminating CRLF
-                local chunk, err = sock:receive(size)
-                if chunk then sock:receive() end 
-                return chunk, err
-            end
-        end
-    })
-end
 
 socket.sourcet["default"] = socket.sourcet["until-closed"]
 

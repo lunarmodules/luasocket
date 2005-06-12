@@ -70,7 +70,7 @@ end
 local check_headers = function(sent, got)
     sent = sent or {}
     got = got or {}
-    for i,v in sent do
+    for i,v in pairs(sent) do
         if not similar(v, got[i]) then fail("header " .. v .. "failed!") end
     end
 end

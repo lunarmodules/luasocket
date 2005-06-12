@@ -7,6 +7,7 @@ get rid of a = socket.try() in the manual, except for protected cases.
 get rid of "base." kludge
 check all "require("http")" etc in the manual.
 make sure sock_gethostname.*  only return success if the hp is not null!
-change 'l' prefix in C libraries to 'l-something'...
+change 'l' prefix in C libraries to 'c'
     don't forget the declarations in luasocket.h and mime.h!!!
 setpeername was using udp{unconnected}
+fixed a bug in http.lua that caused some requests to fail

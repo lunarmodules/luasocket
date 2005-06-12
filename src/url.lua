@@ -119,7 +119,7 @@ end
 function parse(url, default)
     -- initialize default parameters
     local parsed = {}
-    for i,v in (default or parsed) do parsed[i] = v end
+    for i,v in base.pairs(default or parsed) do parsed[i] = v end
     -- empty url is parsed to nil
     if not url or url == "" then return nil, "invalid url" end
     -- remove whitespace

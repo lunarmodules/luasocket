@@ -28,6 +28,51 @@ PORT = 80
 USERAGENT = socket.VERSION
 
 -----------------------------------------------------------------------------
+-- Extra sources and sinks
+-----------------------------------------------------------------------------
+socket.sourcet["http-chunked"] = function(sock)
+    return base.setmetatable({
+        getfd = function() return sock:getfd() end,
+        dirty = function() return sock:dirty() end
+    }, { 
+        __call = function()
+            -- get chunk size, skip extention
+            local line, err = sock:receive()
+            if err then return nil, err end 
+            local size = base.tonumber(string.gsub(line, ";.*", ""), 16)
+            if not size then return nil, "invalid chunk size" end
+            -- was it the last chunk?
+            if size <= 0 then 
+                -- skip trailer headers, if any
+                local line, err = sock:receive()
+                while not err and line ~= "" do
+                    line, err = sock:receive()
+                end
+                return nil, err
+            else
+                -- get chunk and skip terminating CRLF
+                local chunk, err, part = sock:receive(size)
+                if chunk then sock:receive() end 
+                return chunk, err
+            end
+        end
+    })
+end
+
+socket.sinkt["http-chunked"] = function(sock)
+    return base.setmetatable({
+        getfd = function() return sock:getfd() end,
+        dirty = function() return sock:dirty() end
+    }, { 
+        __call = function(self, chunk, err)
+            if not chunk then return sock:send("0\r\n\r\n") end
+            local size = string.format("%X\r\n", string.len(chunk))
+            return sock:send(size ..  chunk .. "\r\n")
+        end
+    })
+end
+
+-----------------------------------------------------------------------------
 -- Low level HTTP API
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
@@ -70,7 +115,7 @@ function metat.__index:sendheaders(headers)
 end
 
 function metat.__index:sendbody(headers, source, step)
-    source = source or ltn12.source.empty()
+    source = source or ltn12.source.empty() 
     step = step or ltn12.pump.step
     -- if we don't know the size in advance, send chunked and hope for the best
     local mode = "http-chunked"
@@ -155,7 +200,7 @@ end
 local function adjustheaders(headers, host)
     local lower = {}
     -- override with user values
-    for i,v in (headers or lower) do
+    for i,v in pairs(headers or lower) do
         lower[string.lower(i)] = v
     end
     lower["user-agent"] = lower["user-agent"] or USERAGENT
@@ -175,7 +220,7 @@ local function adjustrequest(reqt)
     local nreqt = reqt.url and url.parse(reqt.url, default) or {}
     local t = url.parse(reqt.url, default)
     -- explicit components override url
-    for i,v in reqt do nreqt[i] = reqt[i] end
+    for i,v in pairs(reqt) do nreqt[i] = v end
     socket.try(nreqt.host, "invalid host '" .. base.tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)
@@ -238,7 +283,7 @@ function trequest(reqt)
     local h = open(reqt.host, reqt.port, reqt.connect)
     h:sendrequestline(reqt.method, reqt.uri)
     h:sendheaders(reqt.headers)
-    h:sendbody(reqt.headers, reqt.source, reqt.step)
+    if reqt.source then h:sendbody(reqt.headers, reqt.source, reqt.step) end
     local code, headers, status
     code, status = h:receivestatusline()
     headers = h:receiveheaders()

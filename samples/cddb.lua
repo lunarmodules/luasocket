@@ -39,7 +39,7 @@ if code == 200 then
     if not data then 
         print(error or code)
     else
-        for i,v in data do 
+        for i,v in pairs(data) do 
             io.write(i, ': ', v, '\n') 
         end
     end

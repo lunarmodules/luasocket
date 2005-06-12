@@ -211,7 +211,7 @@ end
 -- set defaul headers
 local function adjust_headers(mesgt)
     local lower = {}
-    for i,v in (mesgt.headers or lower) do
+    for i,v in base.pairs(mesgt.headers or lower) do
         lower[string.lower(i)] = v
     end
     lower["date"] = lower["date"] or 
