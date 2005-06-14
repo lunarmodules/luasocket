@@ -10,7 +10,7 @@
 -----------------------------------------------------------------------------
 local string = require("string")
 local table = require("table")
-local base = require("base")
+local base = _G
 module("ltn12")
 
 filter = {}

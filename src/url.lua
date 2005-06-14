@@ -9,7 +9,7 @@
 -- Declare module
 -----------------------------------------------------------------------------
 local string = require("string")
-local base = require("base")
+local base = _G
 local table = require("table")
 module("socket.url")
 

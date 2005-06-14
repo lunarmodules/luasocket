@@ -69,7 +69,7 @@ function check_timeout(tm, sl, elapsed, err, opp, mode, alldone)
     end
 end
 
-if not socket.DEBUG then
+if not socket._DEBUG then
     fail("Please define LUASOCKET_DEBUG and recompile LuaSocket")
 end
 

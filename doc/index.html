@@ -93,38 +93,24 @@ Windows&nbsp;XP, Linux, and Mac OS X.
 </p>
 
 <p>
-The library can be downloaded in source code from the following links: 
-</p>
-
-<blockquote>
-<p>
-<a href="luasocket-2.0.tar.gz">luasocket-2.0.tar.gz</a> <br>
-<a href="luasocket-2.0.zip">luasocket-2.0.zip</a>
-</p>
-</blockquote>
-
-<p>
+The library can be downloaded in source code from the
+<a href=http://luaforge.net/projects/luasocket/>LuaSocket
+project page</a> at LuaForge. 
 Besides the full C and Lua source code for the library, the distribution
 contains several examples, this user's manual and basic test procedures.
 </p>
 
 <p>
-I  am also  providing  PC Win32  binaries  for those  that  want to  give
-LuaSocket a try (those on Unix or Mac OS X can just type <tt>make</tt>).
-These are compatible with the 
+Danilo Tuler is mantaining Win32 binaries for LuaSocket, which are also
+available from LuaForge.  These are compatible with the 
 <a href=http://luaforge.net/projects/luabinaries>LuaBinaries</a> 
 available from LuaForge. 
 </p>
 
-<blockquote>
 <p>
-<a href="luasocket-2.0-win32.zip">luasocket-2.0-win32.zip</a>
-</p>
-</blockquote>
-
-<p>
-The quick and dirty way to use these binaries is to unpack everything into
-a directory, say <tt>c:\luasocket</tt>, then set <tt>LUA_INIT</tt> to load
+For those that  want to give LuaSocket a quick try, download the
+stand-alone archive and unpack everything into
+a directory, say <tt>c:\luasocket</tt>. Then set <tt>LUA_INIT</tt> to load
 the <tt>compat-5.1.lua</tt> and set <tt>LUA_PATH</tt> and
 <tt>LUA_CPATH</tt> to look for files in the current directory: 
 </p>
@@ -142,10 +128,10 @@ do the following:
 </p>
 
 <pre class=example>
-c:\luasocket\&gt; lua
+c:\luasocket\&gt; lua50
 Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
 &gt; http = require"socket.http"
-&gt; print(http.request"http://www.tecgraf.puc-rio.br/luasocket/")
+&gt; print(http.request"http://www.cs.princeton.edu/~diego/professional/luasocket/")
 --&gt; the source to this web page gets dumped to terminal
 </pre>
 
@@ -173,31 +159,39 @@ has been helping a lot too! Thanks to you all!
 <h2 id=new>What's New</h2>
 
 <p>
-The big change for the 2.0 (beta3) release was the adoption of the Lua 5.1
-package proposal. Naturally, there were a few bug fixes (a beta is a
-beta, is a beta).
+There is no big change for the 2.0 (final) release. It is basically a 
+bug fix release. The only improvement is in the non-blocking 
+support. 
 </p>
 
 <ul>
-<li> New compat-5.1 distribution:
-<ul>
-<li> Installation uses new directory structure;
-<li> Namespace hierarchy is in now back in use (ex. <tt>socket.url</tt> 
-    instead of <tt>url</tt>);
-<li> All modules call <tt>require</tt> even for standard libraries;
-</ul>
-<li> <tt>socket.select</tt> wasn't calling <tt>tm_markstart</tt>;
-<li> LTN12 avoids coroutines (so you can go wild on the C side);
-<li> Kludge on wsocket.c:sock_send for windows timeout issue
-    moved to buffer.c:sendraw so it's not a kludge anymore;
-<li> <tt>socket.protect </tt>only catches errors thrown by <tt>socket.try</tt>;
-<li> Fixed <tt>udp:sendto</tt> to call <tt>sock_sendto</tt> instead of
-    <tt>sock_send</tt>;
-<li> <tt>close</tt> wasn't returning 1!
-<li> <tt>socket.gettime</tt> returns time since Unix Epoch 1/1/1970 (UTC);
-<li> <tt>socket.sleep</tt> is robust to interrupts;
-<li> <tt>http.PROXY</tt> wasn't working;
-<li> <tt>url.escape</tt> escapes only dangerous characters. 
+<li> Improved: <tt>tcp{client}:send(data, i)</tt> now returns <tt>(i+sent-1)</tt>.  This is great for non-blocking I/O, but might break some code;
+<li> Improved: HTTP, SMTP, and FTP functions accept a new field
+<tt>connect</tt> that can be used to replace the function invoked to 
+create and connect the sockets used internally;
+<li> Fixed: <tt>url.absolute()</tt> was not working when <tt>base_url</tt> was 
+already parsed;
+<li> Fixed: <tt>http.request()</tt> was redirecting even when the location 
+header was empty (well, it shouldn't be empty);
+<li> Fixed: <tt>tcp{client}:shutdown()</tt> was checking for group instead of class;
+<li> Fixed: <tt>socket.try()</tt> can't be used in place of <tt>assert()</tt>. The manual and examples don't do it anymore; 
+<li> Improved: Get rid of <tt>require("base")</tt> kludge in <tt>package.loaded</tt>;
+<li> Fixedd: Parts of the manual referred to <tt>require("http")</tt> instead of
+<tt>require("socket.http")</tt>;
+<li> Improved: Changed 'l' prefix in C libraries to 'c' to avoid clash with LHF
+libraries;
+<li> Improved: Using bundles in Mac OS X; 
+<li> Fixed: <tt>luasocket.h</tt> was exporting <tt>luaopen_socket</tt> 
+instead of <tt>luaopen_csocket</tt>;
+<li> Fixed: <tt>udp:setpeername()</tt> only worked for 
+<tt>udp{unconnected}</tt>. Now you can "disconnect" an <tt>UDP</tt> socket;
+<li> Fixed: bug in http.lua that caused some requests to fail (Florian
+Berger);
+<li> Fixed: bug in <tt>select.c</tt> that prevented sockets with descriptor 0 from working (Renato Maia);
+<li> Fixed: "bug" that caused <tt>dns.toip</tt> to crash under uLinux;
+<li> Fixed: "bug" that caused a crash in <tt>gethostbyname</tt> under VMS
+(Renato Maia);
+<li> Improved: <tt>socket.DEBUG</tt> and <tt>socket.VERSION</tt> became <tt>socket._DEBUGs</tt> and <tt>socket._VERSION</tt> for uniformity with other libraries.
 </ul>
 
 <!-- incompatible +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -205,9 +199,11 @@ beta, is a beta).
 <h3 id=incompatible>Incompatibilities with previous versions</h3>
 
 <ul>
-<li> Namespaces are hierarchical again. This means that whoever used to 
-call <tt>require("url")</tt> should update their code to
-<tt>require("socket.url")</tt>.
+<li> If you use the return value of <tt>tcp:send()</tt> <em>and</em> you
+use the extra parameters to select only part of the string to be sent, your
+code is now broken, but when you fix it, it will be much simpler;
+<li> If you check <tt>socket.DEBUG</tt> or <tt>socket.VERSION</tt>, 
+change it to <tt>socket._DEBUG</tt> or <tt>socket._VERSION</tt>.
 </ul>
 
 <!-- old ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

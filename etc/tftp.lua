@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 -- Load required files
 -----------------------------------------------------------------------------
-local base = require("base")
+local base = _G
 local table = require("table")
 local math = require("math")
 local string = require("string")

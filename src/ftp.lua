@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 -- Declare module and import dependencies
 -----------------------------------------------------------------------------
-local base = require("base")
+local base = _G
 local table = require("table")
 local string = require("string")
 local math = require("math")

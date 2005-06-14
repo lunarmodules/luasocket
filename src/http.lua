@@ -13,7 +13,7 @@ local url = require("socket.url")
 local ltn12 = require("ltn12")
 local mime = require("mime")
 local string = require("string")
-local base = require("base")
+local base = _G
 local table = require("table")
 module("socket.http")
 
@@ -25,7 +25,7 @@ TIMEOUT = 60
 -- default port for document retrieval
 PORT = 80
 -- user agent field sent in request
-USERAGENT = socket.VERSION
+USERAGENT = socket._VERSION
 
 -----------------------------------------------------------------------------
 -- Extra sources and sinks

@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 -- Load required modules
 -----------------------------------------------------------------------------
-local base = require("base")
+local base = _G
 local string = require("string")
 local table = require("table")
 local socket = require("socket")

@@ -7,8 +7,7 @@
 -----------------------------------------------------------------------------
 -- Declare module and import dependencies
 -----------------------------------------------------------------------------
-package.loaded.base = _G
-local base = require("base")
+local base = _G
 local string = require("string")
 local math = require("math")
 local socket = require("csocket")

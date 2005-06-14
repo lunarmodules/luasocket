@@ -172,21 +172,25 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
     i = 1;
     alias = hp->h_aliases;
     lua_newtable(L);
-    while (*alias) {
-        lua_pushnumber(L, i);
-        lua_pushstring(L, *alias);
-        lua_settable(L, -3);
-        i++; alias++;
+    if (alias) {
+        while (*alias) {
+            lua_pushnumber(L, i);
+            lua_pushstring(L, *alias);
+            lua_settable(L, -3);
+            i++; alias++;
+        }
     }
     lua_settable(L, resolved);
     i = 1;
     lua_newtable(L);
     addr = (struct in_addr **) hp->h_addr_list;
-    while (*addr) {
-        lua_pushnumber(L, i);
-        lua_pushstring(L, inet_ntoa(**addr));
-        lua_settable(L, -3);
-        i++; addr++;
+    if (addr) {
+        while (*addr) {
+            lua_pushnumber(L, i);
+            lua_pushstring(L, inet_ntoa(**addr));
+            lua_settable(L, -3);
+            i++; addr++;
+        }
     }
     lua_settable(L, resolved);
 }

@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 -- Declare module and import dependencies
 -----------------------------------------------------------------------------
-local base = require("base")
+local base = _G
 local coroutine = require("coroutine")
 local string = require("string")
 local math = require("math")
@@ -216,7 +216,7 @@ local function adjust_headers(mesgt)
     end
     lower["date"] = lower["date"] or 
         os.date("!%a, %d %b %Y %H:%M:%S ") .. (mesgt.zone or ZONE)
-    lower["x-mailer"] = lower["x-mailer"] or socket.VERSION
+    lower["x-mailer"] = lower["x-mailer"] or socket._VERSION
     -- this can't be overriden
     lower["mime-version"] = "1.0" 
     mesgt.headers = lower

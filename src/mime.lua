@@ -8,8 +8,7 @@
 -----------------------------------------------------------------------------
 -- Declare module and import dependencies
 -----------------------------------------------------------------------------
-package.loaded.base = _G
-local base = require("base")
+local base = _G
 local ltn12 = require("ltn12")
 local mime = require("cmime")
 module("mime")

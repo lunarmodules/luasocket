@@ -89,12 +89,12 @@ static int base_open(lua_State *L) {
         /* export functions (and leave namespace table on top of stack) */
         luaL_openlib(L, "socket", func, 0);
 #ifdef LUASOCKET_DEBUG
-        lua_pushstring(L, "DEBUG");
+        lua_pushstring(L, "_DEBUG");
         lua_pushboolean(L, 1);
         lua_rawset(L, -3);
 #endif
         /* make version string available to scripts */
-        lua_pushstring(L, "VERSION");
+        lua_pushstring(L, "_VERSION");
         lua_pushstring(L, LUASOCKET_VERSION);
         lua_rawset(L, -3);
         return 1;
