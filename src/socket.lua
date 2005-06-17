@@ -10,13 +10,13 @@
 local base = _G
 local string = require("string")
 local math = require("math")
-local socket = require("csocket")
+local socket = require("socket.core")
 module("socket")
 
 -----------------------------------------------------------------------------
--- Auxiliar functions
+-- Exported auxiliar functions
 -----------------------------------------------------------------------------
-function socket.connect(address, port, laddress, lport)
+function connect(address, port, laddress, lport)
     local sock, err = socket.tcp()
     if not sock then return nil, err end
     if laddress then 
@@ -28,7 +28,7 @@ function socket.connect(address, port, laddress, lport)
     return sock
 end
 
-function socket.bind(host, port, backlog)
+function bind(host, port, backlog)
     local sock, err = socket.tcp()
     if not sock then return nil, err end
     sock:setoption("reuseaddr", true)
@@ -39,9 +39,9 @@ function socket.bind(host, port, backlog)
     return sock
 end
 
-socket.try = socket.newtry()
+try = newtry()
 
-function socket.choose(table)
+function choose(table)
     return function(name, opt1, opt2)
         if base.type(name) ~= "string" then
             name, opt1, opt2 = "default", name, opt1
@@ -56,12 +56,12 @@ end
 -- Socket sources and sinks, conforming to LTN12
 -----------------------------------------------------------------------------
 -- create namespaces inside LuaSocket namespace
-socket.sourcet = {}
-socket.sinkt = {}
+sourcet = {}
+sinkt = {}
 
-socket.BLOCKSIZE = 2048
+BLOCKSIZE = 2048
 
-socket.sinkt["close-when-done"] = function(sock)
+sinkt["close-when-done"] = function(sock)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
@@ -75,7 +75,7 @@ socket.sinkt["close-when-done"] = function(sock)
     })
 end
 
-socket.sinkt["keep-open"] = function(sock)
+sinkt["keep-open"] = function(sock)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
@@ -87,11 +87,11 @@ socket.sinkt["keep-open"] = function(sock)
     })
 end
 
-socket.sinkt["default"] = socket.sinkt["keep-open"]
+sinkt["default"] = sinkt["keep-open"]
 
-socket.sink = socket.choose(socket.sinkt)
+sink = choose(sinkt)
 
-socket.sourcet["by-length"] = function(sock, length)
+sourcet["by-length"] = function(sock, length)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
@@ -107,7 +107,7 @@ socket.sourcet["by-length"] = function(sock, length)
     })
 end
 
-socket.sourcet["until-closed"] = function(sock)
+sourcet["until-closed"] = function(sock)
     local done
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
@@ -127,8 +127,9 @@ socket.sourcet["until-closed"] = function(sock)
 end
 
 
-socket.sourcet["default"] = socket.sourcet["until-closed"]
+sourcet["default"] = sourcet["until-closed"]
 
-socket.source = socket.choose(socket.sourcet)
+source = choose(sourcet)
 
---getmetatable(_M).__index = nil
+-- clear globals from namespace
+getmetatable(_M).__index = nil

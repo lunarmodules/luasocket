@@ -22,7 +22,7 @@ http.TIMEOUT = 10
 
 local t = socket.gettime()
 
-host = host or "diego.student.princeton.edu"
+host = host or "localhost" -- "diego.student.princeton.edu"
 proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
@@ -146,6 +146,7 @@ ignore = {
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
+--[[
 io.write("testing proxy with post method: ")
 request = {
 	url = "http://" .. host .. cgiprefix .. "/cat",
@@ -163,6 +164,7 @@ ignore = {
 	headers = 1
 }
 check_request(request, expect, ignore)
+]]
 
 ------------------------------------------------------------------------
 io.write("testing simple post function: ")
@@ -249,6 +251,7 @@ ignore = {
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
+--[[
 io.write("testing proxy with redirection: ")
 request = {
 	url = "http://" .. host .. prefix,
@@ -263,6 +266,7 @@ ignore = {
 	headers = 1
 }
 check_request(request, expect, ignore)
+]]
 
 ------------------------------------------------------------------------
 io.write("testing automatic auth failure: ")

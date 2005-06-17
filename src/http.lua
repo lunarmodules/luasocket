@@ -28,9 +28,40 @@ PORT = 80
 USERAGENT = socket._VERSION
 
 -----------------------------------------------------------------------------
+-- Reads MIME headers from a connection, unfolding where needed
+-----------------------------------------------------------------------------
+local function receiveheaders(sock, headers)
+    local line, name, value, err
+    headers = headers or {}
+    -- get first line
+    line, err = sock:receive()
+    if err then return nil, err end
+    -- headers go until a blank line is found
+    while line ~= "" do
+        -- get field-name and value
+        name, value = socket.skip(2, string.find(line, "^(.-):%s*(.*)"))
+        if not (name and value) then return nil, "malformed reponse headers" end
+        name = string.lower(name)
+        -- get next line (value might be folded)
+        line, err  = sock:receive()
+        if err then return nil, err end
+        -- unfold any folded values
+        while string.find(line, "^%s") do
+            value = value .. line
+            line = sock:receive()
+            if err then return nil, err end
+        end
+        -- save pair in table
+        if headers[name] then headers[name] = headers[name] .. ", " .. value
+        else headers[name] = value end
+    end
+    return headers
+end
+
+-----------------------------------------------------------------------------
 -- Extra sources and sinks
 -----------------------------------------------------------------------------
-socket.sourcet["http-chunked"] = function(sock)
+socket.sourcet["http-chunked"] = function(sock, headers)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
@@ -42,18 +73,15 @@ socket.sourcet["http-chunked"] = function(sock)
             local size = base.tonumber(string.gsub(line, ";.*", ""), 16)
             if not size then return nil, "invalid chunk size" end
             -- was it the last chunk?
-            if size <= 0 then 
-                -- skip trailer headers, if any
-                local line, err = sock:receive()
-                while not err and line ~= "" do
-                    line, err = sock:receive()
-                end
-                return nil, err
-            else
-                -- get chunk and skip terminating CRLF
+            if size > 0 then 
+                -- if not, get chunk and skip terminating CRLF
                 local chunk, err, part = sock:receive(size)
                 if chunk then sock:receive() end 
                 return chunk, err
+            else
+                -- if it was, read trailers into headers table
+                headers, err = receiveheaders(sock, headers)
+                if not headers then return nil, err end
             end
         end
     })
@@ -78,8 +106,8 @@ end
 local metat = { __index = {} }
 
 -- default connect function, respecting the timeout
-local function connect(host, port)
-    local c, e = socket.tcp()
+local function connect(host, port, create)
+    local c, e = (create or socket.tcp)()
     if not c then return nil, e end
     c:settimeout(TIMEOUT)
     local r, e = c:connect(host, port or PORT)
@@ -90,9 +118,9 @@ local function connect(host, port)
     return c
 end
 
-function open(host, port, user)
+function open(host, port, create)
     -- create socket with user connect function, or with default
-    local c = socket.try((user or connect)(host, port))
+    local c = socket.try(connect(host, port, create))
     -- create our http request object, pointing to the socket
     local h = base.setmetatable({ c = c }, metat)
     -- make sure the object close gets called on exception
@@ -130,37 +158,16 @@ function metat.__index:receivestatusline()
 end
 
 function metat.__index:receiveheaders()
-    local line, name, value
-    local headers = {}
-    -- get first line
-    line = self.try(self.c:receive())
-    -- headers go until a blank line is found
-    while line ~= "" do
-        -- get field-name and value
-        name, value = socket.skip(2, string.find(line, "^(.-):%s*(.*)"))
-        self.try(name and value, "malformed reponse headers")
-        name = string.lower(name)
-        -- get next line (value might be folded)
-        line  = self.try(self.c:receive())
-        -- unfold any folded values
-        while string.find(line, "^%s") do
-            value = value .. line
-            line = self.try(self.c:receive())
-        end
-        -- save pair in table
-        if headers[name] then headers[name] = headers[name] .. ", " .. value
-        else headers[name] = value end
-    end
-    return headers
+    return self.try(receiveheaders(self.c))
 end
 
 function metat.__index:receivebody(headers, sink, step)
     sink = sink or ltn12.sink.null()
     step = step or ltn12.pump.step
     local length = base.tonumber(headers["content-length"])
-    local TE = headers["transfer-encoding"]
+    local t = headers["transfer-encoding"] -- shortcut
     local mode = "default" -- connection close
-    if TE and TE ~= "identity" then mode = "http-chunked"
+    if t and t ~= "identity" then mode = "http-chunked"
     elseif base.tonumber(headers["content-length"]) then mode = "by-length" end
     return self.try(ltn12.pump.all(socket.source(mode, self.c, length), 
         sink, step))
@@ -198,16 +205,21 @@ local function adjustproxy(reqt)
 end
 
 local function adjustheaders(headers, host)
-    local lower = {}
-    -- override with user values
+    -- default headers
+    local lower = {
+        ["user-agent"] = USERAGENT,
+        ["host"] = host,
+        ["connection"] = "close, TE",
+        ["te"] = "trailers"
+    }
+    -- override with user headers
     for i,v in pairs(headers or lower) do
         lower[string.lower(i)] = v
     end
-    lower["user-agent"] = lower["user-agent"] or USERAGENT
-    lower["host"] = lower["host"] or host
     return lower
 end
 
+-- default url parts
 local default = {
     host = "",
     port = PORT,
@@ -280,7 +292,7 @@ end
 
 function trequest(reqt)
     reqt = adjustrequest(reqt)
-    local h = open(reqt.host, reqt.port, reqt.connect)
+    local h = open(reqt.host, reqt.port, reqt.create)
     h:sendrequestline(reqt.method, reqt.uri)
     h:sendheaders(reqt.headers)
     if reqt.source then h:sendbody(reqt.headers, reqt.source, reqt.step) end

@@ -27,6 +27,6 @@
 /*-------------------------------------------------------------------------*\
 * Initializes the library.
 \*-------------------------------------------------------------------------*/
-LUASOCKET_API int luaopen_csocket(lua_State *L);
+LUASOCKET_API int luaopen_socketcore(lua_State *L);
 
 #endif /* LUASOCKET_H */

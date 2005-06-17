@@ -10,7 +10,9 @@
 -----------------------------------------------------------------------------
 local base = _G
 local ltn12 = require("ltn12")
-local mime = require("cmime")
+local mime = require("mime.core")
+local io = require("io")
+local string = require("string")
 module("mime")
 
 -- encode, decode and wrap algorithm tables
@@ -48,8 +50,6 @@ end
 decodet['quoted-printable'] = function()
     return ltn12.filter.cycle(unqp, "")
 end
-
-local io, string = io, string
 
 local function format(chunk)
     if chunk then
