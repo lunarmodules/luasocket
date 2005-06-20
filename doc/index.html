@@ -165,32 +165,35 @@ support.
 </p>
 
 <ul>
-<li> Improved: <tt>tcp{client}:send(data, i)</tt> now returns <tt>(i+sent-1)</tt>.  This is great for non-blocking I/O, but might break some code;
-<li> Improved: HTTP, SMTP, and FTP functions accept a new field
-<tt>connect</tt> that can be used to replace the function invoked to 
-create and connect the sockets used internally;
-<li> Fixed: <tt>url.absolute()</tt> was not working when <tt>base_url</tt> was 
-already parsed;
-<li> Fixed: <tt>http.request()</tt> was redirecting even when the location 
-header was empty (well, it shouldn't be empty);
-<li> Fixed: <tt>tcp{client}:shutdown()</tt> was checking for group instead of class;
-<li> Fixed: <tt>socket.try()</tt> can't be used in place of <tt>assert()</tt>. The manual and examples don't do it anymore; 
-<li> Improved: Get rid of <tt>require("base")</tt> kludge in <tt>package.loaded</tt>;
-<li> Fixedd: Parts of the manual referred to <tt>require("http")</tt> instead of
+<li> Improved: <tt>tcp:send(data, i, j)</tt> to return <tt>(i+sent-1)</tt>.  This is great for non-blocking I/O, but might break some code;
+<li> Improved: HTTP, SMTP, and FTP functions to accept a new field
+<tt>create</tt> that overrides the function used to create socket objects;
+<li> Fixed: <tt>url.absolute()</tt> to work when <tt>base_url</tt> is in
+parsed form;
+<li> Fixed: <tt>http.request()</tt> not to redirect when the location 
+header is empty (naughty servers...);
+<li> Fixed: <tt>tcp{client}:shutdown()</tt> to check for class instead of
+group;
+<li> Fixed: The manual to stop using <tt>socket.try()</tt> in place of
+<tt>assert()</tt>, since it can't; 
+<li> Improved: Got rid of <tt>package.loaded.base = _G</tt> kludge;
+<li> Fixed: Parts of the manual referred to <tt>require("http")</tt> instead of
 <tt>require("socket.http")</tt>;
-<li> Improved: Changed 'l' prefix in C libraries to 'c' to avoid clash with LHF
-libraries;
-<li> Improved: Using bundles in Mac OS X; 
-<li> Fixed: <tt>luasocket.h</tt> was exporting <tt>luaopen_socket</tt> 
-instead of <tt>luaopen_csocket</tt>;
-<li> Fixed: <tt>udp:setpeername()</tt> only worked for 
-<tt>udp{unconnected}</tt>. Now you can "disconnect" an <tt>UDP</tt> socket;
-<li> Fixed: bug in http.lua that caused some requests to fail (Florian
-Berger);
-<li> Fixed: bug in <tt>select.c</tt> that prevented sockets with descriptor 0 from working (Renato Maia);
-<li> Fixed: "bug" that caused <tt>dns.toip</tt> to crash under uLinux;
-<li> Fixed: "bug" that caused a crash in <tt>gethostbyname</tt> under VMS
+<li> Improved: Socket and MIME binaries are called 'core' each inside their
+directory (ex. "socket/core.dll"). The 'l' prefix was just a bad idea;
+<li> Improved: Using bundles in Mac OS X, instead of dylibs; 
+<li> Fixed: <tt>luasocket.h</tt> to export <tt>luaopen_socketcore</tt>;
+<li> Fixed: <tt>udp:setpeername()</tt> so you can "disconnect" an 
+<tt>UDP</tt> socket;
+<li> Fixed: A weird bug in HTTP support that caused some requests to 
+fail (Florian Berger);
+<li> Fixed: Bug in <tt>socket.select()</tt> that caused sockets 
+with descriptor 0 to be ignored (Renato Maia);
+<li> Fixed: "Bug" that caused <tt>dns.toip()</tt> to crash under uLinux
+(William Trenker);
+<li> Fixed: "Bug" that caused <tt>gethostbyname</tt> to crash under VMS
 (Renato Maia);
+<li> Fixed: <tt>tcp:send("")</tt> to return 0 bytes sent (Alexander Marinov);
 <li> Improved: <tt>socket.DEBUG</tt> and <tt>socket.VERSION</tt> became <tt>socket._DEBUGs</tt> and <tt>socket._VERSION</tt> for uniformity with other libraries.
 </ul>
 

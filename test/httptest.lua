@@ -26,7 +26,7 @@ host = host or "localhost" -- "diego.student.princeton.edu"
 proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
-index_file = "test/index.html"
+index_file = "index.html"
 
 -- read index with CRLF convention
 index = readfile(index_file)

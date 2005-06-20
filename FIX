@@ -14,3 +14,4 @@ fixed a bug in select.c that prevented sockets with descriptor 0 from working (R
 fixed a "bug" that caused dns.toip to crash under uLinux
 fixed a "bug" that caused a crash in gethostbyname under VMS
 DEBUG and VERSION became _DEBUG and _VERSION
+send returns the right value if input is "". Alexander Marinov

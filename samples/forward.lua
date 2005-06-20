@@ -2,7 +2,7 @@
 local socket = require"socket"
 
 -- creates a new set data structure
-function newset(a)
+function newset()
     local reverse = {}
     local set = {}
     return setmetatable(set, {__index = {

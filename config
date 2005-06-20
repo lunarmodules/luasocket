@@ -1,0 +1,47 @@
+#------
+# LuaSocket makefile configuration
+#
+
+#------
+# Output file names
+#
+EXT=so
+SOCKET_V=2.0.0
+MIME_V=1.0.0
+SOCKET_SO=socket-core.$(EXT).$(SOCKET_V) 
+MIME_SO=mime-core.$(EXT).$(MIME_V)
+UNIX_SO=unix.$(EXT)
+
+#------
+# Lua includes and libraries
+#
+LUAINC=
+LUALIB=
+
+#------
+# Compat-5.1 directory
+#
+COMPAT=compat-5.1r3
+
+#------
+# Top of your Lua installation
+# Relative paths will be inside src tree
+#
+INSTALL_TOP=/usr/local/share/lua/5.0
+
+INSTALL_DATA=cp
+INSTALL_EXEC=cp
+INSTALL_LINK=ln
+
+#------
+# Compiler and linker settings
+#
+CC=gcc
+DEF=-DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
+CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2
+LDFLAGS=-bundle -undefined dynamic_lookup
+LD=export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
+
+#------
+# End of makefile configuration
+#
