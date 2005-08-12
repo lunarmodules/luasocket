@@ -127,6 +127,7 @@ smtp.<b>send{</b><br>
 &nbsp;&nbsp;[port = <i>number</i>,]<br>
 &nbsp;&nbsp;[domain = <i>string</i>,]<br>
 &nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
+&nbsp;&nbsp;[create = <i>function</i>]<br>
 <b>}</b>
 </p>
 
@@ -137,6 +138,7 @@ doesn't have a simple interface. However, see the
 <a href=#message><tt>message</tt></a> source factory for 
 a very powerful way to define the message contents.
 </p>
+
 
 <p class=parameters>
 The sender is given by the e-mail address in the <tt>from</tt> field. 
@@ -158,7 +160,9 @@ local machine host name;
 <li> <tt>step</tt>: 
 <a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
 pump step function used to pass data from the
-source to the server. Defaults to the LTN12 <tt>pump.step</tt> function.
+source to the server. Defaults to the LTN12 <tt>pump.step</tt> function;
+<li><tt>accept</tt>: An optional function to be used instead of
+<a href=tcp.html#socket.tcp><tt>socket.tcp</tt></a> when the communications socket is created. 
 </ul>
 
 <p class=return> 
@@ -167,7 +171,7 @@ If  successful, the function returns 1. Otherwise, the function returns
 </p>
 
 <p class=note>
-Note: SMTP servers are can be very picky with the format of e-mail
+Note: SMTP servers can be very picky with the format of e-mail
 addresses. To be safe, use only addresses of the form
 "<tt>&lt;fulano@example.com&gt;</tt>" in the <tt>from</tt> and
 <tt>rcpt</tt> arguments to the <tt>send</tt> function. In headers, e-mail

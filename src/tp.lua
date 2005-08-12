@@ -13,6 +13,7 @@ local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
 module("socket.tp")
+getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -98,7 +99,8 @@ end
 
 function metat.__index:source(source, step)
     local sink = socket.sink("keep-open", self.c)
-    return ltn12.pump.all(source, sink, step or ltn12.pump.step)
+    local ret, err = ltn12.pump.all(source, sink, step or ltn12.pump.step)
+    return ret, err
 end
 
 -- closes the underlying c
@@ -108,8 +110,8 @@ function metat.__index:close()
 end
 
 -- connect with server and return c object
-function connect(host, port, timeout)
-    local c, e = socket.tcp()
+function connect(host, port, create, timeout)
+    local c, e = (create or socket.tcp())
     if not c then return nil, e end
     c:settimeout(timeout or TIMEOUT)
     local r, e = c:connect(host, port)
@@ -120,4 +122,3 @@ function connect(host, port, timeout)
     return base.setmetatable({c = c}, metat)
 end
 
---getmetatable(_M).__index = nil

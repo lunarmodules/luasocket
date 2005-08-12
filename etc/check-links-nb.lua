@@ -84,17 +84,22 @@ function newcreate(thread)
                 first = (first or 1) - 1
                 local result, error
                 while true do
+                    -- tell dispatcher we want to keep sending before we
+                    -- yield control
+                    sending:insert(tcp)                   
+                    -- return control to dispatcher
+                    -- if upon return the dispatcher tells us we timed out,
+                    -- return an error to whoever called us
+                    if coroutine.yield() == "timeout" then 
+                        return nil, "timeout" 
+                    end
+                    -- mark time we started waiting
+                    context[tcp].last = socket.gettime()
+                    -- try sending
                     result, error, first = tcp:send(data, first+1, last)
-                    if error == "timeout" then
-                        -- tell dispatcher we want to keep sending
-                        sending:insert(tcp)
-                        -- mark time we started waiting
-                        context[tcp].last = socket.gettime()
-                        -- return control to dispatcher
-                        if coroutine.yield() == "timeout" then 
-                            return nil, "timeout" 
-                        end
-                    else return result, error, first end
+                    -- if we are done, or there was an unexpected error, 
+                    -- break away from loop
+                    if error ~= "timeout" then return result, error, first end
                 end
             end,
             -- receive in non-blocking mode and yield on timeout
@@ -102,28 +107,35 @@ function newcreate(thread)
                 local error, partial = "timeout", ""
                 local value
                 while true do 
+                    -- tell dispatcher we want to keep receiving before we
+                    -- yield control
+                    receiving:insert(tcp)
+                    -- return control to dispatcher
+                    -- if upon return the dispatcher tells us we timed out,
+                    -- return an error to whoever called us
+                    if coroutine.yield() == "timeout" then 
+                        return nil, "timeout" 
+                    end
+                    -- mark time we started waiting
+                    context[tcp].last = socket.gettime()
+                    -- try receiving
                     value, error, partial = tcp:receive(pattern, partial)
-                    if error == "timeout" then 
-                        -- tell dispatcher we want to keep receiving
-                        receiving:insert(tcp)
-                        -- mark time we started waiting
-                        context[tcp].last = socket.gettime()
-                        -- return control to dispatcher
-                        if coroutine.yield() == "timeout" then 
-                            return nil, "timeout" 
-                        end
-                    else return value, error, partial end
+                    -- if we are done, or there was an unexpected error, 
+                    -- break away from loop
+                    if error ~= "timeout" then return value, error, partial end
                 end
             end,
             -- connect in non-blocking mode and yield on timeout
             connect = function(self, host, port)
                 local result, error = tcp:connect(host, port)
+                -- mark time we started waiting
+                context[tcp].last = socket.gettime()
                 if error == "timeout" then
                     -- tell dispatcher we will be able to write uppon connection
                     sending:insert(tcp)
-                    -- mark time we started waiting
-                    context[tcp].last = socket.gettime()
                     -- return control to dispatcher
+                    -- if upon return the dispatcher tells us we have a
+                    -- timeout, just abort
                     if coroutine.yield() == "timeout" then 
                         return nil, "timeout" 
                     end
@@ -148,10 +160,10 @@ function newcreate(thread)
 end
 
 -- get the status of a URL, non-blocking
-function getstatus(from, link)
+function getstatus(link)
     local parsed = url.parse(link, {scheme = "file"})
     if parsed.scheme == "http" then
-        local thread = coroutine.create(function(thread, from, link)
+        local thread = coroutine.create(function(thread, link)
             local r, c, h, s = http.request{
                 method = "HEAD",
                 url = link, 
@@ -162,7 +174,7 @@ function getstatus(from, link)
             nthreads = nthreads - 1
         end)
         nthreads = nthreads + 1
-        assert(coroutine.resume(thread, thread, from, link))
+        assert(coroutine.resume(thread, thread, link))
     end
 end
 
@@ -190,6 +202,8 @@ function dispatch()
         local now = socket.gettime()
         for who, data in pairs(context) do
             if  data.last and now - data.last > TIMEOUT then
+                sending:remove(who)
+                receiving:remove(who)
                 assert(coroutine.resume(context[who].thread, "timeout"))
             end
         end
@@ -206,14 +220,15 @@ function readfile(path)
     else return nil, error end
 end
 
-function retrieve(u)
+function load(u)
     local parsed = url.parse(u, { scheme = "file" })
     local body, headers, code, error
     local base = u
     if parsed.scheme == "http" then
         body, code, headers = http.request(u)
         if code == 200 then
-            base = base or headers.location
+            -- if there was a redirect, update base to reflect it
+            base = headers.location or base
         end
         if not body then
             error = code
@@ -241,12 +256,13 @@ function getlinks(body, base)
     return links
 end
 
-function checklinks(from)
-    local base, body, error = retrieve(from)
+function checklinks(address)
+    local base, body, error = load(address)
     if not body then print(error) return end
+    print("Checking ", base)
     local links = getlinks(body, base)
     for _, link in ipairs(links) do
-        getstatus(from, link)
+        getstatus(link)
     end
 end
 
@@ -255,8 +271,7 @@ if table.getn(arg) < 1 then
     print("Usage:\n  luasocket check-links.lua {<url>}")
     exit()
 end
-for _, a in ipairs(arg) do
-    print("Checking ", a)
-    checklinks(url.absolute("file:", a))
+for _, address in ipairs(arg) do
+    checklinks(url.absolute("file:", address))
 end
 dispatch()

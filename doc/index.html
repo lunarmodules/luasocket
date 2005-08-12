@@ -168,6 +168,7 @@ support.
 <li> Improved: <tt>tcp:send(data, i, j)</tt> to return <tt>(i+sent-1)</tt>.  This is great for non-blocking I/O, but might break some code;
 <li> Improved: HTTP, SMTP, and FTP functions to accept a new field
 <tt>create</tt> that overrides the function used to create socket objects;
+<li> Fixed: <tt>smtp.send</tt> was hanging on errors returned by LTN12 sources;
 <li> Fixed: <tt>url.absolute()</tt> to work when <tt>base_url</tt> is in
 parsed form;
 <li> Fixed: <tt>http.request()</tt> not to redirect when the location 
@@ -194,7 +195,8 @@ with descriptor 0 to be ignored (Renato Maia);
 <li> Fixed: "Bug" that caused <tt>gethostbyname</tt> to crash under VMS
 (Renato Maia);
 <li> Fixed: <tt>tcp:send("")</tt> to return 0 bytes sent (Alexander Marinov);
-<li> Improved: <tt>socket.DEBUG</tt> and <tt>socket.VERSION</tt> became <tt>socket._DEBUGs</tt> and <tt>socket._VERSION</tt> for uniformity with other libraries.
+<li> Improved: <tt>socket.DEBUG</tt> and <tt>socket.VERSION</tt> became <tt>socket._DEBUGs</tt> and <tt>socket._VERSION</tt> for uniformity with other libraries;
+<li> Improved: <tt>socket.select</tt> now works on empty sets on Windows. 
 </ul>
 
 <!-- incompatible +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

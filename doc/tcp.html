@@ -79,7 +79,7 @@ reported by <b><tt>nil</tt></b> followed by a message describing the error.
 <p class=note>
 Note: calling <a href=socket.html#select><tt>socket.select</tt></a>
 with   a  server   object   in
-the <tt>receive</tt>  parameter  before  a   call  to  <tt>accept</tt> does
+the <tt>recvt</tt>  parameter  before  a   call  to  <tt>accept</tt> does
 <em>not</em> guarantee  <tt>accept</tt> will  return immediately.  Use the <a
 href=#settimeout><tt>settimeout</tt></a> method or <tt>accept</tt>
 might block until <em>another</em> client shows up. 
@@ -111,7 +111,7 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 
 <p class=note>
 Note: The function <a href=socket.html#bind><tt>socket.bind</tt></a> 
-is available and is a shortcut for the creation server sockets.
+is available and is a shortcut for the creation of server sockets.
 </p>
 
 <!-- close ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -173,8 +173,11 @@ is available and is a shortcut for the creation of client sockets.
 <p class=note>
 Note: Starting with LuaSocket 2.0, 
 the <a href=#settimeout><tt>settimeout</tt></a>
-method affects the behavior of connect, causing it to return in case of
-a timeout.
+method affects the behavior of <tt>connect</tt>, causing it to return 
+with an error in case of a timeout. If that happens, you can still call <a
+href=socket.html#select><tt>socket.select</tt></a> with the socket in the
+<tt>sendt</tt> table. The socket will be writable when the connection is
+stablished.
 </p>
 
 <!-- getpeername ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -328,11 +331,11 @@ substring to be sent.
 </p>
 
 <p class=return>
-If successful, the method returns the number of bytes accepted by 
-the transport layer. In case of error, the method returns 
+If successful, the method returns the number of bytes sent.
+In case of error, the method returns 
 <b><tt>nil</tt></b>, followed by an error message, followed by the
-partial number of bytes accepted by the transport layer.  
-The error message can be '<tt>closed</tt>' in case
+index of the first character within <tt>[i, j]</tt> that has not been sent yet
+(you might want to try again from then on). The error message can be '<tt>closed</tt>' in case
 the connection was  closed before the transmission was  completed or the
 string  '<tt>timeout</tt>'  in  case  there was  a  timeout  during  the
 operation.
@@ -433,7 +436,7 @@ of bandwidth.
 <p class=parameters>
 <tt>Received</tt> is a number with the new number of bytes received.
 <tt>Sent</tt> is a number with the new number of bytes sent.
-<tt>Age</tt> is the new age in seconds</tt>
+<tt>Age</tt> is the new age in seconds.
 </p>
 
 <p class=return>

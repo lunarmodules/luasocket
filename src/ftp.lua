@@ -17,6 +17,7 @@ local url = require("socket.url")
 local tp = require("socket.tp")
 local ltn12 = require("ltn12")
 module("socket.ftp")
+getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -35,8 +36,8 @@ PASSWORD = "anonymous@anonymous.org"
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function open(server, port)
-    local tp = socket.try(tp.connect(server, port or PORT, TIMEOUT))
+function open(server, port, create)
+    local tp = socket.try(tp.connect(server, port or PORT, create, TIMEOUT))
     local f = base.setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)
@@ -199,7 +200,7 @@ end
 local function tput(putt)
     putt = override(putt)
     socket.try(putt.host, "missing hostname")
-    local f = open(putt.host, putt.port)
+    local f = open(putt.host, putt.port, putt.create)
     f:greet()
     f:login(putt.user, putt.password)
     if putt.type then f:type(putt.type) end
@@ -242,7 +243,7 @@ end)
 local function tget(gett)
     gett = override(gett)
     socket.try(gett.host, "missing hostname")
-    local f = open(gett.host, gett.port)
+    local f = open(gett.host, gett.port, gett.create)
     f:greet()
     f:login(gett.user, gett.password)
     if gett.type then f:type(gett.type) end
@@ -264,7 +265,7 @@ command = socket.protect(function(cmdt)
     cmdt = override(cmdt)
     socket.try(cmdt.host, "missing hostname")
     socket.try(cmdt.command, "missing command")
-    local f = open(cmdt.host, cmdt.port)
+    local f = open(cmdt.host, cmdt.port, cmdt.create)
     f:greet()
     f:login(cmdt.user, cmdt.password)
     f.try(f.tp:command(cmdt.command, cmdt.argument))
@@ -278,4 +279,3 @@ get = socket.protect(function(gett)
     else return tget(gett) end
 end)
 
---getmetatable(_M).__index = nil

@@ -37,7 +37,7 @@ function retrieve(u)
 	if parsed.scheme == "http" then 
         body, code, headers = http.request(u)
         if code == 200 then 
-            base = base or headers.location
+            base = headers.location or base
         end
         if not body then 
             error = code

@@ -106,6 +106,7 @@ ftp.<b>get{</b><br>
 &nbsp;&nbsp;[port = <i>number</i>,]<br>
 &nbsp;&nbsp;[type = <i>string</i>,]<br>
 &nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
+&nbsp;&nbsp;[create = <i>function</i>]<br>
 <b>}</b>
 </p>
 
@@ -138,7 +139,9 @@ authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
 <li><tt>step</tt>: 
 <a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
 pump step function used to pass data from the
-server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function.
+server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function;
+<li><tt>accept</tt>: An optional function to be used instead of
+<a href=tcp.html#socket.tcp><tt>socket.tcp</tt></a> when the communications socket is created. 
 </ul>
 
 <p class=return>
@@ -188,6 +191,7 @@ ftp.<b>put{</b><br>
 &nbsp;&nbsp;[port = <i>number</i>,]<br>
 &nbsp;&nbsp;[type = <i>string</i>,]<br>
 &nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
+&nbsp;&nbsp;[create = <i>function</i>]<br>
 <b>}</b>
 </p>
 
@@ -220,7 +224,9 @@ authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";
 <li><tt>step</tt>: 
 <a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
 pump step function used to pass data from the
-server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function.
+server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function;
+<li><tt>accept</tt>: An optional function to be used instead of
+<a href=tcp.html#socket.tcp><tt>socket.tcp</tt></a> when the communications socket is created. 
 </ul>
 
 <p class=return>

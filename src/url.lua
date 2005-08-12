@@ -12,6 +12,7 @@ local string = require("string")
 local base = _G
 local table = require("table")
 module("socket.url")
+getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Encodes a string into its escaped hexadecimal representation
@@ -279,4 +280,3 @@ function build_path(parsed, unsafe)
 	return path
 end
 
---getmetatable(_M).__index = nil

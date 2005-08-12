@@ -1,21 +1,12 @@
+new instalation scheme???
+test empty socket.select no windows.
+bug by mathew percival?
+
+arranjar um jeito de fazer multipart/alternative
+
 what the hell does __unload do?
-clean timeout argument to open functions in SMTP, HTTP and FTP
-add create field to FTP and SMTP
-talk about new create field in HTTP, FTP and SMTP
-talk about the non-blocking connect in the manual
+
 test it on Windows!!!
-
-think about a dispatcher.
-    - it creates a server and receives a function that will do the work on
-    received connections
-    - this function is invoked with the client socket
-    - it calls special send and receive functions that yield on timeout
-
-think about how to extend http, ftp, smtp to use special send and receive
-functions for non-blocking so they can be used in the context of the
-dispatcher!
-
-adjust manual for new sock:send returns.
 
 leave code for losers that don't have nanosleep
 
@@ -41,7 +32,16 @@ testar os options!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 
-eliminate globals from namespaces created by module().
-
 * BUG NO SET DO TINYIRC!!! SINISTRO.
 * _VERSION, _DEBUG, etc.
+* talk about new create field in HTTP, FTP and SMTP
+* talk about the non-blocking connect in the manual
+* think about how to extend http, ftp, smtp to use special send and receive
+* functions for non-blocking so they can be used in the context of the
+* dispatcher!
+* adjust manual for new sock:send returns.
+* think about a dispatcher.
+    * - it creates a server and receives a function that will do the work on
+    * received connections
+    * - this function is invoked with the client socket
+    * - it calls special send and receive functions that yield on timeout

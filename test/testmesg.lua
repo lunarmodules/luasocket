@@ -48,18 +48,19 @@ source = smtp.message{
   }
 }
 
---[[
-sink = ltn12.sink.file(io.stdout)
-ltn12.pump.all(source, sink)
-]]
+function filter(s)
+    if s then io.write(s) end
+    return s
+end
 
--- finally send it
 r, e = smtp.send{
     rcpt = {"<diego@tecgraf.puc-rio.br>",
             "<diego@princeton.edu>" },
     from = "<diego@princeton.edu>",
-    source = source,
-    server = "mail.cs.princeton.edu"
+    source = ltn12.source.chain(source, filter),
+    --server = "mail.cs.princeton.edu"
+    server = "localhost",
+    port = 2525
 }
 
 print(r, e)

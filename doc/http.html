@@ -131,7 +131,8 @@ http.<b>request{</b><br>
 &nbsp;&nbsp;[source = <i>LTN12 source</i>],<br>
 &nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
 &nbsp;&nbsp;[proxy = <i>string</i>,]<br>
-&nbsp;&nbsp;[redirect = <i>boolean</i>]<br>
+&nbsp;&nbsp;[redirect = <i>boolean</i>,]<br>
+&nbsp;&nbsp;[create = <i>function</i>]<br>
 <b>}</b>
 </p>
 
@@ -178,7 +179,9 @@ pump step function used to move data.
 Defaults to the LTN12 <tt>pump.step</tt> function.
 <li><tt>proxy</tt>: The URL of a proxy server to use. Defaults to no proxy; 
 <li><tt>redirect</tt>: Set to <tt><b>false</b></tt> to prevent the 
-function from  automatically following 301 or 302 server redirect messages. 
+function from  automatically following 301 or 302 server redirect messages; 
+<li><tt>accept</tt>: An optional function to be used instead of
+<a href=tcp.html#socket.tcp><tt>socket.tcp</tt></a> when the communications socket is created. 
 </ul>
 
 <p class=return>

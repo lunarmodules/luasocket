@@ -12,6 +12,7 @@ local string = require("string")
 local table = require("table")
 local base = _G
 module("ltn12")
+getmetatable(_M).__index = nil
 
 filter = {}
 source = {}
@@ -133,8 +134,6 @@ function source.rewind(src)
         end
     end
 end
-
-local print = print
 
 -- chains a source with a filter
 function source.chain(src, f)
@@ -258,7 +257,8 @@ end
 function pump.step(src, snk)
     local chunk, src_err = src()
     local ret, snk_err = snk(chunk, src_err)
-    return chunk and ret and not src_err and not snk_err, src_err or snk_err
+    if chunk and ret then return 1
+    else return nil, src_err or snk_err end
 end
 
 -- pumps all data from a source to a sink, using a step function
@@ -267,8 +267,10 @@ function pump.all(src, snk, step)
     step = step or pump.step
     while true do
         local ret, err = step(src, snk)
-        if not ret then return not err, err end
+        if not ret then 
+            if err then return nil, err
+            else return 1 end
+        end
     end
 end
 
---getmetatable(_M).__index = nil

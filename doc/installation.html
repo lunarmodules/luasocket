@@ -71,11 +71,11 @@ Here is the standard LuaSocket distribution directory structure:</p>
 
 <pre class=example>
 &lt;ROOT&gt;/compat-5.1.lua
-&lt;ROOT&gt;/socket.lua
-&lt;ROOT&gt;/lsocket.dll
-&lt;ROOT&gt;/mime.lua
-&lt;ROOT&gt;/lmime.dll
 &lt;ROOT&gt;/ltn12.lua
+&lt;ROOT&gt;/mime/init.lua
+&lt;ROOT&gt;/mime/core.dll
+&lt;ROOT&gt;/socket/init.lua
+&lt;ROOT&gt;/socket/core.dll
 &lt;ROOT&gt;/socket/http.lua
 &lt;ROOT&gt;/socket/tp.lua
 &lt;ROOT&gt;/socket/ftp.lua
@@ -83,10 +83,8 @@ Here is the standard LuaSocket distribution directory structure:</p>
 &lt;ROOT&gt;/socket/url.lua
 </pre>
 
-<p> Naturally, on Unix systems, <tt>lsocket.dll</tt> and <tt>lmime.dll</tt>
-would be replaced by <tt>lsocket.so</tt> and <tt>lmime.so</tt>. In Mac OS
-X, they would be replaced by <tt>lsocket.dylib</tt> and
-<tt>lmime.dylib</tt>. </p>
+<p> Naturally, on Unix systems, <tt>core.dll</tt>
+would be replaced by <tt>core.so</tt>.
 
 <p> In order for the interpreter to find all LuaSocket components, three
 environment variables need to be set. The first environment variable tells

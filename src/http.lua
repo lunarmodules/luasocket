@@ -16,6 +16,7 @@ local string = require("string")
 local base = _G
 local table = require("table")
 module("socket.http")
+getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -105,26 +106,16 @@ end
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
--- default connect function, respecting the timeout
-local function connect(host, port, create)
-    local c, e = (create or socket.tcp)()
-    if not c then return nil, e end
-    c:settimeout(TIMEOUT)
-    local r, e = c:connect(host, port or PORT)
-    if not r then 
-        c:close()
-        return nil, e 
-    end
-    return c
-end
-
 function open(host, port, create)
     -- create socket with user connect function, or with default
-    local c = socket.try(connect(host, port, create))
-    -- create our http request object, pointing to the socket
+    local c = socket.try(create or socket.tcp)()
     local h = base.setmetatable({ c = c }, metat)
-    -- make sure the object close gets called on exception
+    -- create finalized try
     h.try = socket.newtry(function() h:close() end)
+    -- set timeout before connecting
+    h.try(c:settimeout(TIMEOUT))
+    h.try(c:connect(host, port or PORT))
+    -- here everything worked
     return h 
 end
 
@@ -134,11 +125,11 @@ function metat.__index:sendrequestline(method, uri)
 end
 
 function metat.__index:sendheaders(headers)
+    local h = "\r\n"
     for i, v in base.pairs(headers) do
-        self.try(self.c:send(i .. ": " .. v .. "\r\n"))
+        h = i .. ": " .. v .. "\r\n" .. h
     end
-    -- mark end of request headers
-    self.try(self.c:send("\r\n"))
+    self.try(self.c:send(h))
     return 1
 end
 
@@ -213,7 +204,7 @@ local function adjustheaders(headers, host)
         ["te"] = "trailers"
     }
     -- override with user headers
-    for i,v in pairs(headers or lower) do
+    for i,v in base.pairs(headers or lower) do
         lower[string.lower(i)] = v
     end
     return lower
@@ -232,7 +223,7 @@ local function adjustrequest(reqt)
     local nreqt = reqt.url and url.parse(reqt.url, default) or {}
     local t = url.parse(reqt.url, default)
     -- explicit components override url
-    for i,v in pairs(reqt) do nreqt[i] = v end
+    for i,v in base.pairs(reqt) do nreqt[i] = v end
     socket.try(nreqt.host, "invalid host '" .. base.tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)
@@ -276,11 +267,11 @@ function tauthorize(reqt)
     return trequest(reqt)
 end
 
-function tredirect(reqt, headers)
-    return trequest {
+function tredirect(reqt, location)
+    local result, code, headers, status = trequest {
         -- the RFC says the redirect URL has to be absolute, but some
         -- servers do not respect that
-        url = url.absolute(reqt, headers["location"]),
+        url = url.absolute(reqt, location),
         source = reqt.source,
         sink = reqt.sink,
         headers = reqt.headers,
@@ -288,6 +279,9 @@ function tredirect(reqt, headers)
         nredirects = (reqt.nredirects or 0) + 1,
         connect = reqt.connect
     }
+    -- pass location header back as a hint we redirected
+    headers.location = headers.location or location
+    return result, code, headers, status
 end
 
 function trequest(reqt)
@@ -301,7 +295,7 @@ function trequest(reqt)
     headers = h:receiveheaders()
     if shouldredirect(reqt, code, headers) then 
         h:close()
-        return tredirect(reqt, headers)
+        return tredirect(reqt, headers.location)
     elseif shouldauthorize(reqt, code) then 
         h:close()
         return tauthorize(reqt)
@@ -332,4 +326,3 @@ request = socket.protect(function(reqt, body)
     else return trequest(reqt) end
 end)
 
---getmetatable(_M).__index = nil

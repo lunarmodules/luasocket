@@ -18,6 +18,7 @@ local tp = require("socket.tp")
 local ltn12 = require("ltn12")
 local mime = require("mime")
 module("socket.smtp")
+getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -111,12 +112,12 @@ function metat.__index:send(mailt)
     self:data(ltn12.source.chain(mailt.source, mime.stuff()), mailt.step)
 end
 
-function open(server, port)
-    local tp = socket.try(tp.connect(server or SERVER, port or PORT, TIMEOUT))
+function open(server, port, create)
+    local tp = socket.try(tp.connect(server or SERVER, port or PORT, 
+        create, TIMEOUT))
     local s = base.setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
     s.try = socket.newtry(function() 
-        if s.tp:command("QUIT") then s.tp:check("2..") end
         s:close()
     end)
     return s 
@@ -165,10 +166,9 @@ end
 local function send_source(mesgt)
     -- set content-type if user didn't override
     if not mesgt.headers or not mesgt.headers["content-type"] then
-        coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n')
-    end
+        coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n\r\n')
+    else coroutine.yield("\r\n") end
     -- finish headers
-    coroutine.yield("\r\n")
     -- send body from source
     while true do 
         local chunk, err = mesgt.body()
@@ -182,21 +182,20 @@ end
 local function send_string(mesgt)
     -- set content-type if user didn't override
     if not mesgt.headers or not mesgt.headers["content-type"] then
-        coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n')
-    end
-    -- finish headers
-    coroutine.yield("\r\n")
+      coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n\r\n')
+    else coroutine.yield("\r\n") end
     -- send body from string
     coroutine.yield(mesgt.body)
-
 end
 
--- yield the headers one by one
+-- yield the headers all at once 
 local function send_headers(mesgt)
     if mesgt.headers then
+        local h = ""
         for i,v in base.pairs(mesgt.headers) do
-            coroutine.yield(i .. ':' .. v .. "\r\n")
+            h = i .. ': ' .. v .. "\r\n" .. h
         end
+        coroutine.yield(h)
     end
 end
 
@@ -237,12 +236,10 @@ end
 -- High level SMTP API
 -----------------------------------------------------------------------------
 send = socket.protect(function(mailt)
-    local s = open(mailt.server, mailt.port)
+    local s = open(mailt.server, mailt.port, mailt.create)
     local ext = s:greet(mailt.domain)
     s:auth(mailt.user, mailt.password, ext)
     s:send(mailt)
     s:quit()
     return s:close()
 end)
-
---getmetatable(_M).__index = nil

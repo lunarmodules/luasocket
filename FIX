@@ -1,3 +1,14 @@
+fix smtp.send hang on source error
+add create field to FTP and SMTP and fix HTTP ugliness
+clean timeout argument to open functions in SMTP, HTTP and FTP
+eliminate globals from namespaces created by module().
+
+
+
+
+
+
+
 url.absolute was not working when base_url was already parsed
 http.request was redirecting even when the location header was empty
 tcp{client}:shutdown() was checking for group instead of class.

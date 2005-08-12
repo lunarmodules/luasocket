@@ -12,6 +12,7 @@ local string = require("string")
 local math = require("math")
 local socket = require("socket.core")
 module("socket")
+getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Exported auxiliar functions
@@ -131,5 +132,3 @@ sourcet["default"] = sourcet["until-closed"]
 
 source = choose(sourcet)
 
--- clear globals from namespace
-getmetatable(_M).__index = nil

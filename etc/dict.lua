@@ -16,6 +16,7 @@ local url = require("socket.url")
 local tp = require("socket.tp")
 
 module("socket.dict")
+getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Globals 
@@ -151,4 +152,3 @@ get = socket.protect(function(gett)
     else return tget(gett) end
 end)
 
---getmetatable(_M).__index = nil
