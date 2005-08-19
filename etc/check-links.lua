@@ -1,49 +1,84 @@
 -----------------------------------------------------------------------------
--- Little program that checks links in HTML files
+-- Little program that checks links in HTML files, using coroutines and
+-- non-blocking I/O via the dispatcher module.
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id$
+-- RCS ID: $$
 -----------------------------------------------------------------------------
-local http = require("socket.http")
-local url = require("socket.url")
-http.TIMEOUT = 10
+local dispatch, url, http, handler
+
+arg = arg or {}
+if table.getn(arg) < 1 then
+    print("Usage:\n  luasocket check-links.lua [-n] {<url>}")
+    exit()
+end
+
+if arg[1] ~= "-n" then
+    -- if using blocking I/O, simulate dispatcher interface
+    url = require("socket.url")
+    http = require("socket.http")
+    handler = { 
+        start = function(self, f)
+            f()
+        end,
+        tcp = socket.tcp
+    }
+    http.TIMEOUT = 10
+else
+    -- if non-blocking I/O was requested, disable dispatcher
+    table.remove(arg, 1)
+    dispatch = require("dispatch")
+    dispatch.TIMEOUT = 10
+    url = require("socket.url")
+    http = require("socket.http")
+    handler = dispatch.newhandler()
+end
+
+local nthreads = 0
+
+-- get the status of a URL using the dispatcher
+function getstatus(link)
+    local parsed = url.parse(link, {scheme = "file"})
+    if parsed.scheme == "http" then
+        nthreads = nthreads + 1
+        handler:start(function()
+            local r, c, h, s = http.request{
+                method = "HEAD",
+                url = link, 
+                create = handler.tcp
+            }
+            if r and c == 200 then io.write('\t', link, '\n')
+            else io.write('\t', link, ': ', tostring(c), '\n') end
+            nthreads = nthreads - 1
+        end)
+    end
+end
 
 function readfile(path)
-	path = url.unescape(path)
-	local file, error = io.open(path, "r")
-	if file then 
+    path = url.unescape(path)
+    local file, error = io.open(path, "r")
+    if file then
         local body = file:read("*a")
-		file:close()
+        file:close()
         return body
     else return nil, error end
 end
 
-function getstatus(u)
-	local parsed = url.parse(u, {scheme = "file"})
-    if parsed.scheme == "http" then
-        local r, c, h, s = http.request{url = u, method = "HEAD"}
-        if c ~= 200 then return s or c end
-    elseif parsed.scheme == "file" then
-        local file, error = io.open(url.unescape(parsed.path), "r")
-        if file then file:close()
-        else return error end 
-    else return string.format("unhandled scheme '%s'", parsed.scheme) end
-end
-
-function retrieve(u)
-	local parsed = url.parse(u, { scheme = "file" })
+function load(u)
+    local parsed = url.parse(u, { scheme = "file" })
     local body, headers, code, error
     local base = u
-	if parsed.scheme == "http" then 
+    if parsed.scheme == "http" then
         body, code, headers = http.request(u)
-        if code == 200 then 
+        if code == 200 then
+            -- if there was a redirect, update base to reflect it
             base = headers.location or base
         end
-        if not body then 
+        if not body then
             error = code
         end
-    elseif parsed.scheme == "file" then 
-        body, error = readfile(parsed.path) 
+    elseif parsed.scheme == "file" then
+        body, error = readfile(parsed.path)
     else error = string.format("unhandled scheme '%s'", parsed.scheme) end
     return base, body, error
 end
@@ -53,35 +88,32 @@ function getlinks(body, base)
     body = string.gsub(body, "%<%!%-%-.-%-%-%>", "")
     local links = {}
     -- extract links
-	body = string.gsub(body, '[Hh][Rr][Ee][Ff]%s*=%s*"([^"]*)"', function(href)
+    body = string.gsub(body, '[Hh][Rr][Ee][Ff]%s*=%s*"([^"]*)"', function(href)
         table.insert(links, url.absolute(base, href))
     end)
-	body = string.gsub(body, "[Hh][Rr][Ee][Ff]%s*=%s*'([^']*)'", function(href)
+    body = string.gsub(body, "[Hh][Rr][Ee][Ff]%s*=%s*'([^']*)'", function(href)
         table.insert(links, url.absolute(base, href))
     end)
-	string.gsub(body, "[Hh][Rr][Ee][Ff]%s*=%s*(.-)>", function(href)
+    string.gsub(body, "[Hh][Rr][Ee][Ff]%s*=%s*(.-)>", function(href)
         table.insert(links, url.absolute(base, href))
     end)
     return links
 end
 
-function checklinks(u)
-	local base, body, error = retrieve(u)
+function checklinks(address)
+    local base, body, error = load(address)
     if not body then print(error) return end
+    print("Checking ", base)
     local links = getlinks(body, base)
-    for _, l in ipairs(links) do
-		io.stderr:write("\t", l, "\n")
-		local err = getstatus(l)
-		if err then io.stderr:write('\t', l, ": ", err, "\n") end
+    for _, link in ipairs(links) do
+        getstatus(link)
     end
 end
 
-arg = arg or {}
-if table.getn(arg) < 1 then
-	print("Usage:\n  luasocket check-links.lua {<url>}")
-	exit()
+for _, address in ipairs(arg) do
+    checklinks(url.absolute("file:", address))
 end
-for _, a in ipairs(arg) do
-	print("Checking ", a)
-	checklinks(url.absolute("file:", a))
-end
+
+while nthreads > 0 do 
+    handler:step()
+end 
