@@ -2,9 +2,9 @@
 # Distribution makefile
 #--------------------------------------------------------------------------
 
-DIST = luasocket-2.0-beta3
+DIST = luasocket-2.0
 
-COMPAT = compat-5.1r2
+COMPAT = compat-5.1r4
 
 LUA = \
 	ftp.lua \
@@ -37,6 +37,7 @@ EXAMPLES = \
 
 ETC = \
 	check-links.lua \
+	check-links-nb.lua \
 	dict.lua \
 	get.lua \
 	unix.c \
@@ -76,8 +77,8 @@ CORE = \
 	wsocket.h
 
 MAKE = \
-	makefile.Darwin \
-	makefile.Linux \
+	makefile \
+	config \
 	luasocket.sln \
 	luasocket.vcproj \
 	mime.vcproj

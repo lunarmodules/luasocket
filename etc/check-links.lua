@@ -5,33 +5,26 @@
 -- Author: Diego Nehab
 -- RCS ID: $$
 -----------------------------------------------------------------------------
-local dispatch, url, http, handler
+local url = require("socket.url")
+local dispatch = require("dispatch")
+local http = require("socket.http")
+dispatch.TIMEOUT = 10
 
+-- make sure the user knows how to invoke us
 arg = arg or {}
 if table.getn(arg) < 1 then
     print("Usage:\n  luasocket check-links.lua [-n] {<url>}")
     exit()
 end
 
-if arg[1] ~= "-n" then
-    -- if using blocking I/O, simulate dispatcher interface
-    url = require("socket.url")
-    http = require("socket.http")
-    handler = { 
-        start = function(self, f)
-            f()
-        end,
-        tcp = socket.tcp
-    }
-    http.TIMEOUT = 10
-else
-    -- if non-blocking I/O was requested, disable dispatcher
+-- '-n' means we are running in non-blocking mode
+if arg[1] == "-n" then
+    -- if non-blocking I/O was requested, use real dispatcher interface
     table.remove(arg, 1)
-    dispatch = require("dispatch")
-    dispatch.TIMEOUT = 10
-    url = require("socket.url")
-    http = require("socket.http")
-    handler = dispatch.newhandler()
+    handler = dispatch.newhandler("coroutine")
+else
+    -- if using blocking I/O, use fake dispatcher interface
+    handler = dispatch.newhandler("sequential")
 end
 
 local nthreads = 0

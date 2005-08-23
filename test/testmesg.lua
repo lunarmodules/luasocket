@@ -3,6 +3,42 @@ local smtp = require("socket.smtp")
 local mime = require("mime")
 local ltn12 = require("ltn12")
 
+function filter(s)
+    if s then io.write(s) end
+    return s
+end
+
+source = smtp.message {
+    headers = { ['content-type'] = 'multipart/alternative' },
+    body = {
+        [1] = {
+            headers = { ['content-type'] = 'text/html' },
+            body = "<html> <body> Hi, <b>there</b>...</body> </html>"
+        },
+        [2] = {
+            headers = { ['content-type'] = 'text/plain' },
+            body = "Hi, there..."
+        }
+    }
+}
+
+r, e = smtp.send{
+    rcpt = {"<diego@tecgraf.puc-rio.br>",
+            "<diego@princeton.edu>" },
+    from = "<diego@princeton.edu>",
+    source = ltn12.source.chain(source, filter),
+    --server = "mail.cs.princeton.edu"
+    server = "localhost",
+    port = 2525
+}
+
+
+os.exit()
+
+
+
+
+
 -- creates a source to send a message with two parts. The first part is 
 -- plain text, the second part is a PNG image, encoded as base64.
 source = smtp.message{
@@ -48,10 +84,6 @@ source = smtp.message{
   }
 }
 
-function filter(s)
-    if s then io.write(s) end
-    return s
-end
 
 r, e = smtp.send{
     rcpt = {"<diego@tecgraf.puc-rio.br>",
@@ -64,3 +96,5 @@ r, e = smtp.send{
 }
 
 print(r, e)
+
+

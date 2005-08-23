@@ -12,8 +12,8 @@ local host, port, index_file, index, back, err, ret
 
 local t = socket.gettime()
 
-host = host or "diego.student.princeton.edu"
-index_file = "test/index.html"
+host = host or "localhost"
+index_file = "index.html"
 
 
 -- a function that returns a directory listing

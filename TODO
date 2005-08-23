@@ -1,10 +1,8 @@
 new instalation scheme???
+
 test empty socket.select no windows.
+
 bug by mathew percival?
-
-arranjar um jeito de fazer multipart/alternative
-
-what the hell does __unload do?
 
 test it on Windows!!!
 
@@ -45,3 +43,6 @@ testar os options!
     * received connections
     * - this function is invoked with the client socket
     * - it calls special send and receive functions that yield on timeout
+* arranjar um jeito de fazer multipart/alternative
+* what the hell does __unload do?
+    * it's there just in case someone wants to use it.

@@ -127,6 +127,9 @@ void aux_setclass(lua_State *L, const char *classname, int objidx) {
 * otherwise
 \*-------------------------------------------------------------------------*/
 void *aux_getgroupudata(lua_State *L, const char *groupname, int objidx) {
+#if 0
+    return lua_touserdata(L, objidx);
+#else
     if (!lua_getmetatable(L, objidx))
         return NULL;
     lua_pushstring(L, groupname);
@@ -138,6 +141,7 @@ void *aux_getgroupudata(lua_State *L, const char *groupname, int objidx) {
         lua_pop(L, 2);
         return lua_touserdata(L, objidx);
     }
+#endif
 }
 
 /*-------------------------------------------------------------------------*\
@@ -145,5 +149,9 @@ void *aux_getgroupudata(lua_State *L, const char *groupname, int objidx) {
 * otherwise
 \*-------------------------------------------------------------------------*/
 void *aux_getclassudata(lua_State *L, const char *classname, int objidx) {
+#if 0
+    return lua_touserdata(L, objidx);
+#else
     return luaL_checkudata(L, objidx, classname);
+#endif
 }

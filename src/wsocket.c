@@ -75,7 +75,7 @@ int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm) {
     tv.tv_sec = (int) t;
     tv.tv_usec = (int) ((t - tv.tv_sec) * 1.0e6);
     if (n <= 0) {
-        Sleep(1000*t);
+        Sleep((DWORD) (1000*t));
         return 0;
     } else return select(0, rfds, wfds, efds, t >= 0.0? &tv: NULL);
 }

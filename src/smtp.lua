@@ -137,12 +137,24 @@ end
 -- send_message forward declaration
 local send_message
 
+-- yield the headers all at once, it's faster
+local function send_headers(headers)
+    local h = "\r\n"
+    for i,v in base.pairs(headers) do
+        h = i .. ': ' .. v .. "\r\n" .. h
+    end
+    coroutine.yield(h) 
+end
+
 -- yield multipart message body from a multipart message table
 local function send_multipart(mesgt)
+    -- make sure we have our boundary and send headers
     local bd = newboundary()
-    -- define boundary and finish headers
-    coroutine.yield('content-type: multipart/mixed; boundary="' .. 
-        bd .. '"\r\n\r\n')
+    local headers = mesgt.headers or {}
+    headers['content-type'] = headers['content-type'] or 'multipart/mixed'
+    headers['content-type'] = headers['content-type'] .. 
+        '; boundary="' ..  bd .. '"'
+    send_headers(headers)
     -- send preamble
     if mesgt.body.preamble then 
         coroutine.yield(mesgt.body.preamble) 
@@ -164,11 +176,11 @@ end
 
 -- yield message body from a source
 local function send_source(mesgt)
-    -- set content-type if user didn't override
-    if not mesgt.headers or not mesgt.headers["content-type"] then
-        coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n\r\n')
-    else coroutine.yield("\r\n") end
-    -- finish headers
+    -- make sure we have a content-type
+    local headers = mesgt.headers or {}
+    headers['content-type'] = headers['content-type'] or
+        'text/plain; charset="iso-8859-1"'
+    send_headers(headers)
     -- send body from source
     while true do 
         local chunk, err = mesgt.body()
@@ -180,28 +192,17 @@ end
 
 -- yield message body from a string
 local function send_string(mesgt)
-    -- set content-type if user didn't override
-    if not mesgt.headers or not mesgt.headers["content-type"] then
-      coroutine.yield('content-type: text/plain; charset="iso-8859-1"\r\n\r\n')
-    else coroutine.yield("\r\n") end
+    -- make sure we have a content-type
+    local headers = mesgt.headers or {}
+    headers['content-type'] = headers['content-type'] or
+        'text/plain; charset="iso-8859-1"'
+    send_headers(headers)
     -- send body from string
     coroutine.yield(mesgt.body)
 end
 
--- yield the headers all at once 
-local function send_headers(mesgt)
-    if mesgt.headers then
-        local h = ""
-        for i,v in base.pairs(mesgt.headers) do
-            h = i .. ': ' .. v .. "\r\n" .. h
-        end
-        coroutine.yield(h)
-    end
-end
-
 -- message source
 function send_message(mesgt)
-    send_headers(mesgt)
     if base.type(mesgt.body) == "table" then send_multipart(mesgt)
     elseif base.type(mesgt.body) == "function" then send_source(mesgt)
     else send_string(mesgt) end

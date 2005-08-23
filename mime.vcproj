@@ -12,18 +12,18 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\"
-			IntermediateDirectory=".\"
+			OutputDirectory="src"
+			IntermediateDirectory="src"
 			ConfigurationType="2"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\include, compat-5.1r2"
+				AdditionalIncludeDirectories="src\compat-5.1r4, ..\lua-5.0.2\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MIME_EXPORTS;MIME_API=__declspec(dllexport)"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -32,7 +32,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/cmime.dll"
+				OutputFile="$(OutDir)/mime.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/mime.pdb"
@@ -62,15 +62,15 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="."
-			IntermediateDirectory="."
+			OutputDirectory="src"
+			IntermediateDirectory="src"
 			ConfigurationType="2"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../include, compat-5.1r2"
+				AdditionalIncludeDirectories="src\compat-5.1r4, ..\lua-5.0.2\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MIME_EXPORTS; MIME_API=__declspec(dllexport)"
-				RuntimeLibrary="4"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -79,7 +79,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/cmime.dll"
+				OutputFile="$(OutDir)/mime.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -117,19 +117,16 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\compat-5.1r2\compat-5.1.c">
+				RelativePath="src\compat-5.1r4\compat-5.1.c">
 			</File>
 			<File
-				RelativePath=".\mime.c">
+				RelativePath="src\mime.c">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-			<File
-				RelativePath=".\mime.h">
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -137,10 +134,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
 		<File
-			RelativePath="..\..\lib\liblua.lib">
-		</File>
-		<File
-			RelativePath="..\..\lib\liblualib.lib">
+			RelativePath="..\lua-5.0.2\lib\lua50.lib">
 		</File>
 	</Files>
 	<Globals>

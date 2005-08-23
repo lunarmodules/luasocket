@@ -78,7 +78,7 @@ static UC b64unbase[256];
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-MIME_API int luaopen_mimecore(lua_State *L)
+MIME_API int luaopen_mime_core(lua_State *L)
 {
     luaL_openlib(L, "mime", func, 0);
     /* initialize lookup tables */

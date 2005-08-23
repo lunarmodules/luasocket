@@ -168,6 +168,8 @@ support.
 <li> Improved: <tt>tcp:send(data, i, j)</tt> to return <tt>(i+sent-1)</tt>.  This is great for non-blocking I/O, but might break some code;
 <li> Improved: HTTP, SMTP, and FTP functions to accept a new field
 <tt>create</tt> that overrides the function used to create socket objects;
+<li> Improved: <tt>smtp.message</tt> now supports multipart/alternative
+(for the HTML messages we all love so much); 
 <li> Fixed: <tt>smtp.send</tt> was hanging on errors returned by LTN12 sources;
 <li> Fixed: <tt>url.absolute()</tt> to work when <tt>base_url</tt> is in
 parsed form;
@@ -183,7 +185,7 @@ group;
 <li> Improved: Socket and MIME binaries are called 'core' each inside their
 directory (ex. "socket/core.dll"). The 'l' prefix was just a bad idea;
 <li> Improved: Using bundles in Mac OS X, instead of dylibs; 
-<li> Fixed: <tt>luasocket.h</tt> to export <tt>luaopen_socketcore</tt>;
+<li> Fixed: <tt>luasocket.h</tt> to export <tt>luaopen_socket_core</tt>;
 <li> Fixed: <tt>udp:setpeername()</tt> so you can "disconnect" an 
 <tt>UDP</tt> socket;
 <li> Fixed: A weird bug in HTTP support that caused some requests to 
