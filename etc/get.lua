@@ -7,7 +7,7 @@
 local socket = require("socket")
 local http = require("socket.http")
 local ftp = require("socket.ftp")
-local url = require("url")
+local url = require("socket.url")
 local ltn12 = require("ltn12")
 
 -- formats a number of seconds into human readable form

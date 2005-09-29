@@ -35,12 +35,20 @@ INSTALL_EXEC=cp
 
 #------
 # Compiler and linker settings
+# for Mac OS X
 #
 CC=gcc
 DEF=-DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
-CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2
+CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common
 LDFLAGS=-bundle -undefined dynamic_lookup
 LD=export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
+
+# for Linux
+#CC=gcc
+#DEF=-DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
+#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
+#LDFLAGS=-O -shared
+#LD=gcc 
 
 #------
 # End of makefile configuration

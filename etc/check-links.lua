@@ -5,7 +5,7 @@
 -- Author: Diego Nehab
 -- RCS ID: $$
 -----------------------------------------------------------------------------
-local url = require("url")
+local url = require("socket.url")
 local dispatch = require("dispatch")
 local http = require("socket.http")
 dispatch.TIMEOUT = 10
