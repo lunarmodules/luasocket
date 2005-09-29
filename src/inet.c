@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <lua.h>
-#include <lauxlib.h>
+#include "lua.h"
+#include "lauxlib.h"
 
 #include "inet.h"
 

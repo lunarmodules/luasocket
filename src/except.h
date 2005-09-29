@@ -28,7 +28,7 @@
 * RCS ID: $Id$
 \*=========================================================================*/
 
-#include <lua.h>
+#include "lua.h"
 
 int except_open(lua_State *L);
 

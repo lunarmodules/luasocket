@@ -22,7 +22,8 @@ int sock_open(void) {
     WORD wVersionRequested = MAKEWORD(2, 0); 
     int err = WSAStartup(wVersionRequested, &wsaData );
     if (err != 0) return 0;
-    if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) {
+    if ((LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) &&
+        (LOBYTE(wsaData.wVersion) != 1 || HIBYTE(wsaData.wVersion) != 1)) {
         WSACleanup();
         return 0; 
     }
@@ -124,16 +125,8 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
     /* zero timeout case optimization */
     if (tm_iszero(tm)) return IO_TIMEOUT;
     /* we wait until something happens */
-    return sock_connected(ps, tm);
-}
-
-/*-------------------------------------------------------------------------*\
-* Check if socket is connected
-\*-------------------------------------------------------------------------*/
-int sock_connected(p_sock ps, p_tm tm) {
-    int err;
-    /* give windows time to find out what is up (yes, disgusting) */
-    if ((err = sock_waitfd(ps, WAITFD_C, tm)) == IO_CLOSED) {
+    err = sock_waitfd(ps, WAITFD_C, tm);
+    if (err == IO_CLOSED) {
         int len = sizeof(err);
         /* give windows time to set the error (yes, disgusting) */
         Sleep(10);
@@ -143,6 +136,7 @@ int sock_connected(p_sock ps, p_tm tm) {
         * "unknown error", but it's not really our fault */
         return err > 0? err: IO_UNKNOWN; 
     } else return err;
+
 }
 
 /*-------------------------------------------------------------------------*\

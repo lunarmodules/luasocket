@@ -1,3 +1,7 @@
+
+get rid of setmetatable(, nil) since packages don't need this anymore in
+5.1
+
 new instalation scheme???
 
 test empty socket.select no windows.
@@ -15,14 +19,7 @@ change ltn13 to make sure drawbacks are obvious
 use mike's "don't set to blocking before closing unless needed" patch?
 take a look at DB's smtp patch (add "extra argument" table)
 
-optmize aux_getgroupudata (Mike idea)
-    make aux_newclass receive upvalues
-    use one upvalue per string name of class/group
-    make aux_checkgroup by upvalue (faster)
 
-add error message stuff to the manual
-
-make sure all modules that can use it actually use socket.newtry
 adicionar exemplos de expansão: pipe, local, named pipe
 testar os options!
 - Thread-safe
@@ -30,6 +27,7 @@ testar os options!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
 
+* protect doesn't catch errors by error and assert
 * BUG NO SET DO TINYIRC!!! SINISTRO.
 * _VERSION, _DEBUG, etc.
 * talk about new create field in HTTP, FTP and SMTP

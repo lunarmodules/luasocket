@@ -6,7 +6,7 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lua.h>
+#include "lua.h"
 
 /* timeout control structure */
 typedef struct t_tm_ {

@@ -14,7 +14,7 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lua.h>
+#include "lua.h"
 
 #include "timeout.h"
 #include "socket.h"

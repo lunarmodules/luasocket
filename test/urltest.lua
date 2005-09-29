@@ -71,7 +71,7 @@ local check_parse_url = function(gaba)
 	local url = gaba.url
 	gaba.url = nil
 	local parsed = socket.url.parse(url)
-	for i, v in gaba do
+	for i, v in pairs(gaba) do
 		if v ~= parsed[i] then
 			io.write("parse: In test for '", url, "' expected ", i, " = '", 
            	    v, "' but got '", tostring(parsed[i]), "'\n")
@@ -79,7 +79,7 @@ local check_parse_url = function(gaba)
 			exit()
 		end
 	end
-	for i, v in parsed do
+	for i, v in pairs(parsed) do
 		if v ~= gaba[i] then
 			io.write("parse: In test for '", url, "' expected ", i, " = '", 
            	    tostring(gaba[i]), "' but got '", v, "'\n")

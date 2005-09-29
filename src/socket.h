@@ -53,7 +53,6 @@ int sock_waitfd(p_sock ps, int sw, p_tm tm);
 int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm);
 
 int sock_connect(p_sock ps, SA *addr, socklen_t addr_len, p_tm tm); 
-int sock_connected(p_sock ps, p_tm tm);
 int sock_create(p_sock ps, int domain, int type, int protocol);
 int sock_bind(p_sock ps, SA *addr, socklen_t addr_len); 
 int sock_listen(p_sock ps, int backlog);

@@ -15,6 +15,11 @@ module("socket.url")
 getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
+-- Module version
+-----------------------------------------------------------------------------
+_VERSION = "URL 1.0"
+
+-----------------------------------------------------------------------------
 -- Encodes a string into its escaped hexadecimal representation
 -- Input 
 --   s: binary string to be encoded

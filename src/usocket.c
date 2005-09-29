@@ -169,15 +169,8 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
     /* zero timeout case optimization */
     if (tm_iszero(tm)) return IO_TIMEOUT;
     /* wait until we have the result of the connection attempt or timeout */
-    return sock_connected(ps, tm);
-}
-
-/*-------------------------------------------------------------------------*\
-* Checks if socket is connected, or return reason for failure
-\*-------------------------------------------------------------------------*/
-int sock_connected(p_sock ps, p_tm tm) {
-    int err;
-    if ((err = sock_waitfd(ps, WAITFD_C, tm) == IO_CLOSED)) {
+    err = sock_waitfd(ps, WAITFD_C, tm);
+    if (err == IO_CLOSED) {
         if (recv(*ps, (char *) &err, 0, 0) == 0) return IO_DONE;
         else return errno;
     } else return err;

@@ -8,10 +8,10 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lua.h>
+#include "lua.h"
 
 /*-------------------------------------------------------------------------*\
-* Current luasocket version
+* Current socket library version
 \*-------------------------------------------------------------------------*/
 #define LUASOCKET_VERSION    "LuaSocket 2.0"
 #define LUASOCKET_COPYRIGHT  "Copyright (C) 2004-2005 Diego Nehab"

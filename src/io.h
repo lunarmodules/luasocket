@@ -15,7 +15,7 @@
 * RCS ID: $Id$
 \*=========================================================================*/
 #include <stdio.h>
-#include <lua.h>
+#include "lua.h"
 
 #include "timeout.h"
 
@@ -24,8 +24,7 @@ enum {
     IO_DONE = 0,        /* operation completed successfully */
     IO_TIMEOUT = -1,    /* operation timed out */
     IO_CLOSED = -2,     /* the connection has been closed */
-    IO_CLIPPED = -3,    /* maxium bytes count reached */
-	IO_UNKNOWN = -4
+	IO_UNKNOWN = -3
 };
 
 /* interface to error message function */

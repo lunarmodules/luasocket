@@ -1,7 +1,7 @@
 #ifndef MIME_H 
 #define MIME_H 
 /*=========================================================================*\
-* MIME support functions
+* Core MIME support
 * LuaSocket toolkit
 *
 * This module provides functions to implement transfer content encodings
@@ -10,7 +10,14 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lua.h>
+#include "lua.h"
+
+/*-------------------------------------------------------------------------*\
+* Current MIME library version
+\*-------------------------------------------------------------------------*/
+#define MIME_VERSION    "MIME 1.0"
+#define MIME_COPYRIGHT  "Copyright (C) 2004-2005 Diego Nehab"
+#define MIME_AUTHORS    "Diego Nehab"
 
 /*-------------------------------------------------------------------------*\
 * This macro prefixes all exported API functions

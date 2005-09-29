@@ -4,8 +4,8 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lua.h>
-#include <lauxlib.h>
+#include "lua.h"
+#include "lauxlib.h"
 
 #include "buffer.h"
 

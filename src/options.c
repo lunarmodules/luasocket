@@ -4,8 +4,9 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lauxlib.h> 
 #include <string.h> 
+
+#include "lauxlib.h"
 
 #include "auxiliar.h"
 #include "options.h"

@@ -31,8 +31,8 @@
 * RCS ID: $Id$
 \*=========================================================================*/
 
-#include <lua.h>
-#include <lauxlib.h>
+#include "lua.h"
+#include "lauxlib.h"
 
 int aux_open(lua_State *L);
 void aux_newclass(lua_State *L, const char *classname, luaL_reg *func);

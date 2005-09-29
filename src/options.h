@@ -10,7 +10,7 @@
 * RCS ID: $Id$
 \*=========================================================================*/
 
-#include <lua.h>
+#include "lua.h"
 #include "socket.h"
 
 /* option registry */

@@ -9,7 +9,7 @@
 *
 * RCS ID: $Id$
 \*=========================================================================*/
-#include <lua.h>
+#include "lua.h"
 
 #include "buffer.h"
 #include "timeout.h"
