@@ -15,8 +15,8 @@ UNIX_SO=unix.$(EXT)
 #------
 # Lua includes and libraries
 #
-LUAINC=
-LUALIB=
+LUAINC=-Ilua-5.0.2/include
+LUALIB=-Llua-5.0.2/lib
 
 #------
 # Compat-5.1 directory
@@ -37,18 +37,20 @@ INSTALL_EXEC=cp
 # Compiler and linker settings
 # for Mac OS X
 #
-CC=gcc
-DEF=-DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
-CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common
-LDFLAGS=-bundle -undefined dynamic_lookup
-LD=export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
-
-# for Linux
 #CC=gcc
 #DEF=-DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
-#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
-#LDFLAGS=-O -shared
-#LD=gcc 
+#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common
+#LDFLAGS=-bundle -undefined dynamic_lookup
+#LD=export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
+
+#------
+# Compiler and linker settings
+# for Linux
+CC=gcc
+DEF=-DLUASOCKET_DEBUG 
+CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
+LDFLAGS=-O -shared
+LD=gcc 
 
 #------
 # End of makefile configuration
