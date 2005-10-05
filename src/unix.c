@@ -70,12 +70,6 @@ static t_opt opt[] = {
     {NULL,          NULL}
 };
 
-/* functions in library namespace */
-static luaL_reg func[] = {
-    {"unix", global_create},
-    {NULL, NULL}
-};
-
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
@@ -89,7 +83,7 @@ int luaopen_socketunix(lua_State *L) {
     aux_add2group(L, "unix{client}", "unix{any}");
     aux_add2group(L, "unix{server}", "unix{any}");
     /* define library functions */
-    luaL_openlib(L, "socket", func, 0); 
+    lua_pushcfunction(L, global_create); 
     return 1;
 }
 
