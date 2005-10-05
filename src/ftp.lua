@@ -17,7 +17,6 @@ local url = require("socket.url")
 local tp = require("socket.tp")
 local ltn12 = require("ltn12")
 module("socket.ftp")
-getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Program constants

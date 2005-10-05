@@ -16,7 +16,6 @@ local string = require("string")
 local base = _G
 local table = require("table")
 module("socket.http")
-getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Program constants

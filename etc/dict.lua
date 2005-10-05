@@ -14,9 +14,7 @@ local table = require("table")
 local socket = require("socket")
 local url = require("socket.url")
 local tp = require("socket.tp")
-
 module("socket.dict")
-getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Globals 

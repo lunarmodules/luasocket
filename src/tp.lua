@@ -13,7 +13,6 @@ local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
 module("socket.tp")
-getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Program constants

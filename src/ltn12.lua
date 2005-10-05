@@ -12,7 +12,6 @@ local string = require("string")
 local table = require("table")
 local base = _G
 module("ltn12")
-getmetatable(_M).__index = nil
 
 filter = {}
 source = {}

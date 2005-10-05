@@ -14,7 +14,6 @@ local mime = require("mime.core")
 local io = require("io")
 local string = require("string")
 module("mime")
-getmetatable(_M).__index = nil
 
 -- encode, decode and wrap algorithm tables
 encodet = {}

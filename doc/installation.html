@@ -76,9 +76,9 @@ distribution directory structure:</p>
 <pre class=example>
 &lt;SHARE&gt;/compat-5.1.lua
 &lt;SHARE&gt;/ltn12.lua
-&lt;SHARE&gt;/mime/init.lua
+&lt;SHARE&gt;/mime/init.lua (originally mime.lua)
 &lt;LIB&gt;/mime/core.dll
-&lt;SHARE&gt;/socket/init.lua
+&lt;SHARE&gt;/socket/init.lua (originally socket.lua)
 &lt;LIB&gt;/socket/core.dll
 &lt;SHARE&gt;/socket/http.lua
 &lt;SHARE&gt;/socket/tp.lua
@@ -88,7 +88,10 @@ distribution directory structure:</p>
 </pre>
 
 <p> Naturally, on Unix systems, <tt>core.dll</tt>
-would be replaced by <tt>core.so</tt>.
+would be replaced by <tt>core.so</tt>. Notice that in the instalation,
+<tt>socket.lua</tt> becomes <tt>socket/init.lua</tt>, and the same happens
+with <tt>mime.lua</tt>, which becomes <tt>mime/init.lua</tt>.
+</p>
 
 <p> In order for the interpreter to find all LuaSocket components, three
 environment variables need to be set. The first environment variable tells
@@ -110,7 +113,7 @@ LUA_CPATH=&lt;LIB&gt;/?.dll;?.dll
 </pre>
 
 <p> Again, naturally, on Unix systmems the shared library extension would be
-<tt>.so</tt> instead of <tt>.dll</tt></p>
+<tt>.so</tt> instead of <tt>.dll</tt>.</p>
 
 <h3>Using LuaSocket</h3>
 

@@ -12,7 +12,6 @@ local string = require("string")
 local base = _G
 local table = require("table")
 module("socket.url")
-getmetatable(_M).__index = nil
 
 -----------------------------------------------------------------------------
 -- Module version
