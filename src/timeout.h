@@ -1,5 +1,5 @@
-#ifndef TM_H
-#define TM_H
+#ifndef TIMEOUT_H
+#define TIMEOUT_H
 /*=========================================================================*\
 * Timeout management functions
 * LuaSocket toolkit
@@ -9,22 +9,22 @@
 #include "lua.h"
 
 /* timeout control structure */
-typedef struct t_tm_ {
+typedef struct t_timeout_ {
     double block;          /* maximum time for blocking calls */
     double total;          /* total number of miliseconds for operation */
     double start;          /* time of start of operation */
-} t_tm;
-typedef t_tm *p_tm;
+} t_timeout;
+typedef t_timeout *p_timeout;
 
-int tm_open(lua_State *L);
-void tm_init(p_tm tm, double block, double total);
-double tm_get(p_tm tm);
-double tm_getretry(p_tm tm);
-p_tm tm_markstart(p_tm tm);
-double tm_getstart(p_tm tm);
-double tm_gettime(void);
-int tm_meth_settimeout(lua_State *L, p_tm tm);
+int timeout_open(lua_State *L);
+void timeout_init(p_timeout tm, double block, double total);
+double timeout_get(p_timeout tm);
+double timeout_getretry(p_timeout tm);
+p_timeout timeout_markstart(p_timeout tm);
+double timeout_getstart(p_timeout tm);
+double timeout_gettime(void);
+int timeout_meth_settimeout(lua_State *L, p_timeout tm);
 
-#define tm_iszero(tm)   ((tm)->block == 0.0)
+#define timeout_iszero(tm)   ((tm)->block == 0.0)
 
-#endif /* TM_H */
+#endif /* TIMEOUT_H */

@@ -12,12 +12,12 @@
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
-static int recvraw(p_buf buf, size_t wanted, luaL_Buffer *b);
-static int recvline(p_buf buf, luaL_Buffer *b);
-static int recvall(p_buf buf, luaL_Buffer *b);
-static int buf_get(p_buf buf, const char **data, size_t *count);
-static void buf_skip(p_buf buf, size_t count);
-static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent);
+static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b);
+static int recvline(p_buffer buf, luaL_Buffer *b);
+static int recvall(p_buffer buf, luaL_Buffer *b);
+static int buffer_get(p_buffer buf, const char **data, size_t *count);
+static void buffer_skip(p_buffer buf, size_t count);
+static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent);
 
 /* min and max macros */
 #ifndef MIN
@@ -33,7 +33,7 @@ static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent);
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int buf_open(lua_State *L) {
+int buffer_open(lua_State *L) {
     (void) L;
     return 0;
 }
@@ -41,31 +41,31 @@ int buf_open(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Initializes C structure 
 \*-------------------------------------------------------------------------*/
-void buf_init(p_buf buf, p_io io, p_tm tm) {
+void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
 	buf->first = buf->last = 0;
     buf->io = io;
     buf->tm = tm;
     buf->received = buf->sent = 0;
-    buf->birthday = tm_gettime();
+    buf->birthday = timeout_gettime();
 }
 
 /*-------------------------------------------------------------------------*\
 * object:getstats() interface
 \*-------------------------------------------------------------------------*/
-int buf_meth_getstats(lua_State *L, p_buf buf) {
+int buffer_meth_getstats(lua_State *L, p_buffer buf) {
     lua_pushnumber(L, buf->received);
     lua_pushnumber(L, buf->sent);
-    lua_pushnumber(L, tm_gettime() - buf->birthday);
+    lua_pushnumber(L, timeout_gettime() - buf->birthday);
     return 3;
 }
 
 /*-------------------------------------------------------------------------*\
 * object:setstats() interface
 \*-------------------------------------------------------------------------*/
-int buf_meth_setstats(lua_State *L, p_buf buf) {
+int buffer_meth_setstats(lua_State *L, p_buffer buf) {
     buf->received = (long) luaL_optnumber(L, 2, buf->received); 
     buf->sent = (long) luaL_optnumber(L, 3, buf->sent); 
-    if (lua_isnumber(L, 4)) buf->birthday = tm_gettime() - lua_tonumber(L, 4);
+    if (lua_isnumber(L, 4)) buf->birthday = timeout_gettime() - lua_tonumber(L, 4);
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -73,9 +73,9 @@ int buf_meth_setstats(lua_State *L, p_buf buf) {
 /*-------------------------------------------------------------------------*\
 * object:send() interface
 \*-------------------------------------------------------------------------*/
-int buf_meth_send(lua_State *L, p_buf buf) {
+int buffer_meth_send(lua_State *L, p_buffer buf) {
     int top = lua_gettop(L);
-    p_tm tm = tm_markstart(buf->tm);
+    p_timeout tm = timeout_markstart(buf->tm);
     int err = IO_DONE;
     size_t size = 0, sent = 0;
     const char *data = luaL_checklstring(L, 2, &size);
@@ -98,7 +98,7 @@ int buf_meth_send(lua_State *L, p_buf buf) {
     }
 #ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
-    lua_pushnumber(L, tm_gettime() - tm_getstart(tm));
+    lua_pushnumber(L, timeout_gettime() - timeout_getstart(tm));
 #endif
     return lua_gettop(L) - top;
 }
@@ -106,9 +106,9 @@ int buf_meth_send(lua_State *L, p_buf buf) {
 /*-------------------------------------------------------------------------*\
 * object:receive() interface
 \*-------------------------------------------------------------------------*/
-int buf_meth_receive(lua_State *L, p_buf buf) {
+int buffer_meth_receive(lua_State *L, p_buffer buf) {
     int err = IO_DONE, top = lua_gettop(L);
-    p_tm tm = tm_markstart(buf->tm);
+    p_timeout tm = timeout_markstart(buf->tm);
     luaL_Buffer b;
     size_t size;
     const char *part = luaL_optlstring(L, 3, "", &size);
@@ -141,7 +141,7 @@ int buf_meth_receive(lua_State *L, p_buf buf) {
     }
 #ifdef LUASOCKET_DEBUG
     /* push time elapsed during operation as the last return value */
-    lua_pushnumber(L, tm_gettime() - tm_getstart(tm));
+    lua_pushnumber(L, timeout_gettime() - timeout_getstart(tm));
 #endif
     return lua_gettop(L) - top;
 }
@@ -149,7 +149,7 @@ int buf_meth_receive(lua_State *L, p_buf buf) {
 /*-------------------------------------------------------------------------*\
 * Determines if there is any data in the read buffer
 \*-------------------------------------------------------------------------*/
-int buf_isempty(p_buf buf) {
+int buffer_isempty(p_buffer buf) {
     return buf->first >= buf->last;
 }
 
@@ -160,9 +160,9 @@ int buf_isempty(p_buf buf) {
 * Sends a block of data (unbuffered)
 \*-------------------------------------------------------------------------*/
 #define STEPSIZE 8192
-static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent) {
+static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent) {
     p_io io = buf->io;
-    p_tm tm = buf->tm;
+    p_timeout tm = buf->tm;
     size_t total = 0;
     int err = IO_DONE;
     while (total < count && err == IO_DONE) {
@@ -179,15 +179,15 @@ static int sendraw(p_buf buf, const char *data, size_t count, size_t *sent) {
 /*-------------------------------------------------------------------------*\
 * Reads a fixed number of bytes (buffered)
 \*-------------------------------------------------------------------------*/
-static int recvraw(p_buf buf, size_t wanted, luaL_Buffer *b) {
+static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b) {
     int err = IO_DONE;
     size_t total = 0;
     while (total < wanted && err == IO_DONE) {
         size_t count; const char *data;
-        err = buf_get(buf, &data, &count);
+        err = buffer_get(buf, &data, &count);
         count = MIN(count, wanted - total);
         luaL_addlstring(b, data, count);
-        buf_skip(buf, count);
+        buffer_skip(buf, count);
         total += count;
     }
     return err;
@@ -196,13 +196,13 @@ static int recvraw(p_buf buf, size_t wanted, luaL_Buffer *b) {
 /*-------------------------------------------------------------------------*\
 * Reads everything until the connection is closed (buffered)
 \*-------------------------------------------------------------------------*/
-static int recvall(p_buf buf, luaL_Buffer *b) {
+static int recvall(p_buffer buf, luaL_Buffer *b) {
     int err = IO_DONE;
     while (err == IO_DONE) {
         const char *data; size_t count;
-        err = buf_get(buf, &data, &count);
+        err = buffer_get(buf, &data, &count);
         luaL_addlstring(b, data, count);
-        buf_skip(buf, count);
+        buffer_skip(buf, count);
     }
     if (err == IO_CLOSED) return IO_DONE;
     else return err;
@@ -212,11 +212,11 @@ static int recvall(p_buf buf, luaL_Buffer *b) {
 * Reads a line terminated by a CR LF pair or just by a LF. The CR and LF 
 * are not returned by the function and are discarded from the buffer
 \*-------------------------------------------------------------------------*/
-static int recvline(p_buf buf, luaL_Buffer *b) {
+static int recvline(p_buffer buf, luaL_Buffer *b) {
     int err = IO_DONE;
     while (err == IO_DONE) {
         size_t count, pos; const char *data;
-        err = buf_get(buf, &data, &count);
+        err = buffer_get(buf, &data, &count);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
             /* we ignore all \r's */
@@ -224,10 +224,10 @@ static int recvline(p_buf buf, luaL_Buffer *b) {
             pos++;
         }
         if (pos < count) { /* found '\n' */
-            buf_skip(buf, pos+1); /* skip '\n' too */
+            buffer_skip(buf, pos+1); /* skip '\n' too */
             break; /* we are done */
         } else /* reached the end of the buffer */
-            buf_skip(buf, pos);
+            buffer_skip(buf, pos);
     }
     return err;
 }
@@ -236,10 +236,10 @@ static int recvline(p_buf buf, luaL_Buffer *b) {
 * Skips a given number of bytes from read buffer. No data is read from the
 * transport layer
 \*-------------------------------------------------------------------------*/
-static void buf_skip(p_buf buf, size_t count) {
+static void buffer_skip(p_buffer buf, size_t count) {
     buf->received += count;
     buf->first += count;
-    if (buf_isempty(buf)) 
+    if (buffer_isempty(buf)) 
         buf->first = buf->last = 0;
 }
 
@@ -247,11 +247,11 @@ static void buf_skip(p_buf buf, size_t count) {
 * Return any data available in buffer, or get more data from transport layer
 * if buffer is empty
 \*-------------------------------------------------------------------------*/
-static int buf_get(p_buf buf, const char **data, size_t *count) {
+static int buffer_get(p_buffer buf, const char **data, size_t *count) {
     int err = IO_DONE;
     p_io io = buf->io;
-    p_tm tm = buf->tm;
-    if (buf_isempty(buf)) {
+    p_timeout tm = buf->tm;
+    if (buffer_isempty(buf)) {
         size_t got;
         err = io->recv(io->ctx, buf->data, BUF_SIZE, &got, tm);
         buf->first = 0;

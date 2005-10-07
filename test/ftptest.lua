@@ -55,27 +55,27 @@ assert(not err and back == index, err)
 print("ok")
 
 io.write("erasing before upload: ")
-ret, err = dele("ftp://luasocket:password@" .. host .. "/index.up.html")
+ret, err = dele("ftp://luasocket:pedrovian@" .. host .. "/index.up.html")
 if not ret then print(err) 
 else print("ok") end
 
 io.write("testing upload: ")
-ret, err = ftp.put("ftp://luasocket:password@" .. host .. "/index.up.html;type=i", index)
+ret, err = ftp.put("ftp://luasocket:pedrovian@" .. host .. "/index.up.html;type=i", index)
 assert(ret and not err, err)
 print("ok")
 
 io.write("downloading uploaded file: ")
-back, err = ftp.get("ftp://luasocket:password@" .. host .. "/index.up.html;type=i")
+back, err = ftp.get("ftp://luasocket:pedrovian@" .. host .. "/index.up.html;type=i")
 assert(ret and not err and index == back, err)
 print("ok")
 
 io.write("erasing after upload/download: ")
-ret, err = dele("ftp://luasocket:password@" .. host .. "/index.up.html")
+ret, err = dele("ftp://luasocket:pedrovian@" .. host .. "/index.up.html")
 assert(ret and not err, err) 
 print("ok")
 
 io.write("testing weird-character translation: ")
-back, err = ftp.get("ftp://luasocket:password@" .. host .. "/%23%3f;type=i")
+back, err = ftp.get("ftp://luasocket:pedrovian@" .. host .. "/%23%3f;type=i")
 assert(not err and back == index, err)
 print("ok")
 
@@ -84,7 +84,7 @@ local back = {}
 ret, err = ftp.get{
 	url = "//stupid:mistake@" .. host .. "/index.html",
 	user = "luasocket",
-	password = "password",
+	password = "pedrovian",
 	type = "i",
     sink = ltn12.sink.table(back)
 }

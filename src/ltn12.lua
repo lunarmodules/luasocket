@@ -134,33 +134,49 @@ function source.rewind(src)
     end
 end
 
--- chains a source with a filter
 function source.chain(src, f)
     base.assert(src and f)
     local last_in, last_out = "", ""
+    local state = "feeding"
+    local err
     return function()
-        if last_out == "" then
-            while true do
-                local err
+        if not last_out then
+            base.error('source is empty!', 2)
+        end
+        while true do
+            if state == "feeding" then
                 last_in, err = src()
                 if err then return nil, err end
                 last_out = f(last_in)
-                if last_out ~= "" then return last_out end
-                if not last_in then 
-                    base.error('filter returned inappropriate ""') 
+                if not last_out then 
+                    if last_in then
+                        base.error('filter returned inappropriate nil') 
+                    else
+                        return nil
+                    end
+                elseif last_out ~= "" then
+                    state = "eating"
+                    if last_in then last_in = "" end
+                    return last_out
+                end
+            else 
+                last_out = f(last_in)
+                if last_out == "" then 
+                    if last_in == "" then 
+                        state = "feeding"
+                    else
+                        base.error('filter returned ""') 
+                    end
+                elseif not last_out then
+                    if last_in then 
+                        base.error('filter returned inappropriate nil') 
+                    else
+                        return nil
+                    end
+                else
+                    return last_out
                 end
             end
-        elseif last_out then
-            last_out = f(last_in and "")
-            if last_in and not last_out then
-                base.error('filter returned inappropriate nil') 
-            end
-            if last_out == "" and not last_in then
-                base.error(base.tostring(f) .. ' returned inappropriate ""') 
-            end
-            return last_out
-        else
-            base.error("source is empty", 2)
         end
     end
 end

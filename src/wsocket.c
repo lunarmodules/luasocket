@@ -17,7 +17,7 @@ static const char *wstrerror(int err);
 /*-------------------------------------------------------------------------*\
 * Initializes module 
 \*-------------------------------------------------------------------------*/
-int sock_open(void) {
+int socket_open(void) {
     WSADATA wsaData;
     WORD wVersionRequested = MAKEWORD(2, 0); 
     int err = WSAStartup(wVersionRequested, &wsaData );
@@ -33,7 +33,7 @@ int sock_open(void) {
 /*-------------------------------------------------------------------------*\
 * Close module 
 \*-------------------------------------------------------------------------*/
-int sock_close(void) {
+int socket_close(void) {
     WSACleanup();
     return 1;
 }
@@ -46,7 +46,7 @@ int sock_close(void) {
 #define WAITFD_E        4
 #define WAITFD_C        (WAITFD_E|WAITFD_W)
 
-int sock_waitfd(p_sock ps, int sw, p_tm tm) {
+int socket_waitfd(p_socket ps, int sw, p_tm tm) {
     int ret;
     fd_set rfds, wfds, efds, *rp = NULL, *wp = NULL, *ep = NULL;
     struct timeval tv, *tp = NULL;
@@ -70,7 +70,7 @@ int sock_waitfd(p_sock ps, int sw, p_tm tm) {
 /*-------------------------------------------------------------------------*\
 * Select with int timeout in ms
 \*-------------------------------------------------------------------------*/
-int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm) {
+int socket_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm) {
     struct timeval tv; 
     double t = tm_get(tm);
     tv.tv_sec = (int) t;
@@ -84,39 +84,39 @@ int sock_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm) {
 /*-------------------------------------------------------------------------*\
 * Close and inutilize socket
 \*-------------------------------------------------------------------------*/
-void sock_destroy(p_sock ps) {
-    if (*ps != SOCK_INVALID) {
-        sock_setblocking(ps); /* close can take a long time on WIN32 */
+void socket_destroy(p_socket ps) {
+    if (*ps != SOCKET_INVALID) {
+        socket_setblocking(ps); /* close can take a long time on WIN32 */
         closesocket(*ps);
-        *ps = SOCK_INVALID;
+        *ps = SOCKET_INVALID;
     }
 }
 
 /*-------------------------------------------------------------------------*\
 * 
 \*-------------------------------------------------------------------------*/
-void sock_shutdown(p_sock ps, int how) {
-    sock_setblocking(ps);
+void socket_shutdown(p_socket ps, int how) {
+    socket_setblocking(ps);
     shutdown(*ps, how);
-    sock_setnonblocking(ps);
+    socket_setnonblocking(ps);
 }
 
 /*-------------------------------------------------------------------------*\
 * Creates and sets up a socket
 \*-------------------------------------------------------------------------*/
-int sock_create(p_sock ps, int domain, int type, int protocol) {
+int socket_create(p_socket ps, int domain, int type, int protocol) {
     *ps = socket(domain, type, protocol);
-    if (*ps != SOCK_INVALID) return IO_DONE;
+    if (*ps != SOCKET_INVALID) return IO_DONE;
     else return WSAGetLastError();
 }
 
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
+int socket_connect(p_socket ps, SA *addr, socklen_t len, p_tm tm) {
     int err;
     /* don't call on closed socket */
-    if (*ps == SOCK_INVALID) return IO_CLOSED;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     /* ask system to connect */
     if (connect(*ps, addr, len) == 0) return IO_DONE;
     /* make sure the system is trying to connect */
@@ -125,13 +125,13 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
     /* zero timeout case optimization */
     if (tm_iszero(tm)) return IO_TIMEOUT;
     /* we wait until something happens */
-    err = sock_waitfd(ps, WAITFD_C, tm);
+    err = socket_waitfd(ps, WAITFD_C, tm);
     if (err == IO_CLOSED) {
         int len = sizeof(err);
         /* give windows time to set the error (yes, disgusting) */
         Sleep(10);
         /* find out why we failed */
-        getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *)&err, &len); 
+        getsockopt(*ps, SOL_SOCKETET, SO_ERROR, (char *)&err, &len); 
         /* we KNOW there was an error. if 'why' is 0, we will return
         * "unknown error", but it's not really our fault */
         return err > 0? err: IO_UNKNOWN; 
@@ -142,44 +142,44 @@ int sock_connect(p_sock ps, SA *addr, socklen_t len, p_tm tm) {
 /*-------------------------------------------------------------------------*\
 * Binds or returns error message
 \*-------------------------------------------------------------------------*/
-int sock_bind(p_sock ps, SA *addr, socklen_t len) {
+int socket_bind(p_socket ps, SA *addr, socklen_t len) {
     int err = IO_DONE;
-    sock_setblocking(ps);
+    socket_setblocking(ps);
     if (bind(*ps, addr, len) < 0) err = WSAGetLastError();
-    sock_setnonblocking(ps);
+    socket_setnonblocking(ps);
     return err;
 }
 
 /*-------------------------------------------------------------------------*\
 * 
 \*-------------------------------------------------------------------------*/
-int sock_listen(p_sock ps, int backlog) {
+int socket_listen(p_socket ps, int backlog) {
     int err = IO_DONE;
-    sock_setblocking(ps);
+    socket_setblocking(ps);
     if (listen(*ps, backlog) < 0) err = WSAGetLastError();
-    sock_setnonblocking(ps);
+    socket_setnonblocking(ps);
     return err;
 }
 
 /*-------------------------------------------------------------------------*\
 * Accept with timeout
 \*-------------------------------------------------------------------------*/
-int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
+int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, p_tm tm) {
     SA daddr;
     socklen_t dlen = sizeof(daddr);
-    if (*ps == SOCK_INVALID) return IO_CLOSED;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     if (!addr) addr = &daddr;
     if (!len) len = &dlen;
     for ( ;; ) {
         int err;
         /* try to get client socket */
-        if ((*pa = accept(*ps, addr, len)) != SOCK_INVALID) return IO_DONE;
+        if ((*pa = accept(*ps, addr, len)) != SOCKET_INVALID) return IO_DONE;
         /* find out why we failed */
         err = WSAGetLastError(); 
         /* if we failed because there was no connectoin, keep trying */
         if (err != WSAEWOULDBLOCK && err != WSAECONNABORTED) return err;
         /* call select to avoid busy wait */
-        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
+        if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     } 
     /* can't reach here */
     return IO_UNKNOWN; 
@@ -191,11 +191,12 @@ int sock_accept(p_sock ps, p_sock pa, SA *addr, socklen_t *len, p_tm tm) {
 * this can take an awful lot of time and we will end up blocked. 
 * Therefore, whoever calls this function should not pass a huge buffer.
 \*-------------------------------------------------------------------------*/
-int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
+int socket_send(p_socket ps, const char *data, size_t count, 
+        size_t *sent, p_tm tm)
 {
     int err;
     /* avoid making system calls on closed sockets */
-    if (*ps == SOCK_INVALID) return IO_CLOSED;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     /* loop until we send something or we give up on error */
     *sent = 0;
     for ( ;; ) {
@@ -211,7 +212,7 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
         /* we can only proceed if there was no serious error */
         if (err != WSAEWOULDBLOCK) return err;
         /* avoid busy wait */
-        if ((err = sock_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
+        if ((err = socket_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     } 
     /* can't reach here */
     return IO_UNKNOWN;
@@ -220,11 +221,11 @@ int sock_send(p_sock ps, const char *data, size_t count, size_t *sent, p_tm tm)
 /*-------------------------------------------------------------------------*\
 * Sendto with timeout
 \*-------------------------------------------------------------------------*/
-int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent, 
+int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent, 
         SA *addr, socklen_t len, p_tm tm)
 {
     int err;
-    if (*ps == SOCK_INVALID) return IO_CLOSED;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *sent = 0;
     for ( ;; ) {
         int put = sendto(*ps, data, (int) count, 0, addr, len);
@@ -234,7 +235,7 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
         }
         err = WSAGetLastError(); 
         if (err != WSAEWOULDBLOCK) return err;
-        if ((err = sock_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
+        if ((err = socket_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     } 
     return IO_UNKNOWN;
 }
@@ -242,9 +243,9 @@ int sock_sendto(p_sock ps, const char *data, size_t count, size_t *sent,
 /*-------------------------------------------------------------------------*\
 * Receive with timeout
 \*-------------------------------------------------------------------------*/
-int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
+int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_tm tm) {
     int err;
-    if (*ps == SOCK_INVALID) return IO_CLOSED;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *got = 0;
     for ( ;; ) {
         int taken = recv(*ps, data, (int) count, 0);
@@ -255,7 +256,7 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
         if (taken == 0) return IO_CLOSED;
         err = WSAGetLastError();
         if (err != WSAEWOULDBLOCK) return err;
-        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
+        if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
     return IO_UNKNOWN;
 }
@@ -263,10 +264,10 @@ int sock_recv(p_sock ps, char *data, size_t count, size_t *got, p_tm tm) {
 /*-------------------------------------------------------------------------*\
 * Recvfrom with timeout
 \*-------------------------------------------------------------------------*/
-int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got, 
+int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got, 
         SA *addr, socklen_t *len, p_tm tm) {
     int err;
-    if (*ps == SOCK_INVALID) return IO_CLOSED;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *got = 0;
     for ( ;; ) {
         int taken = recvfrom(*ps, data, (int) count, 0, addr, len);
@@ -277,7 +278,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
         if (taken == 0) return IO_CLOSED;
         err = WSAGetLastError();
         if (err != WSAEWOULDBLOCK) return err;
-        if ((err = sock_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
+        if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
     return IO_UNKNOWN;
 }
@@ -285,7 +286,7 @@ int sock_recvfrom(p_sock ps, char *data, size_t count, size_t *got,
 /*-------------------------------------------------------------------------*\
 * Put socket into blocking mode
 \*-------------------------------------------------------------------------*/
-void sock_setblocking(p_sock ps) {
+void socket_setblocking(p_socket ps) {
     u_long argp = 0;
     ioctlsocket(*ps, FIONBIO, &argp);
 }
@@ -293,7 +294,7 @@ void sock_setblocking(p_sock ps) {
 /*-------------------------------------------------------------------------*\
 * Put socket into non-blocking mode
 \*-------------------------------------------------------------------------*/
-void sock_setnonblocking(p_sock ps) {
+void socket_setnonblocking(p_socket ps) {
     u_long argp = 1;
     ioctlsocket(*ps, FIONBIO, &argp);
 }
@@ -301,13 +302,13 @@ void sock_setnonblocking(p_sock ps) {
 /*-------------------------------------------------------------------------*\
 * DNS helpers 
 \*-------------------------------------------------------------------------*/
-int sock_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
+int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
     *hp = gethostbyaddr(addr, len, AF_INET);
     if (*hp) return IO_DONE;
     else return WSAGetLastError();
 }
 
-int sock_gethostbyname(const char *addr, struct hostent **hp) {
+int socket_gethostbyname(const char *addr, struct hostent **hp) {
     *hp = gethostbyname(addr);
     if (*hp) return IO_DONE;
     else return  WSAGetLastError();
@@ -316,7 +317,7 @@ int sock_gethostbyname(const char *addr, struct hostent **hp) {
 /*-------------------------------------------------------------------------*\
 * Error translation functions
 \*-------------------------------------------------------------------------*/
-const char *sock_hoststrerror(int err) {
+const char *socket_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
         case WSAHOST_NOT_FOUND: return "host not found";
@@ -324,7 +325,7 @@ const char *sock_hoststrerror(int err) {
     }
 }
 
-const char *sock_strerror(int err) {
+const char *socket_strerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
         case WSAEADDRINUSE: return "address already in use";
@@ -338,9 +339,9 @@ const char *sock_strerror(int err) {
     }
 }
 
-const char *sock_ioerror(p_sock ps, int err) {
+const char *socket_ioerror(p_socket ps, int err) {
 	(void) ps;
-	return sock_strerror(err);
+	return socket_strerror(err);
 }
 
 static const char *wstrerror(int err) {

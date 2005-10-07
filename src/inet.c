@@ -53,9 +53,9 @@ int inet_open(lua_State *L)
 static int inet_gethost(const char *address, struct hostent **hp) {
     struct in_addr addr;
     if (inet_aton(address, &addr))
-        return sock_gethostbyaddr((char *) &addr, sizeof(addr), hp);
+        return socket_gethostbyaddr((char *) &addr, sizeof(addr), hp);
     else 
-        return sock_gethostbyname(address, hp);
+        return socket_gethostbyname(address, hp);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -68,7 +68,7 @@ static int inet_global_tohostname(lua_State *L) {
     int err = inet_gethost(address, &hp);
     if (err != IO_DONE) {
         lua_pushnil(L);
-        lua_pushstring(L, sock_hoststrerror(err));
+        lua_pushstring(L, socket_hoststrerror(err));
         return 2;
     }
     lua_pushstring(L, hp->h_name);
@@ -87,7 +87,7 @@ static int inet_global_toip(lua_State *L)
     int err = inet_gethost(address, &hp);
     if (err != IO_DONE) {
         lua_pushnil(L);
-        lua_pushstring(L, sock_hoststrerror(err));
+        lua_pushstring(L, socket_hoststrerror(err));
         return 2;
     }
     lua_pushstring(L, inet_ntoa(*((struct in_addr *) hp->h_addr)));
@@ -121,7 +121,7 @@ static int inet_global_gethostname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Retrieves socket peer name
 \*-------------------------------------------------------------------------*/
-int inet_meth_getpeername(lua_State *L, p_sock ps)
+int inet_meth_getpeername(lua_State *L, p_socket ps)
 {
     struct sockaddr_in peer;
     socklen_t peer_len = sizeof(peer);
@@ -138,7 +138,7 @@ int inet_meth_getpeername(lua_State *L, p_sock ps)
 /*-------------------------------------------------------------------------*\
 * Retrieves socket local name
 \*-------------------------------------------------------------------------*/
-int inet_meth_getsockname(lua_State *L, p_sock ps)
+int inet_meth_getsockname(lua_State *L, p_socket ps)
 {
     struct sockaddr_in local;
     socklen_t local_len = sizeof(local);
@@ -198,15 +198,15 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
 \*-------------------------------------------------------------------------*/
-const char *inet_trycreate(p_sock ps, int type) {
-    return sock_strerror(sock_create(ps, AF_INET, type, 0));
+const char *inet_trycreate(p_socket ps, int type) {
+    return socket_strerror(socket_create(ps, AF_INET, type, 0));
 }
 
 /*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_tryconnect(p_sock ps, const char *address, 
-        unsigned short port, p_tm tm)
+const char *inet_tryconnect(p_socket ps, const char *address, 
+        unsigned short port, p_timeout tm)
 {
     struct sockaddr_in remote;
     int err;
@@ -217,20 +217,20 @@ const char *inet_tryconnect(p_sock ps, const char *address,
         if (!inet_aton(address, &remote.sin_addr)) {
             struct hostent *hp = NULL;
             struct in_addr **addr;
-            err = sock_gethostbyname(address, &hp);
-            if (err != IO_DONE) return sock_hoststrerror(err);
+            err = socket_gethostbyname(address, &hp);
+            if (err != IO_DONE) return socket_hoststrerror(err);
             addr = (struct in_addr **) hp->h_addr_list;
             memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
         }
     } else remote.sin_family = AF_UNSPEC;
-    err = sock_connect(ps, (SA *) &remote, sizeof(remote), tm);
-    return sock_strerror(err);
+    err = socket_connect(ps, (SA *) &remote, sizeof(remote), tm);
+    return socket_strerror(err);
 }
 
 /*-------------------------------------------------------------------------*\
 * Tries to bind socket to (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_trybind(p_sock ps, const char *address, unsigned short port)
+const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
 {
     struct sockaddr_in local;
     int err;
@@ -242,14 +242,14 @@ const char *inet_trybind(p_sock ps, const char *address, unsigned short port)
     if (strcmp(address, "*") && !inet_aton(address, &local.sin_addr)) {
         struct hostent *hp = NULL;
         struct in_addr **addr;
-        err = sock_gethostbyname(address, &hp);
-        if (err != IO_DONE) return sock_hoststrerror(err);
+        err = socket_gethostbyname(address, &hp);
+        if (err != IO_DONE) return socket_hoststrerror(err);
         addr = (struct in_addr **) hp->h_addr_list;
         memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
     }
-    err = sock_bind(ps, (SA *) &local, sizeof(local));
-    if (err != IO_DONE) sock_destroy(ps);
-    return sock_strerror(err); 
+    err = socket_bind(ps, (SA *) &local, sizeof(local));
+    if (err != IO_DONE) socket_destroy(ps);
+    return socket_strerror(err); 
 }
 
 /*-------------------------------------------------------------------------*\

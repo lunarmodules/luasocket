@@ -23,10 +23,10 @@
 #include "socket.h"
 
 typedef struct t_tcp_ {
-    t_sock sock;
+    t_socket sock;
     t_io io;
-    t_buf buf;
-    t_tm tm;
+    t_buffer buf;
+    t_timeout tm;
 } t_tcp;
 
 typedef t_tcp *p_tcp;

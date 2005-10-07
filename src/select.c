@@ -51,7 +51,7 @@ int select_open(lua_State *L) {
 static int global_select(lua_State *L) {
     int rtab, wtab, itab, max_fd, ret, ndirty;
     fd_set rset, wset;
-    t_tm tm;
+    t_timeout tm;
     double t = luaL_optnumber(L, 3, -1);
     FD_ZERO(&rset); FD_ZERO(&wset);
     lua_settop(L, 3);
@@ -61,10 +61,10 @@ static int global_select(lua_State *L) {
     max_fd = collect_fd(L, 1, -1, itab, &rset);
     ndirty = check_dirty(L, 1, rtab, &rset);
     t = ndirty > 0? 0.0: t;
-    tm_init(&tm, t, -1);
-    tm_markstart(&tm);
+    timeout_init(&tm, t, -1);
+    timeout_markstart(&tm);
     max_fd = collect_fd(L, 2, max_fd, itab, &wset);
-    ret = sock_select(max_fd+1, &rset, &wset, NULL, &tm);
+    ret = socket_select(max_fd+1, &rset, &wset, NULL, &tm);
     if (ret > 0 || ndirty > 0) {
         return_fd(L, &rset, max_fd+1, itab, rtab, ndirty);
         return_fd(L, &wset, max_fd+1, itab, wtab, 0);

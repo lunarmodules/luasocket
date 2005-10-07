@@ -32,9 +32,9 @@
 /* TCP options (nagle algorithm disable) */
 #include <netinet/tcp.h>
 
-typedef int t_sock;
-typedef t_sock *p_sock;
+typedef int t_socket;
+typedef t_socket *p_socket;
 
-#define SOCK_INVALID (-1)
+#define SOCKET_INVALID (-1)
 
 #endif /* USOCKET_H */

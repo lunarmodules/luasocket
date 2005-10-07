@@ -1,5 +1,5 @@
-#ifndef AUX_H
-#define AUX_H
+#ifndef AUXILIAR_H
+#define AUXILIAR_H
 /*=========================================================================*\
 * Auxiliar routines for class hierarchy manipulation
 * LuaSocket toolkit (but completely independent of other LuaSocket modules)
@@ -34,15 +34,15 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-int aux_open(lua_State *L);
-void aux_newclass(lua_State *L, const char *classname, luaL_reg *func);
-void aux_add2group(lua_State *L, const char *classname, const char *group);
-void aux_setclass(lua_State *L, const char *classname, int objidx);
-void *aux_checkclass(lua_State *L, const char *classname, int objidx);
-void *aux_checkgroup(lua_State *L, const char *groupname, int objidx);
-void *aux_getclassudata(lua_State *L, const char *groupname, int objidx);
-void *aux_getgroupudata(lua_State *L, const char *groupname, int objidx);
-int aux_checkboolean(lua_State *L, int objidx);
-int aux_tostring(lua_State *L);
+int auxiliar_open(lua_State *L);
+void auxiliar_newclass(lua_State *L, const char *classname, luaL_reg *func);
+void auxiliar_add2group(lua_State *L, const char *classname, const char *group);
+void auxiliar_setclass(lua_State *L, const char *classname, int objidx);
+void *auxiliar_checkclass(lua_State *L, const char *classname, int objidx);
+void *auxiliar_checkgroup(lua_State *L, const char *groupname, int objidx);
+void *auxiliar_getclassudata(lua_State *L, const char *groupname, int objidx);
+void *auxiliar_getgroupudata(lua_State *L, const char *groupname, int objidx);
+int auxiliar_checkboolean(lua_State *L, int objidx);
+int auxiliar_tostring(lua_State *L);
 
-#endif /* AUX_H */
+#endif /* AUXILIAR_H */

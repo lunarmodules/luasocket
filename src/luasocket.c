@@ -48,10 +48,10 @@ static int base_open(lua_State *L);
 * Modules and functions
 \*-------------------------------------------------------------------------*/
 static const luaL_reg mod[] = {
-    {"auxiliar", aux_open},
+    {"auxiliar", auxiliar_open},
     {"except", except_open},
-    {"timeout", tm_open},
-    {"buffer", buf_open},
+    {"timeout", timeout_open},
+    {"buffer", buffer_open},
     {"inet", inet_open},
     {"tcp", tcp_open},
     {"udp", udp_open},
@@ -79,7 +79,7 @@ static int global_skip(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int global_unload(lua_State *L) {
     (void) L;
-    sock_close();
+    socket_close();
     return 0;
 }
 
@@ -87,7 +87,7 @@ static int global_unload(lua_State *L) {
 * Setup basic stuff.
 \*-------------------------------------------------------------------------*/
 static int base_open(lua_State *L) {
-    if (sock_open()) {
+    if (socket_open()) {
         /* export functions (and leave namespace table on top of stack) */
         luaL_openlib(L, "socket", func, 0);
 #ifdef LUASOCKET_DEBUG

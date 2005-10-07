@@ -16,9 +16,9 @@
 /*=========================================================================*\
 * Internal functions prototypes
 \*=========================================================================*/
-static int opt_setmembership(lua_State *L, p_sock ps, int level, int name);
-static int opt_setboolean(lua_State *L, p_sock ps, int level, int name);
-static int opt_set(lua_State *L, p_sock ps, int level, int name, 
+static int opt_setmembership(lua_State *L, p_socket ps, int level, int name);
+static int opt_setboolean(lua_State *L, p_socket ps, int level, int name);
+static int opt_set(lua_State *L, p_socket ps, int level, int name, 
         void *val, int len);
 
 /*=========================================================================*\
@@ -27,7 +27,7 @@ static int opt_set(lua_State *L, p_sock ps, int level, int name,
 /*-------------------------------------------------------------------------*\
 * Calls appropriate option handler
 \*-------------------------------------------------------------------------*/
-int opt_meth_setoption(lua_State *L, p_opt opt, p_sock ps)
+int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps)
 {
     const char *name = luaL_checkstring(L, 2);      /* obj, name, ... */
     while (opt->name && strcmp(name, opt->name))
@@ -41,38 +41,38 @@ int opt_meth_setoption(lua_State *L, p_opt opt, p_sock ps)
 }
 
 /* enables reuse of local address */
-int opt_reuseaddr(lua_State *L, p_sock ps)
+int opt_reuseaddr(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_REUSEADDR); 
 }
 
 /* disables the Naggle algorithm */
-int opt_tcp_nodelay(lua_State *L, p_sock ps)
+int opt_tcp_nodelay(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_TCP, TCP_NODELAY); 
 }
 
-int opt_keepalive(lua_State *L, p_sock ps)
+int opt_keepalive(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE); 
 }
 
-int opt_dontroute(lua_State *L, p_sock ps)
+int opt_dontroute(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_DONTROUTE);
 }
 
-int opt_broadcast(lua_State *L, p_sock ps)
+int opt_broadcast(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
-int opt_ip_multicast_loop(lua_State *L, p_sock ps)
+int opt_ip_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
 }
 
-int opt_linger(lua_State *L, p_sock ps)
+int opt_linger(lua_State *L, p_socket ps)
 {
     struct linger li;                      /* obj, name, table */
     if (!lua_istable(L, 3)) luaL_typerror(L, 3, lua_typename(L, LUA_TTABLE));
@@ -89,18 +89,18 @@ int opt_linger(lua_State *L, p_sock ps)
     return opt_set(L, ps, SOL_SOCKET, SO_LINGER, (char *) &li, sizeof(li));
 }
 
-int opt_ip_multicast_ttl(lua_State *L, p_sock ps)
+int opt_ip_multicast_ttl(lua_State *L, p_socket ps)
 {
     int val = (int) luaL_checknumber(L, 3);    /* obj, name, int */
     return opt_set(L, ps, SOL_SOCKET, SO_LINGER, (char *) &val, sizeof(val));
 }
 
-int opt_ip_add_membership(lua_State *L, p_sock ps)
+int opt_ip_add_membership(lua_State *L, p_socket ps)
 {
     return opt_setmembership(L, ps, IPPROTO_IP, IP_ADD_MEMBERSHIP);
 }
 
-int opt_ip_drop_membersip(lua_State *L, p_sock ps)
+int opt_ip_drop_membersip(lua_State *L, p_socket ps)
 {
     return opt_setmembership(L, ps, IPPROTO_IP, IP_DROP_MEMBERSHIP);
 }
@@ -108,7 +108,7 @@ int opt_ip_drop_membersip(lua_State *L, p_sock ps)
 /*=========================================================================*\
 * Auxiliar functions
 \*=========================================================================*/
-static int opt_setmembership(lua_State *L, p_sock ps, int level, int name)
+static int opt_setmembership(lua_State *L, p_socket ps, int level, int name)
 {
     struct ip_mreq val;                   /* obj, name, table */
     if (!lua_istable(L, 3)) luaL_typerror(L, 3, lua_typename(L, LUA_TTABLE));
@@ -130,7 +130,7 @@ static int opt_setmembership(lua_State *L, p_sock ps, int level, int name)
 }
 
 static 
-int opt_set(lua_State *L, p_sock ps, int level, int name, void *val, int len)
+int opt_set(lua_State *L, p_socket ps, int level, int name, void *val, int len)
 {
     if (setsockopt(*ps, level, name, (char *) val, len) < 0) {
         lua_pushnil(L);
@@ -141,9 +141,9 @@ int opt_set(lua_State *L, p_sock ps, int level, int name, void *val, int len)
     return 1;
 }
 
-static int opt_setboolean(lua_State *L, p_sock ps, int level, int name)
+static int opt_setboolean(lua_State *L, p_socket ps, int level, int name)
 {
-    int val = aux_checkboolean(L, 3);             /* obj, name, bool */
+    int val = auxiliar_checkboolean(L, 3);             /* obj, name, bool */
     return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
 }
 

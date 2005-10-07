@@ -13,9 +13,9 @@
 #include <winsock.h>
 
 typedef int socklen_t;
-typedef SOCKET t_sock;
-typedef t_sock *p_sock;
+typedef SOCKET t_socket;
+typedef t_socket *p_socket;
 
-#define SOCK_INVALID (INVALID_SOCKET)
+#define SOCKET_INVALID (INVALID_SOCKET)
 
 #endif /* WSOCKET_H */
