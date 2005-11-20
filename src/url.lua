@@ -130,29 +130,41 @@ function parse(url, default)
     -- remove whitespace
     -- url = string.gsub(url, "%s", "")
     -- get fragment
-    url = string.gsub(url, "#(.*)$", function(f) parsed.fragment = f end)
+    url = string.gsub(url, "#(.*)$", function(f) 
+        parsed.fragment = f 
+        return ""
+    end)
     -- get scheme
     url = string.gsub(url, "^([%w][%w%+%-%.]*)%:", 
-        function(s) parsed.scheme = s end)
+        function(s) parsed.scheme = s; return "" end)
     -- get authority
-    url = string.gsub(url, "^//([^/]*)", function(n) parsed.authority = n end)
+    url = string.gsub(url, "^//([^/]*)", function(n) 
+        parsed.authority = n 
+        return ""
+    end)
     -- get query stringing
-    url = string.gsub(url, "%?(.*)", function(q) parsed.query = q end)
+    url = string.gsub(url, "%?(.*)", function(q) 
+        parsed.query = q 
+        return ""
+    end)
     -- get params
-    url = string.gsub(url, "%;(.*)", function(p) parsed.params = p end)
+    url = string.gsub(url, "%;(.*)", function(p) 
+        parsed.params = p 
+        return ""
+    end)
     -- path is whatever was left
     if url ~= "" then parsed.path = url end
     local authority = parsed.authority
     if not authority then return parsed end
     authority = string.gsub(authority,"^([^@]*)@",
-        function(u) parsed.userinfo = u end)
+        function(u) parsed.userinfo = u; return "" end)
     authority = string.gsub(authority, ":([^:]*)$", 
-        function(p) parsed.port = p end)
+        function(p) parsed.port = p; return "" end)
     if authority ~= "" then parsed.host = authority end
     local userinfo = parsed.userinfo
     if not userinfo then return parsed end
     userinfo = string.gsub(userinfo, ":([^:]*)$", 
-        function(p) parsed.password = p end)
+        function(p) parsed.password = p; return "" end)
     parsed.user = userinfo 
     return parsed
 end
@@ -283,4 +295,3 @@ function build_path(parsed, unsafe)
 	if parsed.is_absolute then path = "/" .. path end
 	return path
 end
-

@@ -156,6 +156,12 @@
 			</File>
 			<File
 				RelativePath="src\wsocket.c">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						GeneratePreprocessedFile="0"/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter

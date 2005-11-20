@@ -16,11 +16,12 @@
 /*=========================================================================*\
 * Internal function prototypes.
 \*=========================================================================*/
-static int getfd(lua_State *L);
+static t_socket getfd(lua_State *L);
 static int dirty(lua_State *L);
-static int collect_fd(lua_State *L, int tab, int max_fd, int itab, fd_set *set);
+static t_socket collect_fd(lua_State *L, int tab, t_socket max_fd, 
+        int itab, fd_set *set);
 static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set);
-static void return_fd(lua_State *L, fd_set *set, int max_fd, 
+static void return_fd(lua_State *L, fd_set *set, t_socket max_fd, 
         int itab, int tab, int start);
 static void make_assoc(lua_State *L, int tab);
 static int global_select(lua_State *L);
@@ -49,7 +50,8 @@ int select_open(lua_State *L) {
 * Waits for a set of sockets until a condition is met or timeout.
 \*-------------------------------------------------------------------------*/
 static int global_select(lua_State *L) {
-    int rtab, wtab, itab, max_fd, ret, ndirty;
+    int rtab, wtab, itab, ret, ndirty;
+    t_socket max_fd;
     fd_set rset, wset;
     t_timeout tm;
     double t = luaL_optnumber(L, 3, -1);
@@ -58,7 +60,7 @@ static int global_select(lua_State *L) {
     lua_newtable(L); itab = lua_gettop(L);
     lua_newtable(L); rtab = lua_gettop(L);
     lua_newtable(L); wtab = lua_gettop(L);
-    max_fd = collect_fd(L, 1, -1, itab, &rset);
+    max_fd = collect_fd(L, 1, SOCKET_INVALID, itab, &rset);
     ndirty = check_dirty(L, 1, rtab, &rset);
     t = ndirty > 0? 0.0: t;
     timeout_init(&tm, t, -1);
@@ -83,15 +85,15 @@ static int global_select(lua_State *L) {
 /*=========================================================================*\
 * Internal functions
 \*=========================================================================*/
-static int getfd(lua_State *L) {
-    int fd = -1;
+static t_socket getfd(lua_State *L) {
+    t_socket fd = SOCKET_INVALID;
     lua_pushstring(L, "getfd");
     lua_gettable(L, -2);
     if (!lua_isnil(L, -1)) {
         lua_pushvalue(L, -2);
         lua_call(L, 1, 1);
         if (lua_isnumber(L, -1)) 
-            fd = (int) lua_tonumber(L, -1); 
+            fd = (t_socket) lua_tonumber(L, -1); 
     } 
     lua_pop(L, 1);
     return fd;
@@ -110,13 +112,13 @@ static int dirty(lua_State *L) {
     return is;
 }
 
-static int collect_fd(lua_State *L, int tab, int max_fd, 
+static t_socket collect_fd(lua_State *L, int tab, t_socket max_fd, 
         int itab, fd_set *set) {
     int i = 1;
     if (lua_isnil(L, tab)) 
         return max_fd;
     while (1) {
-        int fd;
+        t_socket fd;
         lua_pushnumber(L, i);
         lua_gettable(L, tab);
         if (lua_isnil(L, -1)) {
@@ -124,9 +126,10 @@ static int collect_fd(lua_State *L, int tab, int max_fd,
             break;
         }
         fd = getfd(L);
-        if (fd >= 0) {
+        if (fd != SOCKET_INVALID) {
             FD_SET(fd, set);
-            if (max_fd < fd) max_fd = fd;
+            if (max_fd == SOCKET_INVALID || max_fd < fd) 
+                max_fd = fd;
             lua_pushnumber(L, fd);
             lua_pushvalue(L, -2);
             lua_settable(L, itab);
@@ -141,8 +144,8 @@ static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set) {
     int ndirty = 0, i = 1;
     if (lua_isnil(L, tab)) 
         return 0;
-    while (1) {
-        int fd;
+    while (1) { 
+        t_socket fd;
         lua_pushnumber(L, i);
         lua_gettable(L, tab);
         if (lua_isnil(L, -1)) {
@@ -150,7 +153,7 @@ static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set) {
             break;
         }
         fd = getfd(L);
-        if (fd >= 0 && dirty(L)) {
+        if (fd != SOCKET_INVALID && dirty(L)) {
             lua_pushnumber(L, ++ndirty);
             lua_pushvalue(L, -2);
             lua_settable(L, dtab);
@@ -162,9 +165,9 @@ static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set) {
     return ndirty;
 }
 
-static void return_fd(lua_State *L, fd_set *set, int max_fd, 
+static void return_fd(lua_State *L, fd_set *set, t_socket max_fd, 
         int itab, int tab, int start) {
-    int fd;
+    t_socket fd;
     for (fd = 0; fd < max_fd; fd++) {
         if (FD_ISSET(fd, set)) {
             lua_pushnumber(L, ++start);

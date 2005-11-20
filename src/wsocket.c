@@ -46,16 +46,20 @@ int socket_close(void) {
 #define WAITFD_E        4
 #define WAITFD_C        (WAITFD_E|WAITFD_W)
 
-int socket_waitfd(p_socket ps, int sw, p_tm tm) {
+int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
     int ret;
     fd_set rfds, wfds, efds, *rp = NULL, *wp = NULL, *ep = NULL;
     struct timeval tv, *tp = NULL;
     double t;
-    if (tm_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
-    if (sw & WAITFD_R) { FD_ZERO(&rfds); FD_SET(*ps, &rfds); rp = &rfds; }
+    if (timeout_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
+    if (sw & WAITFD_R) { 
+        FD_ZERO(&rfds); 
+		FD_SET(*ps, &rfds);
+        rp = &rfds; 
+    }
     if (sw & WAITFD_W) { FD_ZERO(&wfds); FD_SET(*ps, &wfds); wp = &wfds; }
     if (sw & WAITFD_C) { FD_ZERO(&efds); FD_SET(*ps, &efds); ep = &efds; }
-    if ((t = tm_get(tm)) >= 0.0) {
+    if ((t = timeout_get(tm)) >= 0.0) {
         tv.tv_sec = (int) t;
         tv.tv_usec = (int) ((t-tv.tv_sec)*1.0e6);
         tp = &tv;
@@ -70,9 +74,10 @@ int socket_waitfd(p_socket ps, int sw, p_tm tm) {
 /*-------------------------------------------------------------------------*\
 * Select with int timeout in ms
 \*-------------------------------------------------------------------------*/
-int socket_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_tm tm) {
+int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds, 
+        p_timeout tm) {
     struct timeval tv; 
-    double t = tm_get(tm);
+    double t = timeout_get(tm);
     tv.tv_sec = (int) t;
     tv.tv_usec = (int) ((t - tv.tv_sec) * 1.0e6);
     if (n <= 0) {
@@ -113,7 +118,7 @@ int socket_create(p_socket ps, int domain, int type, int protocol) {
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-int socket_connect(p_socket ps, SA *addr, socklen_t len, p_tm tm) {
+int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
     int err;
     /* don't call on closed socket */
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
@@ -123,7 +128,7 @@ int socket_connect(p_socket ps, SA *addr, socklen_t len, p_tm tm) {
     err = WSAGetLastError();
     if (err != WSAEWOULDBLOCK && err != WSAEINPROGRESS) return err;
     /* zero timeout case optimization */
-    if (tm_iszero(tm)) return IO_TIMEOUT;
+    if (timeout_iszero(tm)) return IO_TIMEOUT;
     /* we wait until something happens */
     err = socket_waitfd(ps, WAITFD_C, tm);
     if (err == IO_CLOSED) {
@@ -131,7 +136,7 @@ int socket_connect(p_socket ps, SA *addr, socklen_t len, p_tm tm) {
         /* give windows time to set the error (yes, disgusting) */
         Sleep(10);
         /* find out why we failed */
-        getsockopt(*ps, SOL_SOCKETET, SO_ERROR, (char *)&err, &len); 
+        getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *)&err, &len); 
         /* we KNOW there was an error. if 'why' is 0, we will return
         * "unknown error", but it's not really our fault */
         return err > 0? err: IO_UNKNOWN; 
@@ -164,7 +169,8 @@ int socket_listen(p_socket ps, int backlog) {
 /*-------------------------------------------------------------------------*\
 * Accept with timeout
 \*-------------------------------------------------------------------------*/
-int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, p_tm tm) {
+int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, 
+        p_timeout tm) {
     SA daddr;
     socklen_t dlen = sizeof(daddr);
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
@@ -192,7 +198,7 @@ int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, p_tm tm) {
 * Therefore, whoever calls this function should not pass a huge buffer.
 \*-------------------------------------------------------------------------*/
 int socket_send(p_socket ps, const char *data, size_t count, 
-        size_t *sent, p_tm tm)
+        size_t *sent, p_timeout tm)
 {
     int err;
     /* avoid making system calls on closed sockets */
@@ -222,7 +228,7 @@ int socket_send(p_socket ps, const char *data, size_t count,
 * Sendto with timeout
 \*-------------------------------------------------------------------------*/
 int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent, 
-        SA *addr, socklen_t len, p_tm tm)
+        SA *addr, socklen_t len, p_timeout tm)
 {
     int err;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
@@ -243,7 +249,7 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
 /*-------------------------------------------------------------------------*\
 * Receive with timeout
 \*-------------------------------------------------------------------------*/
-int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_tm tm) {
+int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
     int err;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *got = 0;
@@ -265,7 +271,7 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_tm tm) {
 * Recvfrom with timeout
 \*-------------------------------------------------------------------------*/
 int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got, 
-        SA *addr, socklen_t *len, p_tm tm) {
+        SA *addr, socklen_t *len, p_timeout tm) {
     int err;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *got = 0;

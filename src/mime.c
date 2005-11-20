@@ -152,8 +152,8 @@ static int mime_global_wrp(lua_State *L)
 static void b64setup(UC *b64unbase) 
 {
     int i;
-    for (i = 0; i < 255; i++) b64unbase[i] = 255;
-    for (i = 0; i < 64; i++) b64unbase[b64base[i]] = i;
+    for (i = 0; i <= 255; i++) b64unbase[i] = (UC) 255;
+    for (i = 0; i < 64; i++) b64unbase[b64base[i]] = (UC) i;
     b64unbase['='] = 0;
 }
 
@@ -191,7 +191,7 @@ static size_t b64pad(const UC *input, size_t size,
         luaL_Buffer *buffer)
 {
     unsigned long value = 0;
-    UC code[4] = "====";
+    UC code[4] = {'=', '=', '=', '='};
     switch (size) {
         case 1:
             value = input[0] << 4;
@@ -480,38 +480,31 @@ static int mime_global_qp(lua_State *L)
 * Accumulate characters until we are sure about how to deal with them.
 * Once we are sure, output the to the buffer, in the correct form. 
 \*-------------------------------------------------------------------------*/
-static size_t qpdecode(UC c, UC *input, size_t size, 
-        luaL_Buffer *buffer)
-{
+static size_t qpdecode(UC c, UC *input, size_t size, luaL_Buffer *buffer) {
+    int d;
     input[size++] = c;
     /* deal with all characters we can deal */
-    while (size > 0) {
-        int c, d;
-        switch (input[0]) {
-            /* if we have an escape character */
-            case '=': 
-                if (size < 3) return size; 
-                /* eliminate soft line break */
-                if (input[1] == '\r' && input[2] == '\n') return 0;
-                /* decode quoted representation */
-                c = qpunbase[input[1]]; d = qpunbase[input[2]];
-                /* if it is an invalid, do not decode */
-                if (c > 15 || d > 15) luaL_addlstring(buffer, (char *)input, 3);
-                else luaL_putchar(buffer, (c << 4) + d);
-                return 0;
-            case '\r':
-                if (size < 2) return size; 
-                if (input[1] == '\n') luaL_addlstring(buffer, (char *)input, 2);
-                return 0;
-            default:
-                if (input[0] == '\t' || (input[0] > 31 && input[0] < 127))
-                    luaL_putchar(buffer, input[0]);
-                return 0;
-        }
-        input[0] = input[1]; input[1] = input[2];
-        size--;
+    switch (input[0]) {
+        /* if we have an escape character */
+        case '=': 
+            if (size < 3) return size; 
+            /* eliminate soft line break */
+            if (input[1] == '\r' && input[2] == '\n') return 0;
+            /* decode quoted representation */
+            c = qpunbase[input[1]]; d = qpunbase[input[2]];
+            /* if it is an invalid, do not decode */
+            if (c > 15 || d > 15) luaL_addlstring(buffer, (char *)input, 3);
+            else luaL_putchar(buffer, (c << 4) + d);
+            return 0;
+        case '\r':
+            if (size < 2) return size; 
+            if (input[1] == '\n') luaL_addlstring(buffer, (char *)input, 2);
+            return 0;
+        default:
+            if (input[0] == '\t' || (input[0] > 31 && input[0] < 127))
+                luaL_putchar(buffer, input[0]);
+            return 0;
     }
-    return 0;
 }
 
 /*-------------------------------------------------------------------------*\

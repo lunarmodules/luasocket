@@ -80,12 +80,12 @@ int opt_linger(lua_State *L, p_socket ps)
     lua_gettable(L, 3);
     if (!lua_isboolean(L, -1)) 
         luaL_argerror(L, 3, "boolean 'on' field expected");
-    li.l_onoff = lua_toboolean(L, -1);
+    li.l_onoff = (u_short) lua_toboolean(L, -1);
     lua_pushstring(L, "timeout");
     lua_gettable(L, 3);
     if (!lua_isnumber(L, -1)) 
         luaL_argerror(L, 3, "number 'timeout' field expected");
-    li.l_linger = (int) lua_tonumber(L, -1);
+    li.l_linger = (u_short) lua_tonumber(L, -1);
     return opt_set(L, ps, SOL_SOCKET, SO_LINGER, (char *) &li, sizeof(li));
 }
 

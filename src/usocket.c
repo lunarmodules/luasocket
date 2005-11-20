@@ -102,7 +102,8 @@ void socket_destroy(p_socket ps) {
 /*-------------------------------------------------------------------------*\
 * Select with timeout control
 \*-------------------------------------------------------------------------*/
-int socket_select(int n, fd_set *rfds, fd_set *wfds, fd_set *efds, p_timeout tm) {
+int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds, 
+        p_timeout tm) {
     int ret;
     do {
         struct timeval tv;
