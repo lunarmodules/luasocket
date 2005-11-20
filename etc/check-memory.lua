@@ -7,7 +7,7 @@ function load(s)
     print(s .. ":\t " .. (b-a) .. "k")
 end
 
-load("url")
+load("socket.url")
 load("ltn12")
 load("socket")
 load("mime")

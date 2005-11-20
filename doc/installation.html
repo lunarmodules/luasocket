@@ -76,9 +76,9 @@ distribution directory structure:</p>
 <pre class=example>
 &lt;SHARE&gt;/compat-5.1.lua
 &lt;SHARE&gt;/ltn12.lua
-&lt;SHARE&gt;/mime/init.lua (originally mime.lua)
+&lt;SHARE&gt;/mime/mime.lua
 &lt;LIB&gt;/mime/core.dll
-&lt;SHARE&gt;/socket/init.lua (originally socket.lua)
+&lt;SHARE&gt;/socket/socket.lua
 &lt;LIB&gt;/socket/core.dll
 &lt;SHARE&gt;/socket/http.lua
 &lt;SHARE&gt;/socket/tp.lua
@@ -88,9 +88,7 @@ distribution directory structure:</p>
 </pre>
 
 <p> Naturally, on Unix systems, <tt>core.dll</tt>
-would be replaced by <tt>core.so</tt>. Notice that in the instalation,
-<tt>socket.lua</tt> becomes <tt>socket/init.lua</tt>, and the same happens
-with <tt>mime.lua</tt>, which becomes <tt>mime/init.lua</tt>.
+would be replaced by <tt>core.so</tt>. 
 </p>
 
 <p> In order for the interpreter to find all LuaSocket components, three

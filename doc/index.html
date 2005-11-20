@@ -165,6 +165,13 @@ support.
 </p>
 
 <ul>
+<li> New: sample module <tt>dispatch.lua</tt> implements a
+coroutine based dispatcher; 
+<li> New: sample <tt>check-links.lua</tt> works
+both in blocking and non-blocking mode using coroutines
+(using the new dispatcher);
+<li> New: sample <tt>forward.lua</tt> implements a coroutine
+based forward server (using the new dispatcher);
 <li> Improved: <tt>tcp:send(data, i, j)</tt> to return <tt>(i+sent-1)</tt>.  This is great for non-blocking I/O, but might break some code;
 <li> Improved: HTTP, SMTP, and FTP functions to accept a new field
 <tt>create</tt> that overrides the function used to create socket objects;

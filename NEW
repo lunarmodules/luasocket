@@ -1,21 +1,54 @@
 What's New
 
-The big change for the 2.0 (beta3) release was the adoption of the Lua
-5.1 package proposal. There were several bug fixes too (a beta is a
-beta, is a beta).
+There is no big change for the 2.0 (final) release. It is
+basically a bug fix release. The main improvement is in the
+non-blocking support. 
 
-* New compat-5.1 distribution:
-  - Instalation uses new directory structure;
-  - Namespace hierarchy is in now back in use (ex. socket.url instead of url);
-  - All modules call require even for standard libraries;
-* LTN12 avoids coroutines (so you can go wild on the C side);
-* socket.select wasn't calling tm_markstart;
-* Kludge on wsocket.c:sock_send for Windows timeout issue moved to
-  buffer.c:sendraw so it's not a kludge anymore;
-* socket.protect only catches errors thrown by socket.try;
-* Fixed udp:sendto to call sock_sendto instead of sock_send;
-* close wasn't returning 1!
-* socket.gettime returns time since Unix Epoch 1/1/1970 (UTC)
-* socket.sleep is robust to interrupts;
-* http.PROXY wasn't working.
-* fixed some of the examples
+  * New: sample module dispatch.lua implements a coroutine
+    based dispatcher; 
+  * New: sample check-links.lua works both in blocking and
+    non-blocking mode using coroutines (using the new
+    dispatcher);
+  * New: sample forward.lua implements a coroutine based
+    forward server (using the new dispatcher);
+  * Improved: tcp:send(data, i, j) to return (i+sent-1).  This
+    is great for non-blocking I/O, but might break some code;
+  * Improved: HTTP, SMTP, and FTP functions to accept a new
+    field create that overrides the function used to create
+    socket objects;
+  * Improved: smtp.message now supports multipart/alternative
+    (for the HTML messages we all love so much); 
+  * Fixed: smtp.send was hanging on errors returned by LTN12
+    sources;
+  * Fixed: url.absolute() to work when base_url is in parsed
+    form;
+  * Fixed: http.request() not to redirect when the location
+    header is empty (naughty servers...);
+  * Fixed: tcp{client}:shutdown() to check for class instead
+    of group;
+  * Fixed: The manual to stop using socket.try() in place of
+    assert(), since it can't; 
+  * Improved: Got rid of package.loaded.base = _G kludge;
+  * Fixed: Parts of the manual referred to require("http")
+    instead of require("socket.http");
+  * Improved: Socket and MIME binaries are called 'core' each
+    inside their directory (ex. "socket/core.dll"). The 'l'
+    prefix was just a bad idea;
+  * Improved: Using bundles in Mac OS X, instead of dylibs; 
+  * Fixed: luasocket.h to export luaopen_socket_core;
+  * Fixed: udp:setpeername() so you can "disconnect" an UDP
+    socket;
+  * Fixed: A weird bug in HTTP support that caused some
+    requests to fail (Florian Berger);
+  * Fixed: Bug in socket.select() that caused sockets with
+    descriptor 0 to be ignored (Renato Maia);
+  * Fixed: "Bug" that caused dns.toip() to crash under uLinux
+    (William Trenker);
+  * Fixed: "Bug" that caused gethostbyname to crash under VMS
+    (Renato Maia);
+  * Fixed: tcp:send("") to return 0 bytes sent (Alexander
+    Marinov);
+  * Improved: socket.DEBUG and socket.VERSION became
+    socket._DEBUGs and socket._VERSION for uniformity with other
+    libraries;
+  * Improved: socket.select now works on empty sets on Windows. 

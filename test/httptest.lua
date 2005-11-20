@@ -22,8 +22,8 @@ http.TIMEOUT = 10
 
 local t = socket.gettime()
 
-host = host or "dell-diego" -- "diego.student.princeton.edu"
-proxy = proxy or "http://dell-diego:3128"
+host = host or "diego.student.princeton.edu"
+proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
 index_file = "index.html"

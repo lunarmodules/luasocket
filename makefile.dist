@@ -4,125 +4,128 @@
 
 DIST = luasocket-2.0
 
-COMPAT = compat-5.1r4
+COMPAT = src/compat-5.1r4
 
-LUA = \
-	ftp.lua \
-	http.lua \
-	ltn12.lua \
-	mime.lua \
-	smtp.lua \
-	socket.lua \
-	tp.lua \
-	url.lua
 
-TESTS = \
-	testclnt.lua \
-	testsrvr.lua \
-	testsupport.lua
+TEST = \
+	test/testclnt.lua \
+	test/testsrvr.lua \
+	test/testsupport.lua
 
-EXAMPLES = \
-	check-memory.lua \
-	b64.lua \
-	cddb.lua \
-	daytimeclnt.lua \
-	echoclnt.lua \
-	echosrvr.lua \
-	eol.lua \
-	listener.lua \
-	qp.lua \
-	lpr.lua \
-	talker.lua \
-	tinyirc.lua
+SAMPLES = \
+	samples/README \
+	samples/cddb.lua \
+	samples/daytimeclnt.lua \
+	samples/echoclnt.lua \
+	samples/echosrvr.lua \
+	samples/listener.lua \
+	samples/lpr.lua \
+	samples/talker.lua \
+	samples/tinyirc.lua
 
 ETC = \
-	check-links.lua \
-	check-links-nb.lua \
-	dict.lua \
-	get.lua \
-	unix.c \
-	unix.h \
-	lp.lua \
-	tftp.lua
+	etc/README \
+	etc/b64.lua \
+	etc/check-links.lua \
+	etc/check-memory.lua \
+	etc/dict.lua \
+	etc/dispatch.lua \
+	etc/eol.lua \
+	etc/forward.lua \
+	etc/get.lua \
+	etc/links \
+	etc/lp.lua \
+	etc/qp.lua \
+	etc/tftp.lua
 
-CORE = \
-	auxiliar.c \
-	auxiliar.h \
-	buffer.c \
-	buffer.h \
-	except.c \
-	except.h \
-	inet.c \
-	inet.h \
-	io.c \
-	io.h \
-	luasocket.c \
-	luasocket.h \
-	mime.c \
-	mime.h \
-	options.c \
-	options.h \
-	select.c \
-	select.h \
-	socket.h \
-	tcp.c \
-	tcp.h \
-	timeout.c \
-	timeout.h \
-	udp.c \
-	udp.h \
-	usocket.c \
-	usocket.h \
-	wsocket.c \
-	wsocket.h
+SRC = \
+	src/auxiliar.c \
+	src/auxiliar.h \
+	src/buffer.c \
+	src/buffer.h \
+	src/except.c \
+	src/except.h \
+	src/inet.c \
+	src/inet.h \
+	src/io.c \
+	src/io.h \
+	src/luasocket.c \
+	src/luasocket.h \
+	src/mime.c \
+	src/mime.h \
+	src/options.c \
+	src/options.h \
+	src/select.c \
+	src/select.h \
+	src/socket.h \
+	src/tcp.c \
+	src/tcp.h \
+	src/timeout.c \
+	src/timeout.h \
+	src/udp.c \
+	src/udp.h \
+	src/unix.c \
+	src/unix.h \
+	src/usocket.c \
+	src/usocket.h \
+	src/wsocket.c \
+	src/wsocket.h \
+	src/ftp.lua \
+	src/http.lua \
+	src/ltn12.lua \
+	src/mime.lua \
+	src/smtp.lua \
+	src/socket.lua \
+	src/tp.lua \
+	src/url.lua
 
 MAKE = \
 	makefile \
 	config \
 	luasocket.sln \
-	luasocket.vcproj \
+	socket.vcproj \
 	mime.vcproj
 
-MANUAL = \
-	manual/dns.html \
-	manual/ftp.html \
-	manual/home.html \
-	manual/http.html \
-	manual/introduction.html \
-	manual/ltn12.html \
-	manual/luasocket.png \
-	manual/mime.html \
-	manual/installation.html \
-	manual/reference.css \
-	manual/reference.html \
-	manual/smtp.html \
-	manual/socket.html \
-	manual/tcp.html \
-	manual/udp.html \
-	manual/url.html
+DOC = \
+	doc/dns.html \
+	doc/ftp.html \
+	doc/home.html \
+	doc/http.html \
+	doc/installation.html \
+	doc/introduction.html \
+	doc/ltn12.html \
+	doc/luasocket.png \
+	doc/mime.html \
+	doc/reference.css \
+	doc/reference.html \
+	doc/smtp.html \
+	doc/socket.html \
+	doc/tcp.html \
+	doc/udp.html \
+	doc/url.html
 
 dist:
-	mkdir -p $(DIST)/examples
-	mkdir -p $(DIST)/tests
-	mkdir -p $(DIST)/etc
-	mkdir -p $(DIST)/lua
-	mkdir -p $(DIST)/manual
-	cp -vfr $(COMPAT) $(DIST)
-	cp -vf $(CORE) $(DIST)
-	cp -vf README $(DIST)
+	mkdir -p $(DIST)
 	cp -vf NEW $(DIST)
 	cp -vf LICENSE $(DIST)
 	cp -vf $(MAKE) $(DIST)
-	cp -vf make.README $(DIST)/INSTALL
-	cp -vf $(LUA) $(DIST)/lua
-	cp -vf lua.README $(DIST)/lua/README
-	cp -vf $(EXAMPLES) $(DIST)/examples
-	cp -vf examples.README $(DIST)/examples/README
-	cp -vf $(TESTS) $(DIST)/tests
-	cp -vf tests.README $(DIST)/tests/README
+
+	mkdir -p $(DIST)/etc
 	cp -vf $(ETC) $(DIST)/etc
-	cp -vf etc.README $(DIST)/etc/README
-	cp -vf $(MANUAL) $(DIST)/manual
+
+	mkdir -p $(DIST)/src
+	cp -vf $(SRC) $(DIST)/src
+	cp -vfr $(COMPAT) $(DIST)/src
+
+	mkdir -p $(DIST)/doc
+	cp -vf $(DOC) $(DIST)/doc
+
+	mkdir -p $(DIST)/samples
+	cp -vf $(SAMPLES) $(DIST)/samples
+
+	mkdir -p $(DIST)/test
+	cp -vf $(TEST) $(DIST)/test
+
 	tar -zcvf $(DIST).tar.gz $(DIST)
 	zip -r $(DIST).zip $(DIST)
 

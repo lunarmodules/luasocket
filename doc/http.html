@@ -209,11 +209,16 @@ Here are a few examples with the simple interface:
 
 <pre class=example>
 -- load the http module
-http = require("socket.http")
+local io = require("io")
+local http = require("socket.http")
+local ltn12 = require("ltn12")
 
--- connect to server "www.tecgraf.puc-rio.br" and retrieves this manual
--- file from "/luasocket/http.html"
-b = http.request("http://www.tecgraf.puc-rio.br/luasocket/http.html")
+-- connect to server "www.cs.princeton.edu" and retrieves this manual
+-- file from "~diego/professional/luasocket/http.html" and print it to stdout
+http.request{ 
+    url = "http://www.cs.princeton.edu/~diego/professional/luasocket/http.html", 
+    sink = ltn12.sink.file(io.stdout)
+}
 
 -- connect to server "www.example.com" and tries to retrieve
 -- "/private/index.html". Fails because authentication is needed.

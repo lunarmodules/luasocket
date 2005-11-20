@@ -1,7 +1,7 @@
 local lp = require("socket.lp")
 
 local function usage()
-  print('\nUsage: lua lptest.lua [filename] [keyword=val...]\n')
+  print('\nUsage: lua lpr.lua [filename] [keyword=val...]\n')
   print('Valid keywords are :')
   print(
      '  host=remote host or IP address (default "localhost")\n' ..
