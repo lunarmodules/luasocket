@@ -11,6 +11,8 @@
 -- make sure LuaSocket is loaded
 local io = require("io")
 local base = _G
+local os = require("os")
+local math = require("math")
 local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
@@ -192,6 +194,7 @@ local function send_data(con,fh,size)
       con.try(size == 0, "file size mismatch")
     end
   end
+  recv_ack(con) -- note the double acknowledgement
   send_ack(con)
   recv_ack(con)
   return size
@@ -224,7 +227,7 @@ local control_dflt = {
 local seq = 0
 local function newjob(connection)
     seq = seq + 1
-    return math.floor(socket.gettime() * 1000 + seq)
+    return math.floor(socket.gettime() * 1000 + seq)%1000
 end
 
 
@@ -241,22 +244,24 @@ local format_codes = {
   f = 'f'
 }
 
--- lp.send
+-- lp.send{option}
+-- requires option.file
 
-send = socket.protect(function(file, option)
-  socket.try(file, "invalid file name")
+send = socket.protect(function(option)
   socket.try(option and base.type(option) == "table", "invalid options")
+  local file = option.file
+  socket.try(file, "invalid file name")
   local fh = socket.try(io.open(file,"rb"))
   local datafile_size = fh:seek("end") -- get total size
-  fh:seek("set")                        -- go back to start of file
-  local localhost = socket.dns.gethostname() or os.getenv("COMPUTERNAME") 
+  fh:seek("set")                       -- go back to start of file
+  local localhost = socket.dns.gethostname() or os.getenv("COMPUTERNAME")
     or "localhost"
   local con = connect(localhost, option)
 -- format the control file
   local jobno = newjob()
   local localip = socket.dns.toip(localhost)
   localhost = string.sub(localhost,1,31)
-  local user = string.sub(option.user or os.getenv("LPRUSER") or 
+  local user = string.sub(option.user or os.getenv("LPRUSER") or
     os.getenv("USERNAME") or os.getenv("USER") or "anonymous", 1,31)
   local lpfile = string.format("dfA%3.3d%-s", jobno, localhost);
   local fmt = format_codes[option.format] or 'l'
@@ -306,15 +311,14 @@ end)
 --
 query = socket.protect(function(p)
   p = p or {}
-  local localhost = socket.dns.gethostname() or os.getenv("COMPUTERNAME") 
+  local localhost = socket.dns.gethostname() or os.getenv("COMPUTERNAME")
     or "localhost"
   local con = connect(localhost,p)
   local fmt
   if string.sub(p.format or 's',1,1) == 's' then fmt = 3 else fmt = 4 end
-  con.try(con.skt:send(string.format("%c%s %s\n", fmt, p.queue or "*", 
+  con.try(con.skt:send(string.format("%c%s %s\n", fmt, p.queue or "*",
     p.list or "")))
   local data = con.try(con.skt:receive("*a"))
   con.skt:close()
   return data
 end)
-
