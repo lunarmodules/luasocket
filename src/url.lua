@@ -55,9 +55,9 @@ local segment_set = make_set {
 }
 
 local function protect_segment(s)
-	return string.gsub(s, "(%W)", function (c) 
+	return string.gsub(s, "([^A-Za-z0-9_])", function (c) 
 		if segment_set[c] then return c
-		else return escape(c) end
+		else return string.format("%%%02x", string.byte(c)) end
 	end)
 end
 
