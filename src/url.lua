@@ -20,7 +20,7 @@ _VERSION = "URL 1.0"
 
 -----------------------------------------------------------------------------
 -- Encodes a string into its escaped hexadecimal representation
--- Input 
+-- Input
 --   s: binary string to be encoded
 -- Returns
 --   escaped representation of string binary
@@ -33,8 +33,8 @@ end
 
 -----------------------------------------------------------------------------
 -- Protects a path segment, to prevent it from interfering with the
--- url parsing. 
--- Input 
+-- url parsing.
+-- Input
 --   s: binary string to be encoded
 -- Returns
 --   escaped representation of string binary
@@ -50,12 +50,12 @@ end
 -- these are allowed withing a path segment, along with alphanum
 -- other characters must be escaped
 local segment_set = make_set {
-    "-", "_", ".", "!", "~", "*", "'", "(", 
+    "-", "_", ".", "!", "~", "*", "'", "(",
 	")", ":", "@", "&", "=", "+", "$", ",",
 }
 
 local function protect_segment(s)
-	return string.gsub(s, "([^A-Za-z0-9_])", function (c) 
+	return string.gsub(s, "([^A-Za-z0-9_])", function (c)
 		if segment_set[c] then return c
 		else return string.format("%%%02x", string.byte(c)) end
 	end)
@@ -63,7 +63,7 @@ end
 
 -----------------------------------------------------------------------------
 -- Encodes a string into its escaped hexadecimal representation
--- Input 
+-- Input
 --   s: binary string to be encoded
 -- Returns
 --   escaped representation of string binary
@@ -86,11 +86,11 @@ local function absolute_path(base_path, relative_path)
     if string.sub(relative_path, 1, 1) == "/" then return relative_path end
     local path = string.gsub(base_path, "[^/]*$", "")
     path = path .. relative_path
-    path = string.gsub(path, "([^/]*%./)", function (s) 
+    path = string.gsub(path, "([^/]*%./)", function (s)
         if s ~= "./" then return s else return "" end
     end)
     path = string.gsub(path, "/%.$", "/")
-    local reduced 
+    local reduced
     while reduced ~= path do
         reduced = path
         path = string.gsub(reduced, "([^/]*/%.%./)", function (s)
@@ -116,7 +116,7 @@ end
 -- Returns
 --   table with the following fields, where RFC naming conventions have
 --   been preserved:
---     scheme, authority, userinfo, user, password, host, port, 
+--     scheme, authority, userinfo, user, password, host, port,
 --     path, params, query, fragment
 -- Obs:
 --   the leading '/' in {/<path>} is considered part of <path>
@@ -130,26 +130,26 @@ function parse(url, default)
     -- remove whitespace
     -- url = string.gsub(url, "%s", "")
     -- get fragment
-    url = string.gsub(url, "#(.*)$", function(f) 
-        parsed.fragment = f 
+    url = string.gsub(url, "#(.*)$", function(f)
+        parsed.fragment = f
         return ""
     end)
     -- get scheme
-    url = string.gsub(url, "^([%w][%w%+%-%.]*)%:", 
+    url = string.gsub(url, "^([%w][%w%+%-%.]*)%:",
         function(s) parsed.scheme = s; return "" end)
     -- get authority
-    url = string.gsub(url, "^//([^/]*)", function(n) 
-        parsed.authority = n 
+    url = string.gsub(url, "^//([^/]*)", function(n)
+        parsed.authority = n
         return ""
     end)
     -- get query stringing
-    url = string.gsub(url, "%?(.*)", function(q) 
-        parsed.query = q 
+    url = string.gsub(url, "%?(.*)", function(q)
+        parsed.query = q
         return ""
     end)
     -- get params
-    url = string.gsub(url, "%;(.*)", function(p) 
-        parsed.params = p 
+    url = string.gsub(url, "%;(.*)", function(p)
+        parsed.params = p
         return ""
     end)
     -- path is whatever was left
@@ -158,14 +158,14 @@ function parse(url, default)
     if not authority then return parsed end
     authority = string.gsub(authority,"^([^@]*)@",
         function(u) parsed.userinfo = u; return "" end)
-    authority = string.gsub(authority, ":([^:]*)$", 
+    authority = string.gsub(authority, ":([^:]*)$",
         function(p) parsed.port = p; return "" end)
     if authority ~= "" then parsed.host = authority end
     local userinfo = parsed.userinfo
     if not userinfo then return parsed end
-    userinfo = string.gsub(userinfo, ":([^:]*)$", 
+    userinfo = string.gsub(userinfo, ":([^:]*)$",
         function(p) parsed.password = p; return "" end)
-    parsed.user = userinfo 
+    parsed.user = userinfo
     return parsed
 end
 
@@ -189,8 +189,8 @@ function build(parsed)
 		local userinfo = parsed.userinfo
 		if parsed.user then
 			userinfo = parsed.user
-			if parsed.password then 
-				userinfo = userinfo .. ":" .. parsed.password 
+			if parsed.password then
+				userinfo = userinfo .. ":" .. parsed.password
 			end
 		end
 		if userinfo then authority = userinfo .. "@" .. authority end
@@ -233,8 +233,8 @@ function absolute(base_url, relative_url)
                         relative_parsed.query = base_parsed.query
                     end
                 end
-            else     
-                relative_parsed.path = absolute_path(base_parsed.path or "", 
+            else    
+                relative_parsed.path = absolute_path(base_parsed.path or "",
                     relative_parsed.path)
             end
         end

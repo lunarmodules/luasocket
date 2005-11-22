@@ -20,10 +20,10 @@ encodet = {}
 decodet = {}
 wrapt = {}
 
--- creates a function that chooses a filter by name from a given table 
+-- creates a function that chooses a filter by name from a given table
 local function choose(table)
     return function(name, opt1, opt2)
-        if base.type(name) ~= "string" then 
+        if base.type(name) ~= "string" then
             name, opt1, opt2 = "default", name, opt1
         end
         local f = table[name or "nil"]
@@ -38,7 +38,7 @@ encodet['base64'] = function()
 end
 
 encodet['quoted-printable'] = function(mode)
-    return ltn12.filter.cycle(qp, "", 
+    return ltn12.filter.cycle(qp, "",
         (mode == "binary") and "=0D=0A" or "\r\n")
 end
 
@@ -56,22 +56,22 @@ local function format(chunk)
         if chunk == "" then return "''"
         else return string.len(chunk) end
     else return "nil" end
-end 
+end
 
 -- define the line-wrap filters
 wrapt['text'] = function(length)
     length = length or 76
-    return ltn12.filter.cycle(wrp, length, length) 
+    return ltn12.filter.cycle(wrp, length, length)
 end
 wrapt['base64'] = wrapt['text']
 wrapt['default'] = wrapt['text']
 
 wrapt['quoted-printable'] = function()
-    return ltn12.filter.cycle(qpwrp, 76, 76) 
+    return ltn12.filter.cycle(qpwrp, 76, 76)
 end
 
 -- function that choose the encoding, decoding or wrap algorithm
-encode = choose(encodet) 
+encode = choose(encodet)
 decode = choose(decodet)
 wrap = choose(wrapt)
 

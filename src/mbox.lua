@@ -10,7 +10,7 @@ function Public.split_message(message_s)
     if not message.body then
 	    string.gsub(message_s, "^\n(.*)", function (b) message.body = b end)
     end
-    if not message.headers and not message.body then 
+    if not message.headers and not message.body then
         message.headers = message_s
     end
     return message.headers or "", message.body or ""

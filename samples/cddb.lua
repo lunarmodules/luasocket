@@ -16,7 +16,7 @@ function parse(body)
         return nil, code, message
     end
     local data = {}
-    for l in lines do 
+    for l in lines do
         local c = string.sub(l, 1, 1)
         if c ~= '#' and c ~= '.' then
             local key, value = socket.skip(2, string.find(l, "(.-)=(.*)"))
@@ -26,7 +26,7 @@ function parse(body)
             data[key] = value
         end
     end
-    return data, code, message  
+    return data, code, message 
 end
 
 local host = socket.dns.gethostname()
@@ -34,13 +34,13 @@ local query = "%s?cmd=cddb+read+%s+%s&hello=LuaSocket+%s+LuaSocket+2.0&proto=6"
 local url = string.format(query, server, arg[1], arg[2], host)
 local body, headers, code = http.get(url)
 
-if code == 200 then 
+if code == 200 then
     local data, code, error = parse(body)
-    if not data then 
+    if not data then
         print(error or code)
     else
-        for i,v in pairs(data) do 
-            io.write(i, ': ', v, '\n') 
+        for i,v in pairs(data) do
+            io.write(i, ': ', v, '\n')
         end
     end
 else print(error) end

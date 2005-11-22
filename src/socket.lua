@@ -19,7 +19,7 @@ module("socket")
 function connect(address, port, laddress, lport)
     local sock, err = socket.tcp()
     if not sock then return nil, err end
-    if laddress then 
+    if laddress then
         local res, err = sock:bind(laddress, lport, -1)
         if not res then return nil, err end
     end
@@ -65,9 +65,9 @@ sinkt["close-when-done"] = function(sock)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
-    }, { 
+    }, {
         __call = function(self, chunk, err)
-            if not chunk then 
+            if not chunk then
                 sock:close()
                 return 1
             else return sock:send(chunk) end
@@ -79,7 +79,7 @@ sinkt["keep-open"] = function(sock)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
-    }, { 
+    }, {
         __call = function(self, chunk, err)
             if chunk then return sock:send(chunk)
             else return 1 end
@@ -95,7 +95,7 @@ sourcet["by-length"] = function(sock, length)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
-    }, { 
+    }, {
         __call = function()
             if length <= 0 then return nil end
             local size = math.min(socket.BLOCKSIZE, length)
@@ -112,16 +112,16 @@ sourcet["until-closed"] = function(sock)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
-    }, { 
+    }, {
         __call = function()
             if done then return nil end
             local chunk, err, partial = sock:receive(socket.BLOCKSIZE)
             if not err then return chunk
-            elseif err == "closed" then 
+            elseif err == "closed" then
                 sock:close()
                 done = 1
                 return partial
-            else return nil, err end 
+            else return nil, err end
         end
     })
 end

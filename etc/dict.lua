@@ -17,7 +17,7 @@ local tp = require("socket.tp")
 module("socket.dict")
 
 -----------------------------------------------------------------------------
--- Globals 
+-- Globals
 -----------------------------------------------------------------------------
 HOST = "dict.org"
 PORT = 2628
@@ -39,7 +39,7 @@ end
 
 function metat.__index:check(ok)
     local code, status = socket.try(self.tp:check(ok))
-    return code, 
+    return code,
         base.tonumber(socket.skip(2, string.find(status, "^%d%d%d (%d*)")))
 end
 
@@ -101,7 +101,7 @@ local default = {
 }
 
 local function there(f)
-    if f == "" then return nil 
+    if f == "" then return nil
     else return f end
 end
 
@@ -116,7 +116,7 @@ local function parse(u)
     arg = string.gsub(arg, "^:([^:]+)", function(f) t.word = f end)
     socket.try(t.word, "need at least <word> in URL")
     arg = string.gsub(arg, "^:([^:]*)", function(f) t.database = there(f) end)
-    if cmd == "m" then 
+    if cmd == "m" then
         arg = string.gsub(arg, "^:([^:]*)", function(f) t.strat = there(f) end)
     end
     string.gsub(arg, ":([^:]*)$", function(f) t.n = base.tonumber(f) end)
@@ -130,7 +130,7 @@ local function tget(gett)
         local def = con:define(gett.database, gett.word)
         con:quit()
         con:close()
-        if gett.n then return def[gett.n] 
+        if gett.n then return def[gett.n]
         else return def end
     elseif gett.command == "m" then
         local mat = con:match(gett.database, gett.strat, gett.word)

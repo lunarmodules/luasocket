@@ -53,10 +53,10 @@ local elapsed_s =   "%s received, %s/s throughput, %s elapsed                "
 function gauge(got, delta, size)
 	local rate = got / delta
 	if size and size >= 1 then
-		return string.format(remaining_s, nicesize(got),  nicesize(rate), 
+		return string.format(remaining_s, nicesize(got),  nicesize(rate),
 			100*got/size, nicetime((size-got)/rate))
-	else 
-		return string.format(elapsed_s, nicesize(got), 
+	else
+		return string.format(elapsed_s, nicesize(got),
 			nicesize(rate), nicetime(delta))
 	end
 end
@@ -68,18 +68,18 @@ function stats(size)
     local got = 0
     return function(chunk)
         -- elapsed time since start
-        local delta = socket.gettime() - start 
-        if chunk then 
+        local delta = socket.gettime() - start
+        if chunk then
             -- total bytes received
-            got = got + string.len(chunk)    
+            got = got + string.len(chunk)   
             -- not enough time for estimate
-            if delta > 0.1 then 
-                io.stderr:write("\r", gauge(got, delta, size)) 
+            if delta > 0.1 then
+                io.stderr:write("\r", gauge(got, delta, size))
                 io.stderr:flush()
             end
-        else 
+        else
             -- close up
-            io.stderr:write("\r", gauge(got, delta), "\n") 
+            io.stderr:write("\r", gauge(got, delta), "\n")
         end
         return chunk
     end
@@ -111,11 +111,11 @@ function getbyftp(u, file)
     local gett = url.parse(u)
     gett.sink = save
     gett.type = "i"
-    local ret, err = ftp.get(gett) 
+    local ret, err = ftp.get(gett)
 	if err then print(err) end
 end
 
--- determines the scheme 
+-- determines the scheme
 function getscheme(u)
 	-- this is an heuristic to solve a common invalid url poblem
 	if not string.find(u, "//") then u = "//" .. u end
@@ -134,7 +134,7 @@ end
 
 -- main program
 arg = arg or {}
-if table.getn(arg) < 1 then 
+if table.getn(arg) < 1 then
 	io.write("Usage:\n  lua get.lua <remote-url> [<local-file>]\n")
 	os.exit(1)
 else get(arg[1], arg[2]) end

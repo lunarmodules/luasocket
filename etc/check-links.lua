@@ -37,7 +37,7 @@ function getstatus(link)
         handler:start(function()
             local r, c, h, s = http.request{
                 method = "HEAD",
-                url = link, 
+                url = link,
                 create = handler.tcp
             }
             if r and c == 200 then io.write('\t', link, '\n')
@@ -107,6 +107,6 @@ for _, address in ipairs(arg) do
     checklinks(url.absolute("file:", address))
 end
 
-while nthreads > 0 do 
+while nthreads > 0 do
     handler:step()
-end 
+end

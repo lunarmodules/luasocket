@@ -1,13 +1,12 @@
 #--------------------------------------------------------------------------
 # Distribution makefile
 #--------------------------------------------------------------------------
-
 DIST = luasocket-2.0
 
 COMPAT = src/compat-5.1r4
 
-
 TEST = \
+	test/README \
 	test/testclnt.lua \
 	test/testsrvr.lua \
 	test/testsupport.lua
@@ -33,12 +32,12 @@ ETC = \
 	etc/eol.lua \
 	etc/forward.lua \
 	etc/get.lua \
-	etc/links \
 	etc/lp.lua \
 	etc/qp.lua \
 	etc/tftp.lua
 
 SRC = \
+	src/makefile \
 	src/auxiliar.c \
 	src/auxiliar.h \
 	src/buffer.c \
@@ -108,6 +107,7 @@ dist:
 	mkdir -p $(DIST)
 	cp -vf NEW $(DIST)
 	cp -vf LICENSE $(DIST)
+	cp -vf README $(DIST)
 	cp -vf $(MAKE) $(DIST)
 
 	mkdir -p $(DIST)/etc

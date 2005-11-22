@@ -14,7 +14,7 @@ module("dispatch")
 TIMEOUT = 60
 
 -----------------------------------------------------------------------------
--- We implement 3 types of dispatchers: 
+-- We implement 3 types of dispatchers:
 --     sequential
 --     coroutine
 --     threaded
@@ -34,7 +34,7 @@ end
 
 -- sequential handler simply calls the functions and doesn't wrap I/O
 function handlert.sequential()
-    return { 
+    return {
         tcp = socket.tcp,
         start = seqstart
     }
@@ -55,7 +55,7 @@ function socket.protect(f)
       if not status then
         if type(results[1]) == 'table' then
           return nil, results[1][1]
-        else error(results[1]) end 
+        else error(results[1]) end
       end
       if coroutine.status(co) == "suspended" then
         arg = {coroutine.yield(unpack(results))}
@@ -84,17 +84,17 @@ local function newset()
             if index then
                 reverse[value] = nil
                 local top = table.remove(set)
-                if top ~= value then 
+                if top ~= value then
                     reverse[top] = index
                     set[index] = top
-                end 
+                end
             end
         end
-    }}) 
+    }})
 end
 
 -----------------------------------------------------------------------------
--- socket.tcp() wrapper for the coroutine dispatcher 
+-- socket.tcp() wrapper for the coroutine dispatcher
 -----------------------------------------------------------------------------
 local function cowrap(dispatcher, tcp, error)
     if not tcp then return nil, error end
@@ -102,7 +102,7 @@ local function cowrap(dispatcher, tcp, error)
     tcp:settimeout(0)
     -- metatable for wrap produces new methods on demand for those that we
     -- don't override explicitly.
-    local metat = { __index = function(table, key) 
+    local metat = { __index = function(table, key)
         table[key] = function(...)
             arg[1] = tcp
             return tcp[key](unpack(arg))
@@ -112,7 +112,7 @@ local function cowrap(dispatcher, tcp, error)
     -- does our user want to do his own non-blocking I/O?
     local zero = false
     -- create a wrap object that will behave just like a real socket object
-    local wrap = {  } 
+    local wrap = {  }
     -- we ignore settimeout to preserve our 0 timeout, but record whether
     -- the user wants to do his own non-blocking I/O
     function wrap:settimeout(value, mode)
@@ -121,19 +121,19 @@ local function cowrap(dispatcher, tcp, error)
         return 1
     end
     -- send in non-blocking mode and yield on timeout
-    function wrap:send(data, first, last) 
+    function wrap:send(data, first, last)
         first = (first or 1) - 1
         local result, error
         while true do
             -- return control to dispatcher and tell it we want to send
             -- if upon return the dispatcher tells us we timed out,
             -- return an error to whoever called us
-            if coroutine.yield(dispatcher.sending, tcp) == "timeout" then 
-                return nil, "timeout" 
+            if coroutine.yield(dispatcher.sending, tcp) == "timeout" then
+                return nil, "timeout"
             end
             -- try sending
             result, error, first = tcp:send(data, first+1, last)
-            -- if we are done, or there was an unexpected error, 
+            -- if we are done, or there was an unexpected error,
             -- break away from loop
             if error ~= "timeout" then return result, error, first end
         end
@@ -143,20 +143,20 @@ local function cowrap(dispatcher, tcp, error)
     function wrap:receive(pattern, partial)
         local error = "timeout"
         local value
-        while true do 
+        while true do
             -- return control to dispatcher and tell it we want to receive
             -- if upon return the dispatcher tells us we timed out,
             -- return an error to whoever called us
-            if coroutine.yield(dispatcher.receiving, tcp) == "timeout" then 
-                return nil, "timeout" 
+            if coroutine.yield(dispatcher.receiving, tcp) == "timeout" then
+                return nil, "timeout"
             end
             -- try receiving
             value, error, partial = tcp:receive(pattern, partial)
-            -- if we are done, or there was an unexpected error, 
+            -- if we are done, or there was an unexpected error,
             -- break away from loop. also, if the user requested
             -- zero timeout, return all we got
-            if (error ~= "timeout") or zero then 
-                return value, error, partial 
+            if (error ~= "timeout") or zero then
+                return value, error, partial
             end
         end
     end
@@ -168,8 +168,8 @@ local function cowrap(dispatcher, tcp, error)
             -- connection succeeds.
             -- if upon return the dispatcher tells us we have a
             -- timeout, just abort
-            if coroutine.yield(dispatcher.sending, tcp) == "timeout" then 
-                return nil, "timeout" 
+            if coroutine.yield(dispatcher.sending, tcp) == "timeout" then
+                return nil, "timeout"
             end
             -- when we come back, check if connection was successful
             result, error = tcp:connect(host, port)
@@ -179,27 +179,27 @@ local function cowrap(dispatcher, tcp, error)
     end
     -- accept in non-blocking mode and yield on timeout
     function wrap:accept()
-        while 1 do 
+        while 1 do
             -- return control to dispatcher. we will be readable when a
             -- connection arrives.
             -- if upon return the dispatcher tells us we have a
             -- timeout, just abort
-            if coroutine.yield(dispatcher.receiving, tcp) == "timeout" then 
-                return nil, "timeout" 
+            if coroutine.yield(dispatcher.receiving, tcp) == "timeout" then
+                return nil, "timeout"
             end
             local client, error = tcp:accept()
-            if error ~= "timeout" then 
-                return cowrap(dispatcher, client, error) 
+            if error ~= "timeout" then
+                return cowrap(dispatcher, client, error)
             end
-        end 
+        end
     end
     -- remove cortn from context
     function wrap:close()
         dispatcher.stamp[tcp] = nil
         dispatcher.sending.set:remove(tcp)
-        dispatcher.sending.cortn[tcp] = nil 
+        dispatcher.sending.cortn[tcp] = nil
         dispatcher.receiving.set:remove(tcp)
-        dispatcher.receiving.cortn[tcp] = nil 
+        dispatcher.receiving.cortn[tcp] = nil
         return tcp:close()
     end
     return setmetatable(wrap, metat)
@@ -207,12 +207,12 @@ end
 
 
 -----------------------------------------------------------------------------
--- Our coroutine dispatcher 
+-- Our coroutine dispatcher
 -----------------------------------------------------------------------------
 local cometat = { __index = {} }
 
 function schedule(cortn, status, operation, tcp)
-    if status then 
+    if status then
         if cortn and operation then
             operation.set:insert(tcp)
             operation.cortn[tcp] = cortn
@@ -233,7 +233,7 @@ function wakeup(operation, tcp)
         kick(operation, tcp)
         return cortn, coroutine.resume(cortn)
     -- othrewise, just get scheduler not to do anything
-    else 
+    else
         return nil, true
     end
 end
@@ -249,7 +249,7 @@ end
 -- step through all active cortns
 function cometat.__index:step()
     -- check which sockets are interesting and act on them
-    local readable, writable = socket.select(self.receiving.set, 
+    local readable, writable = socket.select(self.receiving.set,
         self.sending.set, 1)
     -- for all readable connections, resume their cortns and reschedule
     -- when they yield back to us
@@ -260,7 +260,7 @@ function cometat.__index:step()
     for _, tcp in ipairs(writable) do
         schedule(wakeup(self.sending, tcp))
     end
-    -- politely ask replacement I/O functions in idle cortns to 
+    -- politely ask replacement I/O functions in idle cortns to
     -- return reporting a timeout
     local now = socket.gettime()
     for tcp, stamp in pairs(self.stamp) do
@@ -271,25 +271,25 @@ function cometat.__index:step()
     end
 end
 
-function cometat.__index:start(func) 
+function cometat.__index:start(func)
     local cortn = coroutine.create(func)
     schedule(cortn, coroutine.resume(cortn))
 end
 
 function handlert.coroutine()
     local stamp = {}
-    local dispatcher = { 
+    local dispatcher = {
         stamp = stamp,
         sending  = {
-            name = "sending", 
-            set = newset(), 
-            cortn = {}, 
+            name = "sending",
+            set = newset(),
+            cortn = {},
             stamp = stamp
         },
         receiving = {
             name = "receiving",
-            set = newset(), 
-            cortn = {}, 
+            set = newset(),
+            cortn = {},
             stamp = stamp
         },
     }

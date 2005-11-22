@@ -69,22 +69,22 @@ independent files. Let's call these directories <tt>&lt;LIB&gt;</tt>
 and <tt>&lt;SHARE&gt;</tt>, respectively. 
 For instance, in my laptop, I use '<tt>/usr/local/lib/lua/5.0</tt>' for
 <tt>&lt;LIB&gt;</tt> and '<tt>/usr/local/share/lua/5.0</tt>' for
-<tt>&lt;SHARE&gt;</tt>. On Windows, only one directory is used, say
+<tt>&lt;SHARE&gt;</tt>. On Windows, sometimes only one directory is used, say
 '<tt>c:\program files\lua\5.0</tt>'. Here is the standard LuaSocket 
 distribution directory structure:</p>
 
 <pre class=example>
 &lt;SHARE&gt;/compat-5.1.lua
 &lt;SHARE&gt;/ltn12.lua
-&lt;SHARE&gt;/mime/mime.lua
-&lt;LIB&gt;/mime/core.dll
-&lt;SHARE&gt;/socket/socket.lua
+&lt;SHARE&gt;/socket.lua
 &lt;LIB&gt;/socket/core.dll
 &lt;SHARE&gt;/socket/http.lua
 &lt;SHARE&gt;/socket/tp.lua
 &lt;SHARE&gt;/socket/ftp.lua
 &lt;SHARE&gt;/socket/smtp.lua
 &lt;SHARE&gt;/socket/url.lua
+&lt;SHARE&gt;/mime.lua
+&lt;LIB&gt;/mime/core.dll
 </pre>
 
 <p> Naturally, on Unix systems, <tt>core.dll</tt>

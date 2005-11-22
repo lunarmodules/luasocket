@@ -40,7 +40,7 @@ function open(server, port, create)
     local f = base.setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)
-    return f 
+    return f
 end
 
 function metat.__index:portconnect()
@@ -71,20 +71,20 @@ function metat.__index:pasv()
     local pattern = "(%d+)%D(%d+)%D(%d+)%D(%d+)%D(%d+)%D(%d+)"
     local a, b, c, d, p1, p2 = socket.skip(2, string.find(reply, pattern))
     self.try(a and b and c and d and p1 and p2, reply)
-    self.pasvt = { 
-        ip = string.format("%d.%d.%d.%d", a, b, c, d), 
+    self.pasvt = {
+        ip = string.format("%d.%d.%d.%d", a, b, c, d),
         port = p1*256 + p2
     }
-    if self.server then 
+    if self.server then
         self.server:close()
         self.server = nil
     end
-    return self.pasvt.ip, self.pasvt.port 
+    return self.pasvt.ip, self.pasvt.port
 end
 
 function metat.__index:port(ip, port)
     self.pasvt = nil
-    if not ip then 
+    if not ip then
         ip, port = self.try(self.tp:getcontrol():getsockname())
         self.server = self.try(socket.bind(ip, 0))
         ip, port = self.try(self.server:getsockname())
@@ -100,11 +100,11 @@ end
 
 function metat.__index:send(sendt)
     self.try(self.pasvt or self.server, "need port or pasv first")
-    -- if there is a pasvt table, we already sent a PASV command 
+    -- if there is a pasvt table, we already sent a PASV command
     -- we just get the data connection into self.data
     if self.pasvt then self:pasvconnect() end
-    -- get the transfer argument and command 
-    local argument = sendt.argument or 
+    -- get the transfer argument and command
+    local argument = sendt.argument or
         url.unescape(string.gsub(sendt.path or "", "^[/\\]", ""))
     if argument == "" then argument = nil end
     local command = sendt.command or "stor"
@@ -137,7 +137,7 @@ end
 function metat.__index:receive(recvt)
     self.try(self.pasvt or self.server, "need port or pasv first")
     if self.pasvt then self:pasvconnect() end
-    local argument = recvt.argument or 
+    local argument = recvt.argument or
         url.unescape(string.gsub(recvt.path or "", "^[/\\]", ""))
     if argument == "" then argument = nil end
     local command = recvt.command or "retr"
@@ -220,7 +220,7 @@ local function parse(u)
     socket.try(t.scheme == "ftp", "wrong scheme '" .. t.scheme .. "'")
     socket.try(t.host, "missing hostname")
     local pat = "^type=(.)$"
-    if t.params then 
+    if t.params then
         t.type = socket.skip(2, string.find(t.params, pat))
         socket.try(t.type == "a" or t.type == "i",
             "invalid type '" .. t.type .. "'")
@@ -229,7 +229,7 @@ local function parse(u)
 end
 
 local function sput(u, body)
-    local putt = parse(u) 
+    local putt = parse(u)
     putt.source = ltn12.source.string(body)
     return tput(putt)
 end
@@ -253,7 +253,7 @@ local function tget(gett)
 end
 
 local function sget(u)
-    local gett = parse(u) 
+    local gett = parse(u)
     local t = {}
     gett.sink = ltn12.sink.table(t)
     tget(gett)

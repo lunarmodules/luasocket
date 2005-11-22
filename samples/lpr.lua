@@ -36,7 +36,8 @@ do
       return usage()
     end
     if arg[1] ~= "query" then
-        r,e=lp.send(arg[1],opt)
+        opt.file = arg[1]
+        r,e=lp.send(opt)
         io.stdout:write(tostring(r or e),'\n')
     else
         r,e=lp.query(opt)

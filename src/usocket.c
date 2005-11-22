@@ -110,7 +110,8 @@ int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
         double t = timeout_getretry(tm);
         tv.tv_sec = (int) t;
         tv.tv_usec = (int) ((t - tv.tv_sec) * 1.0e6);
-        ret = select(n, rfds, wfds, efds, t >= 0.0? &tv: NULL);
+        /* timeout = 0 means no wait */
+        ret = select(n, rfds, wfds, efds, t >= 0.0 ? &tv: NULL);
     } while (ret < 0 && errno == EINTR);
     return ret;
 }

@@ -36,19 +36,19 @@ end
 
 -- chains a bunch of filters together
 -- (thanks to Wim Couwenberg)
-function filter.chain(...) 
+function filter.chain(...)
     local n = table.getn(arg)
     local top, index = 1, 1
     local retry = ""
     return function(chunk)
         retry = chunk and retry
-        while true do 
+        while true do
             if index == top then
                 chunk = arg[index](chunk)
                 if chunk == "" or top == n then return chunk
                 elseif chunk then index = index + 1
-                else 
-                    top = top+1 
+                else
+                    top = top+1
                     index = top
                 end
             else
@@ -148,9 +148,9 @@ function source.chain(src, f)
                 last_in, err = src()
                 if err then return nil, err end
                 last_out = f(last_in)
-                if not last_out then 
+                if not last_out then
                     if last_in then
-                        base.error('filter returned inappropriate nil') 
+                        base.error('filter returned inappropriate nil')
                     else
                         return nil
                     end
@@ -159,17 +159,17 @@ function source.chain(src, f)
                     if last_in then last_in = "" end
                     return last_out
                 end
-            else 
+            else
                 last_out = f(last_in)
-                if last_out == "" then 
-                    if last_in == "" then 
+                if last_out == "" then
+                    if last_in == "" then
                         state = "feeding"
                     else
-                        base.error('filter returned ""') 
+                        base.error('filter returned ""')
                     end
                 elseif not last_out then
-                    if last_in then 
-                        base.error('filter returned inappropriate nil') 
+                    if last_in then
+                        base.error('filter returned inappropriate nil')
                     else
                         return nil
                     end
@@ -224,7 +224,7 @@ end
 function sink.file(handle, io_err)
     if handle then
         return function(chunk, err)
-            if not chunk then 
+            if not chunk then
                 handle:close()
                 return 1
             else return handle:write(chunk) end
@@ -248,7 +248,7 @@ function sink.error(err)
     end
 end
 
--- chains a sink with a filter 
+-- chains a sink with a filter
 function sink.chain(f, snk)
     base.assert(f and snk)
     return function(chunk, err)
@@ -282,7 +282,7 @@ function pump.all(src, snk, step)
     step = step or pump.step
     while true do
         local ret, err = step(src, snk)
-        if not ret then 
+        if not ret then
             if err then return nil, err
             else return 1 end
         end

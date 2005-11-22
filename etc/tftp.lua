@@ -46,7 +46,7 @@ local function ACK(block)
 	local low, high
 	low = math.mod(block, 256)
 	high = (block - low)/256
-	return char(0, OP_ACK, high, low) 
+	return char(0, OP_ACK, high, low)
 end
 
 local function get_OP(dgram)
@@ -71,7 +71,7 @@ local function get_ERROR(dgram)
 end
 
 -----------------------------------------------------------------------------
--- The real work 
+-- The real work
 -----------------------------------------------------------------------------
 local function tget(gett)
     local retries, dgram, sent, datahost, dataport, code
@@ -83,15 +83,15 @@ local function tget(gett)
 	gett.host = try(socket.dns.toip(gett.host))
 	con:settimeout(1)
     -- first packet gives data host/port to be used for data transfers
-    local path = string.gsub(gett.path or "", "^/", "") 
+    local path = string.gsub(gett.path or "", "^/", "")
     path = url.unescape(path)
     retries = 0
-	repeat 
+	repeat
 		sent = try(con:sendto(RRQ(path, "octet"), gett.host, gett.port))
 		dgram, datahost, dataport = con:receivefrom()
         retries = retries + 1
 	until dgram or datahost ~= "timeout" or retries > 5
-	try(dgram, datahost) 
+	try(dgram, datahost)
     -- associate socket with data host/port
 	try(con:setpeername(datahost, dataport))
     -- default sink
@@ -110,7 +110,7 @@ local function tget(gett)
             last = block
         end
         -- last packet brings less than 512 bytes of data
-		if string.len(data) < 512 then 
+		if string.len(data) < 512 then
             try(con:send(ACK(block)))
             try(con:close())
             try(sink(nil))
@@ -118,7 +118,7 @@ local function tget(gett)
         end
         -- get the next packet
         retries = 0
-		repeat 
+		repeat
 			sent = try(con:send(ACK(last)))
 			dgram, err = con:receive()
             retries = retries + 1
@@ -141,7 +141,7 @@ local function parse(u)
 end
 
 local function sget(u)
-    local gett = parse(u) 
+    local gett = parse(u)
     local t = {}
     gett.sink = ltn12.sink.table(t)
     tget(gett)

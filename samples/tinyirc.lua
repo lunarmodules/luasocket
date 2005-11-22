@@ -62,24 +62,24 @@ while 1 do
         if input == server1 or input == server2 then
             io.write("Waiting for clients\n")
             local new = input:accept()
-            if new then 
+            if new then
                 new:settimeout(1)
                 io.write("Inserting client in set\n")
-                set:insert(new) 
+                set:insert(new)
             end
         -- it is a client socket
         else
             local line, error = input:receive()
-            if error then 
+            if error then
                 input:close()
                 io.write("Removing client from set\n")
-                set:remove(input) 
+                set:remove(input)
             else
             	io.write("Broadcasting line '", line, "'\n")
             	writable, error = socket.skip(1, socket.select(nil, set, 1))
             	if not error then
                 	for __, output in ipairs(writable) do
-                    	if output ~= input then 
+                    	if output ~= input then
                             output:send(line .. "\n")
                         end
                 	end

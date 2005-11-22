@@ -21,7 +21,7 @@ module("socket.http")
 -- Program constants
 -----------------------------------------------------------------------------
 -- connection timeout in seconds
-TIMEOUT = 60 
+TIMEOUT = 60
 -- default port for document retrieval
 PORT = 80
 -- user agent field sent in request
@@ -65,18 +65,18 @@ socket.sourcet["http-chunked"] = function(sock, headers)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
-    }, { 
+    }, {
         __call = function()
             -- get chunk size, skip extention
             local line, err = sock:receive()
-            if err then return nil, err end 
+            if err then return nil, err end
             local size = base.tonumber(string.gsub(line, ";.*", ""), 16)
             if not size then return nil, "invalid chunk size" end
             -- was it the last chunk?
-            if size > 0 then 
+            if size > 0 then
                 -- if not, get chunk and skip terminating CRLF
                 local chunk, err, part = sock:receive(size)
-                if chunk then sock:receive() end 
+                if chunk then sock:receive() end
                 return chunk, err
             else
                 -- if it was, read trailers into headers table
@@ -91,7 +91,7 @@ socket.sinkt["http-chunked"] = function(sock)
     return base.setmetatable({
         getfd = function() return sock:getfd() end,
         dirty = function() return sock:dirty() end
-    }, { 
+    }, {
         __call = function(self, chunk, err)
             if not chunk then return sock:send("0\r\n\r\n") end
             local size = string.format("%X\r\n", string.len(chunk))
@@ -115,11 +115,11 @@ function open(host, port, create)
     h.try(c:settimeout(TIMEOUT))
     h.try(c:connect(host, port or PORT))
     -- here everything worked
-    return h 
+    return h
 end
 
 function metat.__index:sendrequestline(method, uri)
-    local reqline = string.format("%s %s HTTP/1.1\r\n", method or "GET", uri) 
+    local reqline = string.format("%s %s HTTP/1.1\r\n", method or "GET", uri)
     return self.try(self.c:send(reqline))
 end
 
@@ -133,7 +133,7 @@ function metat.__index:sendheaders(headers)
 end
 
 function metat.__index:sendbody(headers, source, step)
-    source = source or ltn12.source.empty() 
+    source = source or ltn12.source.empty()
     step = step or ltn12.pump.step
     -- if we don't know the size in advance, send chunked and hope for the best
     local mode = "http-chunked"
@@ -159,7 +159,7 @@ function metat.__index:receivebody(headers, sink, step)
     local mode = "default" -- connection close
     if t and t ~= "identity" then mode = "http-chunked"
     elseif base.tonumber(headers["content-length"]) then mode = "by-length" end
-    return self.try(ltn12.pump.all(socket.source(mode, self.c, length), 
+    return self.try(ltn12.pump.all(socket.source(mode, self.c, length),
         sink, step))
 end
 
@@ -185,7 +185,7 @@ local function adjusturi(reqt)
 end
 
 local function adjustproxy(reqt)
-    local proxy = reqt.proxy or PROXY 
+    local proxy = reqt.proxy or PROXY
     if proxy then
         proxy = url.parse(proxy)
         return proxy.host, proxy.port or 3128
@@ -292,10 +292,10 @@ function trequest(reqt)
     local code, headers, status
     code, status = h:receivestatusline()
     headers = h:receiveheaders()
-    if shouldredirect(reqt, code, headers) then 
+    if shouldredirect(reqt, code, headers) then
         h:close()
         return tredirect(reqt, headers.location)
-    elseif shouldauthorize(reqt, code) then 
+    elseif shouldauthorize(reqt, code) then
         h:close()
         return tauthorize(reqt)
     elseif shouldreceivebody(reqt, code) then
@@ -307,12 +307,12 @@ end
 
 local function srequest(u, body)
     local t = {}
-    local reqt = { 
+    local reqt = {
         url = u,
         sink = ltn12.sink.table(t)
     }
-    if body then 
-        reqt.source = ltn12.source.string(body) 
+    if body then
+        reqt.source = ltn12.source.string(body)
         reqt.headers = { ["content-length"] = string.len(body) }
         reqt.method = "POST"
     end

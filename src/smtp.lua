@@ -27,8 +27,8 @@ TIMEOUT = 60
 -- default server used to send e-mails
 SERVER = "localhost"
 -- default port
-PORT = 25 
--- domain used in HELO command and default sendmail 
+PORT = 25
+-- domain used in HELO command and default sendmail
 -- If we are under a CGI, try to get from environment
 DOMAIN = os.getenv("SERVER_NAME") or "localhost"
 -- default time zone (means we don't know)
@@ -43,12 +43,12 @@ function metat.__index:greet(domain)
     self.try(self.tp:check("2.."))
     self.try(self.tp:command("EHLO", domain or DOMAIN))
     return socket.skip(1, self.try(self.tp:check("2..")))
-end 
+end
 
 function metat.__index:mail(from)
     self.try(self.tp:command("MAIL", "FROM:" .. from))
     return self.try(self.tp:check("2.."))
-end 
+end
 
 function metat.__index:rcpt(to)
     self.try(self.tp:command("RCPT", "TO:" .. to))
@@ -99,7 +99,7 @@ function metat.__index:auth(user, password, ext)
 end
 
 -- send message or throw an exception
-function metat.__index:send(mailt) 
+function metat.__index:send(mailt)
     self:mail(mailt.from)
     if base.type(mailt.rcpt) == "table" then
         for i,v in base.ipairs(mailt.rcpt) do
@@ -112,14 +112,14 @@ function metat.__index:send(mailt)
 end
 
 function open(server, port, create)
-    local tp = socket.try(tp.connect(server or SERVER, port or PORT, 
+    local tp = socket.try(tp.connect(server or SERVER, port or PORT,
         create, TIMEOUT))
     local s = base.setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
-    s.try = socket.newtry(function() 
+    s.try = socket.newtry(function()
         s:close()
     end)
-    return s 
+    return s
 end
 
 ---------------------------------------------------------------------------
@@ -142,7 +142,7 @@ local function send_headers(headers)
     for i,v in base.pairs(headers) do
         h = i .. ': ' .. v .. "\r\n" .. h
     end
-    coroutine.yield(h) 
+    coroutine.yield(h)
 end
 
 -- yield multipart message body from a multipart message table
@@ -151,25 +151,25 @@ local function send_multipart(mesgt)
     local bd = newboundary()
     local headers = mesgt.headers or {}
     headers['content-type'] = headers['content-type'] or 'multipart/mixed'
-    headers['content-type'] = headers['content-type'] .. 
+    headers['content-type'] = headers['content-type'] ..
         '; boundary="' ..  bd .. '"'
     send_headers(headers)
     -- send preamble
-    if mesgt.body.preamble then 
-        coroutine.yield(mesgt.body.preamble) 
-        coroutine.yield("\r\n") 
+    if mesgt.body.preamble then
+        coroutine.yield(mesgt.body.preamble)
+        coroutine.yield("\r\n")
     end
     -- send each part separated by a boundary
     for i, m in base.ipairs(mesgt.body) do
         coroutine.yield("\r\n--" .. bd .. "\r\n")
         send_message(m)
     end
-    -- send last boundary 
+    -- send last boundary
     coroutine.yield("\r\n--" .. bd .. "--\r\n\r\n")
     -- send epilogue
-    if mesgt.body.epilogue then 
-        coroutine.yield(mesgt.body.epilogue) 
-        coroutine.yield("\r\n") 
+    if mesgt.body.epilogue then
+        coroutine.yield(mesgt.body.epilogue)
+        coroutine.yield("\r\n")
     end
 end
 
@@ -181,7 +181,7 @@ local function send_source(mesgt)
         'text/plain; charset="iso-8859-1"'
     send_headers(headers)
     -- send body from source
-    while true do 
+    while true do
         local chunk, err = mesgt.body()
         if err then coroutine.yield(nil, err)
         elseif chunk then coroutine.yield(chunk)
@@ -213,11 +213,11 @@ local function adjust_headers(mesgt)
     for i,v in base.pairs(mesgt.headers or lower) do
         lower[string.lower(i)] = v
     end
-    lower["date"] = lower["date"] or 
+    lower["date"] = lower["date"] or
         os.date("!%a, %d %b %Y %H:%M:%S ") .. (mesgt.zone or ZONE)
     lower["x-mailer"] = lower["x-mailer"] or socket._VERSION
     -- this can't be overriden
-    lower["mime-version"] = "1.0" 
+    lower["mime-version"] = "1.0"
     mesgt.headers = lower
 end
 
@@ -225,7 +225,7 @@ function message(mesgt)
     adjust_headers(mesgt)
     -- create and return message source
     local co = coroutine.create(function() send_message(mesgt) end)
-    return function() 
+    return function()
         local ret, a, b = coroutine.resume(co)
         if ret then return a, b
         else return nil, a end

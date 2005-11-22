@@ -37,7 +37,7 @@ local function get_reply(c)
             current, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
             reply = reply .. "\n" .. line
         -- reply ends with same code
-        until code == current and sep == " " 
+        until code == current and sep == " "
     end
     return code, reply
 end
@@ -49,25 +49,25 @@ function metat.__index:check(ok)
     local code, reply = get_reply(self.c)
     if not code then return nil, reply end
     if base.type(ok) ~= "function" then
-        if base.type(ok) == "table" then 
+        if base.type(ok) == "table" then
             for i, v in base.ipairs(ok) do
-                if string.find(code, v) then 
-                    return base.tonumber(code), reply 
+                if string.find(code, v) then
+                    return base.tonumber(code), reply
                 end
             end
             return nil, reply
         else
-            if string.find(code, ok) then return base.tonumber(code), reply 
+            if string.find(code, ok) then return base.tonumber(code), reply
             else return nil, reply end
         end
     else return ok(base.tonumber(code), reply) end
 end
 
 function metat.__index:command(cmd, arg)
-    if arg then 
+    if arg then
         return self.c:send(cmd .. " " .. arg.. "\r\n")
-    else 
-        return self.c:send(cmd .. "\r\n") 
+    else
+        return self.c:send(cmd .. "\r\n")
     end
 end
 
@@ -114,8 +114,8 @@ function connect(host, port, create, timeout)
     if not c then return nil, e end
     c:settimeout(timeout or TIMEOUT)
     local r, e = c:connect(host, port)
-    if not r then 
-        c:close() 
+    if not r then
+        c:close()
         return nil, e
     end
     return base.setmetatable({c = c}, metat)

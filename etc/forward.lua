@@ -17,10 +17,10 @@ local function move(foo, bar)
         live = data or error == "timeout"
         data = data or partial
         local result, error = bar:send(data)
-        if not live or not result then 
-            foo:close() 
+        if not live or not result then
+            foo:close()
             bar:close()
-            break 
+            break
         end
     end
 end
@@ -51,7 +51,7 @@ for i, v in ipairs(arg) do
                 handler:start(function()
                     move(client, peer)
                 end)
-                -- afte starting new handler, enter in loop sending data from 
+                -- afte starting new handler, enter in loop sending data from
                 -- peer to client
                 move(peer, client)
             end)

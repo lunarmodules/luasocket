@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------
--- Little program to adjust end of line markers. 
+-- Little program to adjust end of line markers.
 -- LuaSocket sample files
 -- Author: Diego Nehab
 -- RCS ID: $Id$
