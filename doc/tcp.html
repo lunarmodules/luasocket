@@ -331,34 +331,17 @@ substring to be sent.
 </p>
 
 <p class=return>
-If successful, the method returns the number of bytes sent.
-In case of error, the method returns 
-<b><tt>nil</tt></b>, followed by an error message, followed by the
-index of the first character within <tt>[i, j]</tt> that has not been sent yet
-(you might want to try again from then on). The error message can be '<tt>closed</tt>' in case
-the connection was  closed before the transmission was  completed or the
-string  '<tt>timeout</tt>'  in  case  there was  a  timeout  during  the
-operation.
-</p>
-
-<p class=note>
-<b>Important note</b>: 
-The return values for the <tt>send</tt> method have been changed in
-LuaSocket 2.0 alpha <b>and again</b> in the beta (sorry)! 
-In previous versions, the method returned only the
-error message. Since returning <b><tt>nil</tt></b> in case of success was
-nonsense, in alpha the first return value became the number of bytes sent.
-Alas, it wasn't returning <tt><b>nil</b></tt> in case of
-error. So it was changed again in beta. 
-</p>
-
-<p class=note>
-<b>Also important</b>: 
-In order to better support non-blocking I/O and to discourage
-bad practice, the <tt>send</tt> method now only sends one string
-per call. The other optional arguments allow the user to select 
-a substring to be sent in a much more efficient way than 
-using <tt>string.sub</tt>.
+If successful, the method returns the index of the last byte
+within <tt>[i, j]</tt> that has been sent.  Notice that, if
+<tt>i</tt> is 1 or absent, this is effectively the total
+number of bytes sent.  In case of error, the method returns
+<b><tt>nil</tt></b>, followed by an error message, followed
+by the index of the last byte within <tt>[i, j]</tt> that
+has been sent. You might want to try again from the byte
+following that.  The error message can be '<tt>closed</tt>'
+in case the connection was  closed before the transmission
+was  completed or the string  '<tt>timeout</tt>'  in  case
+there was  a  timeout  during  the operation.
 </p>
 
 <p class=note>
