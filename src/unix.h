@@ -16,10 +16,10 @@
 #include "socket.h"
 
 typedef struct t_unix_ {
-    t_sock sock;
+    t_socket sock;
     t_io io;
-    t_buf buf;
-    t_tm tm;
+    t_buffer buf;
+    t_timeout tm;
 } t_unix;
 typedef t_unix *p_unix;
 

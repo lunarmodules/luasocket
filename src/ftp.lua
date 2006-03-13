@@ -116,10 +116,11 @@ function metat.__index:send(sendt)
     if not self.pasvt then self:portconnect() end
     -- get the sink, source and step for the transfer
     local step = sendt.step or ltn12.pump.step
+    local readt = {self.tp.c}
     local checkstep = function(src, snk)
         -- check status in control connection while downloading
         local readyt = socket.select(readt, nil, 0)
-        if readyt[tp] then self.try(self.tp:check("2..")) end
+        if readyt[tp] then code = self.try(self.tp:check("2..")) end
         return step(src, snk)
     end
     local sink = socket.sink("close-when-done", self.data)

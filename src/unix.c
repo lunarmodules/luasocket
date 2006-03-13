@@ -41,7 +41,7 @@ static const char *unix_trybind(p_unix un, const char *path);
 /* unix object methods */
 static luaL_reg un[] = {
     {"__gc",        meth_close},
-    {"__tostring",  aux_tostring},
+    {"__tostring",  auxiliar_tostring},
     {"accept",      meth_accept},
     {"bind",        meth_bind},
     {"close",       meth_close},
@@ -70,20 +70,30 @@ static t_opt opt[] = {
     {NULL,          NULL}
 };
 
+/* our socket creation function */
+static luaL_reg func[] = {
+    {"unix", global_create},
+    {NULL,          NULL}
+};
+
+
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int luaopen_socketunix(lua_State *L) {
+int luaopen_socket_unix(lua_State *L) {
     /* create classes */
-    aux_newclass(L, "unix{master}", un);
-    aux_newclass(L, "unix{client}", un);
-    aux_newclass(L, "unix{server}", un);
+    auxiliar_newclass(L, "unix{master}", un);
+    auxiliar_newclass(L, "unix{client}", un);
+    auxiliar_newclass(L, "unix{server}", un);
     /* create class groups */
-    aux_add2group(L, "unix{master}", "unix{any}");
-    aux_add2group(L, "unix{client}", "unix{any}");
-    aux_add2group(L, "unix{server}", "unix{any}");
-    /* define library functions */
-    lua_pushcfunction(L, global_create); 
+    auxiliar_add2group(L, "unix{master}", "unix{any}");
+    auxiliar_add2group(L, "unix{client}", "unix{any}");
+    auxiliar_add2group(L, "unix{server}", "unix{any}");
+    /* make sure the function ends up in the package table */
+    luaL_openlib(L, "socket", func, 0);
+    /* return the function instead of the 'socket' table */
+    lua_pushstring(L, "unix");
+    lua_gettable(L, -2);
     return 1;
 }
 
@@ -94,30 +104,30 @@ int luaopen_socketunix(lua_State *L) {
 * Just call buffered IO methods
 \*-------------------------------------------------------------------------*/
 static int meth_send(lua_State *L) {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
-    return buf_meth_send(L, &un->buf);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{client}", 1);
+    return buffer_meth_send(L, &un->buf);
 }
 
 static int meth_receive(lua_State *L) {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
-    return buf_meth_receive(L, &un->buf);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{client}", 1);
+    return buffer_meth_receive(L, &un->buf);
 }
 
 static int meth_getstats(lua_State *L) {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
-    return buf_meth_getstats(L, &un->buf);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{client}", 1);
+    return buffer_meth_getstats(L, &un->buf);
 }
 
 static int meth_setstats(lua_State *L) {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
-    return buf_meth_setstats(L, &un->buf);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{client}", 1);
+    return buffer_meth_setstats(L, &un->buf);
 }
 
 /*-------------------------------------------------------------------------*\
 * Just call option handler
 \*-------------------------------------------------------------------------*/
 static int meth_setoption(lua_State *L) {
-    p_unix un = (p_unix) aux_checkgroup(L, "unix{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unix{any}", 1);
     return opt_meth_setoption(L, opt, &un->sock);
 }
 
@@ -125,21 +135,21 @@ static int meth_setoption(lua_State *L) {
 * Select support methods
 \*-------------------------------------------------------------------------*/
 static int meth_getfd(lua_State *L) {
-    p_unix un = (p_unix) aux_checkgroup(L, "unix{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unix{any}", 1);
     lua_pushnumber(L, (int) un->sock);
     return 1;
 }
 
 /* this is very dangerous, but can be handy for those that are brave enough */
 static int meth_setfd(lua_State *L) {
-    p_unix un = (p_unix) aux_checkgroup(L, "unix{any}", 1);
-    un->sock = (t_sock) luaL_checknumber(L, 2); 
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unix{any}", 1);
+    un->sock = (t_socket) luaL_checknumber(L, 2); 
     return 0;
 }
 
 static int meth_dirty(lua_State *L) {
-    p_unix un = (p_unix) aux_checkgroup(L, "unix{any}", 1);
-    lua_pushboolean(L, !buf_isempty(&un->buf));
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unix{any}", 1);
+    lua_pushboolean(L, !buffer_isempty(&un->buf));
     return 1;
 }
 
@@ -148,25 +158,25 @@ static int meth_dirty(lua_State *L) {
 * server object 
 \*-------------------------------------------------------------------------*/
 static int meth_accept(lua_State *L) {
-    p_unix server = (p_unix) aux_checkclass(L, "unix{server}", 1);
-    p_tm tm = tm_markstart(&server->tm);
-    t_sock sock;
-    int err = sock_accept(&server->sock, &sock, NULL, NULL, tm);
+    p_unix server = (p_unix) auxiliar_checkclass(L, "unix{server}", 1);
+    p_timeout tm = timeout_markstart(&server->tm);
+    t_socket sock;
+    int err = socket_accept(&server->sock, &sock, NULL, NULL, tm);
     /* if successful, push client socket */
     if (err == IO_DONE) {
         p_unix clnt = (p_unix) lua_newuserdata(L, sizeof(t_unix));
-        aux_setclass(L, "unix{client}", -1);
+        auxiliar_setclass(L, "unix{client}", -1);
         /* initialize structure fields */
-        sock_setnonblocking(&sock);
+        socket_setnonblocking(&sock);
         clnt->sock = sock;
-        io_init(&clnt->io, (p_send)sock_send, (p_recv)sock_recv, 
-                (p_error) sock_ioerror, &clnt->sock);
-        tm_init(&clnt->tm, -1, -1);
-        buf_init(&clnt->buf, &clnt->io, &clnt->tm);
+        io_init(&clnt->io, (p_send)socket_send, (p_recv)socket_recv, 
+                (p_error) socket_ioerror, &clnt->sock);
+        timeout_init(&clnt->tm, -1, -1);
+        buffer_init(&clnt->buf, &clnt->io, &clnt->tm);
         return 1;
     } else {
         lua_pushnil(L); 
-        lua_pushstring(L, sock_strerror(err));
+        lua_pushstring(L, socket_strerror(err));
         return 2;
     }
 }
@@ -185,18 +195,18 @@ static const char *unix_trybind(p_unix un, const char *path) {
 #ifdef UNIX_HAS_SUN_LEN
     local.sun_len = sizeof(local.sun_family) + sizeof(local.sun_len) 
         + len + 1;
-    err = sock_bind(&un->sock, (SA *) &local, local.sun_len);
+    err = socket_bind(&un->sock, (SA *) &local, local.sun_len);
 
 #else 
-    err = sock_bind(&un->sock, (SA *) &local, 
+    err = socket_bind(&un->sock, (SA *) &local, 
             sizeof(local.sun_family) + len);
 #endif
-    if (err != IO_DONE) sock_destroy(&un->sock);
-    return sock_strerror(err); 
+    if (err != IO_DONE) socket_destroy(&un->sock);
+    return socket_strerror(err); 
 }
 
 static int meth_bind(lua_State *L) {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{master}", 1);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{master}", 1);
     const char *path =  luaL_checkstring(L, 2);
     const char *err = unix_trybind(un, path);
     if (err) {
@@ -220,22 +230,22 @@ static const char *unix_tryconnect(p_unix un, const char *path)
     memset(&remote, 0, sizeof(remote));
     strcpy(remote.sun_path, path);
     remote.sun_family = AF_UNIX;
-    tm_markstart(&un->tm);
+    timeout_markstart(&un->tm);
 #ifdef UNIX_HAS_SUN_LEN
     remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len) 
         + len + 1;
-    err = sock_connect(&un->sock, (SA *) &remote, remote.sun_len, &un->tm);
+    err = socket_connect(&un->sock, (SA *) &remote, remote.sun_len, &un->tm);
 #else
-    err = sock_connect(&un->sock, (SA *) &remote, 
+    err = socket_connect(&un->sock, (SA *) &remote, 
             sizeof(remote.sun_family) + len, &un->tm);
 #endif
-    if (err != IO_DONE) sock_destroy(&un->sock);
-    return sock_strerror(err);
+    if (err != IO_DONE) socket_destroy(&un->sock);
+    return socket_strerror(err);
 }
 
 static int meth_connect(lua_State *L)
 {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{master}", 1);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{master}", 1);
     const char *path =  luaL_checkstring(L, 2);
     const char *err = unix_tryconnect(un, path);
     if (err) {
@@ -244,7 +254,7 @@ static int meth_connect(lua_State *L)
         return 2;
     }
     /* turn master object into a client object */
-    aux_setclass(L, "unix{client}", 1);
+    auxiliar_setclass(L, "unix{client}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -254,8 +264,8 @@ static int meth_connect(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_close(lua_State *L)
 {
-    p_unix un = (p_unix) aux_checkgroup(L, "unix{any}", 1);
-    sock_destroy(&un->sock);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unix{any}", 1);
+    socket_destroy(&un->sock);
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -265,16 +275,16 @@ static int meth_close(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_listen(lua_State *L)
 {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{master}", 1);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{master}", 1);
     int backlog = (int) luaL_optnumber(L, 2, 32);
-    int err = sock_listen(&un->sock, backlog);
+    int err = socket_listen(&un->sock, backlog);
     if (err != IO_DONE) {
         lua_pushnil(L);
-        lua_pushstring(L, sock_strerror(err));
+        lua_pushstring(L, socket_strerror(err));
         return 2;
     }
     /* turn master object into a server object */
-    aux_setclass(L, "unix{server}", 1);
+    auxiliar_setclass(L, "unix{server}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -284,20 +294,20 @@ static int meth_listen(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_shutdown(lua_State *L)
 {
-    p_unix un = (p_unix) aux_checkclass(L, "unix{client}", 1);
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{client}", 1);
     const char *how = luaL_optstring(L, 2, "both");
     switch (how[0]) {
         case 'b':
             if (strcmp(how, "both")) goto error;
-            sock_shutdown(&un->sock, 2);
+            socket_shutdown(&un->sock, 2);
             break;
         case 's':
             if (strcmp(how, "send")) goto error;
-            sock_shutdown(&un->sock, 1);
+            socket_shutdown(&un->sock, 1);
             break;
         case 'r':
             if (strcmp(how, "receive")) goto error;
-            sock_shutdown(&un->sock, 0);
+            socket_shutdown(&un->sock, 0);
             break;
     }
     lua_pushnumber(L, 1);
@@ -311,8 +321,8 @@ error:
 * Just call tm methods
 \*-------------------------------------------------------------------------*/
 static int meth_settimeout(lua_State *L) {
-    p_unix un = (p_unix) aux_checkgroup(L, "unix{any}", 1);
-    return tm_meth_settimeout(L, &un->tm);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unix{any}", 1);
+    return timeout_meth_settimeout(L, &un->tm);
 }
 
 /*=========================================================================*\
@@ -322,25 +332,25 @@ static int meth_settimeout(lua_State *L) {
 * Creates a master unix object 
 \*-------------------------------------------------------------------------*/
 static int global_create(lua_State *L) {
-    t_sock sock;
-    int err = sock_create(&sock, AF_UNIX, SOCK_STREAM, 0);
+    t_socket sock;
+    int err = socket_create(&sock, AF_UNIX, SOCK_STREAM, 0);
     /* try to allocate a system socket */
     if (err == IO_DONE) { 
         /* allocate unix object */
         p_unix un = (p_unix) lua_newuserdata(L, sizeof(t_unix));
         /* set its type as master object */
-        aux_setclass(L, "unix{master}", -1);
+        auxiliar_setclass(L, "unix{master}", -1);
         /* initialize remaining structure fields */
-        sock_setnonblocking(&sock);
+        socket_setnonblocking(&sock);
         un->sock = sock;
-        io_init(&un->io, (p_send) sock_send, (p_recv) sock_recv, 
-                (p_error) sock_ioerror, &un->sock);
-        tm_init(&un->tm, -1, -1);
-        buf_init(&un->buf, &un->io, &un->tm);
+        io_init(&un->io, (p_send) socket_send, (p_recv) socket_recv, 
+                (p_error) socket_ioerror, &un->sock);
+        timeout_init(&un->tm, -1, -1);
+        buffer_init(&un->buf, &un->io, &un->tm);
         return 1;
     } else {
         lua_pushnil(L);
-        lua_pushstring(L, sock_strerror(err));
+        lua_pushstring(L, socket_strerror(err));
         return 2;
     }
 }

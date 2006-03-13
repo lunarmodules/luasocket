@@ -15,6 +15,7 @@ local mime = require("mime")
 local string = require("string")
 local base = _G
 local table = require("table")
+local print = print
 module("socket.http")
 
 -----------------------------------------------------------------------------
@@ -194,16 +195,19 @@ local function adjustproxy(reqt)
     end
 end
 
-local function adjustheaders(headers, host)
+local function adjustheaders(reqt)
     -- default headers
     local lower = {
         ["user-agent"] = USERAGENT,
-        ["host"] = host,
+        ["host"] = reqt.host,
         ["connection"] = "close, TE",
         ["te"] = "trailers"
     }
+    -- if we are sending a body, tell server to let us know
+    -- if it this is a waste of time
+    if reqt.source then lower["expect"] = "100-continue" end
     -- override with user headers
-    for i,v in base.pairs(headers or lower) do
+    for i,v in base.pairs(reqt.headers or lower) do
         lower[string.lower(i)] = v
     end
     return lower
@@ -229,7 +233,7 @@ local function adjustrequest(reqt)
     -- ajust host and port if there is a proxy
     nreqt.host, nreqt.port = adjustproxy(nreqt)
     -- adjust headers in request
-    nreqt.headers = adjustheaders(nreqt.headers, nreqt.host)
+    nreqt.headers = adjustheaders(nreqt)
     return nreqt
 end
 
@@ -257,6 +261,7 @@ local function shouldreceivebody(reqt, code)
     return 1
 end
 
+
 -- forward declarations
 local trequest, tauthorize, tredirect
 
@@ -274,46 +279,74 @@ function tredirect(reqt, location)
         source = reqt.source,
         sink = reqt.sink,
         headers = reqt.headers,
-        proxy = reqt.proxy,
+        proxy = reqt.proxy, 
         nredirects = (reqt.nredirects or 0) + 1,
         connect = reqt.connect
-    }
+    }   
     -- pass location header back as a hint we redirected
     headers.location = headers.location or location
     return result, code, headers, status
 end
 
 function trequest(reqt)
+    -- we loop until we get what we want, or
+    -- until we are sure there is no way to get it
     reqt = adjustrequest(reqt)
     local h = open(reqt.host, reqt.port, reqt.create)
+    -- send request line and headers
     h:sendrequestline(reqt.method, reqt.uri)
     h:sendheaders(reqt.headers)
-    if reqt.source then h:sendbody(reqt.headers, reqt.source, reqt.step) end
-    local code, headers, status
-    code, status = h:receivestatusline()
-    headers = h:receiveheaders()
+    local code = 100 
+    local headers, status
+    -- if there is a body, check for server status
+    if reqt.source then
+        local ready = socket.select({h.c}, nil, TIMEOUT)
+        if ready[h.c] then
+            -- here the server sent us something
+            code, status = h:receivestatusline()
+            headers = h:receiveheaders()
+        end
+        -- if server is happy, send body
+        if code == 100 then
+            h:sendbody(reqt.headers, reqt.source, reqt.step) 
+            -- can't send body again!
+            reqt.source = nil
+        end
+    end
+    -- ignore all further 100-continue messages
+    while code == 100 do 
+        code, status = h:receivestatusline()
+        headers = h:receiveheaders()
+    end
+    -- at this point we should have a honest reply from the server
     if shouldredirect(reqt, code, headers) then
         h:close()
         return tredirect(reqt, headers.location)
     elseif shouldauthorize(reqt, code) then
         h:close()
         return tauthorize(reqt)
-    elseif shouldreceivebody(reqt, code) then
-        h:receivebody(headers, reqt.sink, reqt.step)
+    else
+        -- here we are finally done
+        if shouldreceivebody(reqt, code) then
+            h:receivebody(headers, reqt.sink, reqt.step)
+        end
+        h:close()
+        return 1, code, headers, status
     end
-    h:close()
-    return 1, code, headers, status
 end
 
-local function srequest(u, body)
+local function srequest(u, b, h)
     local t = {}
     local reqt = {
         url = u,
         sink = ltn12.sink.table(t)
     }
-    if body then
-        reqt.source = ltn12.source.string(body)
-        reqt.headers = { ["content-length"] = string.len(body) }
+    if b then
+        reqt.source = ltn12.source.string(b)
+        reqt.headers = h or {}
+        reqt.headers["content-length"] = string.len(b) 
+        reqt.headers["content-type"] = reqt.headers["content-type"] or
+            "application/x-www-form-urlencoded"
         reqt.method = "POST"
     end
     local code, headers, status = socket.skip(1, trequest(reqt))
