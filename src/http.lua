@@ -203,9 +203,11 @@ local function adjustheaders(reqt)
         ["connection"] = "close, TE",
         ["te"] = "trailers"
     }
-    -- if we are sending a body, tell server to let us know
-    -- if it this is a waste of time
-    if reqt.source then lower["expect"] = "100-continue" end
+    -- if we have authentication information, pass it along
+    if reqt.user and reqt.password then
+        lower["authorization"] = 
+            "Basic " ..  (mime.b64(reqt.user .. ":" .. reqt.password))
+    end
     -- override with user headers
     for i,v in base.pairs(reqt.headers or lower) do
         lower[string.lower(i)] = v
@@ -246,14 +248,6 @@ local function shouldredirect(reqt, code, headers)
            and (not reqt.nredirects or reqt.nredirects < 5)
 end
 
-local function shouldauthorize(reqt, code)
-    -- if there has been an authorization attempt, it must have failed
-    if reqt.headers and reqt.headers["authorization"] then return nil end
-    -- if last attempt didn't fail due to lack of authentication,
-    -- or we don't have authorization information, we can't retry
-    return code == 401 and reqt.user and reqt.password
-end
-
 local function shouldreceivebody(reqt, code)
     if reqt.method == "HEAD" then return nil end
     if code == 204 or code == 304 then return nil end
@@ -261,15 +255,8 @@ local function shouldreceivebody(reqt, code)
     return 1
 end
 
-
 -- forward declarations
-local trequest, tauthorize, tredirect
-
-function tauthorize(reqt)
-    local auth = "Basic " ..  (mime.b64(reqt.user .. ":" .. reqt.password))
-    reqt.headers["authorization"] = auth
-    return trequest(reqt)
-end
+local trequest, tredirect
 
 function tredirect(reqt, location)
     local result, code, headers, status = trequest {
@@ -300,42 +287,28 @@ function trequest(reqt)
     local headers, status
     -- if there is a body, check for server status
     if reqt.source then
-        local ready = socket.select({h.c}, nil, TIMEOUT)
-        if ready[h.c] then
-            -- here the server sent us something
-            code, status = h:receivestatusline()
-            headers = h:receiveheaders()
-        end
-        -- if server is happy, send body
-        if code == 100 then
-            h:sendbody(reqt.headers, reqt.source, reqt.step) 
-            -- can't send body again!
-            reqt.source = nil
-        end
+        h:sendbody(reqt.headers, reqt.source, reqt.step) 
     end
-    -- ignore all further 100-continue messages
+    -- ignore any 100-continue messages
     while code == 100 do 
         code, status = h:receivestatusline()
         headers = h:receiveheaders()
     end
     -- at this point we should have a honest reply from the server
-    if shouldredirect(reqt, code, headers) then
+    -- we can't redirect if we already used the source, so we report the error 
+    if shouldredirect(reqt, code, headers) and not reqt.source then
         h:close()
         return tredirect(reqt, headers.location)
-    elseif shouldauthorize(reqt, code) then
-        h:close()
-        return tauthorize(reqt)
-    else
-        -- here we are finally done
-        if shouldreceivebody(reqt, code) then
-            h:receivebody(headers, reqt.sink, reqt.step)
-        end
-        h:close()
-        return 1, code, headers, status
     end
+    -- here we are finally done
+    if shouldreceivebody(reqt, code) then
+        h:receivebody(headers, reqt.sink, reqt.step)
+    end
+    h:close()
+    return 1, code, headers, status
 end
 
-local function srequest(u, b, h)
+local function srequest(u, b)
     local t = {}
     local reqt = {
         url = u,
@@ -343,10 +316,10 @@ local function srequest(u, b, h)
     }
     if b then
         reqt.source = ltn12.source.string(b)
-        reqt.headers = h or {}
-        reqt.headers["content-length"] = string.len(b) 
-        reqt.headers["content-type"] = reqt.headers["content-type"] or
-            "application/x-www-form-urlencoded"
+        reqt.headers = {
+            ["content-length"] = string.len(b),
+            ["content-type"] = "application/x-www-form-urlencoded"
+        }
         reqt.method = "POST"
     end
     local code, headers, status = socket.skip(1, trequest(reqt))

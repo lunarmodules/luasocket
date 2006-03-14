@@ -113,7 +113,7 @@ end
 
 function open(server, port, create)
     local tp = socket.try(tp.connect(server or SERVER, port or PORT,
-        create, TIMEOUT))
+        TIMEOUT, create))
     local s = base.setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
     s.try = socket.newtry(function()

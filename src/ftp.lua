@@ -36,7 +36,7 @@ PASSWORD = "anonymous@anonymous.org"
 local metat = { __index = {} }
 
 function open(server, port, create)
-    local tp = socket.try(tp.connect(server, port or PORT, create, TIMEOUT))
+    local tp = socket.try(tp.connect(server, port or PORT, TIMEOUT, create))
     local f = base.setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)

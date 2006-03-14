@@ -109,8 +109,8 @@ function metat.__index:close()
 end
 
 -- connect with server and return c object
-function connect(host, port, create, timeout)
-    local c, e = (create or socket.tcp())
+function connect(host, port, timeout, create)
+    local c, e = (create or socket.tcp)()
     if not c then return nil, e end
     c:settimeout(timeout or TIMEOUT)
     local r, e = c:connect(host, port)
