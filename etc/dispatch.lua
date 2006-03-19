@@ -5,6 +5,7 @@
 -- RCS ID: $$
 -----------------------------------------------------------------------------
 local base = _G
+local table = require("table")
 local socket = require("socket")
 local coroutine = require("coroutine")
 module("dispatch")
@@ -50,7 +51,7 @@ function socket.protect(f)
   return function(...)
     local co = coroutine.create(f)
     while true do
-      local results = {coroutine.resume(co, unpack(arg))}
+      local results = {coroutine.resume(co, base.unpack(arg))}
       local status = table.remove(results, 1)
       if not status then
         if type(results[1]) == 'table' then
@@ -58,9 +59,9 @@ function socket.protect(f)
         else error(results[1]) end
       end
       if coroutine.status(co) == "suspended" then
-        arg = {coroutine.yield(unpack(results))}
+        arg = {coroutine.yield(base.unpack(results))}
       else
-        return unpack(results)
+        return base.unpack(results)
       end
     end
   end
@@ -72,7 +73,7 @@ end
 local function newset()
     local reverse = {}
     local set = {}
-    return setmetatable(set, {__index = {
+    return base.setmetatable(set, {__index = {
         insert = function(set, value)
             if not reverse[value] then
                 table.insert(set, value)
@@ -105,7 +106,7 @@ local function cowrap(dispatcher, tcp, error)
     local metat = { __index = function(table, key)
         table[key] = function(...)
             arg[1] = tcp
-            return tcp[key](unpack(arg))
+            return tcp[key](base.unpack(arg))
         end
         return table[key]
     end}
@@ -202,7 +203,7 @@ local function cowrap(dispatcher, tcp, error)
         dispatcher.receiving.cortn[tcp] = nil
         return tcp:close()
     end
-    return setmetatable(wrap, metat)
+    return base.setmetatable(wrap, metat)
 end
 
 
@@ -253,17 +254,17 @@ function cometat.__index:step()
         self.sending.set, 1)
     -- for all readable connections, resume their cortns and reschedule
     -- when they yield back to us
-    for _, tcp in ipairs(readable) do
+    for _, tcp in base.ipairs(readable) do
         schedule(wakeup(self.receiving, tcp))
     end
     -- for all writable connections, do the same
-    for _, tcp in ipairs(writable) do
+    for _, tcp in base.ipairs(writable) do
         schedule(wakeup(self.sending, tcp))
     end
     -- politely ask replacement I/O functions in idle cortns to
     -- return reporting a timeout
     local now = socket.gettime()
-    for tcp, stamp in pairs(self.stamp) do
+    for tcp, stamp in base.pairs(self.stamp) do
         if tcp.class == "tcp{client}" and now - stamp > TIMEOUT then
             abort(self.sending, tcp)
             abort(self.receiving, tcp)
@@ -296,6 +297,6 @@ function handlert.coroutine()
     function dispatcher.tcp()
         return cowrap(dispatcher, socket.tcp())
     end
-    return setmetatable(dispatcher, cometat)
+    return base.setmetatable(dispatcher, cometat)
 end
 

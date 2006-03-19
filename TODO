@@ -1,25 +1,11 @@
-
-fix unix.c to return just a function
-get rid of setmetatable(, nil) since packages don't need this anymore in
-5.1
-
-new instalation scheme???
-
-test empty socket.select no windows.
-
-bug by mathew percival?
-
-test it on Windows!!!
-
-leave code for losers that don't have nanosleep
-
-ftp.send/recv return bytes transfered?
-new scheme to choose family/protocol of object to create
-change ltn13 to make sure drawbacks are obvious
-    - check discussion
-use mike's "don't set to blocking before closing unless needed" patch?
-take a look at DB's smtp patch (add "extra argument" table)
-
+ftp send should return server replies?
+make sure there are no object files in the distribution tarball
+http handling of 100-continue, see DB patch
+DB ftp.lua bug.
+test unix.c to return just a function and works with require"unix"
+get rid of setmetatable(, nil) since packages don't need this anymore in 5.1
+compat-5.1 novo
+ajeitar pra lua-5.1
 
 adicionar exemplos de expansão: pipe, local, named pipe
 testar os options!
@@ -27,21 +13,3 @@ testar os options!
   - proteger get*by*.* com um mutex GLOBAL!
   - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
   - inet_ntoa também é uma merda.
-
-* protect doesn't catch errors by error and assert
-* BUG NO SET DO TINYIRC!!! SINISTRO.
-* _VERSION, _DEBUG, etc.
-* talk about new create field in HTTP, FTP and SMTP
-* talk about the non-blocking connect in the manual
-* think about how to extend http, ftp, smtp to use special send and receive
-* functions for non-blocking so they can be used in the context of the
-* dispatcher!
-* adjust manual for new sock:send returns.
-* think about a dispatcher.
-    * - it creates a server and receives a function that will do the work on
-    * received connections
-    * - this function is invoked with the client socket
-    * - it calls special send and receive functions that yield on timeout
-* arranjar um jeito de fazer multipart/alternative
-* what the hell does __unload do?
-    * it's there just in case someone wants to use it.

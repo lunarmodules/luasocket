@@ -268,7 +268,7 @@ function tredirect(reqt, location)
         headers = reqt.headers,
         proxy = reqt.proxy, 
         nredirects = (reqt.nredirects or 0) + 1,
-        connect = reqt.connect
+        create = reqt.create
     }   
     -- pass location header back as a hint we redirected
     headers.location = headers.location or location

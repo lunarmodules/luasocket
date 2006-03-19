@@ -32,13 +32,6 @@ r, e = smtp.send{
     port = 2525
 }
 
-
-os.exit()
-
-
-
-
-
 -- creates a source to send a message with two parts. The first part is 
 -- plain text, the second part is a PNG image, encoded as base64.
 source = smtp.message{
@@ -67,13 +60,13 @@ source = smtp.message{
     -- chunks are loaded into memory and translation happens on the fly.
     [2] = { 
       headers = {
-        ["content-type"] = 'image/png; name="image.png"',
-        ["content-disposition"] = 'attachment; filename="image.png"',
+        ["content-type"] = 'image/png; name="luasocket.png"',
+        ["content-disposition"] = 'attachment; filename="luasocket.png"',
         ["content-description"] = 'a beautiful image',
         ["content-transfer-encoding"] = "BASE64"
       },
       body = ltn12.source.chain(
-        ltn12.source.file(io.open("image.png", "rb")),
+        ltn12.source.file(io.open("luasocket.png", "rb")),
         ltn12.filter.chain(
           mime.encode("base64"),
           mime.wrap()
