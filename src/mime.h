@@ -15,8 +15,8 @@
 /*-------------------------------------------------------------------------*\
 * Current MIME library version
 \*-------------------------------------------------------------------------*/
-#define MIME_VERSION    "MIME 1.0"
-#define MIME_COPYRIGHT  "Copyright (C) 2004-2005 Diego Nehab"
+#define MIME_VERSION    "MIME 1.0.1"
+#define MIME_COPYRIGHT  "Copyright (C) 2004-2006 Diego Nehab"
 #define MIME_AUTHORS    "Diego Nehab"
 
 /*-------------------------------------------------------------------------*\

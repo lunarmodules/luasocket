@@ -188,7 +188,7 @@ function from  automatically following 301 or 302 server redirect messages;
 In case of failure, the function returns <tt><b>nil</b></tt> followed by an
 error message. If successful, the simple form returns the response 
 body as a string, followed by the response status code, the response
-headers and the response status line. The complex function returns the same
+headers and the response status line. The generic function returns the same
 information, except the first return value is just the number 1 (the body
 goes to the <tt>sink</tt>).
 </p>
@@ -258,6 +258,14 @@ r, c, h = http.request {
 --   ["content-Type"] = "text/html"
 -- }
 </pre>
+
+<p class=note id=post> 
+Note: When sending a POST request, simple interface adds a
+"<tt>Content-type: application/x-www-form-urlencoded</tt>"
+header to the request. This is the type used by
+HTML forms. If you need another type, use the generic
+interface.
+</p>
 
 <p class=note id=authentication> 
 Note: Some URLs are protected by their

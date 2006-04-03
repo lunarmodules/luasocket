@@ -1,4 +1,0 @@
-AuthName "Test Realm"
-AuthType Basic
-AuthUserFile /home/diego/tec/luasocket/test/auth/.htpasswd
-require valid-user

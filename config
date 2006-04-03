@@ -6,8 +6,8 @@
 # Output file names
 #
 EXT=so
-SOCKET_V=2.0.0
-MIME_V=1.0.0
+SOCKET_V=2.0.1
+MIME_V=1.0.1
 SOCKET_SO=socket.$(EXT).$(SOCKET_V) 
 MIME_SO=mime.$(EXT).$(MIME_V)
 UNIX_SO=unix.$(EXT)
@@ -37,20 +37,20 @@ INSTALL_EXEC=cp
 # Compiler and linker settings
 # for Mac OS X
 #
-#CC=gcc
-#DEF=-DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
-#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common
-#LDFLAGS=-bundle -undefined dynamic_lookup
-#LD=export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
+CC=gcc
+DEF=-DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
+CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common
+LDFLAGS=-bundle -undefined dynamic_lookup
+LD=export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
 
 #------
 # Compiler and linker settings
 # for Linux
-CC=gcc
-DEF=-DLUASOCKET_DEBUG 
-CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
-LDFLAGS=-O -shared
-LD=gcc 
+#CC=gcc
+#DEF=-DLUASOCKET_DEBUG 
+#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
+#LDFLAGS=-O -shared
+#LD=gcc 
 
 #------
 # End of makefile configuration

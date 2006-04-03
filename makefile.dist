@@ -1,9 +1,9 @@
 #--------------------------------------------------------------------------
 # Distribution makefile
 #--------------------------------------------------------------------------
-DIST = luasocket-2.0
+DIST = luasocket-2.0.1
 
-COMPAT = src/compat-5.1r4
+COMPAT = src/compat-5.1r5
 
 TEST = \
 	test/README \

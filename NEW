@@ -1,54 +1,21 @@
 What's New
 
-There is no big change for the 2.0 (final) release. It is
-basically a bug fix release. The main improvement is in the
-non-blocking support. 
+This is just a bug-fix/update release.
 
-  * New: sample module dispatch.lua implements a coroutine
-    based dispatcher; 
-  * New: sample check-links.lua works both in blocking and
-    non-blocking mode using coroutines (using the new
-    dispatcher);
-  * New: sample forward.lua implements a coroutine based
-    forward server (using the new dispatcher);
-  * Improved: tcp:send(data, i, j) to return (i+sent-1).  This
-    is great for non-blocking I/O, but might break some code;
-  * Improved: HTTP, SMTP, and FTP functions to accept a new
-    field create that overrides the function used to create
-    socket objects;
-  * Improved: smtp.message now supports multipart/alternative
-    (for the HTML messages we all love so much); 
-  * Fixed: smtp.send was hanging on errors returned by LTN12
-    sources;
-  * Fixed: url.absolute() to work when base_url is in parsed
-    form;
-  * Fixed: http.request() not to redirect when the location
-    header is empty (naughty servers...);
-  * Fixed: tcp{client}:shutdown() to check for class instead
-    of group;
-  * Fixed: The manual to stop using socket.try() in place of
-    assert(), since it can't; 
-  * Improved: Got rid of package.loaded.base = _G kludge;
-  * Fixed: Parts of the manual referred to require("http")
-    instead of require("socket.http");
-  * Improved: Socket and MIME binaries are called 'core' each
-    inside their directory (ex. "socket/core.dll"). The 'l'
-    prefix was just a bad idea;
-  * Improved: Using bundles in Mac OS X, instead of dylibs; 
-  * Fixed: luasocket.h to export luaopen_socket_core;
-  * Fixed: udp:setpeername() so you can "disconnect" an UDP
-    socket;
-  * Fixed: A weird bug in HTTP support that caused some
-    requests to fail (Florian Berger);
-  * Fixed: Bug in socket.select() that caused sockets with
-    descriptor 0 to be ignored (Renato Maia);
-  * Fixed: "Bug" that caused dns.toip() to crash under uLinux
-    (William Trenker);
-  * Fixed: "Bug" that caused gethostbyname to crash under VMS
-    (Renato Maia);
-  * Fixed: tcp:send("") to return 0 bytes sent (Alexander
-    Marinov);
-  * Improved: socket.DEBUG and socket.VERSION became
-    socket._DEBUGs and socket._VERSION for uniformity with other
-    libraries;
-  * Improved: socket.select now works on empty sets on Windows. 
+    * Updated: now using compat-5.1r5;
+
+    * Improved: http.request is more robust to malformed
+      URLs (Adrian Sietsma);
+
+    * Improved: the simple http.request interface sends a
+      "Content-type: application/x-www-form-urlencoded" header
+      (William Trenker);
+
+    * Improved: http.request is robust to evil servers that
+      send inappropriate 100-continue messages (David Burgess);
+
+    * Fixed: sample unix.c had fallen through the cracks
+      during development (Matthew Percival);
+
+    * Fixed: error code was not being propagated correctly
+      in ftp.lua (David Burgess). 

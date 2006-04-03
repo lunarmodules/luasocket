@@ -78,7 +78,7 @@ LuaSocket.
 </p>
 
 <p>
-Copyright &copy; 2004-2005 Diego Nehab. All rights reserved. <br>
+Copyright &copy; 2004-2006 Diego Nehab. All rights reserved. <br>
 Author: <A href="http://www.cs.princeton.edu/~diego">Diego Nehab</a>
 </p>
 
@@ -87,8 +87,8 @@ Author: <A href="http://www.cs.princeton.edu/~diego">Diego Nehab</a>
 <h2 id=download>Download</h2>
 
 <p>
-LuaSocket version  2.0 (final) is now  available for download! It  is
-compatible with   Lua&nbsp;5.0   and   has    been   tested   on
+LuaSocket version 2.0.1 is now  available for download! It  is
+compatible with  Lua&nbsp;5.0   and   has    been   tested   on
 Windows&nbsp;XP, Linux, and Mac OS X. 
 </p>
 
@@ -159,65 +159,24 @@ has been helping a lot too! Thanks to you all!
 <h2 id=new>What's New</h2>
 
 <p>
-There is no big change for the 2.0 (final) release. It is basically a 
-bug fix release. The only improvement is in the non-blocking 
-support. 
+This is just a bug-fix/update release. 
 </p>
 
 <ul>
-<li> New: sample module <tt>dispatch.lua</tt> implements a
-coroutine based dispatcher; 
-<li> New: sample <tt>check-links.lua</tt> works
-both in blocking and non-blocking mode using coroutines
-(using the new dispatcher);
-<li> New: sample <tt>forward.lua</tt> implements a coroutine
-based forward server (using the new dispatcher);
-<li> Improved: <tt>tcp:send(data, i, j)</tt> to return <tt>(i+sent-1)</tt>.  This is great for non-blocking I/O, but might break some code;
-<li> Improved: HTTP, SMTP, and FTP functions to accept a new field
-<tt>create</tt> that overrides the function used to create socket objects;
-<li> Improved: <tt>smtp.message</tt> now supports multipart/alternative
-(for the HTML messages we all love so much); 
-<li> Fixed: <tt>smtp.send</tt> was hanging on errors returned by LTN12 sources;
-<li> Fixed: <tt>url.absolute()</tt> to work when <tt>base_url</tt> is in
-parsed form;
-<li> Fixed: <tt>http.request()</tt> not to redirect when the location 
-header is empty (naughty servers...);
-<li> Fixed: <tt>tcp{client}:shutdown()</tt> to check for class instead of
-group;
-<li> Fixed: The manual to stop using <tt>socket.try()</tt> in place of
-<tt>assert()</tt>, since it can't; 
-<li> Improved: Got rid of <tt>package.loaded.base = _G</tt> kludge;
-<li> Fixed: Parts of the manual referred to <tt>require("http")</tt> instead of
-<tt>require("socket.http")</tt>;
-<li> Improved: Socket and MIME binaries are called 'core' each inside their
-directory (ex. "socket/core.dll"). The 'l' prefix was just a bad idea;
-<li> Improved: Using bundles in Mac OS X, instead of dylibs; 
-<li> Fixed: <tt>luasocket.h</tt> to export <tt>luaopen_socket_core</tt>;
-<li> Fixed: <tt>udp:setpeername()</tt> so you can "disconnect" an 
-<tt>UDP</tt> socket;
-<li> Fixed: A weird bug in HTTP support that caused some requests to 
-fail (Florian Berger);
-<li> Fixed: Bug in <tt>socket.select()</tt> that caused sockets 
-with descriptor 0 to be ignored (Renato Maia);
-<li> Fixed: "Bug" that caused <tt>dns.toip()</tt> to crash under uLinux
-(William Trenker);
-<li> Fixed: "Bug" that caused <tt>gethostbyname</tt> to crash under VMS
-(Renato Maia);
-<li> Fixed: <tt>tcp:send("")</tt> to return 0 bytes sent (Alexander Marinov);
-<li> Improved: <tt>socket.DEBUG</tt> and <tt>socket.VERSION</tt> became <tt>socket._DEBUGs</tt> and <tt>socket._VERSION</tt> for uniformity with other libraries;
-<li> Improved: <tt>socket.select</tt> now works on empty sets on Windows. 
-</ul>
-
-<!-- incompatible +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<h3 id=incompatible>Incompatibilities with previous versions</h3>
-
-<ul>
-<li> If you use the return value of <tt>tcp:send()</tt> <em>and</em> you
-use the extra parameters to select only part of the string to be sent, your
-code is now broken, but when you fix it, it will be much simpler;
-<li> If you check <tt>socket.DEBUG</tt> or <tt>socket.VERSION</tt>, 
-change it to <tt>socket._DEBUG</tt> or <tt>socket._VERSION</tt>.
+<li> Updated: now using <tt>compat-5.1r5</tt>; 
+<li> Improved: <tt>http.request</tt> is more robust to
+malformed URLs (Adrian Sietsma);
+<li> Improved: the simple <tt>http.request</tt> interface sends a
+"<tt>Content-type: application/x-www-form-urlencoded</tt>"
+header (William Trenker);
+<li> Improved: <tt>http.request</tt> is robust to evil
+servers that send inappropriate 100-continue messages
+(David Burgess);
+<li> Fixed: sample <tt>unix.c</tt> had fallen through the
+cracks during development (Matthew Percival); 
+<li> Fixed: error code was not being propagated correctly in
+ftp.lua (David Burgess). 
+<li> 
 </ul>
 
 <!-- old ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
