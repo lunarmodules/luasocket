@@ -226,9 +226,9 @@ local default = {
 local function adjustrequest(reqt)
     -- parse url if provided
     local nreqt = reqt.url and url.parse(reqt.url, default) or {}
-    local t = url.parse(reqt.url, default)
     -- explicit components override url
     for i,v in base.pairs(reqt) do nreqt[i] = v end
+    if nreqt.port == "" then nreqt.port = 80 end
     socket.try(nreqt.host, "invalid host '" .. base.tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)

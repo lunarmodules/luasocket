@@ -83,9 +83,10 @@ r, e = smtp.send{
             "<diego@princeton.edu>" },
     from = "<diego@princeton.edu>",
     source = ltn12.source.chain(source, filter),
-    --server = "mail.cs.princeton.edu"
-    server = "localhost",
-    port = 2525
+    server = "mail.cs.princeton.edu",
+    --server = "localhost",
+    --port = 2525
+    port = 25
 }
 
 print(r, e)

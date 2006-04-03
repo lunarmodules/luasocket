@@ -22,7 +22,8 @@ http.TIMEOUT = 10
 
 local t = socket.gettime()
 
-host = host or "diego.student.princeton.edu"
+--host = host or "diego.student.princeton.edu"
+host = host or "dell-diego"
 proxy = proxy or "http://localhost:3128"
 prefix = prefix or "/luasocket-test"
 cgiprefix = cgiprefix or "/luasocket-test-cgi"
@@ -124,6 +125,20 @@ r, re = http.request(host .. prefix)
 assert(r == nil and e == re, tostring(r) ..", " .. tostring(re) .. 
     " vs " .. tostring(e)) 
 print("ok")
+
+io.write("testing invalid empty port: ")
+request = {
+    url = "http://" .. host .. ":" .. prefix .. "/index.html"
+}
+expect = {
+    body = index,
+    code = 200
+}
+ignore = {
+    status = 1,
+    headers = 1
+}
+check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing post method: ")

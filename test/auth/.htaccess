@@ -1,4 +1,4 @@
 AuthName "Test Realm"
 AuthType Basic
-AuthUserFile /Users/diego/tec/luasocket/test/auth/.htpasswd
+AuthUserFile /home/diego/tec/luasocket/test/auth/.htpasswd
 require valid-user
