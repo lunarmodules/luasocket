@@ -1,3 +1,13 @@
+New mime support
+
+
+
+
+
+
+
+
+
 ftp send should return server replies?
 make sure there are no object files in the distribution tarball
 http handling of 100-continue, see DB patch

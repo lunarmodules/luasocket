@@ -15,7 +15,6 @@ local mime = require("mime")
 local string = require("string")
 local base = _G
 local table = require("table")
-local print = print
 module("socket.http")
 
 -----------------------------------------------------------------------------
@@ -278,16 +277,16 @@ end
 function trequest(reqt)
     -- we loop until we get what we want, or
     -- until we are sure there is no way to get it
-    reqt = adjustrequest(reqt)
-    local h = open(reqt.host, reqt.port, reqt.create)
+    local nreqt = adjustrequest(reqt)
+    local h = open(nreqt.host, nreqt.port, nreqt.create)
     -- send request line and headers
-    h:sendrequestline(reqt.method, reqt.uri)
-    h:sendheaders(reqt.headers)
+    h:sendrequestline(nreqt.method, nreqt.uri)
+    h:sendheaders(nreqt.headers)
     local code = 100 
     local headers, status
     -- if there is a body, check for server status
-    if reqt.source then
-        h:sendbody(reqt.headers, reqt.source, reqt.step) 
+    if nreqt.source then
+        h:sendbody(nreqt.headers, nreqt.source, nreqt.step) 
     end
     -- ignore any 100-continue messages
     while code == 100 do 
@@ -296,13 +295,13 @@ function trequest(reqt)
     end
     -- at this point we should have a honest reply from the server
     -- we can't redirect if we already used the source, so we report the error 
-    if shouldredirect(reqt, code, headers) and not reqt.source then
+    if shouldredirect(nreqt, code, headers) and not nreqt.source then
         h:close()
         return tredirect(reqt, headers.location)
     end
     -- here we are finally done
-    if shouldreceivebody(reqt, code) then
-        h:receivebody(headers, reqt.sink, reqt.step)
+    if shouldreceivebody(nreqt, code) then
+        h:receivebody(headers, nreqt.sink, nreqt.step)
     end
     h:close()
     return 1, code, headers, status
