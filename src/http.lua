@@ -261,7 +261,7 @@ function tredirect(reqt, location)
     local result, code, headers, status = trequest {
         -- the RFC says the redirect URL has to be absolute, but some
         -- servers do not respect that
-        url = url.absolute(reqt, location),
+        url = url.absolute(reqt.url, location),
         source = reqt.source,
         sink = reqt.sink,
         headers = reqt.headers,

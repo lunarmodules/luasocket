@@ -1,3 +1,4 @@
+http was preserving old host header during redirects
 fix smtp.send hang on source error
 add create field to FTP and SMTP and fix HTTP ugliness
 clean timeout argument to open functions in SMTP, HTTP and FTP

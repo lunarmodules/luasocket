@@ -172,6 +172,8 @@ header (William Trenker);
 <li> Improved: <tt>http.request</tt> is robust to evil
 servers that send inappropriate 100-continue messages
 (David Burgess);
+<li> Fixed: <tt>http.request</tt> was using the old host header during
+redirects (Florian Berger);
 <li> Fixed: sample <tt>unix.c</tt> had fallen through the
 cracks during development (Matthew Percival); 
 <li> Fixed: error code was not being propagated correctly in

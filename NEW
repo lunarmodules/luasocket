@@ -14,6 +14,9 @@ This is just a bug-fix/update release.
     * Improved: http.request is robust to evil servers that
       send inappropriate 100-continue messages (David Burgess);
 
+    * Fixed: http.request was using the old host header during
+      redirects (Florian Berger);
+
     * Fixed: sample unix.c had fallen through the cracks
       during development (Matthew Percival);
 
