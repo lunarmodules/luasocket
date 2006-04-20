@@ -48,11 +48,11 @@ INSTALL_EXEC=cp
 #------
 # Compiler and linker settings
 # for Linux
-#CC=gcc
-#DEF=-DLUASOCKET_DEBUG 
-#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
-#LDFLAGS=-O -shared -fpic
-#LD=gcc 
+CC=gcc
+DEF=-DLUASOCKET_DEBUG 
+CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
+LDFLAGS=-O -shared -fpic
+LD=gcc 
 
 #------
 # End of makefile configuration
