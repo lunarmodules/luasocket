@@ -39,27 +39,24 @@ Installation">
 
 <h2>Installation</h2>
 
-<p> LuaSocket 2.0.1 uses the new package proposal for Lua 5.1.  
+<p> LuaSocket 2.0.1 uses the new package system for Lua 5.1.  
 All Lua library developers are encouraged to update their libraries so that
 all libraries can coexist peacefully and users can benefit from the
 standardization and flexibility of the standard.
 </p>
 
 <p> 
-The proposal was considered important enough by some of us to justify 
-early adoption, even before release of Lua 5.1.
-Thus, a compatibility module 
+Those stuck with Lua 5.0 will need the 
 <a href=http://www.keplerproject.org/compat/>compat-5.1</a> 
-has been released in conjunction with Roberto Ierusalimschy and <a
-href=http://www.keplerproject.org/>The Kepler Project</a> team. 
-It implements the Lua 5.1 package proposal on top of Lua 5.0. </p>
+module. It is maintained by 
+<a href=http://www.keplerproject.org/>The Kepler
+Project</a>'s team, and implements the Lua 5.1 package proposal 
+on top of Lua 5.0. </p>
 
-<p> As far as LuaSocket is concerned, this means that whoever is 
-deploying a non-standard distribution of LuaSocket will probably
-have no problems customizing it. Here we will only describe the standard distribution. If the standard doesn't meet your
-needs, we refer you to the Lua discussion list, where any question about
-the package scheme will likely already have been answered. 
-</p>
+<p> Here we will only describe the standard distribution.
+If the standard doesn't meet your needs, we refer you to the
+Lua discussion list, where any question about the package
+scheme will likely already have been answered.  </p>
 
 <h3>Directory structure</h3>
 
@@ -88,7 +85,7 @@ distribution directory structure:</p>
 </pre>
 
 <p> Naturally, on Unix systems, <tt>core.dll</tt>
-would be replaced by <tt>core.so</tt>. 
+would be replaced by <tt>core.so</tt>.  
 </p>
 
 <p> In order for the interpreter to find all LuaSocket components, three
@@ -98,6 +95,11 @@ the interpreter to load the <tt>compat-5.1.lua</tt> module at startup: </p>
 <pre class=example>
 LUA_INIT=@&lt;LDIR&gt;/compat-5.1.lua
 </pre>
+
+<p>
+This is only need for Lua&nbsp;5.0! Lua&nbsp;5.1 comes with
+the package system bult in, of course. 
+</p>
 
 <p>
 The other two environment variables instruct the compatibility module to

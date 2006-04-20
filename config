@@ -15,8 +15,8 @@ UNIX_SO=unix.$(EXT)
 #------
 # Lua includes and libraries
 #
-LUAINC=-Ilua-5.0.2/include
-LUALIB=-Llua-5.0.2/lib
+LUAINC=-I/usr/local/include/lua50
+#LUAINC=-I/usr/local/include/lua5.1
 
 #------
 # Compat-5.1 directory
@@ -27,8 +27,10 @@ COMPAT=compat-5.1r5
 # Top of your Lua installation
 # Relative paths will be inside the src tree
 #
-INSTALL_TOP_SHARE=share
-INSTALL_TOP_LIB=lib
+INSTALL_TOP_SHARE=/usr/local/share/lua/5.0
+INSTALL_TOP_LIB=/usr/local/lib/lua/5.0
+#INSTALL_TOP_SHARE=/usr/local/share/lua/5.1
+#INSTALL_TOP_LIB=/usr/local/lib/lua/5.1
 
 INSTALL_DATA=cp
 INSTALL_EXEC=cp
@@ -46,11 +48,11 @@ INSTALL_EXEC=cp
 #------
 # Compiler and linker settings
 # for Linux
-CC=gcc
-DEF=-DLUASOCKET_DEBUG 
-CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
-LDFLAGS=-O -shared -fpic
-LD=gcc 
+#CC=gcc
+#DEF=-DLUASOCKET_DEBUG 
+#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
+#LDFLAGS=-O -shared -fpic
+#LD=gcc 
 
 #------
 # End of makefile configuration

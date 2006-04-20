@@ -64,9 +64,9 @@ work. Just run
 
 	lua check-links.lua [-n] {<url>} > output
 
-and open the result to see a list of broken links. You can
-also use the '-n' switch to run the same program in
-non-blocking mode to see how much faster things can get.
+and open the result to see a list of broken links. Make sure
+you check the '-n' switch. It runs in non-blocking mode,
+using coroutines, and is MUCH faster!
 
     forward.lua             -- coroutine based forward server
 

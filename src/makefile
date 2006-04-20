@@ -10,6 +10,7 @@ include ../config
 #------
 # Modules belonging to socket-core
 #
+
 SOCKET_OBJS:= \
 	$(COMPAT)/compat-5.1.o \
 	luasocket.o \
@@ -48,13 +49,13 @@ UNIX_OBJS:=\
 all: $(SOCKET_SO) $(MIME_SO) 
 
 $(SOCKET_SO): $(SOCKET_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $(SOCKET_OBJS)
 
 $(MIME_SO): $(MIME_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $(MIME_OBJS)
 
 $(UNIX_SO): $(UNIX_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $(UNIX_OBJS)
 
 #------
 # List of dependencies

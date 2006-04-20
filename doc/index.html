@@ -88,8 +88,9 @@ Author: <A href="http://www.cs.princeton.edu/~diego">Diego Nehab</a>
 
 <p>
 LuaSocket version 2.0.1 is now  available for download! It  is
-compatible with  Lua&nbsp;5.0   and   has    been   tested   on
-Windows&nbsp;XP, Linux, and Mac OS X. 
+compatible with  Lua&nbsp;5.0 and Lua&nbsp;5.1, and has    
+been tested on Windows&nbsp;XP, Linux, and Mac OS X. Chances
+are it works well on most UNIX systems.
 </p>
 
 <p>
@@ -103,13 +104,13 @@ contains several examples, this user's manual and basic test procedures.
 <p>
 Danilo Tuler is maintaining Win32 binaries for LuaSocket, which are also
 available from LuaForge.  These are compatible with the 
-<a href=http://luaforge.net/projects/luabinaries>LuaBinaries</a> 
-available from LuaForge. 
+<a href=http://luaforge.net/projects/luabinaries>LuaBinaries</a>,
+also available from LuaForge. 
 </p>
 
 <p>
-For those that  want to give LuaSocket a quick try, download the
-stand-alone archive and unpack everything into
+If you are using Lua 5.0, and want to give LuaSocket a quick
+try, download the stand-alone archive and unpack everything into
 a directory, say <tt>c:\luasocket</tt>. Then set <tt>LUA_INIT</tt> to load
 the <tt>compat-5.1.lua</tt> and set <tt>LUA_PATH</tt> and
 <tt>LUA_CPATH</tt> to look for files in the current directory: 
@@ -132,6 +133,23 @@ c:\luasocket\&gt; lua50
 Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
 &gt; http = require"socket.http"
 &gt; print(http.request"http://www.cs.princeton.edu/~diego/professional/luasocket/")
+--&gt; the source to this web page gets dumped to terminal
+</pre>
+
+<p>
+If you are using Lua 5.1, you shouldn't use
+<tt>compat-5.1.lua</tt>. Just unpack the standalone
+directory, set <tt>LUA_CPATH</tt> and <tt>LUA_PATH</tt>, and
+you should be ready to run:
+<p>
+
+<pre class=example>
+c:\luasocket\&gt; set LUA_CPATH=?.dll
+c:\luasocket\&gt; set LUA_PATH=?.lua
+c:\luasocket\&gt; lua5.1
+Lua 5.1  Copyright (C) 1994-2006 Lua.org, PUC-Rio
+&gt; http = require"socket.http"
+&gt; print(http.request"http://www.cs.princeton.edu/~diego/professional/luasocket/"
 --&gt; the source to this web page gets dumped to terminal
 </pre>
 
