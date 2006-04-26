@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src\compat-5.1r5, ..\lua-5.0.2\include, src"
+				AdditionalIncludeDirectories="src\compat-5.1r5, h:\include\lua50"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport)"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -35,6 +35,7 @@
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile="$(OutDir)/socket.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="h:\lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/socket.pdb"
 				SubSystem="2"
@@ -69,7 +70,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="src\compat-5.1r5, src\lua-5.0.2\include"
+				AdditionalIncludeDirectories="src\compat-5.1r5, h:\include\lua50"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LUASOCKET_EXPORTS;LUASOCKET_API=__declspec(dllexport);  LUASOCKET_DEBUG"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -83,6 +84,7 @@
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile="$(OutDir)/socket.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="h:\lib"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -175,7 +177,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
 		<File
-			RelativePath=".\src\lua-5.0.2\lib\lua50.lib">
+			RelativePath="..\..\lib\lua50.dll.lib">
 		</File>
 	</Files>
 	<Globals>
