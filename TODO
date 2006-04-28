@@ -2,12 +2,6 @@ New mime support
 
 
 
-
-
-
-
-
-
 ftp send should return server replies?
 make sure there are no object files in the distribution tarball
 http handling of 100-continue, see DB patch
@@ -19,7 +13,9 @@ ajeitar pra lua-5.1
 
 adicionar exemplos de expansão: pipe, local, named pipe
 testar os options!
-- Thread-safe
-  - proteger get*by*.* com um mutex GLOBAL!
-  - proteger ou atomizar o conjunto (timedout, receive), (timedout, send)
-  - inet_ntoa também é uma merda.
+
+
+- Thread-unsafe functions to protect
+    gethostbyname(), gethostbyaddr(), gethostent(),
+inet_ntoa(), strerror(), 
+    
