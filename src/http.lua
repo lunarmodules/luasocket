@@ -107,7 +107,7 @@ local metat = { __index = {} }
 
 function open(host, port, create)
     -- create socket with user connect function, or with default
-    local c = socket.try(create or socket.tcp)()
+    local c = socket.try((create or socket.tcp)())
     local h = base.setmetatable({ c = c }, metat)
     -- create finalized try
     h.try = socket.newtry(function() h:close() end)
@@ -228,7 +228,8 @@ local function adjustrequest(reqt)
     -- explicit components override url
     for i,v in base.pairs(reqt) do nreqt[i] = v end
     if nreqt.port == "" then nreqt.port = 80 end
-    socket.try(nreqt.host, "invalid host '" .. base.tostring(nreqt.host) .. "'")
+    socket.try(nreqt.host and nreqt.host ~= "", 
+        "invalid host '" .. base.tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)
     -- ajust host and port if there is a proxy

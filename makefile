@@ -25,7 +25,6 @@ TO_SOCKET_SHARE:= \
 	smtp.lua
 
 TO_TOP_SHARE:= \
-	$(COMPAT)/compat-5.1.lua \
 	ltn12.lua \
 	socket.lua \
 	mime.lua

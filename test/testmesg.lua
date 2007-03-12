@@ -12,7 +12,7 @@ source = smtp.message {
     headers = { ['content-type'] = 'multipart/alternative' },
     body = {
         [1] = {
-            headers = { ['content-type'] = 'text/html' },
+            headers = { ['Content-type'] = 'text/html' },
             body = "<html> <body> Hi, <b>there</b>...</body> </html>"
         },
         [2] = {
@@ -60,7 +60,7 @@ source = smtp.message{
     -- chunks are loaded into memory and translation happens on the fly.
     [2] = { 
       headers = {
-        ["content-type"] = 'image/png; name="luasocket.png"',
+        ["ConTenT-tYpE"] = 'image/png; name="luasocket.png"',
         ["content-disposition"] = 'attachment; filename="luasocket.png"',
         ["content-description"] = 'a beautiful image',
         ["content-transfer-encoding"] = "BASE64"
@@ -83,10 +83,10 @@ r, e = smtp.send{
             "<diego@princeton.edu>" },
     from = "<diego@princeton.edu>",
     source = ltn12.source.chain(source, filter),
-    server = "mail.cs.princeton.edu",
-    --server = "localhost",
-    --port = 2525
-    port = 25
+    --server = "mail.cs.princeton.edu",
+    --port = 25
+    server = "localhost",
+    port = 2525
 }
 
 print(r, e)

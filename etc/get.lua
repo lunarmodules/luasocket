@@ -65,21 +65,23 @@ end
 -- kind of copied from luasocket's manual callback examples
 function stats(size)
     local start = socket.gettime()
+    local last = start
     local got = 0
     return function(chunk)
         -- elapsed time since start
-        local delta = socket.gettime() - start
+        local current = socket.gettime()
         if chunk then
             -- total bytes received
             got = got + string.len(chunk)   
             -- not enough time for estimate
-            if delta > 0.1 then
-                io.stderr:write("\r", gauge(got, delta, size))
+            if current - last > 1 then
+                io.stderr:write("\r", gauge(got, current - start, size))
                 io.stderr:flush()
+                last = current
             end
         else
             -- close up
-            io.stderr:write("\r", gauge(got, delta), "\n")
+            io.stderr:write("\r", gauge(got, current - start), "\n")
         end
         return chunk
     end

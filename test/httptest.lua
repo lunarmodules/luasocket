@@ -119,9 +119,8 @@ check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing invalid url: ")
-local c, e = socket.connect("", 80)
-local r, re = http.request{url = host .. prefix}
-assert(r == nil and e == re) 
+local r, e = http.request{url = host .. prefix}
+assert(r == nil and e == "invalid host ''") 
 r, re = http.request(host .. prefix)
 assert(r == nil and e == re, tostring(r) ..", " .. tostring(re) .. 
     " vs " .. tostring(e)) 

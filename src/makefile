@@ -11,8 +11,9 @@ include ../config
 # Modules belonging to socket-core
 #
 
+#$(COMPAT)/compat-5.1.o \
+
 SOCKET_OBJS:= \
-	$(COMPAT)/compat-5.1.o \
 	luasocket.o \
 	timeout.o \
 	buffer.o \
@@ -29,10 +30,10 @@ SOCKET_OBJS:= \
 #------
 # Modules belonging mime-core
 #
-MIME_OBJS:=\
-	$(COMPAT)/compat-5.1.o \
-	mime.o 
+#$(COMPAT)/compat-5.1.o \
 
+MIME_OBJS:=\
+	mime.o 
 
 #------
 # Modules belonging unix (local domain sockets)

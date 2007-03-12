@@ -122,6 +122,15 @@ function open(server, port, create)
     return s
 end
 
+-- convert headers to lowercase
+local function lower_headers(headers)
+    local lower = {}
+    for i,v in base.pairs(headers or lower) do
+        lower[string.lower(i)] = v
+    end
+    return lower
+end
+
 ---------------------------------------------------------------------------
 -- Multipart message source
 -----------------------------------------------------------------------------
@@ -149,7 +158,7 @@ end
 local function send_multipart(mesgt)
     -- make sure we have our boundary and send headers
     local bd = newboundary()
-    local headers = mesgt.headers or {}
+    local headers = lower_headers(mesgt.headers or {})
     headers['content-type'] = headers['content-type'] or 'multipart/mixed'
     headers['content-type'] = headers['content-type'] ..
         '; boundary="' ..  bd .. '"'
@@ -176,7 +185,7 @@ end
 -- yield message body from a source
 local function send_source(mesgt)
     -- make sure we have a content-type
-    local headers = mesgt.headers or {}
+    local headers = lower_headers(mesgt.headers or {})
     headers['content-type'] = headers['content-type'] or
         'text/plain; charset="iso-8859-1"'
     send_headers(headers)
@@ -192,7 +201,7 @@ end
 -- yield message body from a string
 local function send_string(mesgt)
     -- make sure we have a content-type
-    local headers = mesgt.headers or {}
+    local headers = lower_headers(mesgt.headers or {})
     headers['content-type'] = headers['content-type'] or
         'text/plain; charset="iso-8859-1"'
     send_headers(headers)
@@ -209,20 +218,17 @@ end
 
 -- set defaul headers
 local function adjust_headers(mesgt)
-    local lower = {}
-    for i,v in base.pairs(mesgt.headers or lower) do
-        lower[string.lower(i)] = v
-    end
+    local lower = lower_headers(mesgt.headers)
     lower["date"] = lower["date"] or
         os.date("!%a, %d %b %Y %H:%M:%S ") .. (mesgt.zone or ZONE)
     lower["x-mailer"] = lower["x-mailer"] or socket._VERSION
     -- this can't be overriden
     lower["mime-version"] = "1.0"
-    mesgt.headers = lower
+    return lower
 end
 
 function message(mesgt)
-    adjust_headers(mesgt)
+    mesgt.headers = adjust_headers(mesgt)
     -- create and return message source
     local co = coroutine.create(function() send_message(mesgt) end)
     return function()

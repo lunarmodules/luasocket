@@ -101,7 +101,7 @@ control:setoption("tcp-nodelay", true)
 
 ------------------------------------------------------------------------
 function test_methods(sock, methods)
-    for _, v in methods do
+    for _, v in pairs(methods) do
         if type(sock[v]) ~= "function" then 
             fail(sock.class .. " method '" .. v .. "' not registered") 
         end
