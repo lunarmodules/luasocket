@@ -23,19 +23,17 @@ received in consecutive function calls, returning partial
 results after each invocation.  Examples of operations that can be
 implemented as filters include the end-of-line normalization
 for text, Base64 and Quoted-Printable transfer content
-encodings, the breaking of text into lines, SMTP byte
-stuffing, and there are many others.  Filters become even
+encodings, the breaking of text into lines, SMTP dot-stuffing, 
+and there are many others.  Filters become even
 more powerful when we allow them to be chained together to
 create composite filters. In this context, filters can be seen 
 as the middle links in a chain of data transformations. Sources an sinks
 are the corresponding end points of these chains. A source
 is a function that produces data, chunk by chunk, and a sink
 is a function that takes data, chunk by chunk. In this
-chapter, we describe the design of an elegant interface for filters,
-sources, sinks and chaining, refine it 
-until it reaches a high degree of generality. We discuss
-implementation challenges, provide practical solutions,
-and illustrate each step with concrete examples. 
+article, we describe the design of an elegant interface for filters,
+sources, sinks, and chaining, and illustrate each step 
+with concrete examples. 
 \end{abstract}
 
 
@@ -52,7 +50,7 @@ transfer coding, and the list goes on.
 Many complex tasks require a combination of two or more such
 transformations, and therefore a general mechanism for
 promoting reuse is desirable. In the process of designing
-LuaSocket 2.0, David Burgess and I were forced to deal with
+\texttt{LuaSocket~2.0}, David Burgess and I were forced to deal with
 this problem. The solution we reached proved to be very
 general and convenient. It is based on the concepts of
 filters, sources, sinks, and pumps, which we introduce
@@ -62,18 +60,18 @@ below.
 with chunks of input, successively returning processed
 chunks of output. More importantly, the result of
 concatenating all the output chunks must be the same as the
-result of applying the filter over the concatenation of all
+result of applying the filter to the concatenation of all
 input chunks. In fancier language, filters \emph{commute}
 with the concatenation operator. As a result, chunk
 boundaries are irrelevant: filters correctly handle input
-data no matter how it was originally split. 
+data no matter how it is split. 
 
 A \emph{chain} transparently combines the effect of one or
-more filters. The interface of a chain must be
+more filters. The interface of a chain is 
 indistinguishable from the interface of its components.
 This  allows a chained filter to be used wherever an atomic
-filter is expected. In particular, chains can be chained
-themselves to create arbitrarily complex operations.
+filter is expected. In particular, chains can be 
+themselves chained to create arbitrarily complex operations.
 
 Filters can be seen as internal nodes in a network through
 which data will flow, potentially being transformed many
@@ -93,15 +91,13 @@ anything to happen.  \emph{Pumps} provide the driving force
 that pushes data through the network, from a source to a
 sink.
 
-These concepts will become less abstract with examples.  In
-the following sections, we start with a simplified
-interface, which we refine several times until no obvious
-shortcomings remain. The evolution we present is not
-contrived: it recreates the steps we followed ourselves as
-we consolidated our understanding of these concepts and the
-applications that benefit from them. 
+In the following sections, we start with a simplified
+interface, which we later refine. The evolution we present
+is not contrived: it recreates the steps we followed
+ourselves as we consolidated our understanding of these
+concepts within our application domain. 
 
-\subsection{A concrete example}
+\subsection{A simple example}
 
 Let us use the end-of-line normalization of text as an
 example to motivate our initial filter interface. 
@@ -141,23 +137,23 @@ it with a \texttt{nil} chunk. The filter responds by returning
 the final chunk of processed data.
 
 Although the interface is extremely simple, the
-implementation is not so obvious. Any filter
+implementation is not so obvious. A normalization filter
 respecting this interface needs to keep some kind of context
-between calls. This is because chunks can for example be broken 
-between the CR and LF characters marking the end of a line.  This
-need for contextual storage is what motivates the use of
-factories: each time the factory is called, it returns a
+between calls. This is because a chunk boundary may lie between 
+the CR and LF characters marking the end of a line. This
+need for contextual storage motivates the use of
+factories: each time the factory is invoked, it returns a
 filter with its own context so that we can have several
 independent filters being used at the same time.  For
 efficiency reasons, we must avoid the obvious solution of 
 concatenating all the input into the context before
 producing any output. 
 
-To that end, we will break the implementation in two parts:
+To that end, we break the implementation into two parts:
 a low-level filter, and a factory of high-level filters. The
-low-level filter will be implemented in C and will not carry
+low-level filter is implemented in C and does not maintain
 any context between function calls. The high-level filter
-factory, implemented in Lua, will create and return a
+factory, implemented in Lua, creates and returns a
 high-level filter that maintains whatever context the low-level
 filter needs, but isolates the user from its internal
 details. That way, we take advantage of C's efficiency to
@@ -191,22 +187,21 @@ end
 The \texttt{normalize} factory simply calls a more generic
 factory, the \texttt{cycle} factory. This factory receives a
 low-level filter, an initial context, and an extra
-parameter, and returns the corresponding high-level filter.
-Each time the high-level filer is passed a new chunk, it
-invokes the low-level filter passing it the previous
-context, the new chunk, and the extra argument. The
-low-level filter in turn produces the chunk of processed
-data and a new context. The high-level filter then updates
-its internal context, and returns the processed chunk of
-data to the user.  It is the low-level filter that does all
-the work.  Notice that we take advantage of Lua's lexical
+parameter, and returns a new high-level filter.  Each time
+the high-level filer is passed a new chunk, it invokes the
+low-level filter with the previous context, the new chunk,
+and the extra argument.  It is the low-level filter that
+does all the work, producing the chunk of processed data and
+a new context. The high-level filter then updates its
+internal context, and returns the processed chunk of data to
+the user.  Notice that we take advantage of Lua's lexical
 scoping to store the context in a closure between function
 calls.  
 
 Concerning the low-level filter code, we must first accept
 that there is no perfect solution to the end-of-line marker
-normalization problem itself. The difficulty comes from an
-inherent ambiguity on the definition of empty lines within
+normalization problem. The difficulty comes from an
+inherent ambiguity in the definition of empty lines within
 mixed input. However, the following solution works well for
 any consistent input, as well as for non-empty lines in
 mixed input. It also does a reasonable job with empty lines
@@ -218,17 +213,18 @@ The idea is to consider both CR and~LF as end-of-line
 is seen alone, or followed by a different candidate.  In
 other words, CR~CR~and LF~LF each issue two end-of-line
 markers, whereas CR~LF~and LF~CR issue only one marker each.
-This idea correctly handles the Unix, DOS/MIME, VMS, and Mac
-OS, as well as other more obscure conventions.
+This method correctly handles the Unix, DOS/MIME, VMS, and Mac
+OS conventions.
 
 \subsection{The C part of the filter}
 
 Our low-level filter is divided into two simple functions.
-The inner function actually does the conversion. It takes
+The inner function performs the normalization itself. It takes
 each input character in turn, deciding what to output and
 how to modify the context. The context tells if the last
-character processed was an end-of-line candidate, and if so, 
-which candidate it was.
+processed character was an end-of-line candidate, and if so, 
+which candidate it was. For efficiency, it uses 
+Lua's auxiliary library's buffer interface: 
 \begin{quote}
 \begin{C}
 @stick#
@@ -252,12 +248,10 @@ static int process(int c, int last, const char *marker,
 \end{C}
 \end{quote}
 
-The inner function makes use of Lua's auxiliary library's
-buffer interface for efficiency. The
-outer function simply interfaces with Lua.  It receives the
-context and the input chunk (as well as an optional
+The outer function simply interfaces with Lua.  It receives the
+context and input chunk (as well as an optional
 custom end-of-line marker), and returns the transformed
-output chunk and the new context.
+output chunk and the new context:
 \begin{quote}
 \begin{C}
 @stick#
@@ -291,33 +285,29 @@ initial state.  This allows the filter to be reused many
 times. 
 
 When designing your own filters, the challenging part is to
-decide what will be the context. For line breaking, for
+decide what will be in the context. For line breaking, for
 instance, it could be the number of bytes left in the
 current line.  For Base64 encoding, it could be a string
 with the bytes that remain after the division of the input
-into 3-byte atoms. The MIME module in the LuaSocket
+into 3-byte atoms. The MIME module in the \texttt{LuaSocket}
 distribution has many other examples. 
 
 \section{Filter chains}
 
 Chains add a lot to the power of filters.  For example,
-according to the standard for Quoted-Printable encoding, the
-text must be normalized into its canonic form prior to
-encoding, as far as end-of-line markers are concerned.  To
-help specifying complex transformations like these, we define a
-chain factory that creates a composite filter from one or
-more filters.  A chained filter passes data through all
-its components, and can be used wherever a primitive filter
-is accepted.
+according to the standard for Quoted-Printable encoding,
+text must be normalized to a canonic end-of-line marker
+prior to encoding.  To help specifying complex
+transformations like this, we define a chain factory that
+creates a composite filter from one or more filters.  A
+chained filter passes data through all its components, and
+can be used wherever a primitive filter is accepted.
 
-The chaining factory is very simple. All it does is return a
-function that passes data through all filters and returns
-the result to the user.  The auxiliary
-function~\texttt{chainpair} can only chain two filters
-together. In the auxiliary function, special care must be
-taken if the chunk is the last. This is because the final
-\texttt{nil} chunk notification has to be pushed through both
-filters in turn:  
+The chaining factory is very simple. The auxiliary
+function~\texttt{chainpair} chains two filters together,
+taking special care if the chunk is the last.  This is
+because the final \texttt{nil} chunk notification has to be
+pushed through both filters in turn:  
 \begin{quote}
 \begin{lua}
 @stick#
@@ -333,7 +323,7 @@ end
 @stick#
 function filter.chain(...)
   local f = arg[1]
-  for i = 2, table.getn(arg) do
+  for i = 2, @#arg do
     f = chainpair(f, arg[i])
   end
   return f
@@ -343,7 +333,7 @@ end
 \end{quote}
 
 Thanks to the chain factory, we can
-trivially define the Quoted-Printable conversion:
+define the Quoted-Printable conversion as such:
 \begin{quote}
 \begin{lua}
 @stick#
@@ -361,7 +351,7 @@ pump.all(in, out)
 The filters we introduced so far act as the internal nodes
 in a network of transformations. Information flows from node
 to node (or rather from one filter to the next) and is
-transformed on its way out. Chaining filters together is our
+transformed along the way. Chaining filters together is our
 way to connect nodes in this network. As the starting point
 for the network, we need a source node that produces the
 data. In the end of the network, we need a sink node that
@@ -376,8 +366,8 @@ caller by returning \texttt{nil} followed by an error message.
 
 Below are two simple source factories. The \texttt{empty} source
 returns no data, possibly returning an associated error
-message. The \texttt{file} source is more usefule, and 
-yields the contents of a file in a chunk by chunk fashion.
+message. The \texttt{file} source works harder, and 
+yields the contents of a file in a chunk by chunk fashion:
 \begin{quote}
 \begin{lua}
 @stick#
@@ -404,9 +394,13 @@ end
 
 \subsection{Filtered sources}
 
-It is often useful to chain a source with a filter. A 
-filtered source passes its data through the
+A filtered source passes its data through the
 associated filter before returning it to the caller. 
+Filtered sources are useful when working with
+functions that get their input data from a source (such as
+the pump in our first example). By chaining a source with one or
+more filters, the function can be transparently provided
+with filtered data, with no need to change its interface. 
 Here is a factory that does the job:
 \begin{quote}
 \begin{lua}
@@ -425,23 +419,16 @@ end
 \end{lua}
 \end{quote}
 
-Our motivating example in the introduction chains a source
-with a filter. Filtered sources are useful when working with
-functions that get their input data from a source (such as
-the pump in the example). By chaining a source with one or
-more filters, the function can be transparently provided
-with filtered data, with no need to change its interface. 
-
 \subsection{Sinks}
 
-Just as we defined an interface for sources of
-data, we can also define an interface for a 
-destination for data. We call any function respecting this
+Just as we defined an interface a data source, 
+we can also define an interface for a data destination. 
+We call any function respecting this
 interface a \emph{sink}. In our first example, we used a
 file sink connected to the standard output. 
 
 Sinks receive consecutive chunks of data, until the end of
-data is notified with a \texttt{nil} chunk. A sink can be
+data is signaled by a \texttt{nil} chunk. A sink can be
 notified of an error with an optional extra argument that
 contains the error message, following a \texttt{nil} chunk.  
 If a sink detects an error itself, and
@@ -529,18 +516,21 @@ common that it deserves its own function:
 function pump.step(src, snk)
   local chunk, src_err = src()
   local ret, snk_err = snk(chunk, src_err)
-  return chunk and ret and not src_err and not snk_err, 
-    src_err or snk_err
+  if chunk and ret then return 1
+  else return nil, src_err or snk_err end
 end
 %
 
 @stick#
 function pump.all(src, snk, step)
-  step = step or pump.step
-  while true do
-    local ret, err = step(src, snk)
-    if not ret then return not err, err end
-  end
+    step = step or pump.step
+    while true do
+        local ret, err = step(src, snk)
+        if not ret then
+            if err then return nil, err
+            else return 1 end
+        end 
+    end
 end
 %
 \end{lua}
@@ -571,21 +561,23 @@ The way we split the filters here is not intuitive, on
 purpose.  Alternatively, we could have chained the Base64
 encode filter and the line-wrap filter together, and then
 chain the resulting filter with either the file source or
-the file sink. It doesn't really matter.
+the file sink. It doesn't really matter. The Base64 and the
+line wrapping filters are part of the \texttt{LuaSocket}
+distribution.
 
 \section{Exploding filters}
 
 Our current filter interface has one flagrant shortcoming.
 When David Burgess was writing his \texttt{gzip} filter, he
 noticed that a decompression filter can explode a small
-input chunk into a huge amount of data. To address this, we
-decided to change our filter interface to allow exploding
-filters to return large quantities of output data in a chunk
-by chunk manner. 
+input chunk into a huge amount of data. To address this
+problem, we decided to change the filter interface and allow 
+exploding filters to return large quantities of output data 
+in a chunk by chunk manner. 
 
-More specifically, after passing each chunk of input data to
-a filter and collecting the first chunk of output data, the
-user must now loop to receive data from the filter until no
+More specifically, after passing each chunk of input to
+a filter, and collecting the first chunk of output, the
+user must now loop to receive other chunks from the filter until no
 filtered data is left. Within these secondary calls, the
 caller passes an empty string to the filter. The filter
 responds with an empty string when it is ready for the next
@@ -593,7 +585,7 @@ input chunk. In the end, after the user passes a
 \texttt{nil} chunk notifying the filter that there is no
 more input data, the filter might still have to produce too
 much output data to return in a single chunk. The user has
-to loop again, this time passing \texttt{nil} each time,
+to loop again, now passing \texttt{nil} to the filter each time,
 until the filter itself returns \texttt{nil} to notify the
 user it is finally done.
 
@@ -602,9 +594,9 @@ the new interface. In fact, the end-of-line translation
 filter we presented earlier already conforms to it.  The
 complexity is encapsulated within the chaining functions,
 which must now include a loop. Since these functions only
-have to be written once, the user is not affected.
+have to be written once, the user is rarely affected.
 Interestingly, the modifications do not have a measurable
-negative impact in the the performance of filters that do
+negative impact in the performance of filters that do
 not need the added flexibility. On the other hand, for a
 small price in complexity, the changes make exploding
 filters practical. 
@@ -617,7 +609,7 @@ and SMTP modules are especially integrated with LTN12,
 and can be used to showcase the expressive power of filters,
 sources, sinks, and pumps. Below is an example 
 of how a user would proceed to define and send a
-multipart message with attachments, using \texttt{LuaSocket}:
+multipart message, with attachments, using \texttt{LuaSocket}:
 \begin{quote}
 \begin{mime}
 local smtp = require"socket.smtp"
@@ -656,8 +648,8 @@ assert(smtp.send{
 The \texttt{smtp.message} function receives a table
 describing the message, and returns a source. The
 \texttt{smtp.send} function takes this source, chains it with the
-SMTP dot-stuffing filter, creates a connects a socket sink
-to the server, and simply pumps the data. The message is never 
+SMTP dot-stuffing filter, connects a socket sink
+with the server, and simply pumps the data. The message is never 
 assembled in memory.  Everything is produced on demand, 
 transformed in small pieces, and sent to the server in chunks, 
 including the file attachment that is loaded from disk and 
@@ -665,14 +657,14 @@ encoded on the fly. It just works.
 
 \section{Conclusions}
 
-In this article we introduce the concepts of filters,
+In this article, we introduced the concepts of filters,
 sources, sinks, and pumps to the Lua language. These are
-useful tools for data processing in general. Sources provide
+useful tools for stream processing in general. Sources provide
 a simple abstraction for data acquisition. Sinks provide an
 abstraction for final data destinations. Filters define an
 interface for data transformations.  The chaining of
 filters, sources and sinks provides an elegant way to create
-arbitrarily complex data transformation from simpler
-transformations. Pumps simply move the data through.  
+arbitrarily complex data transformations from simpler
+components. Pumps simply move the data through.  
 
 \end{document}
