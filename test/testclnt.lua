@@ -553,7 +553,6 @@ function test_readafterclose()
     back, err, partial = data:receive(0)
     assert(back == nil and err == "closed", "should have returned 'closed'")
     print("ok")
-os.exit()
 end
 
 test("method registration")
