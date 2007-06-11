@@ -62,7 +62,7 @@ source = smtp.message{
       headers = {
         ["ConTenT-tYpE"] = 'image/png; name="luasocket.png"',
         ["content-disposition"] = 'attachment; filename="luasocket.png"',
-        ["content-description"] = 'a beautiful image',
+        ["content-description"] = 'our logo',
         ["content-transfer-encoding"] = "BASE64"
       },
       body = ltn12.source.chain(

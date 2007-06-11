@@ -201,10 +201,10 @@ int socket_send(p_socket ps, const char *data, size_t count,
         size_t *sent, p_timeout tm)
 {
     int err;
+    *sent = 0;
     /* avoid making system calls on closed sockets */
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     /* loop until we send something or we give up on error */
-    *sent = 0;
     for ( ;; ) {
         /* try to send something */
 		int put = send(*ps, data, (int) count, 0);
@@ -231,8 +231,8 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
         SA *addr, socklen_t len, p_timeout tm)
 {
     int err;
-    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *sent = 0;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         int put = sendto(*ps, data, (int) count, 0, addr, len);
         if (put > 0) {
@@ -251,8 +251,8 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
 \*-------------------------------------------------------------------------*/
 int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
     int err;
-    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *got = 0;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         int taken = recv(*ps, data, (int) count, 0);
         if (taken > 0) {
@@ -273,8 +273,8 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
 int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got, 
         SA *addr, socklen_t *len, p_timeout tm) {
     int err;
-    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *got = 0;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         int taken = recvfrom(*ps, data, (int) count, 0, addr, len);
         if (taken > 0) {

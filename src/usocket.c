@@ -206,10 +206,10 @@ int socket_send(p_socket ps, const char *data, size_t count,
         size_t *sent, p_timeout tm)
 {
     int err;
+    *sent = 0;
     /* avoid making system calls on closed sockets */
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     /* loop until we send something or we give up on error */
-    *sent = 0;
     for ( ;; ) {
         long put = (long) send(*ps, data, count, 0);
         /* if we sent anything, we are done */
@@ -239,8 +239,8 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
         SA *addr, socklen_t len, p_timeout tm)
 {
     int err;
-    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     *sent = 0;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         long put = (long) sendto(*ps, data, count, 0, addr, len);  
         if (put > 0) {
@@ -261,6 +261,7 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
 \*-------------------------------------------------------------------------*/
 int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
     int err;
+    *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         long taken = (long) recv(*ps, data, count, 0);
@@ -269,7 +270,6 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
             return IO_DONE;
         }
         err = errno;
-        *got = 0;
         if (taken == 0) return IO_CLOSED;
         if (err == EINTR) continue;
         if (err != EAGAIN) return err; 
@@ -284,6 +284,7 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
 int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got, 
         SA *addr, socklen_t *len, p_timeout tm) {
     int err;
+    *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         long taken = (long) recvfrom(*ps, data, count, 0, addr, len);
@@ -292,7 +293,6 @@ int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
             return IO_DONE;
         }
         err = errno;
-        *got = 0;
         if (taken == 0) return IO_CLOSED;
         if (err == EINTR) continue;
         if (err != EAGAIN) return err; 

@@ -1,9 +1,7 @@
 #--------------------------------------------------------------------------
 # Distribution makefile
 #--------------------------------------------------------------------------
-DIST = luasocket-2.0.1
-
-COMPAT = src/compat-5.1r5
+DIST = luasocket-2.0.2
 
 TEST = \
 	test/README \
@@ -115,7 +113,6 @@ dist:
 
 	mkdir -p $(DIST)/src
 	cp -vf $(SRC) $(DIST)/src
-	cp -vfr $(COMPAT) $(DIST)/src
 
 	mkdir -p $(DIST)/doc
 	cp -vf $(DOC) $(DIST)/doc

@@ -75,12 +75,12 @@ int buffer_meth_setstats(lua_State *L, p_buffer buf) {
 \*-------------------------------------------------------------------------*/
 int buffer_meth_send(lua_State *L, p_buffer buf) {
     int top = lua_gettop(L);
-    p_timeout tm = timeout_markstart(buf->tm);
     int err = IO_DONE;
     size_t size = 0, sent = 0;
     const char *data = luaL_checklstring(L, 2, &size);
     long start = (long) luaL_optnumber(L, 3, 1);
     long end = (long) luaL_optnumber(L, 4, -1);
+    p_timeout tm = timeout_markstart(buf->tm);
     if (start < 0) start = (long) (size+start+1);
     if (end < 0) end = (long) (size+end+1);
     if (start < 1) start = (long) 1;
@@ -108,10 +108,10 @@ int buffer_meth_send(lua_State *L, p_buffer buf) {
 \*-------------------------------------------------------------------------*/
 int buffer_meth_receive(lua_State *L, p_buffer buf) {
     int err = IO_DONE, top = lua_gettop(L);
-    p_timeout tm = timeout_markstart(buf->tm);
     luaL_Buffer b;
     size_t size;
     const char *part = luaL_optlstring(L, 3, "", &size);
+    p_timeout tm = timeout_markstart(buf->tm);
     /* initialize buffer with optional extra prefix 
      * (useful for concatenating previous partial results) */
     luaL_buffinit(L, &b);
@@ -182,13 +182,14 @@ static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent) {
 static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b) {
     int err = IO_DONE;
     size_t total = 0;
-    while (total < wanted && err == IO_DONE) {
+    while (err == IO_DONE) {
         size_t count; const char *data;
         err = buffer_get(buf, &data, &count);
         count = MIN(count, wanted - total);
         luaL_addlstring(b, data, count);
         buffer_skip(buf, count);
         total += count;
+        if (total >= wanted) break;
     }
     return err;
 }
@@ -198,14 +199,18 @@ static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b) {
 \*-------------------------------------------------------------------------*/
 static int recvall(p_buffer buf, luaL_Buffer *b) {
     int err = IO_DONE;
+    size_t total = 0;
     while (err == IO_DONE) {
         const char *data; size_t count;
         err = buffer_get(buf, &data, &count);
+        total += count;
         luaL_addlstring(b, data, count);
         buffer_skip(buf, count);
     }
-    if (err == IO_CLOSED) return IO_DONE;
-    else return err;
+    if (err == IO_CLOSED) {
+        if (total > 0) return IO_DONE;
+        else return IO_CLOSED;
+    } else return err;
 }
 
 /*-------------------------------------------------------------------------*\

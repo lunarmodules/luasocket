@@ -13,8 +13,8 @@
 /*-------------------------------------------------------------------------*\
 * Current socket library version
 \*-------------------------------------------------------------------------*/
-#define LUASOCKET_VERSION    "LuaSocket 2.0.1"
-#define LUASOCKET_COPYRIGHT  "Copyright (C) 2004-2006 Diego Nehab"
+#define LUASOCKET_VERSION    "LuaSocket 2.0.2"
+#define LUASOCKET_COPYRIGHT  "Copyright (C) 2004-2007 Diego Nehab"
 #define LUASOCKET_AUTHORS    "Diego Nehab"
 
 /*-------------------------------------------------------------------------*\

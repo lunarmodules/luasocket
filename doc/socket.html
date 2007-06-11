@@ -190,11 +190,13 @@ be empty tables or <tt><b>nil</b></tt>. Non-socket values (or values with
 non-numeric indices) in the arrays will be silently ignored.
 </p>
 
-<p class=return> The function returns a table with the sockets ready for
-reading, a table with the sockets ready for writing and an error message.
+<p class=return> The function returns a list with the sockets ready for
+reading, a list with the sockets ready for writing and an error message.
 The error message is "<tt>timeout</tt>" if a timeout condition was met and
-<tt><b>nil</b></tt> otherwise.  The returned tables are associative, to
-simplify the test if a specific socket has changed status.  
+<tt><b>nil</b></tt> otherwise. The returned tables are
+doubly keyed both by integers and also by the sockets
+themselves, to simplify the test if a specific socket has
+changed status. 
 </p>
 
 <p class=note>

@@ -56,7 +56,7 @@ function socket.protect(f)
       if not status then
         if type(results[1]) == 'table' then
           return nil, results[1][1]
-        else error(results[1]) end
+        else base.error(results[1]) end
       end
       if coroutine.status(co) == "suspended" then
         arg = {coroutine.yield(base.unpack(results))}
@@ -219,7 +219,7 @@ function schedule(cortn, status, operation, tcp)
             operation.cortn[tcp] = cortn
             operation.stamp[tcp] = socket.gettime()
         end
-    else error(operation) end
+    else base.error(operation) end
 end
 
 function kick(operation, tcp)
