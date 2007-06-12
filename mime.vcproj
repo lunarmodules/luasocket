@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src\compat-5.1r5, h:\include\lua50"
+				AdditionalIncludeDirectories="h:\include\lua5.1"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MIME_EXPORTS;MIME_API=__declspec(dllexport)"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -69,7 +69,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="src\compat-5.1r5, h:\include\lua50"
+				AdditionalIncludeDirectories="h:\include\lua5.1"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MIME_EXPORTS; MIME_API=__declspec(dllexport)"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -119,9 +119,6 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\src\compat-5.1r5\compat-5.1.c">
-			</File>
-			<File
 				RelativePath="src\mime.c">
 			</File>
 		</Filter>
@@ -136,7 +133,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
 		<File
-			RelativePath="..\..\lib\lua50.dll.lib">
+			RelativePath="..\..\lib\lua5.1.dll.lib">
 		</File>
 	</Files>
 	<Globals>
