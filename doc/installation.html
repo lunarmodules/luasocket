@@ -39,7 +39,7 @@ Installation">
 
 <h2>Installation</h2>
 
-<p> LuaSocket 2.0.1 uses the new package system for Lua 5.1.  
+<p> LuaSocket 2.0.2 uses the new package system for Lua 5.1.  
 All Lua library developers are encouraged to update their libraries so that
 all libraries can coexist peacefully and users can benefit from the
 standardization and flexibility of the standard.
@@ -122,17 +122,17 @@ it should be easy to use LuaSocket. Just fire the interpreter and use the
 <tt>require</tt> function to gain access to whatever module you need:</p>
 
 <pre class=example>
-Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
+Lua 5.1.2  Copyright (C) 1994-2007 Lua.org, PUC-Rio
 &gt; socket = require("socket")
 &gt; print(socket._VERSION)
---&gt; LuaSocket 2.0.1
+--&gt; LuaSocket 2.0.2
 </pre>
 
 <p> Each module loads their dependencies automatically, so you only need to
 load the modules you directly depend upon: </p>
 
 <pre class=example>
-Lua 5.0.2  Copyright (C) 1994-2004 Tecgraf, PUC-Rio
+Lua 5.1.2  Copyright (C) 1994-2007 Lua.org, PUC-Rio
 &gt; http = require("socket.http")
 &gt; print(http.request("http://www.cs.princeton.edu/~diego/professional/luasocket"))
 --&gt; homepage gets dumped to terminal

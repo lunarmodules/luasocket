@@ -1,1 +1,11 @@
-Fixed case sensitivity in headers of multipart messages in smtp.message.
+What's New
+
+This is just a bug-fix/update release.
+
+    * Fixed: crash when reading '*a' on closed socket (Duck);
+    * Fixed: return values are consistent when reading from closed sockets;
+    * Fixed: case sensitivity in headers of multipart messages in 
+      smtp.message() (Graham Henstridge);
+    * Fixed a couple instances of error() being called instead of base.error().       These would cause an error when an error was reported. :)  (Ketmar Dark);
+    * Fixed: test script now uses pairs() iterator instead of the old 
+      Lua syntax (Robert Dodier).
