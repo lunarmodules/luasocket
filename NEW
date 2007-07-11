@@ -2,7 +2,7 @@ What's New
 
 This is just a bug-fix/update release.
 
-    * Fixed: crash when reading '*a' on closed socket (Duck);
+    * Fixed: crash when reading '*a' on closed socket (Paul Ducklin);
     * Fixed: return values are consistent when reading from closed sockets;
     * Fixed: case sensitivity in headers of multipart messages in 
       smtp.message() (Graham Henstridge);

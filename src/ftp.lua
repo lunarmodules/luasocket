@@ -88,7 +88,7 @@ function metat.__index:port(ip, port)
         ip, port = self.try(self.tp:getcontrol():getsockname())
         self.server = self.try(socket.bind(ip, 0))
         ip, port = self.try(self.server:getsockname())
-        self.try(server:settimeout(TIMEOUT))
+        self.try(self.server:settimeout(TIMEOUT))
     end
     local pl = math.mod(port, 256)
     local ph = (port - pl)/256
@@ -187,9 +187,9 @@ end
 -----------------------------------------------------------------------------
 -- High level FTP API
 -----------------------------------------------------------------------------
-function override(t)
+local function override(t)
     if t.url then
-        u = url.parse(t.url)
+        local u = url.parse(t.url)
         for i,v in base.pairs(t) do
             u[i] = v
         end
