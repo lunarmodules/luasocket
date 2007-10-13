@@ -61,7 +61,7 @@ sinks, and pumps, which we introduce below.
 
 \emph{Filters} are functions that can be repeatedly invoked
 with chunks of input, successively returning processed
-chunks of output. More importantly, the result of
+chunks of output. Naturally, the result of
 concatenating all the output chunks must be the same as the
 result of applying the filter to the concatenation of all
 input chunks. In fancier language, filters \emph{commute}
@@ -81,11 +81,12 @@ which data will flow, potentially being transformed many
 times along the way.  Chains connect these nodes together.
 The initial and final nodes of the network are
 \emph{sources} and \emph{sinks}, respectively.  Less
-abstractly, a source is a function that produces new data
-every time it is invoked.  Conversely, sinks are functions
-that give a final destination to the data they receive.
-Naturally, sources and sinks can also be chained with
-filters to produce filtered sources and sinks.
+abstractly, a source is a function that produces new chunks
+of data every time it is invoked.  Conversely, sinks are
+functions that give a final destination to the chunks of
+data they receive in sucessive calls.  Naturally, sources
+and sinks can also be chained with filters to produce
+filtered sources and sinks.
 
 Finally, filters, chains, sources, and sinks are all passive
 entities: they must be repeatedly invoked in order for
@@ -95,8 +96,8 @@ sink, and indirectly through all intervening filters.
 
 In the following sections, we start with a simplified
 interface, which we later refine. The evolution we present
-is not contrived: it recreates the steps we followed
-ourselves as we consolidated our understanding of these
+is not contrived: it recreates the steps we ourselves
+followed as we consolidated our understanding of these
 concepts within our application domain. 
 
 \subsection{A simple example}
@@ -290,8 +291,8 @@ static int eol(lua_State *L) {
 \end{C}
 \end{quote}
 
-When designing your own filters, the challenging part is to
-decide what will be in the context. For line breaking, for
+When designing filters, the challenging part is usually 
+deciding what to store in the context. For line breaking, for
 instance, it could be the number of bytes that still fit in the
 current line.  For Base64 encoding, it could be a string
 with the bytes that remain after the division of the input
@@ -408,8 +409,8 @@ associated filter before returning it to the caller.
 Filtered sources are useful when working with
 functions that get their input data from a source (such as
 the pumps in our examples). By chaining a source with one or
-more filters, the function can be transparently provided
-with filtered data, with no need to change its interface. 
+more filters, such functions can be transparently provided
+with filtered data, with no need to change their interfaces. 
 Here is a factory that does the job:
 \begin{quote}
 \begin{lua}
@@ -434,11 +435,11 @@ end
 
 \subsection{Sinks}
 
-Just as we defined an interface for source of data, 
-we can also define an interface for a data destination. 
-We call any function respecting this
-interface a \emph{sink}. In our first example, we used a
-file sink connected to the standard output. 
+Just as we defined an interface for a source of data, we can
+also define an interface for a data destination.  We call
+any function respecting this interface a sink. In our first
+example, we used a file sink connected to the standard
+output. 
 
 Sinks receive consecutive chunks of data, until the end of
 data is signaled by a \nil\ input chunk. A sink can be
@@ -665,7 +666,7 @@ SMTP dot-stuffing filter, connects a socket sink
 with the server, and simply pumps the data. The message is never 
 assembled in memory.  Everything is produced on demand, 
 transformed in small pieces, and sent to the server in chunks, 
-including the file attachment that is loaded from disk and 
+including the file attachment which is loaded from disk and 
 encoded on the fly. It just works.
 
 \section{Conclusions}
@@ -685,11 +686,10 @@ components. Pumps simply push the data through.
 The concepts described in this text are the result of  long
 discussions with David Burgess. A version of this text has
 been released on-line as the Lua Technical Note 012, hence
-the name of the corresponding LuaSocket module,
-\texttt{ltn12}.  Wim Couwenberg contributed to the
-implementation of the module, and Adrian Sietsma was the
-first to notice the correspondence between sources and Lua
-iterators. 
+the name of the corresponding LuaSocket module, LTN12.  Wim
+Couwenberg contributed to the implementation of the module,
+and Adrian Sietsma was the first to notice the
+correspondence between sources and Lua iterators. 
 
 
 \end{document}

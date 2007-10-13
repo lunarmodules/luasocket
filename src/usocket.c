@@ -359,7 +359,7 @@ const char *socket_strerror(int err) {
         case ECONNREFUSED: return "connection refused";
         case ECONNABORTED: return "closed";
         case ECONNRESET: return "closed";
-        case ETIMEDOUT: return "timedout";
+        case ETIMEDOUT: return "timeout";
         default: return strerror(errno);
     }
 }

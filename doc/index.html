@@ -124,7 +124,7 @@ Special thanks go to
 David Burgess, who has helped push the library to a new level of quality and
 from whom I have learned a lot of stuff that doesn't show up in RFCs.
 Special thanks also to Carlos Cassino, who played a big part in the 
-extensible design seen in the C core of LuaSocket 2.0. Recently, Mike Pall
+extensible design seen in the C core of LuaSocket 2.0. Mike Pall
 has been helping a lot too! Thanks to you all! 
 </p>
 
@@ -137,6 +137,9 @@ has been helping a lot too! Thanks to you all!
 </p>
 
 <ul>
+<li> Improved: http.request() now supports deprecated
+HTTP/0.9 servers (Florian Berger);
+<li> Fixed: could return "timedout" instead of "timeout" (Leo Leo);
 <li> Fixed: crash when reading '*a' on closed socket (Paul Ducklin);
 <li> Fixed: return values are consistent when reading from closed sockets;
 <li> Fixed: case sensitivity in headers of multipart
@@ -195,7 +198,7 @@ still available for those that have compatibility issues.
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Thu Apr 20 00:25:23 EDT 2006
+Wed Oct 3 02:07:59 BRT 2007
 </small>
 </p>
 </center>

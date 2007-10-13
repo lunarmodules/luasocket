@@ -86,7 +86,7 @@ MAKE = \
 DOC = \
 	doc/dns.html \
 	doc/ftp.html \
-	doc/home.html \
+	doc/index.html \
 	doc/http.html \
 	doc/installation.html \
 	doc/introduction.html \

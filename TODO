@@ -1,6 +1,5 @@
+replace \r\n with \0xD\0xA in everything
 New mime support
-
-
 
 ftp send should return server replies?
 make sure there are no object files in the distribution tarball
