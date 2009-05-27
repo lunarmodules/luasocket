@@ -24,8 +24,6 @@
 *
 * With these two function, it's easy to write functions that throw
 * exceptions on error, but that don't interrupt the user script. 
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 
 #include "lua.h"

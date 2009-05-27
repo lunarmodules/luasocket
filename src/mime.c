@@ -272,9 +272,12 @@ static int mime_global_b64(lua_State *L)
     input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     /* if second part is nil, we are done */
     if (!input) {
+        size_t osize = 0;
         asize = b64pad(atom, asize, &buffer);
         luaL_pushresult(&buffer);
-        if (!(*lua_tostring(L, -1))) lua_pushnil(L);
+        /* if the output is empty  and the input is nil, return nil */
+        lua_tolstring(L, -1, &osize);
+        if (osize == 0) lua_pushnil(L);
         lua_pushnil(L);
         return 2;
     }
@@ -313,8 +316,11 @@ static int mime_global_unb64(lua_State *L)
     input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
     /* if second is nil, we are done */
     if (!input) {
+        size_t osize = 0;
         luaL_pushresult(&buffer);
-        if (!(*lua_tostring(L, -1))) lua_pushnil(L);
+        /* if the output is empty  and the input is nil, return nil */
+        lua_tolstring(L, -1, &osize);
+        if (osize == 0) lua_pushnil(L);
         lua_pushnil(L);
         return 2;
     }

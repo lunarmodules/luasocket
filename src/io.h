@@ -11,8 +11,6 @@
 *
 * The module socket.h implements this interface, and thus the module tcp.h
 * is very simple.
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 #include <stdio.h>
 #include "lua.h"

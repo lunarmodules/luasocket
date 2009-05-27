@@ -8,8 +8,6 @@
 * method getfd() which returns the descriptor to be passed to the
 * underlying select function. Another method, dirty(), should return 
 * true if there is data ready for reading (required for buffered input).
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 
 int select_open(lua_State *L);

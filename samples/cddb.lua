@@ -32,7 +32,7 @@ end
 local host = socket.dns.gethostname()
 local query = "%s?cmd=cddb+read+%s+%s&hello=LuaSocket+%s+LuaSocket+2.0&proto=6"
 local url = string.format(query, server, arg[1], arg[2], host)
-local body, headers, code = http.get(url)
+local body, headers, code = http.request(url)
 
 if code == 200 then
     local data, code, error = parse(body)

@@ -27,8 +27,6 @@
 *
 * The mapping from class name to the corresponding metatable and the
 * reverse mapping are done using lauxlib. 
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 
 #include "lua.h"

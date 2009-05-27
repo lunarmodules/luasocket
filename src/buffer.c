@@ -166,7 +166,7 @@ static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent) {
     size_t total = 0;
     int err = IO_DONE;
     while (total < count && err == IO_DONE) {
-        size_t done;
+        size_t done = 0;
         size_t step = (count-total <= STEPSIZE)? count-total: STEPSIZE;
         err = io->send(io->ctx, data+total, step, &done, tm);
         total += done;

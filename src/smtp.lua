@@ -16,6 +16,7 @@ local os = require("os")
 local socket = require("socket")
 local tp = require("socket.tp")
 local ltn12 = require("ltn12")
+local headers = require("socket.headers")
 local mime = require("mime")
 module("socket.smtp")
 
@@ -146,10 +147,11 @@ end
 local send_message
 
 -- yield the headers all at once, it's faster
-local function send_headers(headers)
+local function send_headers(tosend)
+    local canonic = headers.canonic
     local h = "\r\n"
-    for i,v in base.pairs(headers) do
-        h = i .. ': ' .. v .. "\r\n" .. h
+    for f,v in base.pairs(tosend) do
+        h = (canonic[f] or f) .. ': ' .. v .. "\r\n" .. h
     end
     coroutine.yield(h)
 end

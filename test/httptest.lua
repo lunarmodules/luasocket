@@ -420,17 +420,17 @@ print("ok")
 io.write("testing HEAD method: ")
 local r, c, h = http.request {
   method = "HEAD",
-  url = "http://www.cs.princeton.edu/~diego/"
+  url = "http://www.tecgraf.puc-rio.br/~diego/"
 }
 assert(r and h and (c == 200), c)
 print("ok")
 
 ------------------------------------------------------------------------
 io.write("testing host not found: ")
-local c, e = socket.connect("wronghost", 80)
-local r, re = http.request{url = "http://wronghost/does/not/exist"}
-assert(r == nil and e == re) 
-r, re = http.request("http://wronghost/does/not/exist")
+local c, e = socket.connect("example.invalid", 80)
+local r, re = http.request{url = "http://example.invalid/does/not/exist"}
+assert(r == nil and e == re, tostring(r) .. " " .. tostring(re)) 
+r, re = http.request("http://example.invalid/does/not/exist")
 assert(r == nil and e == re) 
 print("ok")
 

@@ -342,6 +342,7 @@ end
 ------------------------------------------------------------------------
 function test_selectbugs()
     local r, s, e = socket.select(nil, nil, 0.1)
+print(r, s, e)
     assert(type(r) == "table" and type(s) == "table" and 
         (e == "timeout" or e == "error"))
     pass("both nil: ok")
@@ -352,10 +353,23 @@ function test_selectbugs()
         (e == "timeout" or e == "error"))
     pass("closed sockets: ok")
     e = pcall(socket.select, "wrong", 1, 0.1)
-    assert(e == false)
+    assert(e == false, tostring(e))
     e = pcall(socket.select, {}, 1, 0.1)
-    assert(e == false)
+    assert(e == false, tostring(e))
     pass("invalid input: ok")
+    local toomany = {}
+    for i = 1, socket._SETSIZE+1 do
+        toomany[#toomany+1] = socket.udp()
+    end
+    if #toomany > socket._SETSIZE then
+        local e = pcall(socket.select, toomany, nil, 0.1)
+        assert(e == false, tostring(e))
+        pass("too many sockets (" .. #toomany .. "): ok")
+    else
+        pass("unable to create enough sockets (max was "..#toomany..")")
+        pass("try using ulimit")
+    end
+    for _, c in ipairs(toomany) do c:close() end
 end
 
 ------------------------------------------------------------------------
@@ -555,6 +569,25 @@ function test_readafterclose()
     print("ok")
 end
 
+------------------------------------------------------------------------
+function test_writeafterclose()
+    local str = 'little string'
+    reconnect()
+    remote (string.format ([[
+        data:close()
+        data = nil
+    ]]))
+    local sent, err, errsent
+    while not err do 
+        sent, err, errsent, time = data:send(str)
+    end
+    print(sent, err, errsent, time)
+    print("ok")
+end
+
+------------------------------------------------------------------------
+--test_writeafterclose()
+
 test("method registration")
 test_methods(socket.tcp(), {
     "accept",
@@ -596,11 +629,11 @@ test_methods(socket.udp(), {
     "settimeout"
 })
 
-test("testing read after close")
-test_readafterclose()
-
 test("select function")
 test_selectbugs()
+
+test("testing read after close")
+test_readafterclose()
 
 test("connect function")
 connect_timeout()

@@ -8,8 +8,6 @@
 * differences. Also, not all *nix platforms behave the same. This module
 * (and the associated usocket.h and wsocket.h) factor these differences and
 * creates a interface compatible with the io.h module.
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 #include "io.h"
 

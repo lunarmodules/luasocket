@@ -24,8 +24,8 @@
 </td></tr>
 </table>
 <p class=bar>
-<a href="home.html">home</a> &middot;
-<a href="home.html#download">download</a> &middot;
+<a href="index.html">home</a> &middot;
+<a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a> 
@@ -93,6 +93,24 @@ socket.<b>_DEBUG</b>
 This constant is set to <tt><b>true</b></tt> if the library was compiled
 with debug support.
 </p>
+
+<!-- get time +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=gettime> 
+socket.<b>gettime()</b>
+</p>
+
+<p class=description>
+Returns the time in seconds, relative to the origin of the 
+universe. You should subtract the values returned by this function
+to get meaningful values. 
+</p>
+
+<pre class=example>
+t = socket.gettime()
+-- do stuff
+print(socket.gettime() - t .. " seconds elapsed")
+</pre>
 
 <!-- newtry +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -200,6 +218,15 @@ changed status.
 </p>
 
 <p class=note>
+<b>Note: </b>: <tt>select</tt> can monitor a limited number
+of sockets, as defined by the constant <tt>socket._SETSIZE</tt>. This
+number may be as high as 1024 or as low as 64 by default,
+depending on the system. It is usually possible to change this
+at compile time. Invoking <tt>select</tt> with a larger
+number of sockets will raise an error.
+</p>
+
+<p class=note>
 <b>Important note</b>: a known bug in WinSock causes <tt>select</tt> to fail 
 on non-blocking TCP sockets. The function may return a socket as
 writable even though the socket is <em>not</em> ready for sending.
@@ -288,8 +315,8 @@ Freezes the program execution during a given amount of time.
 </p>
 
 <p class=parameters> 
-<tt>Time</tt> is the number of seconds to sleep for. 
-The function truncates <tt>time</tt> down to the nearest integer. 
+<tt>Time</tt> is the number of seconds to sleep for. If
+<tt>time</tt> is negative, the function returns immediately.
 </p>
 
 <!-- source +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -324,23 +351,16 @@ side closes the connection.
 The function returns a source with the appropriate behavior. 
 </p>
 
-<!-- time ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- setsize ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=gettime> 
-socket.<b>gettime()</b>
+<p class=name id=setsize> 
+socket.<b>_SETSIZE</b>
 </p>
 
 <p class=description>
-Returns the time in seconds, relative to the origin of the 
-universe. You should subtract the values returned by this function
-to get meaningful values. 
+The maximum number of sockets that the <a
+href=#select><tt>select</tt></a> function can handle. 
 </p>
-
-<pre class=example>
-t = socket.gettime()
--- do stuff
-print(socket.gettime() - t .. " seconds elapsed")
-</pre>
 
 <!-- try ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -386,8 +406,8 @@ This constant has a string describing the current LuaSocket version.
 <hr>
 <center>
 <p class=bar>
-<a href="home.html">home</a> &middot;
-<a href="home.html#down">download</a> &middot;
+<a href="index.html">home</a> &middot;
+<a href="index.html#down">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a>

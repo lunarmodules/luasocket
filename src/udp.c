@@ -37,6 +37,7 @@ static int meth_setsockname(lua_State *L);
 static int meth_setpeername(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_setoption(lua_State *L);
+static int meth_getoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
@@ -57,22 +58,32 @@ static luaL_reg udp[] = {
     {"sendto",      meth_sendto},
     {"setfd",       meth_setfd},
     {"setoption",   meth_setoption},
+    {"getoption",   meth_getoption},
     {"setpeername", meth_setpeername},
     {"setsockname", meth_setsockname},
     {"settimeout",  meth_settimeout},
     {NULL,          NULL}
 };
 
-/* socket options */
-static t_opt opt[] = {
-    {"dontroute",          opt_dontroute},
-    {"broadcast",          opt_broadcast},
-    {"reuseaddr",          opt_reuseaddr},
-    {"ip-multicast-ttl",   opt_ip_multicast_ttl},
-    {"ip-multicast-loop",  opt_ip_multicast_loop},
-    {"ip-add-membership",  opt_ip_add_membership},
-    {"ip-drop-membership", opt_ip_drop_membersip},
-    {NULL,          NULL}
+/* socket options for setoption */
+static t_opt optset[] = {
+    {"dontroute",          opt_set_dontroute},
+    {"broadcast",          opt_set_broadcast},
+    {"reuseaddr",          opt_set_reuseaddr},
+    {"reuseport",          opt_set_reuseport},
+    {"ip-multicast-if",    opt_set_ip_multicast_if},
+    {"ip-multicast-ttl",   opt_set_ip_multicast_ttl},
+    {"ip-multicast-loop",  opt_set_ip_multicast_loop},
+    {"ip-add-membership",  opt_set_ip_add_membership},
+    {"ip-drop-membership", opt_set_ip_drop_membersip},
+    {NULL,                 NULL}
+};
+
+/* socket options for getoption */
+static t_opt optget[] = {
+    {"ip-multicast-if",    opt_get_ip_multicast_if},
+    {"ip-multicast-loop",  opt_get_ip_multicast_loop},
+    {NULL,                 NULL}
 };
 
 /* functions in library namespace */
@@ -247,7 +258,15 @@ static int meth_getsockname(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int meth_setoption(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
-    return opt_meth_setoption(L, opt, &udp->sock);
+    return opt_meth_setoption(L, optset, &udp->sock);
+}
+
+/*-------------------------------------------------------------------------*\
+* Just call option handler
+\*-------------------------------------------------------------------------*/
+static int meth_getoption(lua_State *L) {
+    p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
+    return opt_meth_getoption(L, optget, &udp->sock);
 }
 
 /*-------------------------------------------------------------------------*\

@@ -3,8 +3,6 @@
 /*=========================================================================*\
 * Socket compatibilization module for Unix
 * LuaSocket toolkit
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 
 /*=========================================================================*\
@@ -31,6 +29,10 @@
 #include <arpa/inet.h>
 /* TCP options (nagle algorithm disable) */
 #include <netinet/tcp.h>
+
+#ifndef SO_REUSEPORT
+#define SO_REUSEPORT SO_REUSEADDR
+#endif
 
 typedef int t_socket;
 typedef t_socket *p_socket;

@@ -7,16 +7,14 @@
 * This module provides functions to implement transfer content encodings
 * and formatting conforming to RFC 2045. It is used by mime.lua, which
 * provide a higher level interface to this functionality. 
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 #include "lua.h"
 
 /*-------------------------------------------------------------------------*\
 * Current MIME library version
 \*-------------------------------------------------------------------------*/
-#define MIME_VERSION    "MIME 1.0.2"
-#define MIME_COPYRIGHT  "Copyright (C) 2004-2007 Diego Nehab"
+#define MIME_VERSION    "MIME 1.0.3"
+#define MIME_COPYRIGHT  "Copyright (C) 2004-2009 Diego Nehab"
 #define MIME_AUTHORS    "Diego Nehab"
 
 /*-------------------------------------------------------------------------*\

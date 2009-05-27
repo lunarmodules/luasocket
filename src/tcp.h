@@ -13,8 +13,6 @@
 * objects are tcp objects bound to some local address. Client objects are
 * tcp objects either connected to some address or returned by the accept
 * method of a server object.
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 #include "lua.h"
 

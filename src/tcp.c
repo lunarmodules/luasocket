@@ -64,11 +64,11 @@ static luaL_reg tcp[] = {
 };
 
 /* socket option handlers */
-static t_opt opt[] = {
-    {"keepalive",   opt_keepalive},
-    {"reuseaddr",   opt_reuseaddr},
-    {"tcp-nodelay", opt_tcp_nodelay},
-    {"linger",      opt_linger},
+static t_opt optset[] = {
+    {"keepalive",   opt_set_keepalive},
+    {"reuseaddr",   opt_set_reuseaddr},
+    {"tcp-nodelay", opt_set_tcp_nodelay},
+    {"linger",      opt_set_linger},
     {NULL,          NULL}
 };
 
@@ -128,7 +128,7 @@ static int meth_setstats(lua_State *L) {
 static int meth_setoption(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
-    return opt_meth_setoption(L, opt, &tcp->sock);
+    return opt_meth_setoption(L, optset, &tcp->sock);
 }
 
 /*-------------------------------------------------------------------------*\

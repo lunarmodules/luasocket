@@ -24,8 +24,8 @@
 </td></tr>
 </table>
 <p class=bar>
-<a href="home.html">home</a> &middot;
-<a href="home.html#download">download</a> &middot;
+<a href="index.html">home</a> &middot;
+<a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a> 
@@ -297,12 +297,12 @@ of any received data before return.
 
 <p class=return>
 If successful, the method returns the received pattern. In case of error,
-the method returns <tt><b>nil</b></tt> followed by an error message which
-can be the string '<tt>closed</tt>'  in   case  the  connection  was
+the method returns <tt><b>nil</b></tt> followed by an error
+message, followed by a (possibly empty) string containing
+the partial that was received. The error message can be
+the string '<tt>closed</tt>'  in   case  the  connection  was
 closed  before  the transmission  was completed  or  the string
 '<tt>timeout</tt>' in  case there was a timeout during  the operation.
-Also, after the error message, the function returns the partial result of
-the transmission.
 </p>
 
 <p class=note>
@@ -514,8 +514,8 @@ This function returns 1.
 <hr>
 <center>
 <p class=bar>
-<a href="home.html">home</a> &middot;
-<a href="home.html#down">download</a> &middot;
+<a href="index.html">home</a> &middot;
+<a href="index.html#down">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a>

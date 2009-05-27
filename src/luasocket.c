@@ -10,8 +10,6 @@
 * involved in setting up both  client and server connections. The provided
 * IO routines, however, follow the Lua  style, being very similar  to the
 * standard Lua read and write functions.
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 
 /*=========================================================================*\

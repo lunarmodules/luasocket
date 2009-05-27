@@ -24,8 +24,8 @@
 </td></tr>
 </table>
 <p class=bar>
-<a href="home.html">home</a> &middot;
-<a href="home.html#download">download</a> &middot;
+<a href="index.html">home</a> &middot;
+<a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a> 
@@ -87,7 +87,7 @@ Author: <A href="http://www.cs.princeton.edu/~diego">Diego Nehab</a>
 <h2 id=download>Download</h2>
 
 <p>
-LuaSocket version 2.0.2 is now  available for download! It  is
+LuaSocket version 2.0.3 is now  available for download! It  is
 compatible with  Lua&nbsp;5.1, and has    
 been tested on Windows&nbsp;XP, Linux, and Mac OS X. Chances
 are it works well on most UNIX distributions and Windows flavors.
@@ -118,14 +118,15 @@ manual to find out how to properly install the library.
 <h2 id=thanks>Special thanks</h2>
 
 <p>
-Throughout LuaSocket's history, many people gave suggestions that helped
-improve it. For that, I thank the Lua community. 
-Special thanks go to
-David Burgess, who has helped push the library to a new level of quality and
-from whom I have learned a lot of stuff that doesn't show up in RFCs.
-Special thanks also to Carlos Cassino, who played a big part in the 
-extensible design seen in the C core of LuaSocket 2.0. Mike Pall
-has been helping a lot too! Thanks to you all! 
+Throughout LuaSocket's history, many people gave suggestions
+that helped improve it. For that, I thank the Lua community.
+Special thanks go to David Burgess, who has helped push the
+library to a new level of quality and from whom I have
+learned a lot of stuff that doesn't show up in RFCs.
+Special thanks also to Carlos Cassino, who played a big part
+in the extensible design seen in the C core of LuaSocket
+2.0. Mike Pall has been helping a lot too! Thanks to you
+all! 
 </p>
 
 <!-- whatsnew +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -133,44 +134,26 @@ has been helping a lot too! Thanks to you all!
 <h2 id=new>What's New</h2>
 
 <p>
-2.0.2 is just a bug-fix/update release. 
+2.0.3 is just a bug-fix/update release. 
 </p>
 
 <ul>
-<li> Improved: http.request() now supports deprecated
-HTTP/0.9 servers (Florian Berger);
-<li> Fixed: could return "timedout" instead of "timeout" (Leo Leo);
-<li> Fixed: crash when reading '*a' on closed socket (Paul Ducklin);
-<li> Fixed: return values are consistent when reading from closed sockets;
-<li> Fixed: case sensitivity in headers of multipart
-messages in smtp.message() (Graham Henstridge);
-<li> Fixed a couple instances of error() being called instead of
-base.error(). These would cause an error when an error was
-reported :)  (Ketmar Dark);
-<li> Fixed: test script now uses pairs() iterator instead
-of the old Lua syntax (Robert Dodier).
-</ul>
-
-<p>
-2.0.1 is just a bug-fix/update release. 
-</p>
-
-<ul>
-<li> Updated: now using <tt>compat-5.1r5</tt>; 
-<li> Improved: <tt>http.request</tt> is more robust to
-malformed URLs (Adrian Sietsma);
-<li> Improved: the simple <tt>http.request</tt> interface sends a
-"<tt>Content-type: application/x-www-form-urlencoded</tt>"
-header (William Trenker);
-<li> Improved: <tt>http.request</tt> is robust to evil
-servers that send inappropriate 100-continue messages
-(David Burgess);
-<li> Fixed: <tt>http.request</tt> was using the old host header during
-redirects (Florian Berger);
-<li> Fixed: sample <tt>unix.c</tt> had fallen through the
-cracks during development (Matthew Percival); 
-<li> Fixed: error code was not being propagated correctly in
-ftp.lua (David Burgess). 
+<li> Fixed: multicast didn't work on Windows, or anywhere
+     else for that matter (Herbert Leuwer, Adrian Sietsma)
+<li> Fixed: select() now reports an error when called with more
+     sockets than FD_SETSIZE (Lorenzo Leonini)
+<li> Fixed: manual links to home.html changed to index.html (Robert Hahn)
+<li> Fixed: mime.unb64() would return an empty string on results that started
+     with a null character (Robert Raschke)
+<li> Fixed: HTTP now automatically redirects on 303 and 307 (Jonathan Gray)
+<li> Fixed: calling sleep() with negative numbers could
+     block forever, wasting CPU. Now it returns immediately (MPB);
+<li> Improved: FTP commands are now sent in upper case to
+     help buggy servers (Anders Eurenius)
+<li> Improved: known headers now sent in canonic
+     capitalization to help buggy servers (Joseph Stewart);
+<li> Improved: Clarified tcp:receive() in the manual (MPB);  
+<li> Improved: Decent makefiles (LHF).
 </ul>
 
 <!-- old ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -190,7 +173,7 @@ still available for those that have compatibility issues.
 <hr>
 <center>
 <p class=bar>
-<a href="home.html#download">download</a> &middot;
+<a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a>

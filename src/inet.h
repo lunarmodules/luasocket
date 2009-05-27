@@ -13,8 +13,6 @@
 * getpeername and getsockname functions as seen by Lua programs.
 *
 * The Lua functions toip and tohostname are also implemented here.
-*
-* RCS ID: $Id$
 \*=========================================================================*/
 #include "lua.h"
 #include "socket.h"

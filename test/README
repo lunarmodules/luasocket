@@ -8,5 +8,7 @@ The files provided are:
 
 To run these tests, just run lua on the server and then on the client. 
 
+    hello.lua               -- run to verify if installation worked
+
 Good luck,
 Diego.

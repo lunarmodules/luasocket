@@ -251,6 +251,28 @@ io.write("testing b64 padding: ")
     print("ok")
 end
 
+local function test_b64lowlevel()
+io.write("testing b64 low-level: ")
+    local a, b
+    a, b = mime.b64("", "")
+    assert(a == "" and b == "")
+    a, b = mime.b64(nil, "blablabla")
+    assert(a == nil and b == nil)
+    a, b = mime.b64("", nil)
+    assert(a == nil and b == nil)
+    a, b = mime.unb64("", "")
+    assert(a == "" and b == "")
+    a, b = mime.unb64(nil, "blablabla")
+    assert(a == nil and b == nil)
+    a, b = mime.unb64("", nil)
+    assert(a == nil and b == nil)
+    local binary=string.char(0x00,0x44,0x1D,0x14,0x0F,0xF4,0xDA,0x11,0xA9,0x78,0x00,0x14,0x38,0x50,0x60,0xCE)
+    local encoded = mime.b64(binary)
+    local decoded=mime.unb64(encoded)
+    assert(binary == decoded)
+    print("ok")
+end
+
 local t = socket.gettime()
 
 create_b64test()
@@ -260,6 +282,7 @@ decode_b64test()
 compare_b64test()
 cleanup_b64test()
 padding_b64test()
+test_b64lowlevel()
 
 create_qptest()
 encode_qptest()
@@ -269,5 +292,6 @@ encode_qptest("binary")
 decode_qptest()
 compare_qptest()
 cleanup_qptest()
+
 
 print(string.format("done in %.2fs", socket.gettime() - t))

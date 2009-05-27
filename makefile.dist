@@ -1,10 +1,11 @@
 #--------------------------------------------------------------------------
 # Distribution makefile
 #--------------------------------------------------------------------------
-DIST = luasocket-2.0.2
+DIST = luasocket-2.0.3
 
 TEST = \
 	test/README \
+	test/hello.lua \
 	test/testclnt.lua \
 	test/testsrvr.lua \
 	test/testsupport.lua
@@ -15,6 +16,8 @@ SAMPLES = \
 	samples/daytimeclnt.lua \
 	samples/echoclnt.lua \
 	samples/echosrvr.lua \
+	samples/mclisten.lua \
+	samples/mcsend.lua \
 	samples/listener.lua \
 	samples/lpr.lua \
 	samples/talker.lua \
@@ -73,12 +76,12 @@ SRC = \
 	src/mime.lua \
 	src/smtp.lua \
 	src/socket.lua \
+	src/headers.lua \
 	src/tp.lua \
 	src/url.lua
 
 MAKE = \
 	makefile \
-	config \
 	luasocket.sln \
 	socket.vcproj \
 	mime.vcproj

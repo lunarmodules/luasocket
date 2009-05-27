@@ -5,6 +5,8 @@
 * RCS ID: $Id$
 \*=========================================================================*/
 #include <stdio.h>
+#include <limits.h>
+#include <float.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -187,13 +189,23 @@ static int timeout_lua_gettime(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Sleep for n seconds.
 \*-------------------------------------------------------------------------*/
+#ifdef _WIN32
 int timeout_lua_sleep(lua_State *L)
 {
     double n = luaL_checknumber(L, 1);
-#ifdef _WIN32
-    Sleep((int)(n*1000));
+    if (n < 0.0) n = 0.0;
+    if (n < DBL_MAX/1000.0) n *= 1000.0;
+    if (n > INT_MAX) n = INT_MAX;
+    Sleep((int)n);
+    return 0;
+}
 #else
+int timeout_lua_sleep(lua_State *L)
+{
+    double n = luaL_checknumber(L, 1);
     struct timespec t, r;
+    if (n < 0.0) n = 0.0;
+    if (n > INT_MAX) n = INT_MAX;
     t.tv_sec = (int) n;
     n -= t.tv_sec;
     t.tv_nsec = (int) (n * 1000000000);
@@ -202,6 +214,6 @@ int timeout_lua_sleep(lua_State *L)
         t.tv_sec = r.tv_sec;
         t.tv_nsec = r.tv_nsec;
     }
-#endif
     return 0;
 }
+#endif

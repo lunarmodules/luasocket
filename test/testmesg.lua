@@ -32,6 +32,8 @@ r, e = smtp.send{
     port = 2525
 }
 
+print(r, e)
+
 -- creates a source to send a message with two parts. The first part is 
 -- plain text, the second part is a PNG image, encoded as base64.
 source = smtp.message{
