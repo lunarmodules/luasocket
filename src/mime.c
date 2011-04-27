@@ -35,12 +35,12 @@ static int mime_global_eol(lua_State *L);
 static int mime_global_dot(lua_State *L);
 
 static size_t dot(int c, size_t state, luaL_Buffer *buffer);
-static void b64setup(UC *b64unbase);
+static void b64setup(UC *base);
 static size_t b64encode(UC c, UC *input, size_t size, luaL_Buffer *buffer);
 static size_t b64pad(const UC *input, size_t size, luaL_Buffer *buffer);
 static size_t b64decode(UC c, UC *input, size_t size, luaL_Buffer *buffer);
 
-static void qpsetup(UC *qpclass, UC *qpunbase);
+static void qpsetup(UC *class, UC *unbase);
 static void qpquote(UC c, luaL_Buffer *buffer);
 static size_t qpdecode(UC c, UC *input, size_t size, luaL_Buffer *buffer);
 static size_t qpencode(UC c, UC *input, size_t size, 
@@ -149,12 +149,12 @@ static int mime_global_wrp(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Fill base64 decode map. 
 \*-------------------------------------------------------------------------*/
-static void b64setup(UC *b64unbase) 
+static void b64setup(UC *unbase) 
 {
     int i;
-    for (i = 0; i <= 255; i++) b64unbase[i] = (UC) 255;
-    for (i = 0; i < 64; i++) b64unbase[b64base[i]] = (UC) i;
-    b64unbase['='] = 0;
+    for (i = 0; i <= 255; i++) unbase[i] = (UC) 255;
+    for (i = 0; i < 64; i++) unbase[b64base[i]] = (UC) i;
+    unbase['='] = 0;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -349,24 +349,24 @@ static int mime_global_unb64(lua_State *L)
 * Split quoted-printable characters into classes
 * Precompute reverse map for encoding
 \*-------------------------------------------------------------------------*/
-static void qpsetup(UC *qpclass, UC *qpunbase)
+static void qpsetup(UC *cl, UC *unbase)
 {
     int i;
-    for (i = 0; i < 256; i++) qpclass[i] = QP_QUOTED;
-    for (i = 33; i <= 60; i++) qpclass[i] = QP_PLAIN;
-    for (i = 62; i <= 126; i++) qpclass[i] = QP_PLAIN;
-    qpclass['\t'] = QP_IF_LAST; 
-    qpclass[' '] = QP_IF_LAST;
-    qpclass['\r'] = QP_CR;
-    for (i = 0; i < 256; i++) qpunbase[i] = 255;
-    qpunbase['0'] = 0; qpunbase['1'] = 1; qpunbase['2'] = 2;
-    qpunbase['3'] = 3; qpunbase['4'] = 4; qpunbase['5'] = 5;
-    qpunbase['6'] = 6; qpunbase['7'] = 7; qpunbase['8'] = 8;
-    qpunbase['9'] = 9; qpunbase['A'] = 10; qpunbase['a'] = 10;
-    qpunbase['B'] = 11; qpunbase['b'] = 11; qpunbase['C'] = 12;
-    qpunbase['c'] = 12; qpunbase['D'] = 13; qpunbase['d'] = 13;
-    qpunbase['E'] = 14; qpunbase['e'] = 14; qpunbase['F'] = 15;
-    qpunbase['f'] = 15;
+    for (i = 0; i < 256; i++) cl[i] = QP_QUOTED;
+    for (i = 33; i <= 60; i++) cl[i] = QP_PLAIN;
+    for (i = 62; i <= 126; i++) cl[i] = QP_PLAIN;
+    cl['\t'] = QP_IF_LAST; 
+    cl[' '] = QP_IF_LAST;
+    cl['\r'] = QP_CR;
+    for (i = 0; i < 256; i++) unbase[i] = 255;
+    unbase['0'] = 0; unbase['1'] = 1; unbase['2'] = 2;
+    unbase['3'] = 3; unbase['4'] = 4; unbase['5'] = 5;
+    unbase['6'] = 6; unbase['7'] = 7; unbase['8'] = 8;
+    unbase['9'] = 9; unbase['A'] = 10; unbase['a'] = 10;
+    unbase['B'] = 11; unbase['b'] = 11; unbase['C'] = 12;
+    unbase['c'] = 12; unbase['D'] = 13; unbase['d'] = 13;
+    unbase['E'] = 14; unbase['e'] = 14; unbase['F'] = 15;
+    unbase['f'] = 15;
 }
 
 /*-------------------------------------------------------------------------*\

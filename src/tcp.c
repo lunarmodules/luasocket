@@ -40,7 +40,7 @@ static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
 
 /* tcp object methods */
-static luaL_reg tcp[] = {
+static luaL_reg tcp_methods[] = {
     {"__gc",        meth_close},
     {"__tostring",  auxiliar_tostring},
     {"accept",      meth_accept},
@@ -88,9 +88,9 @@ static luaL_reg func[] = {
 int tcp_open(lua_State *L)
 {
     /* create classes */
-    auxiliar_newclass(L, "tcp{master}", tcp);
-    auxiliar_newclass(L, "tcp{client}", tcp);
-    auxiliar_newclass(L, "tcp{server}", tcp);
+    auxiliar_newclass(L, "tcp{master}", tcp_methods);
+    auxiliar_newclass(L, "tcp{client}", tcp_methods);
+    auxiliar_newclass(L, "tcp{server}", tcp_methods);
     /* create class groups */
     auxiliar_add2group(L, "tcp{master}", "tcp{any}");
     auxiliar_add2group(L, "tcp{client}", "tcp{any}");
@@ -359,7 +359,7 @@ static const char *trybind6(const char *localaddr, const char *localserv,
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         /* create a new socket each time because parameters
          * may have changed */
-        const char *err = socket_strerror(socket_create(&tcp->sock, 
+        err = socket_strerror(socket_create(&tcp->sock, 
             iterator->ai_family, iterator->ai_socktype, 
             iterator->ai_protocol));
         /* if failed to create socket, bail out */
@@ -445,7 +445,7 @@ static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
         p_timeout tm = timeout_markstart(&tcp->tm);
         /* create new socket if one wasn't created by the bind stage */
         if (tcp->sock == SOCKET_INVALID) {
-            const char *err = socket_strerror(socket_create(&tcp->sock, 
+            err = socket_strerror(socket_create(&tcp->sock, 
                 iterator->ai_family, iterator->ai_socktype, 
                 iterator->ai_protocol));
             if (err != NULL) {

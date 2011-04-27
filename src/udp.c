@@ -44,7 +44,7 @@ static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
 
 /* udp object methods */
-static luaL_reg udp[] = {
+static luaL_reg udp_methods[] = {
     {"__gc",        meth_close},
     {"__tostring",  auxiliar_tostring},
     {"close",       meth_close},
@@ -98,8 +98,8 @@ static luaL_reg func[] = {
 int udp_open(lua_State *L)
 {
     /* create classes */
-    auxiliar_newclass(L, "udp{connected}", udp);
-    auxiliar_newclass(L, "udp{unconnected}", udp);
+    auxiliar_newclass(L, "udp{connected}", udp_methods);
+    auxiliar_newclass(L, "udp{unconnected}", udp_methods);
     /* create class groups */
     auxiliar_add2group(L, "udp{connected}",   "udp{any}");
     auxiliar_add2group(L, "udp{unconnected}", "udp{any}");
