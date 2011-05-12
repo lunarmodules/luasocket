@@ -26,9 +26,9 @@ _VERSION = "URL 1.0.1"
 --   escaped representation of string binary
 -----------------------------------------------------------------------------
 function escape(s)
-    return string.gsub(s, "([^A-Za-z0-9_])", function(c)
+    return (string.gsub(s, "([^A-Za-z0-9_])", function(c)
         return string.format("%%%02x", string.byte(c))
-    end)
+    end))
 end
 
 -----------------------------------------------------------------------------
@@ -69,9 +69,9 @@ end
 --   escaped representation of string binary
 -----------------------------------------------------------------------------
 function unescape(s)
-    return string.gsub(s, "%%(%x%x)", function(hex)
+    return (string.gsub(s, "%%(%x%x)", function(hex)
         return string.char(base.tonumber(hex, 16))
-    end)
+    end))
 end
 
 -----------------------------------------------------------------------------
