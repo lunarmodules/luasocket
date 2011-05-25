@@ -213,7 +213,7 @@ const char *inet_tryconnect(p_socket ps, const char *address,
     memset(&remote, 0, sizeof(remote));
     remote.sin_family = AF_INET;
     remote.sin_port = htons(port);
-	if (strcmp(address, "*")) {
+    if (strcmp(address, "*")) {
         if (!inet_aton(address, &remote.sin_addr)) {
             struct hostent *hp = NULL;
             struct in_addr **addr;
@@ -248,7 +248,6 @@ const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
         memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
     }
     err = socket_bind(ps, (SA *) &local, sizeof(local));
-    if (err != IO_DONE) socket_destroy(ps);
     return socket_strerror(err); 
 }
 

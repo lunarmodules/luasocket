@@ -212,8 +212,8 @@ local function tput(putt)
 end
 
 local default = {
-	path = "/",
-	scheme = "ftp"
+    path = "/",
+    scheme = "ftp"
 }
 
 local function parse(u)

@@ -268,11 +268,11 @@ send = socket.protect(function(option)
   local class = string.sub(option.class or localip or localhost,1,31)
   local _,_,ctlfn = string.find(file,".*[%/%\\](.*)")
   ctlfn = string.sub(ctlfn  or file,1,131)
-	local cfile =
-	  string.format("H%-s\nC%-s\nJ%-s\nP%-s\n%.1s%-s\nU%-s\nN%-s\n",
-	  localhost,
+    local cfile =
+      string.format("H%-s\nC%-s\nJ%-s\nP%-s\n%.1s%-s\nU%-s\nN%-s\n",
+      localhost,
     class,
-	  option.job or "LuaSocket",
+      option.job or "LuaSocket",
     user,
     fmt, lpfile,
     lpfile,

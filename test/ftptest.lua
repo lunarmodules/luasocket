@@ -82,10 +82,10 @@ print("ok")
 io.write("testing parameter overriding: ")
 local back = {}
 ret, err = ftp.get{
-	url = "//stupid:mistake@" .. host .. "/index.html",
-	user = "luasocket",
-	password = "pedrovian",
-	type = "i",
+    url = "//stupid:mistake@" .. host .. "/index.html",
+    user = "luasocket",
+    password = "pedrovian",
+    type = "i",
     sink = ltn12.sink.table(back)
 }
 assert(ret and not err and table.concat(back) == index, err)

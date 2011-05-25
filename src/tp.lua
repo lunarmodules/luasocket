@@ -106,7 +106,7 @@ end
 -- closes the underlying c
 function metat.__index:close()
     self.c:close()
-	return 1
+    return 1
 end
 
 -- connect with server and return c object

@@ -35,18 +35,18 @@ local OP_INV = {"RRQ", "WRQ", "DATA", "ACK", "ERROR"}
 -- Packet creation functions
 -----------------------------------------------------------------------------
 local function RRQ(source, mode)
-	return char(0, OP_RRQ) .. source .. char(0) .. mode .. char(0)
+    return char(0, OP_RRQ) .. source .. char(0) .. mode .. char(0)
 end
 
 local function WRQ(source, mode)
-	return char(0, OP_RRQ) .. source .. char(0) .. mode .. char(0)
+    return char(0, OP_RRQ) .. source .. char(0) .. mode .. char(0)
 end
 
 local function ACK(block)
-	local low, high
-	low = math.mod(block, 256)
-	high = (block - low)/256
-	return char(0, OP_ACK, high, low)
+    local low, high
+    low = math.mod(block, 256)
+    high = (block - low)/256
+    return char(0, OP_ACK, high, low)
 end
 
 local function get_OP(dgram)
@@ -58,16 +58,16 @@ end
 -- Packet analysis functions
 -----------------------------------------------------------------------------
 local function split_DATA(dgram)
-	local block = byte(dgram, 3)*256 + byte(dgram, 4)
-	local data = string.sub(dgram, 5)
-	return block, data
+    local block = byte(dgram, 3)*256 + byte(dgram, 4)
+    local data = string.sub(dgram, 5)
+    return block, data
 end
 
 local function get_ERROR(dgram)
-	local code = byte(dgram, 3)*256 + byte(dgram, 4)
-	local msg
-	_,_, msg = string.find(dgram, "(.*)\000", 5)
-	return string.format("error code %d: %s", code, msg)
+    local code = byte(dgram, 3)*256 + byte(dgram, 4)
+    local msg
+    _,_, msg = string.find(dgram, "(.*)\000", 5)
+    return string.format("error code %d: %s", code, msg)
 end
 
 -----------------------------------------------------------------------------
@@ -77,40 +77,40 @@ local function tget(gett)
     local retries, dgram, sent, datahost, dataport, code
     local last = 0
     socket.try(gett.host, "missing host")
-	local con = socket.try(socket.udp())
+    local con = socket.try(socket.udp())
     local try = socket.newtry(function() con:close() end)
     -- convert from name to ip if needed
-	gett.host = try(socket.dns.toip(gett.host))
-	con:settimeout(1)
+    gett.host = try(socket.dns.toip(gett.host))
+    con:settimeout(1)
     -- first packet gives data host/port to be used for data transfers
     local path = string.gsub(gett.path or "", "^/", "")
     path = url.unescape(path)
     retries = 0
-	repeat
-		sent = try(con:sendto(RRQ(path, "octet"), gett.host, gett.port))
-		dgram, datahost, dataport = con:receivefrom()
+    repeat
+        sent = try(con:sendto(RRQ(path, "octet"), gett.host, gett.port))
+        dgram, datahost, dataport = con:receivefrom()
         retries = retries + 1
-	until dgram or datahost ~= "timeout" or retries > 5
-	try(dgram, datahost)
+    until dgram or datahost ~= "timeout" or retries > 5
+    try(dgram, datahost)
     -- associate socket with data host/port
-	try(con:setpeername(datahost, dataport))
+    try(con:setpeername(datahost, dataport))
     -- default sink
     local sink = gett.sink or ltn12.sink.null()
     -- process all data packets
-	while 1 do
+    while 1 do
         -- decode packet
-		code = get_OP(dgram)
-		try(code ~= OP_ERROR, get_ERROR(dgram))
+        code = get_OP(dgram)
+        try(code ~= OP_ERROR, get_ERROR(dgram))
         try(code == OP_DATA, "unhandled opcode " .. code)
         -- get data packet parts
-		local block, data = split_DATA(dgram)
+        local block, data = split_DATA(dgram)
         -- if not repeated, write
         if block == last+1 then
-		    try(sink(data))
+            try(sink(data))
             last = block
         end
         -- last packet brings less than 512 bytes of data
-		if string.len(data) < 512 then
+        if string.len(data) < 512 then
             try(con:send(ACK(block)))
             try(con:close())
             try(sink(nil))
@@ -118,13 +118,13 @@ local function tget(gett)
         end
         -- get the next packet
         retries = 0
-		repeat
-			sent = try(con:send(ACK(last)))
-			dgram, err = con:receive()
+        repeat
+            sent = try(con:send(ACK(last)))
+            dgram, err = con:receive()
             retries = retries + 1
-		until dgram or err ~= "timeout" or retries > 5
-		try(dgram, err)
-	end
+        until dgram or err ~= "timeout" or retries > 5
+        try(dgram, err)
+    end
 end
 
 local default = {

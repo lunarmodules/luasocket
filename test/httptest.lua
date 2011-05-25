@@ -34,28 +34,28 @@ index_file = "index.html"
 index = readfile(index_file)
 
 local check_result = function(response, expect, ignore)
-	for i,v in pairs(response) do
-		if not ignore[i] then
-			if v ~= expect[i] then 
+    for i,v in pairs(response) do
+        if not ignore[i] then
+            if v ~= expect[i] then 
                 local f = io.open("err", "w")
                 f:write(tostring(v), "\n\n versus\n\n", tostring(expect[i]))
                 f:close()
                 fail(i .. " differs!") 
             end
-		end
-	end
-	for i,v in pairs(expect) do
-		if not ignore[i] then
-			if v ~= response[i] then 
+        end
+    end
+    for i,v in pairs(expect) do
+        if not ignore[i] then
+            if v ~= response[i] then 
                 local f = io.open("err", "w")
                 f:write(tostring(response[i]), "\n\n versus\n\n", tostring(v))
                 v = string.sub(type(v) == "string" and v or "", 1, 70)
                 f:close()
                 fail(i .. " differs!") 
             end
-		end
-	end
-	print("ok")
+        end
+    end
+    print("ok")
 end
 
 local check_request = function(request, expect, ignore)
@@ -63,7 +63,7 @@ local check_request = function(request, expect, ignore)
     if not request.sink then request.sink, t = ltn12.sink.table() end
     request.source = request.source or 
         (request.body and ltn12.source.string(request.body))
-	local response = {}
+    local response = {}
     response.code, response.headers, response.status = 
         socket.skip(1, http.request(request))
     if t and table.getn(t) > 0 then response.body = table.concat(t) end
@@ -90,15 +90,15 @@ else fail("failed!") end
 ------------------------------------------------------------------------
 io.write("testing document retrieval: ")
 request = {
-	url = "http://" .. host .. prefix .. "/index.html"
+    url = "http://" .. host .. prefix .. "/index.html"
 }
 expect = {
-	body = index,
-	code = 200
+    body = index,
+    code = 200
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
@@ -111,9 +111,9 @@ expect = {
     code = 302
 }
 ignore = {
-	status = 1,
-	headers = 1,
-	body = 1
+    status = 1,
+    headers = 1,
+    body = 1
 }
 check_request(request, expect, ignore)
 
@@ -144,19 +144,19 @@ check_request(request, expect, ignore)
 io.write("testing post method: ")
 -- wanted to test chunked post, but apache doesn't support it...
 request = {
-	url = "http://" .. host .. cgiprefix .. "/cat",
-	method = "POST",
-	body = index,
+    url = "http://" .. host .. cgiprefix .. "/cat",
+    method = "POST",
+    body = index,
     -- remove content-length header to send chunked body
     headers = { ["content-length"] = string.len(index) }
 }
 expect = {
-	body = index,
-	code = 200
+    body = index,
+    code = 200
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
@@ -164,19 +164,19 @@ check_request(request, expect, ignore)
 --[[
 io.write("testing proxy with post method: ")
 request = {
-	url = "http://" .. host .. cgiprefix .. "/cat",
-	method = "POST",
-	body = index,
+    url = "http://" .. host .. cgiprefix .. "/cat",
+    method = "POST",
+    body = index,
     headers = { ["content-length"] = string.len(index) },
     proxy= proxy
 }
 expect = {
-	body = index,
-	code = 200
+    body = index,
+    code = 200
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 ]]
@@ -190,18 +190,18 @@ print("ok")
 ------------------------------------------------------------------------
 io.write("testing ltn12.(sink|source).file: ")
 request = {
-	url = "http://" .. host .. cgiprefix .. "/cat",
-	method = "POST",
-	source = ltn12.source.file(io.open(index_file, "rb")),
+    url = "http://" .. host .. cgiprefix .. "/cat",
+    method = "POST",
+    source = ltn12.source.file(io.open(index_file, "rb")),
     sink = ltn12.sink.file(io.open(index_file .. "-back", "wb")),
     headers = { ["content-length"] = string.len(index) }
 }
 expect = {
-	code = 200
+    code = 200
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 back = readfile(index_file .. "-back")
@@ -231,19 +231,19 @@ local sink = ltn12.sink.chain(
 )
 
 request = {
-	url = "http://" .. host .. cgiprefix .. "/cat",
-	method = "POST",
-	source = source,
+    url = "http://" .. host .. cgiprefix .. "/cat",
+    method = "POST",
+    source = source,
     sink = sink,
     headers = { ["content-length"] = b64length(string.len(index)) }
 }
 expect = {
-	code = 200
+    code = 200
 }
 ignore = {
     body_cb = 1,
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 back = readfile(index_file .. "-back")
@@ -253,15 +253,15 @@ os.remove(index_file .. "-back")
 ------------------------------------------------------------------------
 io.write("testing http redirection: ")
 request = {
-	url = "http://" .. host .. prefix
+    url = "http://" .. host .. prefix
 }
 expect = {
-	body = index,
-	code = 200
+    body = index,
+    code = 200
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
@@ -269,16 +269,16 @@ check_request(request, expect, ignore)
 --[[
 io.write("testing proxy with redirection: ")
 request = {
-	url = "http://" .. host .. prefix,
+    url = "http://" .. host .. prefix,
     proxy = proxy
 }
 expect = {
-	body = index,
-	code = 200
+    body = index,
+    code = 200
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 ]]
@@ -293,104 +293,104 @@ expect = {
 }
 ignore = {
     body = 1,
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing http redirection failure: ")
 request = {
-	url = "http://" .. host .. prefix,
-	redirect = false
+    url = "http://" .. host .. prefix,
+    redirect = false
 }
 expect = {
     code = 301
 }
 ignore = {
     body = 1,
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
     
 ------------------------------------------------------------------------
 io.write("testing document not found: ")
 request = {
-	url = "http://" .. host .. "/wrongdocument.html"
+    url = "http://" .. host .. "/wrongdocument.html"
 }
 expect = {
-	code = 404
+    code = 404
 }
 ignore = {
     body = 1,
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing auth failure: ")
 request = {
-	url = "http://" .. host .. prefix .. "/auth/index.html"
+    url = "http://" .. host .. prefix .. "/auth/index.html"
 }
 expect = {
-	code = 401
+    code = 401
 }
 ignore = {
     body = 1,
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing manual basic auth: ")
 request = {
-	url = "http://" .. host .. prefix .. "/auth/index.html",
-	headers = {
-		authorization = "Basic " .. (mime.b64("luasocket:password"))
-	}
+    url = "http://" .. host .. prefix .. "/auth/index.html",
+    headers = {
+        authorization = "Basic " .. (mime.b64("luasocket:password"))
+    }
 }
 expect = {
-	code = 200,
-	body = index
+    code = 200,
+    body = index
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing automatic basic auth: ")
 request = {
-	url = "http://luasocket:password@" .. host .. prefix .. "/auth/index.html"
+    url = "http://luasocket:password@" .. host .. prefix .. "/auth/index.html"
 }
 expect = {
-	code = 200,
-	body = index
+    code = 200,
+    body = index
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
 ------------------------------------------------------------------------
 io.write("testing auth info overriding: ")
 request = {
-	url = "http://really:wrong@" .. host .. prefix .. "/auth/index.html",
-	user = "luasocket",
-	password = "password"
+    url = "http://really:wrong@" .. host .. prefix .. "/auth/index.html",
+    user = "luasocket",
+    password = "password"
 }
 expect = {
-	code = 200,
-	body = index
+    code = 200,
+    body = index
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 
@@ -400,12 +400,12 @@ request = {
     url = "http://" .. host .. cgiprefix .. "/cat-index-html"
 }
 expect = {
-	body = index,
-	code = 200
+    body = index,
+    code = 200
 }
 ignore = {
-	status = 1,
-	headers = 1
+    status = 1,
+    headers = 1
 }
 check_request(request, expect, ignore)
 

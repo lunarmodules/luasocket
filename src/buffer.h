@@ -29,8 +29,8 @@ typedef struct t_buffer_ {
     size_t sent, received;  /* bytes sent, and bytes received */
     p_io io;                /* IO driver used for this buffer */
     p_timeout tm;           /* timeout management for this buffer */
-	size_t first, last;     /* index of first and last bytes of stored data */
-	char data[BUF_SIZE];    /* storage space for buffer data */
+    size_t first, last;     /* index of first and last bytes of stored data */
+    char data[BUF_SIZE];    /* storage space for buffer data */
 } t_buffer;
 typedef t_buffer *p_buffer;
 

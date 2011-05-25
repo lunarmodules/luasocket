@@ -3,439 +3,439 @@ socket.url = require("socket.url")
 dofile("testsupport.lua")
 
 local check_build_url = function(parsed)
-	local built = socket.url.build(parsed)
+    local built = socket.url.build(parsed)
     if built ~= parsed.url then
-	    print("built is different from expected")
-		print(built)
-		print(expected)
-		exit()
-	end
+        print("built is different from expected")
+        print(built)
+        print(expected)
+        exit()
+    end
 end
 
 local check_protect = function(parsed, path, unsafe)
-	local built = socket.url.build_path(parsed, unsafe)
-	if built ~= path then
-		print(built, path)
-	    print("path composition failed.")
-		exit()
-	end
+    local built = socket.url.build_path(parsed, unsafe)
+    if built ~= path then
+        print(built, path)
+        print("path composition failed.")
+        exit()
+    end
 end
 
 local check_invert = function(url)
-	local parsed = socket.url.parse(url)
-	parsed.path = socket.url.build_path(socket.url.parse_path(parsed.path))
-	local rebuilt = socket.url.build(parsed)
-	if rebuilt ~= url then
-		print(url, rebuilt)
-	    print("original and rebuilt are different")
-		exit()
-	end
+    local parsed = socket.url.parse(url)
+    parsed.path = socket.url.build_path(socket.url.parse_path(parsed.path))
+    local rebuilt = socket.url.build(parsed)
+    if rebuilt ~= url then
+        print(url, rebuilt)
+        print("original and rebuilt are different")
+        exit()
+    end
 end
 
 local check_parse_path = function(path, expect)
-	local parsed = socket.url.parse_path(path)
-	for i = 1, math.max(table.getn(parsed), table.getn(expect)) do
-		if parsed[i] ~= expect[i] then
-			print(path)
+    local parsed = socket.url.parse_path(path)
+    for i = 1, math.max(table.getn(parsed), table.getn(expect)) do
+        if parsed[i] ~= expect[i] then
+            print(path)
             exit()
-		end
-	end
-	if expect.is_directory ~= parsed.is_directory then
-		print(path)
-	    print("is_directory mismatch")
-		exit()
-	end
-	if expect.is_absolute ~= parsed.is_absolute then
-		print(path)
-	    print("is_absolute mismatch")
-		exit()
-	end
-	local built = socket.url.build_path(expect)
-	if built ~= path then
-		print(built, path)
-	    print("path composition failed.")
-		exit()
-	end
+        end
+    end
+    if expect.is_directory ~= parsed.is_directory then
+        print(path)
+        print("is_directory mismatch")
+        exit()
+    end
+    if expect.is_absolute ~= parsed.is_absolute then
+        print(path)
+        print("is_absolute mismatch")
+        exit()
+    end
+    local built = socket.url.build_path(expect)
+    if built ~= path then
+        print(built, path)
+        print("path composition failed.")
+        exit()
+    end
 end
 
 local check_absolute_url = function(base, relative, absolute)
-	local res = socket.url.absolute(base, relative)
-	if res ~= absolute then 
-		io.write("absolute: In test for '", relative, "' expected '", 
+    local res = socket.url.absolute(base, relative)
+    if res ~= absolute then 
+        io.write("absolute: In test for '", relative, "' expected '", 
             absolute, "' but got '", res, "'\n")
-		exit()
-	end
+        exit()
+    end
 end
 
 local check_parse_url = function(gaba)
-	local url = gaba.url
-	gaba.url = nil
-	local parsed = socket.url.parse(url)
-	for i, v in pairs(gaba) do
-		if v ~= parsed[i] then
-			io.write("parse: In test for '", url, "' expected ", i, " = '", 
-           	    v, "' but got '", tostring(parsed[i]), "'\n")
-			for i,v in pairs(parsed) do print(i,v) end
-			exit()
-		end
-	end
-	for i, v in pairs(parsed) do
-		if v ~= gaba[i] then
-			io.write("parse: In test for '", url, "' expected ", i, " = '", 
-           	    tostring(gaba[i]), "' but got '", v, "'\n")
-			for i,v in pairs(parsed) do print(i,v) end
-			exit()
-		end
-	end
+    local url = gaba.url
+    gaba.url = nil
+    local parsed = socket.url.parse(url)
+    for i, v in pairs(gaba) do
+        if v ~= parsed[i] then
+            io.write("parse: In test for '", url, "' expected ", i, " = '", 
+                   v, "' but got '", tostring(parsed[i]), "'\n")
+            for i,v in pairs(parsed) do print(i,v) end
+            exit()
+        end
+    end
+    for i, v in pairs(parsed) do
+        if v ~= gaba[i] then
+            io.write("parse: In test for '", url, "' expected ", i, " = '", 
+                   tostring(gaba[i]), "' but got '", v, "'\n")
+            for i,v in pairs(parsed) do print(i,v) end
+            exit()
+        end
+    end
 end
 
 print("testing URL parsing")
 check_parse_url{
-	url = "scheme://userinfo@host:port/path;params?query#fragment",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://userinfo@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_parse_url{
-	url = "scheme://user:password@host:port/path;params?query#fragment",
-	scheme = "scheme", 
-	authority = "user:password@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "user:password",
-	user = "user",
-	password = "password",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment",
+    url = "scheme://user:password@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    authority = "user:password@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "user:password",
+    user = "user",
+    password = "password",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment",
 }
 
 check_parse_url{
-	url = "scheme://userinfo@host:port/path;params?query#",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = ""
+    url = "scheme://userinfo@host:port/path;params?query#",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = ""
 }
 
 check_parse_url{
-	url = "scheme://userinfo@host:port/path;params?#fragment",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
-	params = "params",
-	query = "",
-	fragment = "fragment"
+    url = "scheme://userinfo@host:port/path;params?#fragment",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    params = "params",
+    query = "",
+    fragment = "fragment"
 }
 
 check_parse_url{
-	url = "scheme://userinfo@host:port/path;params#fragment",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
-	params = "params",
-	fragment = "fragment"
+    url = "scheme://userinfo@host:port/path;params#fragment",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    params = "params",
+    fragment = "fragment"
 }
 
 check_parse_url{
-	url = "scheme://userinfo@host:port/path;?query#fragment",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
-	params = "",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://userinfo@host:port/path;?query#fragment",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    params = "",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_parse_url{
-	url = "scheme://userinfo@host:port/path?query#fragment",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://userinfo@host:port/path?query#fragment",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_parse_url{
-	url = "scheme://userinfo@host:port/;params?query#fragment",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://userinfo@host:port/;params?query#fragment",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_parse_url{
-	url = "scheme://userinfo@host:port",
-	scheme = "scheme", 
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
+    url = "scheme://userinfo@host:port",
+    scheme = "scheme", 
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
 }
 
 check_parse_url{
-	url = "//userinfo@host:port/path;params?query#fragment",
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    url = "//userinfo@host:port/path;params?query#fragment",
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_parse_url{
-	url = "//userinfo@host:port/path",
-	authority = "userinfo@host:port", 
-	host = "host",
-	port = "port",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
+    url = "//userinfo@host:port/path",
+    authority = "userinfo@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "//userinfo@host/path",
-	authority = "userinfo@host", 
-	host = "host",
-	userinfo = "userinfo",
-	user = "userinfo",
-	path = "/path",
+    url = "//userinfo@host/path",
+    authority = "userinfo@host", 
+    host = "host",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "//user:password@host/path",
-	authority = "user:password@host", 
-	host = "host",
-	userinfo = "user:password",
-	password = "password",
-	user = "user",
-	path = "/path",
+    url = "//user:password@host/path",
+    authority = "user:password@host", 
+    host = "host",
+    userinfo = "user:password",
+    password = "password",
+    user = "user",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "//user:@host/path",
-	authority = "user:@host", 
-	host = "host",
-	userinfo = "user:",
-	password = "",
-	user = "user",
-	path = "/path",
+    url = "//user:@host/path",
+    authority = "user:@host", 
+    host = "host",
+    userinfo = "user:",
+    password = "",
+    user = "user",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "//user@host:port/path",
-	authority = "user@host:port", 
-	host = "host",
-	userinfo = "user",
-	user = "user",
-	port = "port",
-	path = "/path",
+    url = "//user@host:port/path",
+    authority = "user@host:port", 
+    host = "host",
+    userinfo = "user",
+    user = "user",
+    port = "port",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "//host:port/path",
-	authority = "host:port", 
-	port = "port",
-	host = "host",
-	path = "/path",
+    url = "//host:port/path",
+    authority = "host:port", 
+    port = "port",
+    host = "host",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "//host/path",
-	authority = "host", 
-	host = "host",
-	path = "/path",
+    url = "//host/path",
+    authority = "host", 
+    host = "host",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "//host",
-	authority = "host", 
-	host = "host",
+    url = "//host",
+    authority = "host", 
+    host = "host",
 }
 
 check_parse_url{
-	url = "/path",
-	path = "/path",
+    url = "/path",
+    path = "/path",
 }
 
 check_parse_url{
-	url = "path",
-	path = "path",
+    url = "path",
+    path = "path",
 }
 
 print("testing URL building")
 check_build_url {
-	url = "scheme://user:password@host:port/path;params?query#fragment",
-	scheme = "scheme", 
-	host = "host",
-	port = "port",
-	user = "user",
-	password = "password",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://user:password@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    host = "host",
+    port = "port",
+    user = "user",
+    password = "password",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://user:password@host/path;params?query#fragment",
-	scheme = "scheme", 
-	host = "host",
-	user = "user",
-	password = "password",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://user:password@host/path;params?query#fragment",
+    scheme = "scheme", 
+    host = "host",
+    user = "user",
+    password = "password",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://user@host/path;params?query#fragment",
-	scheme = "scheme", 
-	host = "host",
-	user = "user",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://user@host/path;params?query#fragment",
+    scheme = "scheme", 
+    host = "host",
+    user = "user",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://host/path;params?query#fragment",
-	scheme = "scheme", 
-	host = "host",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    url = "scheme://host/path;params?query#fragment",
+    scheme = "scheme", 
+    host = "host",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://host/path;params#fragment",
-	scheme = "scheme", 
-	host = "host",
-	path = "/path",
-	params = "params",
-	fragment = "fragment"
+    url = "scheme://host/path;params#fragment",
+    scheme = "scheme", 
+    host = "host",
+    path = "/path",
+    params = "params",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://host/path#fragment",
-	scheme = "scheme", 
-	host = "host",
-	path = "/path",
-	fragment = "fragment"
+    url = "scheme://host/path#fragment",
+    scheme = "scheme", 
+    host = "host",
+    path = "/path",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://host/path",
-	scheme = "scheme", 
-	host = "host",
-	path = "/path",
+    url = "scheme://host/path",
+    scheme = "scheme", 
+    host = "host",
+    path = "/path",
 }
 
 check_build_url {
-	url = "//host/path",
-	host = "host",
-	path = "/path",
+    url = "//host/path",
+    host = "host",
+    path = "/path",
 }
 
 check_build_url {
-	url = "/path",
-	path = "/path",
+    url = "/path",
+    path = "/path",
 }
 
 check_build_url {
-	url = "scheme://user:password@host:port/path;params?query#fragment",
-	scheme = "scheme", 
-	host = "host",
-	port = "port",
-	user = "user",
+    url = "scheme://user:password@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    host = "host",
+    port = "port",
+    user = "user",
     userinfo = "not used",
-	password = "password",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    password = "password",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://user:password@host:port/path;params?query#fragment",
-	scheme = "scheme", 
-	host = "host",
-	port = "port",
-	user = "user",
+    url = "scheme://user:password@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    host = "host",
+    port = "port",
+    user = "user",
     userinfo = "not used",
     authority = "not used",
-	password = "password",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    password = "password",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://user:password@host:port/path;params?query#fragment",
-	scheme = "scheme", 
-	host = "host",
-	port = "port",
+    url = "scheme://user:password@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    host = "host",
+    port = "port",
     userinfo = "user:password",
     authority = "not used",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 check_build_url {
-	url = "scheme://user:password@host:port/path;params?query#fragment",
-	scheme = "scheme", 
+    url = "scheme://user:password@host:port/path;params?query#fragment",
+    scheme = "scheme", 
     authority = "user:password@host:port",
-	path = "/path",
-	params = "params",
-	query = "query",
-	fragment = "fragment"
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
 }
 
 -- standard RFC tests
@@ -488,11 +488,11 @@ print("testing path parsing and composition")
 check_parse_path("/eu/tu/ele", { "eu", "tu", "ele"; is_absolute = 1 })
 check_parse_path("/eu/", { "eu"; is_absolute = 1, is_directory = 1 })
 check_parse_path("eu/tu/ele/nos/vos/eles/", 
-	{ "eu", "tu", "ele", "nos", "vos", "eles"; is_directory = 1})
+    { "eu", "tu", "ele", "nos", "vos", "eles"; is_directory = 1})
 check_parse_path("/", { is_absolute = 1, is_directory = 1})
 check_parse_path("", { })
 check_parse_path("eu%01/%02tu/e%03l%04e/nos/vos%05/e%12les/", 
-	{ "eu\1", "\2tu", "e\3l\4e", "nos", "vos\5", "e\18les"; is_directory = 1})
+    { "eu\1", "\2tu", "e\3l\4e", "nos", "vos\5", "e\18les"; is_directory = 1})
 check_parse_path("eu/tu", { "eu", "tu" })
 
 print("testing path protection")

@@ -30,9 +30,9 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
     pfd.revents = 0;
     if (timeout_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
     do {
-		int t = (int)(timeout_getretry(tm)*1e3);
-		ret = poll(&pfd, 1, t >= 0? t: -1);
-	} while (ret == -1 && errno == EINTR);
+        int t = (int)(timeout_getretry(tm)*1e3);
+        ret = poll(&pfd, 1, t >= 0? t: -1);
+    } while (ret == -1 && errno == EINTR);
     if (ret == -1) return errno;
     if (ret == 0) return IO_TIMEOUT;
     if (sw == WAITFD_C && (pfd.revents & (POLLIN|POLLERR))) return IO_CLOSED;

@@ -298,7 +298,7 @@ function empty_connect()
         pass("ok")
         data = socket.connect(host, port)
     else 
-		pass("gethostbyname returns localhost on empty string...")
+        pass("gethostbyname returns localhost on empty string...")
     end
 end
 

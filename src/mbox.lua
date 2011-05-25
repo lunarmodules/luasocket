@@ -5,10 +5,10 @@ mbox = Public
 function Public.split_message(message_s)
     local message = {}
     message_s = string.gsub(message_s, "\r\n", "\n")
-	string.gsub(message_s, "^(.-\n)\n", function (h) message.headers = h end)
-	string.gsub(message_s, "^.-\n\n(.*)", function (b) message.body = b end)
+    string.gsub(message_s, "^(.-\n)\n", function (h) message.headers = h end)
+    string.gsub(message_s, "^.-\n\n(.*)", function (b) message.body = b end)
     if not message.body then
-	    string.gsub(message_s, "^\n(.*)", function (b) message.body = b end)
+        string.gsub(message_s, "^\n(.*)", function (b) message.body = b end)
     end
     if not message.headers and not message.body then
         message.headers = message_s
@@ -54,30 +54,30 @@ function Public.parse_from(from)
     name = name or ""
     address = address or ""
     if name == "" then name = address end
-	name = string.gsub(name, '"', "")
+    name = string.gsub(name, '"', "")
     return name, address
 end
 
 function Public.split_mbox(mbox_s)
-	mbox = {}
-	mbox_s = string.gsub(mbox_s, "\r\n", "\n") .."\n\nFrom \n"
-	local nj, i, j = 1, 1, 1
-	while 1 do
-		i, nj = string.find(mbox_s, "\n\nFrom .-\n", j)
-		if not i then break end
-		local message = string.sub(mbox_s, j, i-1)
-		table.insert(mbox, message)
-		j = nj+1
-	end
-	return mbox
+    mbox = {}
+    mbox_s = string.gsub(mbox_s, "\r\n", "\n") .."\n\nFrom \n"
+    local nj, i, j = 1, 1, 1
+    while 1 do
+        i, nj = string.find(mbox_s, "\n\nFrom .-\n", j)
+        if not i then break end
+        local message = string.sub(mbox_s, j, i-1)
+        table.insert(mbox, message)
+        j = nj+1
+    end
+    return mbox
 end
 
 function Public.parse(mbox_s)
-	local mbox = Public.split_mbox(mbox_s)
-	for i = 1, table.getn(mbox) do
-		mbox[i] = Public.parse_message(mbox[i])
-	end
-	return mbox
+    local mbox = Public.split_mbox(mbox_s)
+    for i = 1, table.getn(mbox) do
+        mbox[i] = Public.parse_message(mbox[i])
+    end
+    return mbox
 end
 
 function Public.parse_message(message_s)

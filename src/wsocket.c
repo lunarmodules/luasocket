@@ -54,7 +54,7 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
     if (timeout_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
     if (sw & WAITFD_R) { 
         FD_ZERO(&rfds); 
-		FD_SET(*ps, &rfds);
+        FD_SET(*ps, &rfds);
         rp = &rfds; 
     }
     if (sw & WAITFD_W) { FD_ZERO(&wfds); FD_SET(*ps, &wfds); wp = &wfds; }
@@ -207,7 +207,7 @@ int socket_send(p_socket ps, const char *data, size_t count,
     /* loop until we send something or we give up on error */
     for ( ;; ) {
         /* try to send something */
-		int put = send(*ps, data, (int) count, 0);
+        int put = send(*ps, data, (int) count, 0);
         /* if we sent something, we are done */
         if (put > 0) {
             *sent = put;
@@ -346,8 +346,8 @@ const char *socket_strerror(int err) {
 }
 
 const char *socket_ioerror(p_socket ps, int err) {
-	(void) ps;
-	return socket_strerror(err);
+    (void) ps;
+    return socket_strerror(err);
 }
 
 static const char *wstrerror(int err) {

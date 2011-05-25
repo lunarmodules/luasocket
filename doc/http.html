@@ -45,8 +45,7 @@ namespace offers  full support for the client  side of the HTTP
 protocol (i.e.,
 the facilities that would be  used by a web-browser implementation). The
 implementation    conforms     to    the    HTTP/1.1     standard,
-<a href="http://www.cs.princeton.edu/~diego/rfc/rfc2616.txt">RFC
-2616</a>.
+<a href="http://www.ietf.org/rfc/rfc2616.txt">RFC 2616</a>.
 </p>
 
 <p>
@@ -67,8 +66,7 @@ local http = require("socket.http")
 
 <p>
 URLs must conform to
-<a href="http://www.cs.princeton.edu/~diego/rfc/rfc1738.txt">RFC
-1738</a>,
+<a href="http://www.ietf.org/rfc/rfc1738.txt">RFC 1738</a>,
 that is, an URL is a string in the form: 
 </p>
 
@@ -199,8 +197,7 @@ it usually returns a message body (a web page informing the
 URL  was  not found  or  some  other useless  page).  To  make sure  the
 operation was successful, check  the returned status <tt>code</tt>. For
 a  list  of  the  possible  values  and  their  meanings,  refer  to  <a
-href="http://www.cs.princeton.edu/~diego/rfc/rfc2616.txt">RFC
-2616</a>. 
+href="http://www.ietf.org/rfc/rfc2616.txt">RFC 2616</a>. 
 </p>
 
 <p class=description>
@@ -278,7 +275,7 @@ download and return status "401&nbsp;Authentication Required".
 The  HTTP/1.1 standard  defines  two authentication  methods: the  Basic
 Authentication  Scheme  and  the   Digest  Authentication  Scheme,  both
 explained in detail in
-<a href="http://www.cs.princeton.edu/~diego/rfc/rfc2068.txt">RFC 2068</a>.
+<a href="http://www.ietf.org/rfc/rfc2068.txt">RFC 2068</a>.
 </p>
 
 <p class=note>The Basic  Authentication   Scheme  sends   
@@ -304,7 +301,7 @@ b, c, h = http.request("http://fulano:silva@www.example.com/private/index.html")
 -- the request directly.
 r, c = http.request {
   url = "http://www.example.com/private/index.html",
-  headers = { authentication = "Basic " .. (mime.b64("fulano:silva")) }
+  headers = { authorization = "Basic " .. (mime.b64("fulano:silva")) }
 }
 </pre>
 

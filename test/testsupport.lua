@@ -1,13 +1,13 @@
 function readfile(name)
-	local f = io.open(name, "rb")
-	if not f then return nil end
-	local s = f:read("*a")
-	f:close()
-	return s
+    local f = io.open(name, "rb")
+    if not f then return nil end
+    local s = f:read("*a")
+    f:close()
+    return s
 end
 
 function similar(s1, s2)
-	return string.lower(string.gsub(s1 or "", "%s", "")) == 
+    return string.lower(string.gsub(s1 or "", "%s", "")) == 
         string.lower(string.gsub(s2 or "", "%s", ""))
 end
 
@@ -28,7 +28,7 @@ local set = rawset
 local warn = print
 
 local setglobal = function(table, key, value)
-	warn("changed " .. key)
+    warn("changed " .. key)
     set(table, key, value)
 end
 

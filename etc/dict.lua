@@ -44,48 +44,48 @@ function metat.__index:check(ok)
 end
 
 function metat.__index:getdef()
-	local line = socket.try(self.tp:receive())
-	local def = {}
-	while line ~= "." do
-		table.insert(def, line)
-		line = socket.try(self.tp:receive())
-	end
-	return table.concat(def, "\n")
+    local line = socket.try(self.tp:receive())
+    local def = {}
+    while line ~= "." do
+        table.insert(def, line)
+        line = socket.try(self.tp:receive())
+    end
+    return table.concat(def, "\n")
 end
 
 function metat.__index:define(database, word)
     database = database or "!"
-  	socket.try(self.tp:command("DEFINE",  database .. " " .. word))
+      socket.try(self.tp:command("DEFINE",  database .. " " .. word))
     local code, count = self:check(150)
-	local defs = {}
-	for i = 1, count do
-  		self:check(151)
-		table.insert(defs, self:getdef())
-	end
-  	self:check(250)
+    local defs = {}
+    for i = 1, count do
+          self:check(151)
+        table.insert(defs, self:getdef())
+    end
+      self:check(250)
     return defs
 end
 
 function metat.__index:match(database, strat, word)
     database = database or "!"
     strat = strat or "."
-  	socket.try(self.tp:command("MATCH",  database .." ".. strat .." ".. word))
+      socket.try(self.tp:command("MATCH",  database .." ".. strat .." ".. word))
     self:check(152)
-	local mat = {}
-	local line = socket.try(self.tp:receive())
+    local mat = {}
+    local line = socket.try(self.tp:receive())
     while line ~= '.' do
         database, word = socket.skip(2, string.find(line, "(%S+) (.*)"))
         if not mat[database] then mat[database] = {} end
         table.insert(mat[database], word)
-	    line = socket.try(self.tp:receive())
-	end
-  	self:check(250)
+        line = socket.try(self.tp:receive())
+    end
+      self:check(250)
     return mat
 end
 
 function metat.__index:quit()
-	self.tp:command("QUIT")
-	return self:check(221)
+    self.tp:command("QUIT")
+    return self:check(221)
 end
 
 function metat.__index:close()

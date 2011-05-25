@@ -1,8 +1,13 @@
-PLAT = none
+PLAT?=macosx
+
 INSTALL_DATA=cp
 INSTALL_EXEC=cp
-INSTALL_TOP= /opt/local
-LUAINC= $(LUAINC_$(PLAT))
+INSTALL_TOP=/opt/local
+
+LUAINC_macosx=/opt/local/include
+LUAINC_linux=/usr/include/lua5.1
+LUAINC_win32="../../lua-5.1.3/src"
+LUALIB_win32="../../lua-5.1.3"
 
 #------
 # Install directories
@@ -15,40 +20,76 @@ INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/mime
 INSTALL_MIME_LIB=$(INSTALL_TOP_LIB)/mime
 
 #------
-# Output file names
+# Supported platforms
 #
-EXT=so
-SOCKET_V=2.0.3
-MIME_V=1.0.3
-SOCKET_SO=socket.$(EXT).$(SOCKET_V)
-MIME_SO=mime.$(EXT).$(MIME_V)
-UNIX_SO=unix.$(EXT)
+PLATS= macosx linux win32
 
 #------
 # Compiler and linker settings
 # for Mac OS X
-LUAINC_macosx= -I/opt/local/include
+SO_macosx=so
+O_macosx=o
 CC_macosx=gcc
 DEF_macosx= -DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_macosx= $(LUAINC) $(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common \
+CFLAGS_macosx= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
 	-fvisibility=hidden
-LDFLAGS_macosx= -bundle -undefined dynamic_lookup
+LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o 
 LD_macosx= export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
+SOCKET_macosx=usocket.o
 
 #------
 # Compiler and linker settings
 # for Linux
-LUAINC_linux= -I/usr/local/include/lua5.1
+SO_linux=so
+O_linux=o
 CC_linux=gcc
 DEF_linux=-DLUASOCKET_DEBUG \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_linux= $(LUAINC) $(DEF) -pedantic -Wall -O2 -fpic \
+CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fpic \
 	-fvisibility=hidden
-LDFLAGS_linux=-O -shared -fpic
-LD_linux= gcc
+LDFLAGS_linux=-O -shared -fpic -o 
+LD_linux=gcc
+SOCKET_linux=usocket.o
+
+#------
+# Compiler and linker settings
+# for Win32
+SO_win32=dll
+O_win32=obj
+CC_win32=cl
+DEF_win32= /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
+     /D "LUASOCKET_API=__declspec(dllexport)" /D "LUASOCKET_DEBUG" \
+     /D "_CRT_SECURE_NO_WARNINGS" /D "_WINDLL"
+CFLAGS_win32=/I$(LUAINC) $(DEF) /O2 /Ot /MD /W3 /nologo
+LDFLAGS_win32= /nologo /link /NOLOGO /DLL /INCREMENTAL:NO \
+    /LIBPATH:$(LUALIB) \
+    /MANIFEST \
+    /MANIFESTFILE:"intermediate.manifest" \
+    /MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
+	/SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /DYNAMICBASE:NO \
+    /MACHINE:X86 ws2_32.lib lua5.1.lib /OUT:
+LD_win32=cl
+SOCKET_win32=wsocket.obj
+
+.SUFFIXES: .obj
+
+.c.obj:
+	$(CC) $(CFLAGS) /Fo"$@" /c $<
+
+#------
+# Output file names
+#
+SO=$(SO_$(PLAT))
+O=$(O_$(PLAT))
+SOCKET_V=2.0.3
+MIME_V=1.0.3
+SOCKET_SO=socket.$(SO).$(SOCKET_V)
+MIME_SO=mime.$(SO).$(MIME_V)
+UNIX_SO=unix.$(SO)
+SOCKET=$(SOCKET_$(PLAT))
 
 #------
 # Settings selected for platform
@@ -58,46 +99,48 @@ DEF=$(DEF_$(PLAT))
 CFLAGS=$(CFLAGS_$(PLAT))
 LDFLAGS=$(LDFLAGS_$(PLAT))
 LD=$(LD_$(PLAT))
+LUAINC= $(LUAINC_$(PLAT))
+LUALIB= $(LUALIB_$(PLAT))
 
 #------
 # Modules belonging to socket-core
 #
 SOCKET_OBJS= \
-	luasocket.o \
-	timeout.o \
-	buffer.o \
-	io.o \
-    auxiliar.o \
-	options.o \
-	inet.o \
-	usocket.o \
-	except.o \
-	select.o \
-	tcp.o \
-	udp.o
+	luasocket.$(O) \
+	timeout.$(O) \
+	buffer.$(O) \
+	io.$(O) \
+    auxiliar.$(O) \
+	options.$(O) \
+	inet.$(O) \
+	$(SOCKET) \
+	except.$(O) \
+	select.$(O) \
+	tcp.$(O) \
+	udp.$(O)
 
 #------
 # Modules belonging mime-core
 #
 MIME_OBJS= \
-	mime.o
+	mime.$(O)
 
 #------
 # Modules belonging unix (local domain sockets)
 #
-UNIX_OBJS:=\
-	buffer.o \
-	auxiliar.o \
-	options.o \
-	timeout.o \
-	io.o \
-	usocket.o \
-	unix.o
+UNIX_OBJS=\
+	buffer.$(O) \
+	auxiliar.$(O) \
+	options.$(O) \
+	timeout.$(O) \
+	io.$(O) \
+	usocket.$(O) \
+	unix.$(O)
 
 #------
 # Files to install
 #
-TO_SOCKET_SHARE:= \
+TO_SOCKET_SHARE= \
 	http.lua \
 	url.lua \
 	tp.lua \
@@ -105,33 +148,41 @@ TO_SOCKET_SHARE:= \
 	headers.lua \
 	smtp.lua
 
-TO_TOP_SHARE:= \
+TO_TOP_SHARE= \
 	ltn12.lua \
 	socket.lua \
 	mime.lua
 
+#------
+# Targets
+#
 default: $(PLAT)
 
 macosx:
 	$(MAKE) all PLAT=macosx
 
+win32:
+	$(MAKE) all PLAT=win32
+
 linux:
 	$(MAKE) all PLAT=linux
 
 none:
-	@echo "Please choose a platform:"
+	@echo "Please run"
+	@echo "   make PLATFORM"
+	@echo "where PLATFORM is one of these:"
 	@echo "   $(PLATS)"
 
 all: $(SOCKET_SO) $(MIME_SO)
 
 $(SOCKET_SO): $(SOCKET_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(SOCKET_OBJS)
+	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@ 
 
 $(MIME_SO): $(MIME_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(MIME_OBJS)
+	$(LD) $(MIME_OBJS) $(LDFLAGS)$@ 
 
 $(UNIX_SO): $(UNIX_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(UNIX_OBJS)
+	$(LD) $(UNIX_OBJS) $(LDFLAGS)$@ 
 
 install: 
 	mkdir -p $(INSTALL_TOP_SHARE)
@@ -139,9 +190,9 @@ install:
 	mkdir -p $(INSTALL_SOCKET_SHARE)
 	$(INSTALL_DATA) $(TO_SOCKET_SHARE) $(INSTALL_SOCKET_SHARE)
 	mkdir -p $(INSTALL_SOCKET_LIB)
-	$(INSTALL_EXEC) $(SOCKET_SO) $(INSTALL_SOCKET_LIB)/core.$(EXT)
+	$(INSTALL_EXEC) $(SOCKET_SO) $(INSTALL_SOCKET_LIB)/core.$(SO)
 	mkdir -p $(INSTALL_MIME_LIB)
-	$(INSTALL_EXEC) $(MIME_SO) $(INSTALL_MIME_LIB)/core.$(EXT)
+	$(INSTALL_EXEC) $(MIME_SO) $(INSTALL_MIME_LIB)/core.$(SO)
 
 local:
 	$(MAKE) install INSTALL_TOP_LIB=.. INSTALL_TOP_SHARE=..
@@ -155,24 +206,24 @@ clean:
 #------
 # List of dependencies
 #
-auxiliar.o: auxiliar.c auxiliar.h
-buffer.o: buffer.c buffer.h io.h timeout.h
-except.o: except.c except.h
-inet.o: inet.c inet.h socket.h io.h timeout.h usocket.h
-io.o: io.c io.h timeout.h
-luasocket.o: luasocket.c luasocket.h auxiliar.h except.h \
+auxiliar.$(O): auxiliar.c auxiliar.h
+buffer.$(O): buffer.c buffer.h io.h timeout.h
+except.$(O): except.c except.h
+inet.$(O): inet.c inet.h socket.h io.h timeout.h usocket.h
+io.$(O): io.c io.h timeout.h
+luasocket.$(O): luasocket.c luasocket.h auxiliar.h except.h \
 	timeout.h buffer.h io.h inet.h socket.h usocket.h tcp.h \
 	udp.h select.h
-mime.o: mime.c mime.h
-options.o: options.c auxiliar.h options.h socket.h io.h \
+mime.$(O): mime.c mime.h
+options.$(O): options.c auxiliar.h options.h socket.h io.h \
 	timeout.h usocket.h inet.h
-select.o: select.c socket.h io.h timeout.h usocket.h select.h
-tcp.o: tcp.c auxiliar.h socket.h io.h timeout.h usocket.h \
+select.$(O): select.c socket.h io.h timeout.h usocket.h select.h
+tcp.$(O): tcp.c auxiliar.h socket.h io.h timeout.h usocket.h \
 	inet.h options.h tcp.h buffer.h
-timeout.o: timeout.c auxiliar.h timeout.h
-udp.o: udp.c auxiliar.h socket.h io.h timeout.h usocket.h \
+timeout.$(O): timeout.c auxiliar.h timeout.h
+udp.$(O): udp.c auxiliar.h socket.h io.h timeout.h usocket.h \
 	inet.h options.h udp.h
-unix.o: unix.c auxiliar.h socket.h io.h timeout.h usocket.h \
+unix.$(O): unix.c auxiliar.h socket.h io.h timeout.h usocket.h \
 	options.h unix.h buffer.h
-usocket.o: usocket.c socket.h io.h timeout.h usocket.h
-wsocket.o: wsocket.c socket.h io.h timeout.h usocket.h
+usocket.$(O): usocket.c socket.h io.h timeout.h usocket.h
+wsocket.$(O): wsocket.c socket.h io.h timeout.h usocket.h

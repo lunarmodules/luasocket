@@ -42,7 +42,7 @@ int buffer_open(lua_State *L) {
 * Initializes C structure 
 \*-------------------------------------------------------------------------*/
 void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
-	buf->first = buf->last = 0;
+    buf->first = buf->last = 0;
     buf->io = io;
     buf->tm = tm;
     buf->received = buf->sent = 0;
@@ -122,9 +122,15 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
         if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b);
         else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b); 
         else luaL_argcheck(L, 0, 2, "invalid receive pattern");
-        /* get a fixed number of bytes (minus what was already partially 
-         * received) */
-    } else err = recvraw(buf, (size_t) lua_tonumber(L, 2)-size, &b);
+    /* get a fixed number of bytes (minus what was already partially 
+     * received) */
+    } else {
+        double n = lua_tonumber(L, 2); 
+        size_t wanted = (size_t) n;
+        luaL_argcheck(L, n >= 0, 2, "invalid receive pattern");
+        if (size == 0 || wanted > size)
+            err = recvraw(buf, wanted-size, &b);
+    }
     /* check if there was an error */
     if (err != IO_DONE) {
         /* we can't push anyting in the stack before pushing the

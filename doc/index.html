@@ -138,18 +138,22 @@ all!
 </p>
 
 <ul>
+<li> Fixed: manual sample of HTTP authentication now uses correct
+     "authorization" header (Alexandre Ittner);
+<li> Fixed: receive() returns immediatelly if prefix can satisfy
+     bytes requested (M Joonas Pihlaja);
 <li> Fixed: multicast didn't work on Windows, or anywhere
-     else for that matter (Herbert Leuwer, Adrian Sietsma)
+     else for that matter (Herbert Leuwer, Adrian Sietsma);
 <li> Fixed: select() now reports an error when called with more
-     sockets than FD_SETSIZE (Lorenzo Leonini)
-<li> Fixed: manual links to home.html changed to index.html (Robert Hahn)
+     sockets than FD_SETSIZE (Lorenzo Leonini);
+<li> Fixed: manual links to home.html changed to index.html (Robert Hahn);
 <li> Fixed: mime.unb64() would return an empty string on results that started
-     with a null character (Robert Raschke)
-<li> Fixed: HTTP now automatically redirects on 303 and 307 (Jonathan Gray)
+     with a null character (Robert Raschke);
+<li> Fixed: HTTP now automatically redirects on 303 and 307 (Jonathan Gray);
 <li> Fixed: calling sleep() with negative numbers could
      block forever, wasting CPU. Now it returns immediately (MPB);
 <li> Improved: FTP commands are now sent in upper case to
-     help buggy servers (Anders Eurenius)
+     help buggy servers (Anders Eurenius);
 <li> Improved: known headers now sent in canonic
      capitalization to help buggy servers (Joseph Stewart);
 <li> Improved: Clarified tcp:receive() in the manual (MPB);  
