@@ -16,7 +16,7 @@
 * Internal function prototypes.
 \*=========================================================================*/
 static int inet_global_toip(lua_State *L);
-static int inet_global_toip6(lua_State *L);
+static int inet_global_getaddrinfo(lua_State *L);
 static int inet_global_tohostname(lua_State *L);
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
 static int inet_global_gethostname(lua_State *L);
@@ -24,7 +24,7 @@ static int inet_global_gethostname(lua_State *L);
 /* DNS functions */
 static luaL_reg func[] = {
     { "toip", inet_global_toip},
-    { "toip6", inet_global_toip6},
+    { "getaddrinfo", inet_global_getaddrinfo},
     { "tohostname", inet_global_tohostname},
     { "gethostname", inet_global_gethostname},
     { NULL, NULL}
@@ -97,7 +97,7 @@ static int inet_global_toip(lua_State *L)
     return 2;
 }
 
-static int inet_global_toip6(lua_State *L)
+static int inet_global_getaddrinfo(lua_State *L)
 {
     const char *hostname = luaL_checkstring(L, 1);
     struct addrinfo *iterator = NULL, *resolved = NULL;
