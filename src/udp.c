@@ -27,6 +27,7 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int global_create(lua_State *L);
+static int global_create6(lua_State *L);
 static int meth_send(lua_State *L);
 static int meth_sendto(lua_State *L);
 static int meth_receive(lua_State *L);
@@ -89,6 +90,7 @@ static t_opt optget[] = {
 /* functions in library namespace */
 static luaL_reg func[] = {
     {"udp", global_create},
+    {"udp6", global_create6},
     {NULL, NULL}
 };
 
@@ -317,8 +319,14 @@ static int meth_close(lua_State *L) {
 static int meth_setsockname(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkclass(L, "udp{unconnected}", 1);
     const char *address =  luaL_checkstring(L, 2);
-    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    const char *err = inet_trybind(&udp->sock, address, port);
+    const char *port = luaL_checkstring(L, 3);
+    const char *err;
+	struct addrinfo bindhints;
+    memset(&bindhints, 0, sizeof(bindhints));
+    bindhints.ai_socktype = SOCK_DGRAM;
+    bindhints.ai_family = udp->domain;
+    bindhints.ai_flags = AI_PASSIVE;
+    err = inet_trybind(&udp->sock, address, port, &bindhints);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -334,22 +342,31 @@ static int meth_setsockname(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Creates a master udp object 
 \*-------------------------------------------------------------------------*/
-static int global_create(lua_State *L) {
+static int udp_create(lua_State *L, int domain) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, SOCK_DGRAM);
+    const char *err = inet_trycreate(&sock, domain, SOCK_DGRAM);
     /* try to allocate a system socket */
     if (!err) { 
-        /* allocate tcp object */
+        /* allocate udp object */
         p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
         auxiliar_setclass(L, "udp{unconnected}", -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
         udp->sock = sock;
         timeout_init(&udp->tm, -1, -1);
+        udp->domain = domain;
         return 1;
     } else {
         lua_pushnil(L);
         lua_pushstring(L, err);
         return 2;
     }
+}
+
+static int global_create(lua_State *L) {
+	return udp_create(L, AF_INET);
+}
+
+static int global_create6(lua_State *L) {
+	return udp_create(L, AF_INET6);
 }

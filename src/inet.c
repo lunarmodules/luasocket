@@ -56,7 +56,7 @@ static int inet_gethost(const char *address, struct hostent **hp) {
     struct in_addr addr;
     if (inet_aton(address, &addr))
         return socket_gethostbyaddr((char *) &addr, sizeof(addr), hp);
-    else 
+    else
         return socket_gethostbyname(address, hp);
 }
 
@@ -66,7 +66,7 @@ static int inet_gethost(const char *address, struct hostent **hp) {
 \*-------------------------------------------------------------------------*/
 static int inet_global_tohostname(lua_State *L) {
     const char *address = luaL_checkstring(L, 1);
-    struct hostent *hp = NULL; 
+    struct hostent *hp = NULL;
     int err = inet_gethost(address, &hp);
     if (err != IO_DONE) {
         lua_pushnil(L);
@@ -85,7 +85,7 @@ static int inet_global_tohostname(lua_State *L) {
 static int inet_global_toip(lua_State *L)
 {
     const char *address = luaL_checkstring(L, 1);
-    struct hostent *hp = NULL; 
+    struct hostent *hp = NULL;
     int err = inet_gethost(address, &hp);
     if (err != IO_DONE) {
         lua_pushnil(L);
@@ -136,7 +136,7 @@ static int inet_global_toip6(lua_State *L)
         lua_settable(L, -3);
         lua_settable(L, -3);
         i++;
-    } 
+    }
     freeaddrinfo(resolved);
     return 1;
 }
@@ -244,14 +244,14 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
 \*-------------------------------------------------------------------------*/
-const char *inet_trycreate(p_socket ps, int type) {
-    return socket_strerror(socket_create(ps, AF_INET, type, 0));
+const char *inet_trycreate(p_socket ps, int domain, int type) {
+    return socket_strerror(socket_create(ps, domain, type, 0));
 }
 
 /*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_tryconnect(p_socket ps, const char *address, 
+const char *inet_tryconnect(p_socket ps, const char *address,
         unsigned short port, p_timeout tm)
 {
     struct sockaddr_in remote;
@@ -276,25 +276,35 @@ const char *inet_tryconnect(p_socket ps, const char *address,
 /*-------------------------------------------------------------------------*\
 * Tries to bind socket to (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
+const char *inet_trybind(p_socket ps, const char *address, const char *serv,
+        struct addrinfo *bindhints)
 {
-    struct sockaddr_in local;
-    int err;
-    memset(&local, 0, sizeof(local));
-    /* address is either wildcard or a valid ip address */
-    local.sin_addr.s_addr = htonl(INADDR_ANY);
-    local.sin_port = htons(port);
-    local.sin_family = AF_INET;
-    if (strcmp(address, "*") && !inet_aton(address, &local.sin_addr)) {
-        struct hostent *hp = NULL;
-        struct in_addr **addr;
-        err = socket_gethostbyname(address, &hp);
-        if (err != IO_DONE) return socket_hoststrerror(err);
-        addr = (struct in_addr **) hp->h_addr_list;
-        memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
+    struct addrinfo *iterator = NULL, *resolved = NULL;
+    const char *err = NULL;
+    /* translate luasocket special values to C */
+    if (strcmp(address, "*") == 0) address = NULL;
+    if  (!serv) serv = "0";
+    /* try resolving */
+    err = socket_gaistrerror(getaddrinfo(address, serv,
+            bindhints, &resolved));
+    if (err) {
+        if (resolved) freeaddrinfo(resolved);
+        return err;
     }
-    err = socket_bind(ps, (SA *) &local, sizeof(local));
-    return socket_strerror(err); 
+    /* iterate over resolved addresses until one is good */
+    for (iterator = resolved; iterator; iterator = iterator->ai_next) {
+        /* try binding to local address */
+        err = socket_strerror(socket_bind(ps,
+            (SA *) iterator->ai_addr,
+            iterator->ai_addrlen));
+        /* if faiiled, we try the next one */
+        if (err != NULL) socket_destroy(ps);
+        /* if success, we abort loop */
+        else break;
+    }
+    /* cleanup and return error */
+    freeaddrinfo(resolved);
+    return err;
 }
 
 /*-------------------------------------------------------------------------*\

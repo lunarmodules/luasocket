@@ -23,6 +23,7 @@
 typedef struct t_udp_ {
     t_socket sock;
     t_timeout tm;
+    int domain;
 } t_udp;
 typedef t_udp *p_udp;
 

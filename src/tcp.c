@@ -19,8 +19,8 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int global_create(lua_State *L);
+static int global_create6(lua_State *L);
 static int global_connect6(lua_State *L);
-static int global_bind6(lua_State *L);
 static int meth_connect(lua_State *L);
 static int meth_listen(lua_State *L);
 static int meth_bind(lua_State *L);
@@ -77,8 +77,8 @@ static t_opt optset[] = {
 /* functions in library namespace */
 static luaL_reg func[] = {
     {"tcp", global_create},
+    {"tcp6", global_create6},
     {"connect6", global_connect6},
-    {"bind6", global_bind6},
     {NULL, NULL}
 };
 
@@ -196,8 +196,14 @@ static int meth_bind(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
-    unsigned short port = (unsigned short) luaL_checknumber(L, 3);
-    const char *err = inet_trybind(&tcp->sock, address, port);
+    const char *port = luaL_checkstring(L, 3);
+    const char *err;
+    struct addrinfo bindhints;
+    memset(&bindhints, 0, sizeof(bindhints));
+    bindhints.ai_socktype = SOCK_STREAM;
+    bindhints.ai_family = tcp->domain;
+    bindhints.ai_flags = AI_PASSIVE;
+    err = inet_trybind(&tcp->sock, address, port, &bindhints);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -317,11 +323,11 @@ static int meth_settimeout(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Creates a master tcp object 
 \*-------------------------------------------------------------------------*/
-static int global_create(lua_State *L) {
+static int tcp_create(lua_State *L, int domain) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, SOCK_STREAM);
+    const char *err = inet_trycreate(&sock, domain, SOCK_STREAM);
     /* try to allocate a system socket */
-    if (!err) { 
+    if (!err) {
         /* allocate tcp object */
         p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
         /* set its type as master object */
@@ -333,6 +339,7 @@ static int global_create(lua_State *L) {
                 (p_error) socket_ioerror, &tcp->sock);
         timeout_init(&tcp->tm, -1, -1);
         buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
+		tcp->domain = domain;
         return 1;
     } else {
         lua_pushnil(L);
@@ -341,92 +348,12 @@ static int global_create(lua_State *L) {
     }
 }
 
-static const char *trybind6(const char *localaddr, const char *localserv,
-    struct addrinfo *bindhints, p_tcp tcp) {
-    struct addrinfo *iterator = NULL, *resolved = NULL;
-    const char *err = NULL;
-    /* translate luasocket special values to C */
-    if (strcmp(localaddr, "*") == 0) localaddr = NULL;
-    if  (!localserv) localserv = "0";
-    /* try resolving */
-    err = socket_gaistrerror(getaddrinfo(localaddr, localserv, 
-            bindhints, &resolved));
-    if (err) {
-        if (resolved) freeaddrinfo(resolved);
-        return err;
-    }
-    /* iterate over resolved addresses until one is good */
-    for (iterator = resolved; iterator; iterator = iterator->ai_next) {
-        /* create a new socket each time because parameters
-         * may have changed */
-        err = socket_strerror(socket_create(&tcp->sock, 
-            iterator->ai_family, iterator->ai_socktype, 
-            iterator->ai_protocol));
-        /* if failed to create socket, bail out */
-        if (err != NULL) {
-            freeaddrinfo(resolved);
-            return err;
-        }
-        /* all sockets are set as non-blocking initially */
-        socket_setnonblocking(&tcp->sock);
-        /* try binding to local address */
-        err = socket_strerror(socket_bind(&tcp->sock, 
-            (SA *) iterator->ai_addr,
-            iterator->ai_addrlen));
-        /* if faiiled, we try the next one */
-        if (err != NULL) socket_destroy(&tcp->sock);
-        /* if success, we abort loop */
-        else break;
-    }
-    /* at this point, if err is not set, se succeeded */
-    if (err == NULL) {
-        /* save family of chosen local address */ 
-        bindhints->ai_family = iterator->ai_family;
-    }
-    /* cleanup and return error */
-    freeaddrinfo(resolved);
-    return err; 
+static int global_create(lua_State *L) {
+    return tcp_create(L, AF_INET);
 }
 
-static int global_bind6(lua_State *L) {
-    const char *localaddr  = luaL_checkstring(L, 1);
-    const char *localserv  = luaL_checkstring(L, 2);
-    int backlog = luaL_checkint(L, 3);
-    p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
-    struct addrinfo bindhints;
-    const char *err = NULL;
-    /* initialize tcp structure */
-    io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv, 
-            (p_error) socket_ioerror, &tcp->sock);
-    timeout_init(&tcp->tm, -1, -1);
-    buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
-    tcp->sock = SOCKET_INVALID;
-    /* try binding to local address */
-    memset(&bindhints, 0, sizeof(bindhints));
-    bindhints.ai_socktype = SOCK_STREAM;
-    bindhints.ai_family = PF_UNSPEC;
-    bindhints.ai_flags = AI_PASSIVE;
-    err = trybind6(localaddr, localserv, &bindhints, tcp);
-    if (err == NULL) {
-        /* all server sockets initially with reuseaddr set */
-        int val = 1;
-        setsockopt(tcp->sock, SOL_SOCKET, SO_REUSEADDR, 
-            (char *) &val, sizeof(val));
-        /* set the backlog and listen */
-        err = socket_strerror(socket_listen(&tcp->sock, backlog));
-        if (err) {
-            socket_destroy(&tcp->sock);
-            lua_pushnil(L);
-            lua_pushstring(L, err); 
-            return 2;
-        }
-        auxiliar_setclass(L, "tcp{server}", -1);
-        return 1;
-    } else {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
-    }
+static int global_create6(lua_State *L) {
+    return tcp_create(L, AF_INET6);
 }
 
 static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
@@ -488,7 +415,7 @@ static int global_connect6(lua_State *L) {
     bindhints.ai_family = PF_UNSPEC;
     bindhints.ai_flags = AI_PASSIVE;
     if (localaddr) {
-        err = trybind6(localaddr, localserv, &bindhints, tcp);
+        err = inet_trybind(&tcp->sock, localaddr, localserv, &bindhints);
         if (err) {
             lua_pushnil(L);
             lua_pushstring(L, err);
