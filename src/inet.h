@@ -25,8 +25,8 @@
 int inet_open(lua_State *L);
 
 const char *inet_trycreate(p_socket ps, int domain, int type);
-const char *inet_tryconnect(p_socket ps, const char *address, 
-        unsigned short port, p_timeout tm);
+const char *inet_tryconnect(p_socket ps, const char *address,
+        const char *serv, p_timeout tm, struct addrinfo *connecthints);
 const char *inet_trybind(p_socket ps, const char *address, const char *serv,
         struct addrinfo *bindhints);
 

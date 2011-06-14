@@ -1,10 +1,10 @@
 /*=========================================================================*\
-* UDP object 
+* UDP object
 * LuaSocket toolkit
 *
 * RCS ID: $Id: udp.c,v 1.30 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
-#include <string.h> 
+#include <string.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -18,10 +18,10 @@
 /* min and max macros */
 #ifndef MIN
 #define MIN(x, y) ((x) < (y) ? x : y)
-#endif 
+#endif
 #ifndef MAX
 #define MAX(x, y) ((x) > (y) ? x : y)
-#endif 
+#endif
 
 /*=========================================================================*\
 * Internal function prototypes
@@ -109,7 +109,7 @@ int udp_open(lua_State *L)
     auxiliar_add2group(L, "udp{connected}",   "select{able}");
     auxiliar_add2group(L, "udp{unconnected}", "select{able}");
     /* define library functions */
-    luaL_openlib(L, NULL, func, 0); 
+    luaL_openlib(L, NULL, func, 0);
     return 0;
 }
 
@@ -156,12 +156,12 @@ static int meth_sendto(lua_State *L) {
     struct sockaddr_in addr;
     int err;
     memset(&addr, 0, sizeof(addr));
-    if (!inet_aton(ip, &addr.sin_addr)) 
+    if (!inet_aton(ip, &addr.sin_addr))
         luaL_argerror(L, 3, "invalid ip address");
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     timeout_markstart(tm);
-    err = socket_sendto(&udp->sock, data, count, &sent, 
+    err = socket_sendto(&udp->sock, data, count, &sent,
             (SA *) &addr, sizeof(addr), tm);
     if (err != IO_DONE) {
         lua_pushnil(L);
@@ -206,7 +206,7 @@ static int meth_receivefrom(lua_State *L) {
     p_timeout tm = &udp->tm;
     timeout_markstart(tm);
     count = MIN(count, sizeof(buffer));
-    err = socket_recvfrom(&udp->sock, buffer, count, &got, 
+    err = socket_recvfrom(&udp->sock, buffer, count, &got,
             (SA *) &addr, &addr_len, tm);
     if (err == IO_DONE) {
         lua_pushlstring(L, buffer, got);
@@ -288,10 +288,17 @@ static int meth_setpeername(lua_State *L) {
     p_timeout tm = &udp->tm;
     const char *address =  luaL_checkstring(L, 2);
     int connecting = strcmp(address, "*");
-    unsigned short port = connecting ? 
-        (unsigned short) luaL_checknumber(L, 3) : 
-        (unsigned short) luaL_optnumber(L, 3, 0);
-    const char *err = inet_tryconnect(&udp->sock, address, port, tm);
+    const char *port = connecting ?
+        luaL_checkstring(L, 3) :
+        luaL_optstring(L, 3, "0");
+    struct addrinfo connecthints;
+    const char *err;
+    memset(&connecthints, 0, sizeof(connecthints));
+    connecthints.ai_socktype = SOCK_DGRAM;
+    /* make sure we try to connect only to the same family */
+    connecthints.ai_family = udp->domain;
+    err = inet_tryconnect(&udp->sock, address, port,
+		    tm, &connecthints);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -305,7 +312,7 @@ static int meth_setpeername(lua_State *L) {
 }
 
 /*-------------------------------------------------------------------------*\
-* Closes socket used by object 
+* Closes socket used by object
 \*-------------------------------------------------------------------------*/
 static int meth_close(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
@@ -341,13 +348,13 @@ static int meth_setsockname(lua_State *L) {
 * Library functions
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
-* Creates a master udp object 
+* Creates a master udp object
 \*-------------------------------------------------------------------------*/
 static int udp_create(lua_State *L, int domain) {
     t_socket sock;
     const char *err = inet_trycreate(&sock, domain, SOCK_DGRAM);
     /* try to allocate a system socket */
-    if (!err) { 
+    if (!err) {
         /* allocate udp object */
         p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
         auxiliar_setclass(L, "udp{unconnected}", -1);

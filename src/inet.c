@@ -252,25 +252,31 @@ const char *inet_trycreate(p_socket ps, int domain, int type) {
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
 const char *inet_tryconnect(p_socket ps, const char *address,
-        unsigned short port, p_timeout tm)
+        const char *serv, p_timeout tm, struct addrinfo *connecthints)
 {
-    struct sockaddr_in remote;
-    int err;
-    memset(&remote, 0, sizeof(remote));
-    remote.sin_family = AF_INET;
-    remote.sin_port = htons(port);
-    if (strcmp(address, "*")) {
-        if (!inet_aton(address, &remote.sin_addr)) {
-            struct hostent *hp = NULL;
-            struct in_addr **addr;
-            err = socket_gethostbyname(address, &hp);
-            if (err != IO_DONE) return socket_hoststrerror(err);
-            addr = (struct in_addr **) hp->h_addr_list;
-            memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
-        }
-    } else remote.sin_family = AF_UNSPEC;
-    err = socket_connect(ps, (SA *) &remote, sizeof(remote), tm);
-    return socket_strerror(err);
+    struct addrinfo *iterator = NULL, *resolved = NULL;
+    const char *err = NULL;
+    /* try resolving */
+    err = socket_gaistrerror(getaddrinfo(address, serv,
+                connecthints, &resolved));
+    if (err != NULL) {
+        if (resolved) freeaddrinfo(resolved);
+        return err;
+    }
+    /* iterate over all returned addresses trying to connect */
+    for (iterator = resolved; iterator; iterator = iterator->ai_next) {
+        timeout_markstart(tm);
+        /* try connecting to remote address */
+        err = socket_strerror(socket_connect(ps,
+            (SA *) iterator->ai_addr,
+            iterator->ai_addrlen, tm));
+        /* if success, break out of loop */
+        if (err == NULL) break;
+    }
+
+    freeaddrinfo(resolved);
+    /* here, if err is set, we failed */
+    return err;
 }
 
 /*-------------------------------------------------------------------------*\

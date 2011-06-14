@@ -17,7 +17,15 @@ module("socket")
 -- Exported auxiliar functions
 -----------------------------------------------------------------------------
 function connect(address, port, laddress, lport)
-    local sock, err = socket.tcp()
+    if address == "*" then address = "0.0.0.0" end
+    local addrinfo, err = socket.dns.getaddrinfo(address);
+    if not addrinfo then return nil, err end
+    local sock, err;
+    if addrinfo[1].family == "inet" then
+        sock, err = socket.tcp()
+    else
+        sock, err = socket.tcp6()
+    end
     if not sock then return nil, err end
     if laddress then
         local res, err = sock:bind(laddress, lport, -1)
