@@ -154,6 +154,11 @@ int opt_set_ip_drop_membersip(lua_State *L, p_socket ps)
     return opt_setmembership(L, ps, IPPROTO_IP, IP_DROP_MEMBERSHIP);
 }
 
+int opt_set_ip6_v6only(lua_State *L, p_socket ps)
+{
+    return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
+}
+
 /*=========================================================================*\
 * Auxiliar functions
 \*=========================================================================*/

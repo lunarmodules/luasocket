@@ -77,6 +77,7 @@ static t_opt optset[] = {
     {"ip-multicast-loop",  opt_set_ip_multicast_loop},
     {"ip-add-membership",  opt_set_ip_add_membership},
     {"ip-drop-membership", opt_set_ip_drop_membersip},
+    {"ipv6-v6only",        opt_set_ip6_v6only},
     {NULL,                 NULL}
 };
 
@@ -352,6 +353,11 @@ static int udp_create(lua_State *L, int domain) {
         auxiliar_setclass(L, "udp{unconnected}", -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
+        if (domain == PF_INET6) {
+            int yes = 1;
+            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
+                (void *)&yes, sizeof(yes));
+        }
         udp->sock = sock;
         timeout_init(&udp->tm, -1, -1);
         udp->domain = domain;

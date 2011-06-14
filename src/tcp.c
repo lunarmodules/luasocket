@@ -70,6 +70,7 @@ static t_opt optset[] = {
     {"keepalive",   opt_set_keepalive},
     {"reuseaddr",   opt_set_reuseaddr},
     {"tcp-nodelay", opt_set_tcp_nodelay},
+    {"ipv6-v6only", opt_set_ip6_v6only},
     {"linger",      opt_set_linger},
     {NULL,          NULL}
 };
@@ -334,6 +335,11 @@ static int tcp_create(lua_State *L, int domain) {
         auxiliar_setclass(L, "tcp{master}", -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
+        if (domain == PF_INET6) {
+            int yes = 1;
+            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
+                (void *)&yes, sizeof(yes));
+        }
         tcp->sock = sock;
         io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv, 
                 (p_error) socket_ioerror, &tcp->sock);
