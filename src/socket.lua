@@ -29,7 +29,15 @@ function connect(address, port, laddress, lport)
 end
 
 function bind(host, port, backlog)
-    local sock, err = socket.tcp()
+    if host == "*" then host = "0.0.0.0" end
+    local addrinfo, err = socket.dns.getaddrinfo(host);
+    if not addrinfo then return nil, err end
+    local sock, err;
+    if addrinfo[1].family == "inet" then
+        sock, err = socket.tcp()
+    else
+        sock, err = socket.tcp6()
+    end
     if not sock then return nil, err end
     sock:setoption("reuseaddr", true)
     local res, err = sock:bind(host, port)
