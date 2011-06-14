@@ -109,7 +109,7 @@ static int inet_global_getaddrinfo(lua_State *L)
     ret = getaddrinfo(hostname, NULL, &hints, &resolved);
     if (ret != 0) {
         lua_pushnil(L);
-        lua_pushstring(L, "getaddrinfo returned error");
+        lua_pushstring(L, socket_gaistrerror(ret));
         return 2;
     }
     lua_newtable(L);
