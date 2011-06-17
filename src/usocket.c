@@ -213,14 +213,13 @@ int socket_send(p_socket ps, const char *data, size_t count,
     for ( ;; ) {
         long put = (long) send(*ps, data, count, 0);
         /* if we sent anything, we are done */
-        if (put > 0) {
+        if (put >= 0) {
             *sent = put;
             return IO_DONE;
         }
         err = errno;
-        /* send can't really return 0, but EPIPE means the connection was 
-           closed */
-        if (put == 0 || err == EPIPE) return IO_CLOSED;
+        /* EPIPE means the connection was closed */
+        if (err == EPIPE) return IO_CLOSED;
         /* we call was interrupted, just try again */
         if (err == EINTR) continue;
         /* if failed fatal reason, report error */
@@ -243,12 +242,12 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         long put = (long) sendto(*ps, data, count, 0, addr, len);  
-        if (put > 0) {
+        if (put >= 0) {
             *sent = put;
             return IO_DONE;
         }
         err = errno;
-        if (put == 0 || err == EPIPE) return IO_CLOSED;
+        if (err == EPIPE) return IO_CLOSED;
         if (err == EINTR) continue;
         if (err != EAGAIN) return err;
         if ((err = socket_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
