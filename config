@@ -27,11 +27,15 @@ UNIX_SO=unix.$(EXT)
 #------
 # Top of your Lua installation
 # Relative paths will be inside the src tree
-#
+
+DESTDIR=
+prefix=/usr/local
+top=$(DESTDIR)$(prefix)
+
 #INSTALL_TOP_SHARE=/usr/local/share/lua/5.0
 #INSTALL_TOP_LIB=/usr/local/lib/lua/5.0
-INSTALL_TOP_SHARE=/usr/local/share/lua/5.1
-INSTALL_TOP_LIB=/usr/local/lib/lua/5.1
+INSTALL_TOP_SHARE=$(top)/share/lua/5.1
+INSTALL_TOP_LIB=$(top)/lib/lua/5.1
 
 INSTALL_DATA=cp
 INSTALL_EXEC=cp
