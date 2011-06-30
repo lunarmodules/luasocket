@@ -169,14 +169,27 @@ static int inet_global_gethostname(lua_State *L)
 \*-------------------------------------------------------------------------*/
 int inet_meth_getpeername(lua_State *L, p_socket ps)
 {
-    struct sockaddr_in peer;
-    socklen_t peer_len = sizeof(peer);
-    if (getpeername(*ps, (SA *) &peer, &peer_len) < 0) {
+    struct sockaddr *peer;
+    socklen_t peer_len = sizeof(struct sockaddr_storage);
+    char ipaddr[INET6_ADDRSTRLEN];
+
+    peer = (struct sockaddr *) malloc(peer_len);
+    if (!peer || (getpeername(*ps, (SA *) peer, &peer_len) < 0)) {
         lua_pushnil(L);
         lua_pushstring(L, "getpeername failed");
     } else {
-        lua_pushstring(L, inet_ntoa(peer.sin_addr));
-        lua_pushnumber(L, ntohs(peer.sin_port));
+        if (peer->sa_family == AF_INET)
+            inet_ntop(AF_INET, &((struct sockaddr_in *)peer)->sin_addr,
+                    ipaddr, sizeof(ipaddr));
+        else if (peer->sa_family == AF_INET6)
+            inet_ntop(AF_INET6, &((struct sockaddr_in6 *)peer)->sin6_addr,
+                    ipaddr, sizeof(ipaddr));
+        lua_pushstring(L, ipaddr);
+        if (peer->sa_family == AF_INET)
+            lua_pushnumber(L, ntohs(((struct sockaddr_in *)peer)->sin_port));
+        else if (peer->sa_family == AF_INET6)
+            lua_pushnumber(L, ntohs(((struct sockaddr_in6 *)peer)->sin6_port));
+        free(peer);
     }
     return 2;
 }
