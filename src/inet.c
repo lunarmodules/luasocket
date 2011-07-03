@@ -175,7 +175,8 @@ int inet_meth_getpeername(lua_State *L, p_socket ps)
 
     if (getpeername(*ps, p, &peer_len) < 0) {
         lua_pushnil(L);
-        lua_pushstring(L, "getpeername failed");
+        lua_pushfstring(L, "getpeername failed (%d): %s", errno,
+                strerror(errno));
     } else {
         char ipaddr[INET6_ADDRSTRLEN] = "";
         unsigned short port = 0;
@@ -193,7 +194,7 @@ int inet_meth_getpeername(lua_State *L, p_socket ps)
             break;
         default:
             lua_pushnil(L);
-            lua_pushstring(L, "Unknown address family");
+            lua_pushfstring(L, "Unknown address family %d", p->sa_family);
             return 2;
             break;
         }
