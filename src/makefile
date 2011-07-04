@@ -2,9 +2,13 @@ PLAT?=macosx
 
 INSTALL_DATA=cp
 INSTALL_EXEC=cp
-INSTALL_TOP=/opt/local
+#INSTALL_TOP=/opt/local
+INSTALL_TOP=./
 
-LUAINC_macosx=/opt/local/include
+#LUAINC_macosx=/opt/local/include
+LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.2.0-beta/src
+#LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.1.4/src
+
 LUAINC_linux=/usr/include/lua5.1
 LUAINC_win32="../../lua-5.1.3/src"
 LUALIB_win32="../../lua-5.1.3"
@@ -12,11 +16,15 @@ LUALIB_win32="../../lua-5.1.3"
 #------
 # Install directories
 #
-INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/5.1
-INSTALL_TOP_LIB=$(INSTALL_TOP)/lib/lua/5.1
+#INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/5.1
+#INSTALL_TOP_LIB=$(INSTALL_TOP)/lib/lua/5.1
+INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/5.2
+INSTALL_TOP_LIB=$(INSTALL_TOP)/lib/lua/5.2
+
 INSTALL_SOCKET_SHARE=$(INSTALL_TOP_SHARE)/socket
 INSTALL_SOCKET_LIB=$(INSTALL_TOP_LIB)/socket
-INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/mime
+#INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/mime
+INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/foo/mime
 INSTALL_MIME_LIB=$(INSTALL_TOP_LIB)/mime
 
 #------
@@ -30,7 +38,7 @@ PLATS= macosx linux win32
 SO_macosx=so
 O_macosx=o
 CC_macosx=gcc
-DEF_macosx= -DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN \
+DEF_macosx= -DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN -DLUA_COMPAT_MODULE \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_macosx= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
@@ -84,7 +92,7 @@ SOCKET_win32=wsocket.obj
 #
 SO=$(SO_$(PLAT))
 O=$(O_$(PLAT))
-SOCKET_V=2.0.3
+SOCKET_V=2.1.1
 MIME_V=1.0.3
 SOCKET_SO=socket.$(SO).$(SOCKET_V)
 MIME_SO=mime.$(SO).$(MIME_V)
@@ -117,7 +125,8 @@ SOCKET_OBJS= \
 	except.$(O) \
 	select.$(O) \
 	tcp.$(O) \
-	udp.$(O)
+	udp.$(O) \
+	lua_typeerror.$(O)
 
 #------
 # Modules belonging mime-core
@@ -135,7 +144,8 @@ UNIX_OBJS=\
 	timeout.$(O) \
 	io.$(O) \
 	usocket.$(O) \
-	unix.$(O)
+	unix.$(O) \
+	lua_typeerror.$(O)
 
 #------
 # Files to install

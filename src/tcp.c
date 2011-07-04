@@ -40,7 +40,7 @@ static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
 
 /* tcp object methods */
-static luaL_reg tcp_methods[] = {
+static luaL_Reg tcp_methods[] = {
     {"__gc",        meth_close},
     {"__tostring",  auxiliar_tostring},
     {"accept",      meth_accept},
@@ -76,7 +76,7 @@ static t_opt optset[] = {
 };
 
 /* functions in library namespace */
-static luaL_reg func[] = {
+static luaL_Reg func[] = {
     {"tcp", global_create},
     {"tcp6", global_create6},
     {"connect6", global_connect6},

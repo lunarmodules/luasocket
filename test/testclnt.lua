@@ -4,8 +4,7 @@ host = host or "localhost"
 port = port or "8383"
 
 function printf(...)
-    local s = string.format(unpack(arg))
-    io.stderr:write(s)
+    io.stderr:write(string.format(...))
 end
 
 function pass(...)
@@ -21,12 +20,12 @@ function fail(...)
 end
 
 function warn(...)
-    local s = string.format(unpack(arg))
+    local s = string.format(...)
     io.stderr:write("WARNING: ", s, "\n")
 end
 
 function remote(...)
-    local s = string.format(unpack(arg))
+    local s = string.format(...)
     s = string.gsub(s, "\n", ";")
     s = string.gsub(s, "%s+", " ")
     s = string.gsub(s, "^%s*", "")
@@ -141,6 +140,9 @@ remote "data:send(str); data:close()"
 end
 
 ------------------------------------------------------------------------
+if not math.mod then
+	math.mod = math.fmod
+end
 function test_asciiline(len)
     reconnect()
     io.stderr:write("length " .. len .. ": ")
@@ -445,7 +447,10 @@ end
 
 ------------------------------------------------------------------------
 function rebind_test()
-    local c = socket.bind("localhost", 0)
+    local c ,c1 = socket.bind("localhost", 0)
+    if not c then pass ("failed to bind! " .. c .. ' ' .. c1)  return end
+	assert(c,c1)
+ 
     local i, p = c:getsockname()
     local s, e = socket.tcp()
     assert(s, e)

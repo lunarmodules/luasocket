@@ -11,6 +11,7 @@
 #include "auxiliar.h"
 #include "options.h"
 #include "inet.h"
+#include "lua_typeerror.h"
 
 /*=========================================================================*\
 * Internal functions prototypes
@@ -99,7 +100,7 @@ int opt_get_ip_multicast_loop(lua_State *L, p_socket ps)
 int opt_set_linger(lua_State *L, p_socket ps)
 {
     struct linger li;                      /* obj, name, table */
-    if (!lua_istable(L, 3)) luaL_typerror(L, 3, lua_typename(L, LUA_TTABLE));
+    if (!lua_istable(L, 3)) luaL_typeerror(L, 3, lua_typename(L, LUA_TTABLE));
     lua_pushstring(L, "on");
     lua_gettable(L, 3);
     if (!lua_isboolean(L, -1)) 
@@ -165,7 +166,7 @@ int opt_set_ip6_v6only(lua_State *L, p_socket ps)
 static int opt_setmembership(lua_State *L, p_socket ps, int level, int name)
 {
     struct ip_mreq val;                   /* obj, name, table */
-    if (!lua_istable(L, 3)) luaL_typerror(L, 3, lua_typename(L, LUA_TTABLE));
+    if (!lua_istable(L, 3)) luaL_typeerror(L, 3, lua_typename(L, LUA_TTABLE));
     lua_pushstring(L, "multiaddr");
     lua_gettable(L, 3);
     if (!lua_isstring(L, -1)) 

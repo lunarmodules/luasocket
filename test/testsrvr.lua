@@ -10,6 +10,6 @@ while 1 do
         command = assert(control:receive());
         assert(control:send(ack));
         print(command);
-        (loadstring(command))();
+		(load(command))();
     end
 end
