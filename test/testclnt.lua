@@ -447,8 +447,9 @@ end
 
 ------------------------------------------------------------------------
 function rebind_test()
-    local c ,c1 = socket.bind("localhost", 0)
-    if not c then pass ("failed to bind! " .. c .. ' ' .. c1)  return end
+    --local c ,c1 = socket.bind("localhost", 0)
+   local c ,c1 = socket.bind("127.0.0.1", 0)
+    if not c then pass ("failed to bind! " .. tostring(c) .. ' ' .. tostring(c1))  return end
 	assert(c,c1)
  
     local i, p = c:getsockname()
