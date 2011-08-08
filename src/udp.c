@@ -170,6 +170,9 @@ static int meth_receive(lua_State *L) {
     count = MIN(count, sizeof(buffer));
     timeout_markstart(tm);
     err = socket_recv(&udp->sock, buffer, count, &got, tm);
+    /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
+    if (err == IO_CLOSED)
+        err = IO_DONE;
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, udp_strerror(err));
@@ -194,6 +197,9 @@ static int meth_receivefrom(lua_State *L) {
     count = MIN(count, sizeof(buffer));
     err = socket_recvfrom(&udp->sock, buffer, count, &got, 
             (SA *) &addr, &addr_len, tm);
+    /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
+    if (err == IO_CLOSED)
+        err = IO_DONE;
     if (err == IO_DONE) {
         lua_pushlstring(L, buffer, got);
         lua_pushstring(L, inet_ntoa(addr.sin_addr));
