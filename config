@@ -17,6 +17,7 @@ UNIX_SO=unix.$(EXT)
 #
 #LUAINC=-I/usr/local/include/lua50
 #LUAINC=-I/usr/local/include/lua5.1
+LUAINC=-I/usr/include/lua5.1
 #LUAINC=-Ilua-5.1.1/src
 
 #------
