@@ -23,7 +23,7 @@ LUAINC=-I/usr/include/lua5.1
 #------
 # Compat-5.1 directory
 #
-#COMPAT=compat-5.1r5
+#COMPAT=-Icompat-5.1r5
 
 #------
 # Top of your Lua installation
@@ -47,7 +47,7 @@ INSTALL_EXEC=cp
 #
 #CC=gcc
 #DEF= -DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN
-#CFLAGS= $(LUAINC) -I$(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common
+#CFLAGS= $(LUAINC) $(COMPAT) $(DEF) -pedantic -Wall -O2 -fno-common
 #LDFLAGS=-bundle -undefined dynamic_lookup
 #LD=export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
 
@@ -56,7 +56,7 @@ INSTALL_EXEC=cp
 # for Linux
 CC=gcc
 DEF=-DLUASOCKET_DEBUG 
-CFLAGS= $(LUAINC) $(DEF) -pedantic -Wall -O2 -fpic
+CFLAGS= $(LUAINC) $(COMPAT) $(DEF) -pedantic -Wall -O2 -fpic
 LDFLAGS=-O -shared -fpic
 LD=gcc 
 
