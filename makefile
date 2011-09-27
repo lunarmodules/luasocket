@@ -11,7 +11,7 @@ INSTALL_SOCKET_LIB=$(INSTALL_TOP_LIB)/socket
 INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/mime
 INSTALL_MIME_LIB=$(INSTALL_TOP_LIB)/mime
 
-all clean:
+all clean all-unix:
 	cd src; $(MAKE) $@
 
 #------
@@ -45,6 +45,9 @@ install: all
 	#cd src; $(INSTALL_DATA) $(TO_MIME_SHARE) $(INSTALL_MIME_SHARE)
 	cd src; mkdir -p $(INSTALL_MIME_LIB)
 	cd src; $(INSTALL_EXEC) $(MIME_SO) $(INSTALL_MIME_LIB)/core.$(EXT)
+
+install-unix: install all-unix
+	cd src; $(INSTALL_EXEC) $(UNIX_SO) $(INSTALL_SOCKET_LIB)/$(UNIX_SO)
 
 #------
 # End of makefile

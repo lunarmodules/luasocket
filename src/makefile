@@ -55,6 +55,8 @@ $(SOCKET_SO): $(SOCKET_OBJS)
 $(MIME_SO): $(MIME_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(MIME_OBJS)
 
+all-unix: all $(UNIX_SO)
+
 $(UNIX_SO): $(UNIX_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(UNIX_OBJS)
 
