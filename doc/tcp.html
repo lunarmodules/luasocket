@@ -507,6 +507,66 @@ This is the default mode;
 This function returns 1.
 </p>
 
+<!-- dirty +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=dirty>
+master:<b>dirty()</b><br>
+client:<b>dirty()</b><br>
+server:<b>dirty()</b>
+</p>
+
+<p class=description>
+Check the read buffer status.
+</p>
+
+<p class=return>
+Returns <tt>true</tt> if there is any data in the read buffer, <tt>false</tt> otherwise.
+</p>
+
+<p class=note>
+Note: <b>This is an internal method, any use is unlikely to be portable.</b>
+</p>
+
+<!-- getfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=getfd>
+master:<b>getfd()</b><br>
+client:<b>getfd()</b><br>
+server:<b>getfd()</b>
+</p>
+
+<p class=description>
+Returns the underling socket descriptor or handle associated to the object. 
+</p>
+
+<p class=return>
+The descriptor or handle. In case the object has been closed, the return will be -1.
+</p>
+
+<p class=note>
+Note: <b>This is an internal method, any use is unlikely to be portable.</b>
+</p>
+
+<!-- setfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=setfd>
+master:<b>setfd(</b>fd<b>)</b><br>
+client:<b>setfd(</b>fd<b>)</b><br>
+server:<b>setfd(</b>fd<b>)</b>
+</p>
+
+<p class=description>
+Sets the underling socket descriptor or handle associated to the object. The current one is simply replaced, not closed, and no other change to the object state is made.
+</p>
+
+<p class=return>
+No return value.
+</p>
+
+<p class=note>
+Note: <b>This is an internal method, any use is unlikely to be portable.</b>
+</p>
+
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <div class=footer>
