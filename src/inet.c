@@ -169,11 +169,15 @@ static int inet_global_gethostname(lua_State *L)
 \*-------------------------------------------------------------------------*/
 int inet_meth_getpeername(lua_State *L, p_socket ps)
 {
-    struct sockaddr_storage peer;
-    struct sockaddr *p = (struct sockaddr *)&peer;
-    socklen_t peer_len = sizeof(struct sockaddr_storage);
+    union {
+	struct sockaddr_storage sas;
+	struct sockaddr sa;
+	struct sockaddr_in sa4;
+	struct sockaddr_in6 sa6;
+    } peer;
+    socklen_t peer_len = sizeof(peer);
 
-    if (getpeername(*ps, p, &peer_len) < 0) {
+    if (getpeername(*ps, &peer.sa, &peer_len) < 0) {
         lua_pushnil(L);
         lua_pushfstring(L, "getpeername failed (%d): %s", errno,
                 strerror(errno));
@@ -181,20 +185,18 @@ int inet_meth_getpeername(lua_State *L, p_socket ps)
         char ipaddr[INET6_ADDRSTRLEN] = "";
         unsigned short port = 0;
 
-        switch (p->sa_family) {
+        switch (peer.sa.sa_family) {
         case AF_INET:
-            inet_ntop(AF_INET, &((struct sockaddr_in *)&peer)->sin_addr,
-                    ipaddr, sizeof(ipaddr));
-            port = ntohs(((struct sockaddr_in *)&peer)->sin_port);
+            inet_ntop(AF_INET, &peer.sa4.sin_addr, ipaddr, sizeof(ipaddr));
+            port = ntohs(peer.sa4.sin_port);
             break;
         case AF_INET6:
-            inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&peer)->sin6_addr,
-                    ipaddr, sizeof(ipaddr));
-            port = ntohs(((struct sockaddr_in6 *)&peer)->sin6_port);
+            inet_ntop(AF_INET6, &peer.sa6.sin6_addr, ipaddr, sizeof(ipaddr));
+            port = ntohs(peer.sa6.sin6_port);
             break;
         default:
             lua_pushnil(L);
-            lua_pushfstring(L, "Unknown address family %d", p->sa_family);
+            lua_pushfstring(L, "Unknown address family %d", peer.sa.sa_family);
             return 2;
             break;
         }
