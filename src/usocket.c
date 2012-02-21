@@ -49,6 +49,7 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
     fd_set rfds, wfds, *rp, *wp;
     struct timeval tv, *tp;
     double t;
+    if (*ps >= FD_SETSIZE) return EINVAL;
     if (timeout_iszero(tm)) return IO_TIMEOUT;  /* optimize timeout == 0 case */
     do {
         /* must set bits within loop, because select may have modifed them */
