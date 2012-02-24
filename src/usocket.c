@@ -300,6 +300,66 @@ int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
     return IO_UNKNOWN;
 }
 
+
+/*-------------------------------------------------------------------------*\
+* Write with timeout
+*
+* socket_read and socket_write are cut-n-paste of socket_send and socket_recv,
+* with send/recv replaced with write/read. We can't just use write/read
+* in the socket version, because behaviour when size is zero is different.
+\*-------------------------------------------------------------------------*/
+int socket_write(p_socket ps, const char *data, size_t count, 
+        size_t *sent, p_timeout tm)
+{
+    int err;
+    *sent = 0;
+    /* avoid making system calls on closed sockets */
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    /* loop until we send something or we give up on error */
+    for ( ;; ) {
+        long put = (long) write(*ps, data, count);
+        /* if we sent anything, we are done */
+        if (put >= 0) {
+            *sent = put;
+            return IO_DONE;
+        }
+        err = errno;
+        /* EPIPE means the connection was closed */
+        if (err == EPIPE) return IO_CLOSED;
+        /* we call was interrupted, just try again */
+        if (err == EINTR) continue;
+        /* if failed fatal reason, report error */
+        if (err != EAGAIN) return err;
+        /* wait until we can send something or we timeout */
+        if ((err = socket_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
+    }
+    /* can't reach here */
+    return IO_UNKNOWN;
+}
+
+/*-------------------------------------------------------------------------*\
+* Read with timeout
+* See note for socket_write
+\*-------------------------------------------------------------------------*/
+int socket_read(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
+    int err;
+    *got = 0;
+    if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    for ( ;; ) {
+        long taken = (long) read(*ps, data, count);
+        if (taken > 0) {
+            *got = taken;
+            return IO_DONE;
+        }
+        err = errno;
+        if (taken == 0) return IO_CLOSED;
+        if (err == EINTR) continue;
+        if (err != EAGAIN) return err; 
+        if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err; 
+    }
+    return IO_UNKNOWN;
+}
+
 /*-------------------------------------------------------------------------*\
 * Put socket into blocking mode
 \*-------------------------------------------------------------------------*/

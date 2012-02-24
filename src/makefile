@@ -47,6 +47,17 @@ UNIX_OBJS:=\
 	usocket.o \
 	unix.o
 
+#------
+# Modules belonging to serial (device streams)
+#
+SERIAL_OBJS:=\
+	buffer.o \
+	auxiliar.o \
+	timeout.o \
+	io.o \
+	usocket.o \
+	serial.o
+
 all: $(SOCKET_SO) $(MIME_SO) 
 
 $(SOCKET_SO): $(SOCKET_OBJS)
@@ -55,10 +66,13 @@ $(SOCKET_SO): $(SOCKET_OBJS)
 $(MIME_SO): $(MIME_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(MIME_OBJS)
 
-all-unix: all $(UNIX_SO)
+all-unix: all $(UNIX_SO) $(SERIAL_SO)
 
 $(UNIX_SO): $(UNIX_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(UNIX_OBJS)
+
+$(SERIAL_SO): $(SERIAL_OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(SERIAL_OBJS)
 
 #------
 # List of dependencies
@@ -74,6 +88,8 @@ mime.o: mime.c mime.h
 options.o: options.c auxiliar.h options.h socket.h io.h timeout.h \
   usocket.h inet.h
 select.o: select.c socket.h io.h timeout.h usocket.h select.h
+serial.o: serial.c auxiliar.h socket.h io.h timeout.h usocket.h \
+  unix.h buffer.h
 tcp.o: tcp.c auxiliar.h socket.h io.h timeout.h usocket.h inet.h \
   options.h tcp.h buffer.h
 timeout.o: timeout.c auxiliar.h timeout.h

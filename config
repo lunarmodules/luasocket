@@ -11,6 +11,7 @@ MIME_V=1.0.2
 SOCKET_SO=socket.$(EXT).$(SOCKET_V) 
 MIME_SO=mime.$(EXT).$(MIME_V)
 UNIX_SO=unix.$(EXT)
+SERIAL_SO=serial.$(EXT)
 
 #------
 # Lua includes and libraries

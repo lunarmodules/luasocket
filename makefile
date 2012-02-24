@@ -48,6 +48,7 @@ install: all
 
 install-unix: install all-unix
 	cd src; $(INSTALL_EXEC) $(UNIX_SO) $(INSTALL_SOCKET_LIB)/$(UNIX_SO)
+	cd src; $(INSTALL_EXEC) $(SERIAL_SO) $(INSTALL_SOCKET_LIB)/$(SERIAL_SO)
 
 #------
 # End of makefile
