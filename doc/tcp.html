@@ -396,7 +396,40 @@ disables the Nagle's algorithm for the connection.
 </ul>
 
 <p class=return>
-The method returns 1 in case of success, or <b><tt>nil</tt></b> otherwise.
+The method returns 1 in case of success, or <b><tt>nil</tt></b>
+followed by an error message otherwise.
+</p>
+
+<p class=note>
+Note: The descriptions above come from the man pages.
+</p>
+
+<!-- getoption ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=getoption>
+client:<b>getoption(</b>option)</b><br>
+server:<b>getoption(</b>option)</b>
+</p>
+
+<p class=description>
+Gets options for the TCP object.
+See <a href=#setoption><tt>setoption</tt></a> for description of the
+option names and values.
+</p>
+
+<p class=parameters>
+<tt>Option</tt> is a string with the option name.
+<ul>
+
+<li> '<tt>keepalive</tt>'
+<li> '<tt>linger</tt>'
+<li> '<tt>reuseaddr</tt>'
+<li> '<tt>tcp-nodelay</tt>'
+</ul>
+
+<p class=return>
+The method returns the option <tt>value</tt> in case of success, or
+<b><tt>nil</tt></b> followed by an error message otherwise.
 </p>
 
 <p class=note>

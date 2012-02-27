@@ -18,8 +18,11 @@
 \*=========================================================================*/
 static int opt_setmembership(lua_State *L, p_socket ps, int level, int name);
 static int opt_setboolean(lua_State *L, p_socket ps, int level, int name);
+static int opt_getboolean(lua_State *L, p_socket ps, int level, int name);
 static int opt_set(lua_State *L, p_socket ps, int level, int name, 
         void *val, int len);
+static int opt_get(lua_State *L, p_socket ps, int level, int name, 
+        void *val, int* len);
 
 /*=========================================================================*\
 * Exported functions
@@ -40,10 +43,28 @@ int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps)
     return opt->func(L, ps);
 }
 
+int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps)
+{
+    const char *name = luaL_checkstring(L, 2);      /* obj, name, ... */
+    while (opt->name && strcmp(name, opt->name))
+        opt++;
+    if (!opt->func) {
+        char msg[45];
+        sprintf(msg, "unsupported option `%.35s'", name);
+        luaL_argerror(L, 2, msg);
+    }
+    return opt->func(L, ps);
+}
+
 /* enables reuse of local address */
 int opt_reuseaddr(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_REUSEADDR); 
+}
+
+int opt_get_reuseaddr(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_REUSEADDR); 
 }
 
 /* disables the Naggle algorithm */
@@ -52,9 +73,19 @@ int opt_tcp_nodelay(lua_State *L, p_socket ps)
     return opt_setboolean(L, ps, IPPROTO_TCP, TCP_NODELAY); 
 }
 
+int opt_get_tcp_nodelay(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, IPPROTO_TCP, TCP_NODELAY);
+}
+
 int opt_keepalive(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE); 
+}
+
+int opt_get_keepalive(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE); 
 }
 
 int opt_dontroute(lua_State *L, p_socket ps)
@@ -105,6 +136,21 @@ int opt_ip_drop_membersip(lua_State *L, p_socket ps)
     return opt_setmembership(L, ps, IPPROTO_IP, IP_DROP_MEMBERSHIP);
 }
 
+int opt_get_linger(lua_State *L, p_socket ps)
+{
+    struct linger li;                      /* obj, name */
+    int len = sizeof(li);
+    int err = opt_get(L, ps, SOL_SOCKET, SO_LINGER, (char *) &li, &len);
+    if (err)
+        return err;
+    lua_newtable(L);
+    lua_pushboolean(L, li.l_onoff);
+    lua_setfield(L, -2, "on");
+    lua_pushinteger(L, li.l_linger);
+    lua_setfield(L, -2, "timeout");
+    return 1;
+}
+
 /*=========================================================================*\
 * Auxiliar functions
 \*=========================================================================*/
@@ -130,6 +176,19 @@ static int opt_setmembership(lua_State *L, p_socket ps, int level, int name)
 }
 
 static 
+int opt_get(lua_State *L, p_socket ps, int level, int name, void *val, int* len)
+{
+    socklen_t socklen = *len;
+    if (getsockopt(*ps, level, name, (char *) val, &socklen) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "getsockopt failed");
+        return 2;
+    }
+    *len = socklen;
+    return 0;
+}
+
+static 
 int opt_set(lua_State *L, p_socket ps, int level, int name, void *val, int len)
 {
     if (setsockopt(*ps, level, name, (char *) val, len) < 0) {
@@ -138,6 +197,17 @@ int opt_set(lua_State *L, p_socket ps, int level, int name, void *val, int len)
         return 2;
     }
     lua_pushnumber(L, 1);
+    return 1;
+}
+
+static int opt_getboolean(lua_State *L, p_socket ps, int level, int name)
+{
+    int val = 0;
+    int len = sizeof(val);
+    int err = opt_get(L, ps, level, name, (char *) &val, &len);
+    if (err)
+        return err;
+    lua_pushboolean(L, val);
     return 1;
 }
 

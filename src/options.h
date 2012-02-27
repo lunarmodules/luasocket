@@ -17,10 +17,17 @@
 typedef struct t_opt {
   const char *name;
   int (*func)(lua_State *L, p_socket ps);
+  int (*get)(lua_State *L, p_socket ps);
 } t_opt;
 typedef t_opt *p_opt;
 
 /* supported options */
+int opt_get_reuseaddr(lua_State *L, p_socket ps);
+int opt_get_tcp_nodelay(lua_State *L, p_socket ps);
+int opt_get_keepalive(lua_State *L, p_socket ps);
+int opt_get_linger(lua_State *L, p_socket ps);
+int opt_get_reuseaddr(lua_State *L, p_socket ps);
+
 int opt_dontroute(lua_State *L, p_socket ps);
 int opt_broadcast(lua_State *L, p_socket ps);
 int opt_reuseaddr(lua_State *L, p_socket ps);
@@ -35,5 +42,6 @@ int opt_ip_drop_membersip(lua_State *L, p_socket ps);
 
 /* invokes the appropriate option handler */
 int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps);
+int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps);
 
 #endif

@@ -31,6 +31,7 @@ static int meth_shutdown(lua_State *L);
 static int meth_receive(lua_State *L);
 static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
+static int meth_getoption(lua_State *L);
 static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
@@ -47,6 +48,7 @@ static luaL_reg tcp[] = {
     {"connect",     meth_connect},
     {"dirty",       meth_dirty},
     {"getfd",       meth_getfd},
+    {"getoption",   meth_getoption},
     {"getpeername", meth_getpeername},
     {"getsockname", meth_getsockname},
     {"getstats",    meth_getstats},
@@ -64,6 +66,14 @@ static luaL_reg tcp[] = {
 };
 
 /* socket option handlers */
+static t_opt optget[] = {
+    {"keepalive",   opt_get_keepalive},
+    {"reuseaddr",   opt_get_reuseaddr},
+    {"tcp-nodelay", opt_get_tcp_nodelay},
+    {"linger",      opt_get_linger},
+    {NULL,          NULL}
+};
+
 static t_opt opt[] = {
     {"keepalive",   opt_keepalive},
     {"reuseaddr",   opt_reuseaddr},
@@ -125,6 +135,12 @@ static int meth_setstats(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Just call option handler
 \*-------------------------------------------------------------------------*/
+static int meth_getoption(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
+    return opt_meth_getoption(L, optget, &tcp->sock);
+}
+
 static int meth_setoption(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
