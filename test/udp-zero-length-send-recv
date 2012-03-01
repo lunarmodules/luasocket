@@ -24,12 +24,14 @@ if ok ~= 0 then
     print("send of zero failed with:", ok, emsg)
 end
 
+assert(r:settimeout(2))
+
 ok, emsg = r:receive()
 
 if not ok or string.len(ok) ~= 0 then
-    print("receive of zero failed with:", ok, emsg)
+    print("fail - receive of zero failed with:", ok, emsg)
+    os.exit(1)
 end
 
 print"ok"
-
 
