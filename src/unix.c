@@ -39,7 +39,7 @@ static const char *unix_tryconnect(p_unix un, const char *path);
 static const char *unix_trybind(p_unix un, const char *path);
 
 /* unix object methods */
-static luaL_Reg un[] = {
+static luaL_Reg unix_methods[] = {
     {"__gc",        meth_close},
     {"__tostring",  auxiliar_tostring},
     {"accept",      meth_accept},
@@ -82,9 +82,9 @@ static luaL_Reg func[] = {
 \*-------------------------------------------------------------------------*/
 int luaopen_socket_unix(lua_State *L) {
     /* create classes */
-    auxiliar_newclass(L, "unix{master}", un);
-    auxiliar_newclass(L, "unix{client}", un);
-    auxiliar_newclass(L, "unix{server}", un);
+    auxiliar_newclass(L, "unix{master}", unix_methods);
+    auxiliar_newclass(L, "unix{client}", unix_methods);
+    auxiliar_newclass(L, "unix{server}", unix_methods);
     /* create class groups */
     auxiliar_add2group(L, "unix{master}", "unix{any}");
     auxiliar_add2group(L, "unix{client}", "unix{any}");

@@ -21,6 +21,8 @@ static int opt_setboolean(lua_State *L, p_socket ps, int level, int name);
 static int opt_getboolean(lua_State *L, p_socket ps, int level, int name);
 static int opt_set(lua_State *L, p_socket ps, int level, int name, 
         void *val, int len);
+static int opt_get(lua_State *L, p_socket ps, int level, int name, 
+        void *val, int* len);
 
 /*=========================================================================*\
 * Exported functions
@@ -60,10 +62,20 @@ int opt_set_reuseaddr(lua_State *L, p_socket ps)
     return opt_setboolean(L, ps, SOL_SOCKET, SO_REUSEADDR); 
 }
 
+int opt_get_reuseaddr(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_REUSEADDR); 
+}
+
 /* enables reuse of local port */
 int opt_set_reuseport(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_REUSEPORT); 
+}
+
+int opt_get_reuseport(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_REUSEPORT); 
 }
 
 /* disables the Naggle algorithm */
@@ -72,9 +84,19 @@ int opt_set_tcp_nodelay(lua_State *L, p_socket ps)
     return opt_setboolean(L, ps, IPPROTO_TCP, TCP_NODELAY); 
 }
 
+int opt_get_tcp_nodelay(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, IPPROTO_TCP, TCP_NODELAY);
+}
+
 int opt_set_keepalive(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE); 
+}
+
+int opt_get_keepalive(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE); 
 }
 
 int opt_set_dontroute(lua_State *L, p_socket ps)
@@ -112,6 +134,21 @@ int opt_set_linger(lua_State *L, p_socket ps)
         luaL_argerror(L, 3, "number 'timeout' field expected");
     li.l_linger = (u_short) lua_tonumber(L, -1);
     return opt_set(L, ps, SOL_SOCKET, SO_LINGER, (char *) &li, sizeof(li));
+}
+
+int opt_get_linger(lua_State *L, p_socket ps)
+{
+    struct linger li;                      /* obj, name */
+    int len = sizeof(li);
+    int err = opt_get(L, ps, SOL_SOCKET, SO_LINGER, (char *) &li, &len);
+    if (err)
+        return err;
+    lua_newtable(L);
+    lua_pushboolean(L, li.l_onoff);
+    lua_setfield(L, -2, "on");
+    lua_pushinteger(L, li.l_linger);
+    lua_setfield(L, -2, "timeout");
+    return 1;
 }
 
 int opt_set_ip_multicast_ttl(lua_State *L, p_socket ps)
@@ -185,6 +222,19 @@ static int opt_setmembership(lua_State *L, p_socket ps, int level, int name)
 }
 
 static 
+int opt_get(lua_State *L, p_socket ps, int level, int name, void *val, int* len)
+{
+    socklen_t socklen = *len;
+    if (getsockopt(*ps, level, name, (char *) val, &socklen) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "getsockopt failed");
+        return 2;
+    }
+    *len = socklen;
+    return 0;
+}
+
+static 
 int opt_set(lua_State *L, p_socket ps, int level, int name, void *val, int len)
 {
     if (setsockopt(*ps, level, name, (char *) val, len) < 0) {
@@ -199,12 +249,10 @@ int opt_set(lua_State *L, p_socket ps, int level, int name, void *val, int len)
 static int opt_getboolean(lua_State *L, p_socket ps, int level, int name)
 {
     int val = 0;
-    socklen_t len = sizeof(val);
-    if (getsockopt(*ps, level, name, (char *) &val, &len) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "getsockopt failed");
-        return 2;
-    }
+    int len = sizeof(val);
+    int err = opt_get(L, ps, level, name, (char *) &val, &len);
+    if (err)
+        return err;
     lua_pushboolean(L, val);
     return 1;
 }

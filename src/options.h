@@ -33,14 +33,18 @@ int opt_set_ip_multicast_loop(lua_State *L, p_socket ps);
 int opt_set_ip_add_membership(lua_State *L, p_socket ps);
 int opt_set_ip_drop_membersip(lua_State *L, p_socket ps);
 int opt_set_ip6_v6only(lua_State *L, p_socket ps);
-/* invokes the appropriate option handler */
-int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps);
 
 /* supported options for getoption */
+int opt_get_reuseaddr(lua_State *L, p_socket ps);
+int opt_get_tcp_nodelay(lua_State *L, p_socket ps);
+int opt_get_keepalive(lua_State *L, p_socket ps);
+int opt_get_linger(lua_State *L, p_socket ps);
+int opt_get_reuseaddr(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_loop(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_if(lua_State *L, p_socket ps);
-/* invokes the appropriate option handler */
-int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps);
 
+/* invokes the appropriate option handler */
+int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps);
+int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps);
 
 #endif

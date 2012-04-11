@@ -1,30 +1,35 @@
 PLAT?=macosx
+LUAV?=5.1
+prefix=/usr/local
+#prefix=/opt/local
+#prefix=.
 
-INSTALL_DATA=cp
-INSTALL_EXEC=cp
-#INSTALL_TOP=/opt/local
-INSTALL_TOP=./
-
+LUAINC_macosx=/usr/local/include
 #LUAINC_macosx=/opt/local/include
-LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.2.0-beta/src
+#LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.2.0-beta/src
 #LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.1.4/src
 
-LUAINC_linux=/usr/include/lua5.1
+#LUAINC_linux=/usr/local/include/lua$(LUAV)
+LUAINC_linux=/usr/include/lua$(LUAV)
+#LUAINC_linux=/usr/local/include
+
 LUAINC_win32="../../lua-5.1.3/src"
 LUALIB_win32="../../lua-5.1.3"
 
 #------
 # Install directories
 #
-#INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/5.1
-#INSTALL_TOP_LIB=$(INSTALL_TOP)/lib/lua/5.1
-INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/5.2
-INSTALL_TOP_LIB=$(INSTALL_TOP)/lib/lua/5.2
+
+INSTALL_DATA=cp
+INSTALL_EXEC=cp
+INSTALL_TOP=$(DESTDIR)$(prefix)
+
+INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/$(LUAV)
+INSTALL_TOP_LIB=$(INSTALL_TOP)/lib/lua/$(LUAV)
 
 INSTALL_SOCKET_SHARE=$(INSTALL_TOP_SHARE)/socket
 INSTALL_SOCKET_LIB=$(INSTALL_TOP_LIB)/socket
-#INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/mime
-INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/foo/mime
+INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/mime
 INSTALL_MIME_LIB=$(INSTALL_TOP_LIB)/mime
 
 #------
@@ -78,7 +83,7 @@ LDFLAGS_win32= /nologo /link /NOLOGO /DLL /INCREMENTAL:NO \
     /MANIFESTFILE:"intermediate.manifest" \
     /MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
 	/SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /DYNAMICBASE:NO \
-    /MACHINE:X86 ws2_32.lib lua5.1.lib /OUT:
+    /MACHINE:X86 ws2_32.lib lua$(LUAV).lib /OUT:
 LD_win32=cl
 SOCKET_win32=wsocket.obj
 
@@ -97,6 +102,7 @@ MIME_V=1.0.3
 SOCKET_SO=socket.$(SO).$(SOCKET_V)
 MIME_SO=mime.$(SO).$(MIME_V)
 UNIX_SO=unix.$(SO)
+SERIAL_SO=serial.$(SO)
 SOCKET=$(SOCKET_$(PLAT))
 
 #------
@@ -118,7 +124,7 @@ SOCKET_OBJS= \
 	timeout.$(O) \
 	buffer.$(O) \
 	io.$(O) \
-    auxiliar.$(O) \
+	auxiliar.$(O) \
 	options.$(O) \
 	inet.$(O) \
 	$(SOCKET) \
@@ -148,6 +154,19 @@ UNIX_OBJS=\
 	lua_typeerror.$(O)
 
 #------
+# Modules belonging to serial (device streams)
+#
+SERIAL_OBJS:=\
+	buffer.$(O) \
+	auxiliar.$(O) \
+	options.$(O) \
+	timeout.$(O) \
+	io.$(O) \
+	usocket.$(O) \
+	serial.$(O) \
+	lua_typeerror.$(O)
+
+#------
 # Files to install
 #
 TO_SOCKET_SHARE= \
@@ -169,13 +188,13 @@ TO_TOP_SHARE= \
 default: $(PLAT)
 
 macosx:
-	$(MAKE) all PLAT=macosx
+	$(MAKE) all-unix PLAT=macosx
 
 win32:
 	$(MAKE) all PLAT=win32
 
 linux:
-	$(MAKE) all PLAT=linux
+	$(MAKE) all-unix PLAT=linux
 
 none:
 	@echo "Please run"
@@ -191,8 +210,13 @@ $(SOCKET_SO): $(SOCKET_OBJS)
 $(MIME_SO): $(MIME_OBJS)
 	$(LD) $(MIME_OBJS) $(LDFLAGS)$@ 
 
+all-unix: all $(UNIX_SO) $(SERIAL_SO)
+
 $(UNIX_SO): $(UNIX_OBJS)
 	$(LD) $(UNIX_OBJS) $(LDFLAGS)$@ 
+
+$(SERIAL_SO): $(SERIAL_OBJS)
+	$(LD) $(SERIAL_OBJS) $(LDFLAGS)$@
 
 install: 
 	mkdir -p $(INSTALL_TOP_SHARE)
@@ -204,12 +228,16 @@ install:
 	mkdir -p $(INSTALL_MIME_LIB)
 	$(INSTALL_EXEC) $(MIME_SO) $(INSTALL_MIME_LIB)/core.$(SO)
 
+install-unix: install
+	$(INSTALL_EXEC) $(UNIX_SO) $(INSTALL_SOCKET_LIB)/$(UNIX_SO)
+	$(INSTALL_EXEC) $(SERIAL_SO) $(INSTALL_SOCKET_LIB)/$(SERIAL_SO)
+
 local:
 	$(MAKE) install INSTALL_TOP_LIB=.. INSTALL_TOP_SHARE=..
 
 clean:
 	rm -f $(SOCKET_SO) $(SOCKET_OBJS)
-	rm -f $(MIME_SO) $(UNIX_SO) $(MIME_OBJS) $(UNIX_OBJS)
+	rm -f $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
 
 .PHONY: all $(PLATS) default clean echo none
 
@@ -228,6 +256,8 @@ mime.$(O): mime.c mime.h
 options.$(O): options.c auxiliar.h options.h socket.h io.h \
 	timeout.h usocket.h inet.h
 select.$(O): select.c socket.h io.h timeout.h usocket.h select.h
+serial.$(O): serial.c auxiliar.h socket.h io.h timeout.h usocket.h \
+  options.h unix.h buffer.h
 tcp.$(O): tcp.c auxiliar.h socket.h io.h timeout.h usocket.h \
 	inet.h options.h tcp.h buffer.h
 timeout.$(O): timeout.c auxiliar.h timeout.h

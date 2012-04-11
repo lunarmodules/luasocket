@@ -244,6 +244,10 @@ method or <tt>accept</tt> might block forever.
 it to <tt>select</tt>, it will be ignored.
 </p>
 
+<p class=note>
+<b>Using select with non-socket objects</b>: Any object that implements <tt>getfd</tt> and <tt>dirty</tt> can be used with <tt>select</tt>, allowing objects from other libraries to be used within a <tt>socket.select</tt> driven loop.
+</p>
+
 <!-- sink ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=sink> 

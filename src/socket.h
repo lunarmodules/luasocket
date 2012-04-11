@@ -67,6 +67,9 @@ const char *socket_strerror(int err);
 int socket_send(p_socket ps, const char *data, size_t count, 
         size_t *sent, p_timeout tm);
 int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm);
+int socket_write(p_socket ps, const char *data, size_t count, 
+        size_t *sent, p_timeout tm);
+int socket_read(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm);
 const char *socket_ioerror(p_socket ps, int err);
 
 int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp);
