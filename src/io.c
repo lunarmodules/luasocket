@@ -2,7 +2,7 @@
 * Input/Output abstraction
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: io.c,v 1.6 2005/09/29 06:11:41 diego Exp $
 \*=========================================================================*/
 #include "io.h"
 

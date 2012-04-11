@@ -6,7 +6,7 @@
 * The penalty of calling select to avoid busy-wait is only paid when
 * the I/O call fail in the first place. 
 *
-* RCS ID: $Id$
+* RCS ID: $Id: usocket.c,v 1.38 2007/10/13 23:55:20 diego Exp $
 \*=========================================================================*/
 #include <string.h> 
 #include <signal.h>
@@ -368,3 +368,24 @@ const char *socket_ioerror(p_socket ps, int err) {
     (void) ps;
     return socket_strerror(err);
 } 
+
+const char *socket_gaistrerror(int err) {
+    if (err == 0) return NULL; 
+    switch (err) {
+        case EAI_AGAIN: return "temporary failure in name resolution";
+        case EAI_BADFLAGS: return "invalid value for ai_flags";
+        case EAI_BADHINTS: return "invalid value for hints";
+        case EAI_FAIL: return "non-recoverable failure in name resolution";
+        case EAI_FAMILY: return "ai_family not supported";
+        case EAI_MEMORY: return "memory allocation failure";
+        case EAI_NONAME: 
+            return "hostname or servname not provided, or not known";
+        case EAI_OVERFLOW: return "argument buffer overflow";
+        case EAI_PROTOCOL: return "resolved protocol is unknown";
+        case EAI_SERVICE: return "servname not supported for socktype";
+        case EAI_SOCKTYPE: return "ai_socktype not supported";
+        case EAI_SYSTEM: return strerror(errno); 
+        default: return "unknown error";
+    }
+}
+

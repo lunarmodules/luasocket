@@ -2,7 +2,7 @@
 -- Little program to download DICT word definitions
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id$
+-- RCS ID: $Id: dict.lua,v 1.22 2005/11/22 08:33:29 diego Exp $
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------

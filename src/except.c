@@ -2,7 +2,7 @@
 * Simple exception support
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: except.c,v 1.8 2005/09/29 06:11:41 diego Exp $
 \*=========================================================================*/
 #include <stdio.h>
 

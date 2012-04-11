@@ -2,7 +2,7 @@
 -- URI parsing, composition and relative URL resolution
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- RCS ID: $Id$
+-- RCS ID: $Id: url.lua,v 1.38 2006/04/03 04:45:42 diego Exp $
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
@@ -195,13 +195,7 @@ function build(parsed)
         end
         if userinfo then authority = userinfo .. "@" .. authority end
     end
-    if authority then 
-        if string.sub(url, 1, 1) == "/" then
-            url = "//" .. authority .. url 
-        else
-            url = "//" .. authority .. "/" .. url 
-        end
-    end
+    if authority then url = "//" .. authority .. url end
     if parsed.scheme then url = parsed.scheme .. ":" .. url end
     if parsed.fragment then url = url .. "#" .. parsed.fragment end
     -- url = string.gsub(url, "%s", "")
@@ -217,8 +211,8 @@ end
 --   corresponding absolute url
 -----------------------------------------------------------------------------
 function absolute(base_url, relative_url)
-    local base_parsed = base_url
     if base.type(base_url) == "table" then
+        base_parsed = base_url
         base_url = build(base_parsed)
     else
         base_parsed = parse(base_url)

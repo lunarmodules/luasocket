@@ -2,7 +2,7 @@
 * Unix domain socket 
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: unix.c,v 1.14 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include <string.h> 
 

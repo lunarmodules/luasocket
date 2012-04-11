@@ -2,7 +2,7 @@
 * Select implementation
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: select.c,v 1.23 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include <string.h>
 
@@ -95,8 +95,10 @@ static t_socket getfd(lua_State *L) {
     if (!lua_isnil(L, -1)) {
         lua_pushvalue(L, -2);
         lua_call(L, 1, 1);
-        if (lua_isnumber(L, -1)) 
-            fd = (t_socket) lua_tonumber(L, -1); 
+        if (lua_isnumber(L, -1)) {
+            double numfd = lua_tonumber(L, -1); 
+            fd = (numfd >= 0.0)? (t_socket) numfd: SOCKET_INVALID;
+        }
     } 
     lua_pop(L, 1);
     return fd;
@@ -134,8 +136,13 @@ static void collect_fd(lua_State *L, int tab, int itab,
         fd = getfd(L);
         if (fd != SOCKET_INVALID) {
             /* make sure we don't overflow the fd_set */
+#ifdef _WIN32
             if (n >= FD_SETSIZE) 
                 luaL_argerror(L, tab, "too many sockets");
+#else
+            if (fd >= FD_SETSIZE) 
+                luaL_argerror(L, tab, "descriptor too large for set size");
+#endif
             FD_SET(fd, set);
             n++;
             /* keep track of the largest descriptor so far */

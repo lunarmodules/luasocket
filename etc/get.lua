@@ -2,7 +2,7 @@
 -- Little program to download files from URLs
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id$
+-- RCS ID: $Id: get.lua,v 1.25 2007/03/12 04:08:40 diego Exp $
 -----------------------------------------------------------------------------
 local socket = require("socket")
 local http = require("socket.http")

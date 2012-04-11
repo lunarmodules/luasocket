@@ -2,7 +2,7 @@
 -- Select sample: simple text line server
 -- LuaSocket sample files.
 -- Author: Diego Nehab
--- RCS ID: $Id$
+-- RCS ID: $Id: tinyirc.lua,v 1.14 2005/11/22 08:33:29 diego Exp $
 -----------------------------------------------------------------------------
 local socket = require("socket")
 host = host or "*"

@@ -5,7 +5,7 @@
 * The penalty of calling select to avoid busy-wait is only paid when
 * the I/O call fail in the first place. 
 *
-* RCS ID: $Id$
+* RCS ID: $Id: wsocket.c,v 1.36 2007/06/11 23:44:54 diego Exp $
 \*=========================================================================*/
 #include <string.h>
 

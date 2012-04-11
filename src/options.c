@@ -2,7 +2,7 @@
 * Common option interface 
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: options.c,v 1.7 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include <string.h> 
 

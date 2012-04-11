@@ -2,7 +2,7 @@
 * UDP object 
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: udp.c,v 1.30 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include <string.h> 
 

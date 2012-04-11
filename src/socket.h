@@ -59,6 +59,7 @@ int socket_accept(p_socket ps, p_socket pa, SA *addr,
         socklen_t *addr_len, p_timeout tm);
 
 const char *socket_hoststrerror(int err);
+const char *socket_gaistrerror(int err);
 const char *socket_strerror(int err);
 
 /* these are perfect to use with the io abstraction module 

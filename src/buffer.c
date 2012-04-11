@@ -2,7 +2,7 @@
 * Input/Output interface for Lua programs
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: buffer.c,v 1.29 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include "lua.h"
 #include "lauxlib.h"

@@ -2,7 +2,7 @@
 * Internet domain functions
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: inet.c,v 1.28 2005/10/07 04:40:59 diego Exp $
 \*=========================================================================*/
 #include <stdio.h>
 #include <string.h>
@@ -16,14 +16,16 @@
 * Internal function prototypes.
 \*=========================================================================*/
 static int inet_global_toip(lua_State *L);
+static int inet_global_toip6(lua_State *L);
 static int inet_global_tohostname(lua_State *L);
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
 static int inet_global_gethostname(lua_State *L);
 
 /* DNS functions */
 static luaL_reg func[] = {
-    { "toip", inet_global_toip },
-    { "tohostname", inet_global_tohostname },
+    { "toip", inet_global_toip},
+    { "toip6", inet_global_toip6},
+    { "tohostname", inet_global_tohostname},
     { "gethostname", inet_global_gethostname},
     { NULL, NULL}
 };
@@ -93,6 +95,50 @@ static int inet_global_toip(lua_State *L)
     lua_pushstring(L, inet_ntoa(*((struct in_addr *) hp->h_addr)));
     inet_pushresolved(L, hp);
     return 2;
+}
+
+static int inet_global_toip6(lua_State *L)
+{
+    const char *hostname = luaL_checkstring(L, 1);
+    struct addrinfo *iterator = NULL, *resolved = NULL;
+    struct addrinfo hints;
+    int i = 1, ret = 0;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = PF_UNSPEC;
+    ret = getaddrinfo(hostname, NULL, &hints, &resolved);
+    if (ret != 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "getaddrinfo returned error");
+        return 2;
+    }
+    lua_newtable(L);
+    for (iterator = resolved; iterator; iterator = iterator->ai_next) {
+        char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+        getnameinfo(iterator->ai_addr, iterator->ai_addrlen, hbuf, sizeof(hbuf),
+                sbuf, 0, NI_NUMERICHOST);
+        lua_pushnumber(L, i);
+        lua_newtable(L);
+        switch (iterator->ai_family) {
+            case AF_INET:
+                lua_pushliteral(L, "family");
+                lua_pushliteral(L, "inet");
+                lua_settable(L, -3);
+                break;
+            case AF_INET6:
+                lua_pushliteral(L, "family");
+                lua_pushliteral(L, "inet6");
+                lua_settable(L, -3);
+                break;;
+        }
+        lua_pushliteral(L, "addr");
+        lua_pushstring(L, hbuf);
+        lua_settable(L, -3);
+        lua_settable(L, -3);
+        i++;
+    } 
+    freeaddrinfo(resolved);
+    return 1;
 }
 
 

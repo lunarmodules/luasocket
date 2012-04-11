@@ -2,7 +2,7 @@
 * TCP object 
 * LuaSocket toolkit
 *
-* RCS ID: $Id$
+* RCS ID: $Id: tcp.c,v 1.42 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include <string.h> 
 
@@ -19,6 +19,8 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int global_create(lua_State *L);
+static int global_connect6(lua_State *L);
+static int global_bind6(lua_State *L);
 static int meth_connect(lua_State *L);
 static int meth_listen(lua_State *L);
 static int meth_bind(lua_State *L);
@@ -75,6 +77,8 @@ static t_opt optset[] = {
 /* functions in library namespace */
 static luaL_reg func[] = {
     {"tcp", global_create},
+    {"connect6", global_connect6},
+    {"bind6", global_bind6},
     {NULL, NULL}
 };
 
@@ -208,6 +212,7 @@ static int meth_bind(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_connect(lua_State *L)
 {
+
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
     const char *address =  luaL_checkstring(L, 2);
     unsigned short port = (unsigned short) luaL_checknumber(L, 3);
@@ -220,7 +225,6 @@ static int meth_connect(lua_State *L)
         lua_pushstring(L, err);
         return 2;
     }
-    /* turn master object into a client object */
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -313,8 +317,7 @@ static int meth_settimeout(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Creates a master tcp object 
 \*-------------------------------------------------------------------------*/
-static int global_create(lua_State *L)
-{
+static int global_create(lua_State *L) {
     t_socket sock;
     const char *err = inet_trycreate(&sock, SOCK_STREAM);
     /* try to allocate a system socket */
@@ -336,4 +339,174 @@ static int global_create(lua_State *L)
         lua_pushstring(L, err);
         return 2;
     }
+}
+
+static const char *trybind6(const char *localaddr, const char *localserv,
+    struct addrinfo *bindhints, p_tcp tcp) {
+    struct addrinfo *iterator = NULL, *resolved = NULL;
+    const char *err = NULL;
+    /* translate luasocket special values to C */
+    if (strcmp(localaddr, "*") == 0) localaddr = NULL;
+    if  (!localserv) localserv = "0";
+    /* try resolving */
+    err = socket_gaistrerror(getaddrinfo(localaddr, localserv, 
+            bindhints, &resolved));
+    if (err) {
+        if (resolved) freeaddrinfo(resolved);
+        return err;
+    }
+    /* iterate over resolved addresses until one is good */
+    for (iterator = resolved; iterator; iterator = iterator->ai_next) {
+        /* create a new socket each time because parameters
+         * may have changed */
+        const char *err = socket_strerror(socket_create(&tcp->sock, 
+            iterator->ai_family, iterator->ai_socktype, 
+            iterator->ai_protocol));
+        /* if failed to create socket, bail out */
+        if (err != NULL) {
+            freeaddrinfo(resolved);
+            return err;
+        }
+        /* all sockets are set as non-blocking initially */
+        socket_setnonblocking(&tcp->sock);
+        /* try binding to local address */
+        err = socket_strerror(socket_bind(&tcp->sock, 
+            (SA *) iterator->ai_addr,
+            iterator->ai_addrlen));
+        /* if faiiled, we try the next one */
+        if (err != NULL) socket_destroy(&tcp->sock);
+        /* if success, we abort loop */
+        else break;
+    }
+    /* at this point, if err is not set, se succeeded */
+    if (err == NULL) {
+        /* save family of chosen local address */ 
+        bindhints->ai_family = iterator->ai_family;
+    }
+    /* cleanup and return error */
+    freeaddrinfo(resolved);
+    return err; 
+}
+
+static int global_bind6(lua_State *L) {
+    const char *localaddr  = luaL_checkstring(L, 1);
+    const char *localserv  = luaL_checkstring(L, 2);
+    int backlog = luaL_checkint(L, 3);
+    p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
+    struct addrinfo bindhints;
+    const char *err = NULL;
+    /* initialize tcp structure */
+    io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv, 
+            (p_error) socket_ioerror, &tcp->sock);
+    timeout_init(&tcp->tm, -1, -1);
+    buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
+    tcp->sock = SOCKET_INVALID;
+    /* try binding to local address */
+    memset(&bindhints, 0, sizeof(bindhints));
+    bindhints.ai_socktype = SOCK_STREAM;
+    bindhints.ai_family = PF_UNSPEC;
+    bindhints.ai_flags = AI_PASSIVE;
+    err = trybind6(localaddr, localserv, &bindhints, tcp);
+    if (err == NULL) {
+        /* all server sockets initially with reuseaddr set */
+        int val = 1;
+        setsockopt(tcp->sock, SOL_SOCKET, SO_REUSEADDR, 
+            (char *) &val, sizeof(val));
+        /* set the backlog and listen */
+        err = socket_strerror(socket_listen(&tcp->sock, backlog));
+        if (err) {
+            socket_destroy(&tcp->sock);
+            lua_pushnil(L);
+            lua_pushstring(L, err); 
+            return 2;
+        }
+        auxiliar_setclass(L, "tcp{server}", -1);
+        return 1;
+    } else {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+}
+
+static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
+    struct addrinfo *connecthints, p_tcp tcp) {
+    struct addrinfo *iterator = NULL, *resolved = NULL;
+    const char *err = NULL;
+    /* try resolving */
+    err = socket_gaistrerror(getaddrinfo(remoteaddr, remoteserv, 
+                connecthints, &resolved));
+    if (err != NULL) {
+        if (resolved) freeaddrinfo(resolved);
+        return err; 
+    }
+    /* iterate over all returned addresses trying to connect */
+    for (iterator = resolved; iterator; iterator = iterator->ai_next) {
+        p_timeout tm = timeout_markstart(&tcp->tm);
+        /* create new socket if one wasn't created by the bind stage */
+        if (tcp->sock == SOCKET_INVALID) {
+            const char *err = socket_strerror(socket_create(&tcp->sock, 
+                iterator->ai_family, iterator->ai_socktype, 
+                iterator->ai_protocol));
+            if (err != NULL) {
+                freeaddrinfo(resolved);
+                return err;
+            }
+            /* all sockets initially non-blocking */
+            socket_setnonblocking(&tcp->sock);
+        }
+        /* finally try connecting to remote address */
+        err = socket_strerror(socket_connect(&tcp->sock, 
+            (SA *) iterator->ai_addr,
+            iterator->ai_addrlen, tm));
+        /* if success, break out of loop */
+        if (err == NULL) break;
+    }
+
+    freeaddrinfo(resolved);
+    /* here, if err is set, we failed */
+    return err;
+}
+
+static int global_connect6(lua_State *L) {
+    const char *remoteaddr = luaL_checkstring(L, 1);
+    const char *remoteserv = luaL_checkstring(L, 2);
+    const char *localaddr  = luaL_optstring(L, 3, NULL);
+    const char *localserv  = luaL_optstring(L, 4, "0");
+    p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
+    struct addrinfo bindhints, connecthints;
+    const char *err = NULL;
+    /* initialize tcp structure */
+    io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv, 
+            (p_error) socket_ioerror, &tcp->sock);
+    timeout_init(&tcp->tm, -1, -1);
+    buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
+    tcp->sock = SOCKET_INVALID;
+    /* allow user to pick local address and port */
+    memset(&bindhints, 0, sizeof(bindhints));
+    bindhints.ai_socktype = SOCK_STREAM;
+    bindhints.ai_family = PF_UNSPEC;
+    bindhints.ai_flags = AI_PASSIVE;
+    if (localaddr) {
+        err = trybind6(localaddr, localserv, &bindhints, tcp);
+        if (err) {
+            lua_pushnil(L);
+            lua_pushstring(L, err);
+            return 2;
+        }
+    }
+    /* try to connect to remote address and port */
+    memset(&connecthints, 0, sizeof(connecthints));
+    connecthints.ai_socktype = SOCK_STREAM;
+    /* make sure we try to connect only to the same family */
+    connecthints.ai_family = bindhints.ai_family; 
+    err = tryconnect6(remoteaddr, remoteserv, &connecthints, tcp);
+    if (err) {
+        socket_destroy(&tcp->sock);
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+    auxiliar_setclass(L, "tcp{client}", -1);
+    return 1;
 }
