@@ -42,5 +42,6 @@ void *auxiliar_getclassudata(lua_State *L, const char *groupname, int objidx);
 void *auxiliar_getgroupudata(lua_State *L, const char *groupname, int objidx);
 int auxiliar_checkboolean(lua_State *L, int objidx);
 int auxiliar_tostring(lua_State *L);
+int auxiliar_typeerror(lua_State *L, int narg, const char *tname);
 
 #endif /* AUXILIAR_H */

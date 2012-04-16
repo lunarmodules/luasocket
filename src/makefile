@@ -1,10 +1,11 @@
 PLAT?=macosx
 LUAV?=5.1
-prefix=/usr/local
+prefix=../../../build/lua/$(LUAV)
+#prefix=/usr/local
 #prefix=/opt/local
 #prefix=.
 
-LUAINC_macosx=/usr/local/include
+LUAINC_macosx=../../../build/lua/$(LUAV)/include
 #LUAINC_macosx=/opt/local/include
 #LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.2.0-beta/src
 #LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.1.4/src
@@ -131,8 +132,7 @@ SOCKET_OBJS= \
 	except.$(O) \
 	select.$(O) \
 	tcp.$(O) \
-	udp.$(O) \
-	lua_typeerror.$(O)
+	udp.$(O)
 
 #------
 # Modules belonging mime-core
@@ -150,8 +150,7 @@ UNIX_OBJS=\
 	timeout.$(O) \
 	io.$(O) \
 	usocket.$(O) \
-	unix.$(O) \
-	lua_typeerror.$(O)
+	unix.$(O)
 
 #------
 # Modules belonging to serial (device streams)
@@ -163,8 +162,7 @@ SERIAL_OBJS:=\
 	timeout.$(O) \
 	io.$(O) \
 	usocket.$(O) \
-	serial.$(O) \
-	lua_typeerror.$(O)
+	serial.$(O)
 
 #------
 # Files to install
