@@ -36,16 +36,16 @@
 
 <!-- tcp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<h2 id=tcp>TCP</h2> 
+<h2 id="tcp">TCP</h2> 
 
 <!-- socket.tcp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=socket.tcp> 
+<p class=name id="socket.tcp"> 
 socket.<b>tcp()</b>
 </p>
 
 <p class=description> 
-Creates and returns a TCP master object. A master object can
+Creates and returns an IPv4 TCP master object. A master object can
 be transformed into a server object with the method 
 <a href=#listen><tt>listen</tt></a> (after a call to <a
 href=#bind><tt>bind</tt></a>) or into a client object with 
@@ -58,9 +58,34 @@ In case of success, a new master object is returned. In case of error,
 <b><tt>nil</tt></b> is returned, followed by an error message.
 </p>
 
+<!-- socket.tcp6 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="socket.tcp6"> 
+socket.<b>tcp6()</b>
+</p>
+
+<p class=description> 
+Creates and returns an IPv6 TCP master object. A master object can
+be transformed into a server object with the method 
+<a href=#listen><tt>listen</tt></a> (after a call to <a
+href=#bind><tt>bind</tt></a>) or into a client object with 
+the method <a href=#connect><tt>connect</tt></a>. The only other 
+method supported by a master object is the 
+<a href=#close><tt>close</tt></a> method.</p>
+
+<p class=return>
+In case of success, a new master object is returned. In case of error,
+<b><tt>nil</tt></b> is returned, followed by an error message.
+</p>
+
+<p class=note>
+Note: The TCP object returned will have the option
+"<tt>ipv6-v6only</tt>" set to <tt><b>true</b></tt>.
+</p>
+
 <!-- accept +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=accept> 
+<p class=name id="accept"> 
 server:<b>accept()</b>
 </p>
 
@@ -87,7 +112,7 @@ might block until <em>another</em> client shows up.
 
 <!-- bind +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=bind> 
+<p class=name id="bind"> 
 master:<b>bind(</b>address, port<b>)</b>
 </p>
 
@@ -116,7 +141,7 @@ is available and is a shortcut for the creation of server sockets.
 
 <!-- close ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=close> 
+<p class=name id="close"> 
 master:<b>close()</b><br>
 client:<b>close()</b><br>
 server:<b>close()</b>
@@ -139,7 +164,7 @@ automatically closed before destruction, though.
 
 <!-- connect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=connect>
+<p class=name id="connect">
 master:<b>connect(</b>address, port<b>)</b>
 </p>
 
@@ -180,9 +205,18 @@ href=socket.html#select><tt>socket.select</tt></a> with the socket in the
 established.
 </p>
 
+<p class=note>
+Note: Starting with LuaSocket 2.1, the host name resolution
+depends on whether the socket was created by <a
+href=#socket.tcp><tt>socket.tcp</tt></a> or <a
+href=#socket.tcp6><tt>socket.tcp6</tt></a>. Addresses from
+the appropriate family are tried in succession until the
+first success or until the last failure.
+</p>
+
 <!-- getpeername ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=getpeername>
+<p class=name id="getpeername">
 client:<b>getpeername()</b>
 </p>
 
@@ -202,7 +236,7 @@ Note: It makes no sense to call this method on server objects.
 
 <!-- getsockname ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=getsockname>
+<p class=name id="getsockname">
 master:<b>getsockname()</b><br>
 client:<b>getsockname()</b><br>
 server:<b>getsockname()</b>
@@ -219,7 +253,7 @@ the port. In case of error, the method returns <b><tt>nil</tt></b>.
 
 <!-- getstats +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=getstats>
+<p class=name id="getstats">
 master:<b>getstats()</b><br>
 client:<b>getstats()</b><br>
 server:<b>getstats()</b><br>
@@ -237,7 +271,7 @@ and the age of the socket object in seconds.
 
 <!-- listen ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=listen> 
+<p class=name id="listen"> 
 master:<b>listen(</b>backlog<b>)</b>
 </p>
 
@@ -265,7 +299,7 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 
 <!-- receive ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=receive>
+<p class=name id="receive">
 client:<b>receive(</b>[pattern [, prefix]]<b>)</b>
 </p>
 
@@ -316,7 +350,7 @@ too.
 
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=send>
+<p class=name id="send">
 client:<b>send(</b>data [, i [, j]]<b>)</b>
 </p>
 
@@ -354,7 +388,7 @@ instead of calling the method several times.
 
 <!-- setoption ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=setoption>
+<p class=name id="setoption">
 client:<b>setoption(</b>option [, value]<b>)</b><br>
 server:<b>setoption(</b>option [, value]<b>)</b>
 </p>
@@ -392,8 +426,11 @@ used in validating addresses supplied in a call to
 <a href=#bind><tt>bind</tt></a> should allow reuse of local addresses;
 
 <li> '<tt>tcp-nodelay</tt>': Setting this option to <tt>true</tt> 
-disables the Nagle's algorithm for the connection.
+disables the Nagle's algorithm for the connection;
 
+<li> '<tt>ipv6-v6only</tt>':
+Setting this option to <tt>true</tt> restricts an <tt>inet6</tt> socket to
+sending and receiving only IPv6 packets.
 </ul>
 
 <p class=return>
@@ -407,7 +444,7 @@ Note: The descriptions above come from the man pages.
 
 <!-- getoption ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=getoption>
+<p class=name id="getoption">
 client:<b>getoption(</b>option)</b><br>
 server:<b>getoption(</b>option)</b>
 </p>
@@ -433,13 +470,9 @@ The method returns the option <tt>value</tt> in case of success, or
 <b><tt>nil</tt></b> followed by an error message otherwise.
 </p>
 
-<p class=note>
-Note: The descriptions above come from the man pages.
-</p>
-
 <!-- setstats +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=setstats>
+<p class=name id="setstats">
 master:<b>setstats(</b>received, sent, age<b>)</b><br>
 client:<b>setstats(</b>received, sent, age<b>)</b><br>
 server:<b>setstats(</b>received, sent, age<b>)</b><br>
@@ -462,7 +495,7 @@ The method returns 1 in case of success and <tt><b>nil</b></tt> otherwise.
 
 <!-- settimeout +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=settimeout>
+<p class=name id="settimeout">
 master:<b>settimeout(</b>value [, mode]<b>)</b><br>
 client:<b>settimeout(</b>value [, mode]<b>)</b><br>
 server:<b>settimeout(</b>value [, mode]<b>)</b>
@@ -519,7 +552,7 @@ contained verbs making their imperative nature obvious.
 
 <!-- shutdown +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=shutdown>
+<p class=name id="shutdown">
 client:<b>shutdown(</b>mode<b>)</b><br>
 </p>
 
@@ -543,7 +576,7 @@ This function returns 1.
 
 <!-- dirty +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=dirty>
+<p class=name id="dirty">
 master:<b>dirty()</b><br>
 client:<b>dirty()</b><br>
 server:<b>dirty()</b>
@@ -563,7 +596,7 @@ Note: <b>This is an internal method, any use is unlikely to be portable.</b>
 
 <!-- getfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=getfd>
+<p class=name id="getfd">
 master:<b>getfd()</b><br>
 client:<b>getfd()</b><br>
 server:<b>getfd()</b>
@@ -583,7 +616,7 @@ Note: <b>This is an internal method, any use is unlikely to be portable.</b>
 
 <!-- setfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=setfd>
+<p class=name id="setfd">
 master:<b>setfd(</b>fd<b>)</b><br>
 client:<b>setfd(</b>fd<b>)</b><br>
 server:<b>setfd(</b>fd<b>)</b>

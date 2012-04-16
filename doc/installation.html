@@ -39,24 +39,16 @@ Installation">
 
 <h2>Installation</h2>
 
-<p> LuaSocket 2.0.2 uses the new package system for Lua 5.1.  
-All Lua library developers are encouraged to update their libraries so that
-all libraries can coexist peacefully and users can benefit from the
-standardization and flexibility of the standard.
-</p>
+<p> LuaSocket 2.1.1-rc still uses Lua&nbsp;5.1's package
+system. Users that have already made the switch to
+Lua&nbsp;5.2 should leave the default
+<tt>LUA_COMPAT_MODULE</tt> defined when compiling their Lua
+distribution for compatibility with LuaSocket. </p>
 
-<p> 
-Those stuck with Lua 5.0 will need the 
-<a href=http://www.keplerproject.org/compat/>compat-5.1</a> 
-module. It is maintained by 
-<a href=http://www.keplerproject.org/>The Kepler
-Project</a>'s team, and implements the Lua 5.1 package proposal 
-on top of Lua 5.0. </p>
-
-<p> Here we will only describe the standard distribution.
-If the standard doesn't meet your needs, we refer you to the
-Lua discussion list, where any question about the package
-scheme will likely already have been answered.  </p>
+<p> Here we describe the standard distribution.  If the
+standard doesn't meet your needs, we refer you to the Lua
+discussion list, where any question about the package scheme
+will likely already have been answered.  </p>
 
 <h3>Directory structure</h3>
 
@@ -64,14 +56,19 @@ scheme will likely already have been answered.  </p>
 directories, one for system dependent files, and another for system
 independent files. Let's call these directories <tt>&lt;CDIR&gt;</tt> 
 and <tt>&lt;LDIR&gt;</tt>, respectively. 
-For instance, in my laptop, I use '<tt>/usr/local/lib/lua/5.0</tt>' for
-<tt>&lt;CDIR&gt;</tt> and '<tt>/usr/local/share/lua/5.0</tt>' for
-<tt>&lt;LDIR&gt;</tt>. On Windows, sometimes only one directory is used, say
-'<tt>c:\program files\lua\5.0</tt>'. Here is the standard LuaSocket 
+For example, in my laptp, Lua&nbsp;5.1 is configured to
+use '<tt>/usr/local/lib/lua/5.1</tt>' for
+<tt>&lt;CDIR&gt;</tt> and '<tt>/usr/local/share/lua/5.1</tt>' for
+<tt>&lt;LDIR&gt;</tt>. On Windows, <tt>&lt;CDIR&gt;</tt>
+usually points to the directory where the Lua executable is
+found, and <tt>&lt;LDIR&gt;</tt> points to a
+<tt>lua/</tt> directory inside <tt>&lt;CDIR&gt;</tt>. (These
+settings can be overridden by environment variables 
+<tt>LUA_PATH</tt> and <tt>LUA_CPATH</tt>. See the Lua
+documentation for details.) Here is the standard LuaSocket 
 distribution directory structure:</p>
 
 <pre class=example>
-&lt;LDIR&gt;/compat-5.1.lua
 &lt;LDIR&gt;/ltn12.lua
 &lt;LDIR&gt;/socket.lua
 &lt;CDIR&gt;/socket/core.dll
@@ -88,33 +85,6 @@ distribution directory structure:</p>
 would be replaced by <tt>core.so</tt>.  
 </p>
 
-<p> In order for the interpreter to find all LuaSocket components, three
-environment variables need to be set. The first environment variable tells
-the interpreter to load the <tt>compat-5.1.lua</tt> module at startup: </p>
-
-<pre class=example>
-LUA_INIT=@&lt;LDIR&gt;/compat-5.1.lua
-</pre>
-
-<p>
-This is only need for Lua&nbsp;5.0! Lua&nbsp;5.1 comes with
-the package system built in, of course. 
-</p>
-
-<p>
-The other two environment variables instruct the compatibility module to
-look for dynamic libraries and extension modules in the appropriate
-directories and with the appropriate filename extensions.
-</p>
-
-<pre class=example>
-LUA_PATH=&lt;LDIR&gt;/?.lua;?.lua
-LUA_CPATH=&lt;CDIR&gt;/?.dll;?.dll
-</pre>
-
-<p> Again, naturally, on Unix systems the shared library extension would be
-<tt>.so</tt> instead of <tt>.dll</tt>.</p>
-
 <h3>Using LuaSocket</h3>
 
 <p> With the above setup, and an interpreter with shared library support,
@@ -122,19 +92,19 @@ it should be easy to use LuaSocket. Just fire the interpreter and use the
 <tt>require</tt> function to gain access to whatever module you need:</p>
 
 <pre class=example>
-Lua 5.1.2  Copyright (C) 1994-2007 Lua.org, PUC-Rio
+Lua 5.1.5  Copyright (C) 1994-2012 Lua.org, PUC-Rio
 &gt; socket = require("socket")
 &gt; print(socket._VERSION)
---&gt; LuaSocket 2.0.2
+--&gt; LuaSocket 2.1.1-rc1
 </pre>
 
 <p> Each module loads their dependencies automatically, so you only need to
 load the modules you directly depend upon: </p>
 
 <pre class=example>
-Lua 5.1.2  Copyright (C) 1994-2007 Lua.org, PUC-Rio
+Lua 5.1.5  Copyright (C) 1994-2012 Lua.org, PUC-Rio
 &gt; http = require("socket.http")
-&gt; print(http.request("http://www.cs.princeton.edu/~diego/professional/luasocket"))
+&gt; print(http.request("http://www.impa.br/~diego/software/luasocket"))
 --&gt; homepage gets dumped to terminal
 </pre>
 
@@ -153,7 +123,7 @@ Lua 5.1.2  Copyright (C) 1994-2007 Lua.org, PUC-Rio
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Thu Apr 20 00:25:30 EDT 2006
+Mon Apr 16 21:01:42 HKT 2012
 </small>
 </p>
 </center>

@@ -39,12 +39,16 @@
 <h2 id=dns>DNS</h2> 
 
 <p>
-Name resolution functions return <em>all</em> information obtained from the
-resolver in a table of the form:
+IPv4 name resolution functions 
+<a href=#toip><tt>dns.toip</tt></a>
+and
+<a href=#tohostname><tt>dns.tohostname</tt></a>
+return <em>all</em> information obtained from 
+the resolver in a table of the form:
 </p>
 
 <blockquote><tt>
-resolved = {<br>
+resolved4 = {<br>
 &nbsp;&nbsp;name = <i>canonic-name</i>,<br>
 &nbsp;&nbsp;alias = <i>alias-list</i>,<br>
 &nbsp;&nbsp;ip = <i>ip-address-list</i><br>
@@ -53,6 +57,53 @@ resolved = {<br>
 
 <p>
 Note that the <tt>alias</tt> list can be empty.
+</p>
+
+<p>
+The more general name resolution function 
+<a href=#getaddrinfo><tt>dns.getaddrinfo</tt></a>, which
+supports both IPv6 and IPv4,
+returns <em>all</em> information obtained from 
+the resolver in a table of the form:
+</p>
+
+<blockquote><tt>
+resolved6 = {<br>
+&nbsp;&nbsp;[1] = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;family = <i>family-name-1</i>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;addr = <i>address-1</i><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;...<br>
+&nbsp;&nbsp;[n] = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;family = <i>family-name-n</i>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;addr = <i>address-n</i><br>
+&nbsp;&nbsp;}<br>
+}
+</tt> </blockquote>
+
+<p>
+Here, <tt>family</tt> contains the string <tt>"inet"</tt> for IPv4
+addresses, and <tt>"inet6"</tt> for IPv6 addresses.
+</p>
+
+<!-- getaddrinfo ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=getaddrinfo> 
+socket.dns.<b>getaddrinfo(</b>address<b>)</b>
+</p>
+
+<p class=description>
+Converts from host name to address. 
+</p>
+
+<p class=parameters>
+<tt>Address</tt> can  be an IPv4 or IPv6 address or host name. 
+</p>
+
+<p class=return>
+The function returns a table with  all  information returned  by
+the  resolver.  In  case of error, the function returns <b><tt>nil</tt></b>
+followed by an error message.  
 </p>
 
 <!-- gethostname ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -72,7 +123,7 @@ socket.dns.<b>tohostname(</b>address<b>)</b>
 </p>
 
 <p class=description>
-Converts from IP address to host name.
+Converts from IPv4 address to host name.
 </p>
 
 <p class=parameters>
@@ -93,7 +144,7 @@ socket.dns.<b>toip(</b>address<b>)</b>
 </p>
 
 <p class=description>
-Converts from host name to IP address.
+Converts from host name to IPv4 address.
 </p>
 
 <p class=parameters>

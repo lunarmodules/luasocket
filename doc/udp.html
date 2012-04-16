@@ -37,7 +37,7 @@
 
 <!-- udp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<h2 id=udp>UDP</h2> 
+<h2 id="udp">UDP</h2> 
 
 <!-- socket.udp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -46,10 +46,12 @@ socket.<b>udp()</b>
 </p>
 
 <p class="description">
-Creates and returns an unconnected UDP object. Unconnected objects support the 
+Creates and returns an unconnected IPv4 UDP object. 
+Unconnected objects support the 
 <a href="#sendto"><tt>sendto</tt></a>, 
 <a href="#receive"><tt>receive</tt></a>, 
 <a href="#receivefrom"><tt>receivefrom</tt></a>, 
+<a href="#getoption"><tt>getoption</tt></a>, 
 <a href="#getsockname"><tt>getsockname</tt></a>, 
 <a href="#setoption"><tt>setoption</tt></a>, 
 <a href="#settimeout"><tt>settimeout</tt></a>, 
@@ -65,6 +67,44 @@ In case of success, a new unconnected UDP object
 returned. In case of error, <b><tt>nil</tt></b> is returned, followed by
 an error message.
 </p>
+
+<!-- socket.udp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="socket.udp6">
+socket.<b>udp6()</b>
+</p>
+
+<p class="description">
+Creates and returns an unconnected IPv6 UDP object. 
+Unconnected objects support the 
+<a href="#sendto"><tt>sendto</tt></a>, 
+<a href="#receive"><tt>receive</tt></a>, 
+<a href="#receivefrom"><tt>receivefrom</tt></a>, 
+<a href="#getoption"><tt>getoption</tt></a>, 
+<a href="#getsockname"><tt>getsockname</tt></a>, 
+<a href="#setoption"><tt>setoption</tt></a>, 
+<a href="#settimeout"><tt>settimeout</tt></a>, 
+<a href="#setpeername"><tt>setpeername</tt></a>, 
+<a href="#setsockname"><tt>setsockname</tt></a>, and 
+<a href="#close"><tt>close</tt></a>. 
+The <a href="#setpeername"><tt>setpeername</tt></a> 
+is used to connect the object.
+</p>
+
+<p class="return">
+In case of success, a new unconnected UDP object
+returned. In case of error, <b><tt>nil</tt></b> is returned, followed by
+an error message.
+</p>
+
+<p class=note>
+Note: The TCP object returned will have the option
+"<tt>ipv6-v6only</tt>" set to <tt><b>true</b></tt>.
+</p>
+
+
+
+<!-- close +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <!-- close +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -177,6 +217,40 @@ address and port as extra return values (and is therefore slightly less
 efficient).
 </p>
 
+<!-- getoption +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="getoption">
+connected:<b>getoption()</b><br>
+unconnected:<b>getoption()</b>
+</p>
+
+<p class="description">
+Gets an option value from the UDP object.
+See <a href=#setoption><tt>setoption</tt></a> for
+description of the option names and values.
+</p>
+
+<p class="parameters"><tt>Option</tt> is a string with the option name. 
+<ul>
+<li> '<tt>dontroute</tt>'
+<li> '<tt>broadcast</tt>'
+<li> '<tt>reuseaddr</tt>'
+<li> '<tt>reuseport</tt>'
+<li> '<tt>ip-multicast-loop</tt>'
+<li> '<tt>ipv6-v6only</tt>'
+<li> '<tt>ip-multicast-if</tt>'
+<li> '<tt>ip-multicast-ttl</tt>'
+<li> '<tt>ip-add-membership</tt>' 
+<li> '<tt>ip-drop-membership</tt>'
+</ul> 
+</p>
+
+<p class=return>
+The method returns the option <tt>value</tt> in case of
+success, or
+<b><tt>nil</tt></b> followed by an error message otherwise.
+</p>
+
 <!-- send ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="send">
@@ -284,6 +358,15 @@ is recommended when the same peer is used for several transmissions
 and can result in up to 30% performance gains.
 </p>
 
+<p class=note>
+Note: Starting with LuaSocket 2.1, the host name resolution
+depends on whether the socket was created by <a
+href=#socket.udp><tt>socket.udp</tt></a> or <a
+href=#socket.udp6><tt>socket.udp6</tt></a>. Addresses from
+the appropriate family are tried in succession until the
+first success or until the last failure.
+</p>
+
 <!-- setsockname +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="setsockname">
@@ -332,23 +415,57 @@ only modify an option if you are sure you need it.</p>
 name, and <tt>value</tt> depends on the option being set:
 </p>
 
-<ul>
-<li>'<tt>dontroute</tt>': Setting this option to <tt>true</tt>
-indicates that outgoing messages should bypass the standard routing
-facilities;</li>
-<li>'<tt>broadcast</tt>': Setting this option to <tt>true</tt>
-requests permission to send broadcast datagrams on the
-socket.</li>
-</ul>
+<ul> 
+<li> '<tt>dontroute</tt>': Indicates that outgoing
+messages should bypass the standard routing facilities.
+Receives a boolean value;
+<li> '<tt>broadcast</tt>': Requests permission to send 
+broadcast datagrams on the socket.
+Receives a boolean value;
+<li> '<tt>reuseaddr</tt>': Indicates that the rules used in
+validating addresses supplied in a <tt>bind()</tt> call 
+should allow reuse of local addresses. 
+Receives a boolean value;
+<li> '<tt>reuseport</tt>': Allows completely duplicate
+bindings by multiple processes if they all set
+'<tt>reuseport</tt>' before binding the port.
+Receives a boolean value;
+<li> '<tt>ip-multicast-loop</tt>':
+Specifies whether or not a copy of an outgoing multicast
+datagram is delivered to the sending host as long as it is a
+member of the multicast group.
+Receives a boolean value;
+<li> '<tt>ipv6-v6only</tt>':
+Specifies whether to restrict <tt>inet6</tt> sockets to 
+sending and receiving only IPv6 packets.
+Receive a boolean value;
+<li> '<tt>ip-multicast-if</tt>':
+Sets the interface over which outgoing multicast datagrams
+are sent.
+Receives an IP address;
+<li> '<tt>ip-multicast-ttl</tt>':
+Sets the Time To Live in the IP header for outgoing
+multicast datagrams. 
+Receives a number;
+<li> '<tt>ip-add-membership</tt>': 
+Joins the multicast group specified.
+Receives a table with fields
+<tt>multiaddr</tt> and <tt>interface</tt>, each containing an
+IP address;
+<li> '<tt>ip-drop-membership</tt>': Leaves the multicast
+group specified.
+Receives a table with fields
+<tt>multiaddr</tt> and <tt>interface</tt>, each containing an
+IP address.
+</ul> 
 
 <p class="return">
 The method returns 1 in case of success, or
 <b><tt>nil</tt></b> followed by an error message otherwise.
 </p>
 
-<p class="note">
-Note: The descriptions above come from the man
-pages.
+<p class=note>
+Note: The descriptions above come from the man pages.
 </p>
 
 <!-- settimeout +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

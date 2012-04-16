@@ -78,8 +78,8 @@ LuaSocket.
 </p>
 
 <p>
-Copyright &copy; 2004-2007 Diego Nehab. All rights reserved. <br>
-Author: <A href="http://www.cs.princeton.edu/~diego">Diego Nehab</a>
+Copyright &copy; 1999-2012 Diego Nehab. All rights reserved. <br>
+Author: <A href="http://www.impa.br/~diego">Diego Nehab</a>
 </p>
 
 <!-- download +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -87,25 +87,18 @@ Author: <A href="http://www.cs.princeton.edu/~diego">Diego Nehab</a>
 <h2 id=download>Download</h2>
 
 <p>
-LuaSocket version 2.0.3 is now  available for download! It  is
-compatible with  Lua&nbsp;5.1, and has    
+LuaSocket version 2.1.1-rc1 is now available for download! 
+It is compatible with  Lua&nbsp;5.1 and 5.2, and has    
 been tested on Windows&nbsp;XP, Linux, and Mac OS X. Chances
 are it works well on most UNIX distributions and Windows flavors.
 </p>
 
 <p>
 The library can be downloaded in source code from the
-<a href=http://luaforge.net/projects/luasocket/>LuaSocket
-project page</a> at LuaForge. 
-Besides the full C and Lua source code for the library, the distribution
-contains several examples, this user's manual and basic test procedures.
-</p>
-
-<p>
-Danilo Tuler is maintaining Win32 binaries for LuaSocket, which are also
-available from LuaForge.  These are compatible with the 
-<a href=http://luaforge.net/projects/luabinaries>LuaBinaries</a>,
-also available from LuaForge. 
+<a href="https://github.com/diegonehab/luasocket/downloads">LuaSocket
+project page</a> at GitHub. Besides the full C and Lua source code 
+for the library, the distribution contains several examples, 
+this user's manual and basic test procedures.
 </p>
 
 <p> Take a look at the <a
@@ -118,15 +111,13 @@ manual to find out how to properly install the library.
 <h2 id=thanks>Special thanks</h2>
 
 <p>
-Throughout LuaSocket's history, many people gave suggestions
-that helped improve it. For that, I thank the Lua community.
-Special thanks go to David Burgess, who has helped push the
-library to a new level of quality and from whom I have
-learned a lot of stuff that doesn't show up in RFCs.
-Special thanks also to Carlos Cassino, who played a big part
-in the extensible design seen in the C core of LuaSocket
-2.0. Mike Pall has been helping a lot too! Thanks to you
-all! 
+This marks the first release of LuaSocket that
+wholeheartedly embraces the open-source development
+philosophy. After a long hiatus, Matthew Wild finally 
+convinced me it was time for a release including IPv6
+and Lua 5.2 support. Special thanks to Sam Roberts, Florian
+Zeitz, and Paul Aurich, Liam Devine, and everybody else that
+has helped bring this library back to life. 
 </p>
 
 <!-- whatsnew +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -134,30 +125,25 @@ all!
 <h2 id=new>What's New</h2>
 
 <p>
-2.0.3 is just a bug-fix/update release. 
+Main changes for LuaSocket&nbsp;2.1.1-rc1 are IPv6 support
+and Lua&nbsp;5.2 compatibility. 
 </p>
 
 <ul>
-<li> Fixed: manual sample of HTTP authentication now uses correct
-     "authorization" header (Alexandre Ittner);
-<li> Fixed: receive() returns immediatelly if prefix can satisfy
-     bytes requested (M Joonas Pihlaja);
-<li> Fixed: multicast didn't work on Windows, or anywhere
-     else for that matter (Herbert Leuwer, Adrian Sietsma);
-<li> Fixed: select() now reports an error when called with more
-     sockets than FD_SETSIZE (Lorenzo Leonini);
-<li> Fixed: manual links to home.html changed to index.html (Robert Hahn);
-<li> Fixed: mime.unb64() would return an empty string on results that started
-     with a null character (Robert Raschke);
-<li> Fixed: HTTP now automatically redirects on 303 and 307 (Jonathan Gray);
-<li> Fixed: calling sleep() with negative numbers could
-     block forever, wasting CPU. Now it returns immediately (MPB);
-<li> Improved: FTP commands are now sent in upper case to
-     help buggy servers (Anders Eurenius);
-<li> Improved: known headers now sent in canonic
-     capitalization to help buggy servers (Joseph Stewart);
-<li> Improved: Clarified tcp:receive() in the manual (MPB);  
-<li> Improved: Decent makefiles (LHF).
+<li> Added: Compatible with Lua&nbsp;5.2 (using <tt>LUA_COMPAT_MODULE</tt>);
+<li> Added: IPv6 support;
+<ul>
+<li> <tt>Socket.connect</tt> and <tt>socket.bind</tt> support IPv6 addresses;
+<li> <tt>Getpeername</tt> and <tt>getsockname</tt> support IPv6 addresses;
+<li> New <tt>socket.tcp6</tt> and <tt>socket.udp6</tt> functions;
+<li> New <tt>socket.dns.getaddrinfo</tt> function;
+</ul>
+<li> Added: <tt>getoption</tt> method;
+<li> Fixed: <tt>url.unescape</tt> was returning additional values;
+<li> Fixed: Receiving zero-length datagram is now possible;
+<li> Improved: Hidden all internal library symbols;
+<li> Improved: Better error messages;
+<li> Improved: Better documentation of socket options.
 </ul>
 
 <!-- old ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -166,7 +152,7 @@ all!
 
 <p>
 All  previous versions  of the  LuaSocket library  can be  downloaded <a
-href="http://www.cs.princeton.edu/~diego/professional/luasocket/old">
+href="http://www.impa.br/~diego/software/luasocket/old">
 here</a>. Although these  versions are  no longer  supported, they  are
 still available for those that have compatibility issues. 
 </p>
@@ -185,7 +171,7 @@ still available for those that have compatibility issues.
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Wed Oct 3 02:07:59 BRT 2007
+Mon Apr 16 21:58:56 HKT 2012
 </small>
 </p>
 </center>
