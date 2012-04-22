@@ -1,8 +1,6 @@
 /*=========================================================================*\
 * TCP object
 * LuaSocket toolkit
-*
-* RCS ID: $Id: tcp.c,v 1.42 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include <string.h>
 
@@ -23,6 +21,7 @@ static int global_create6(lua_State *L);
 static int global_connect6(lua_State *L);
 static int meth_connect(lua_State *L);
 static int meth_listen(lua_State *L);
+static int meth_getfamily(lua_State *L);
 static int meth_bind(lua_State *L);
 static int meth_send(lua_State *L);
 static int meth_getstats(lua_State *L);
@@ -49,6 +48,7 @@ static luaL_Reg tcp_methods[] = {
     {"close",       meth_close},
     {"connect",     meth_connect},
     {"dirty",       meth_dirty},
+    {"getfamily",   meth_getfamily},
     {"getfd",       meth_getfd},
     {"getoption",   meth_getoption},
     {"getpeername", meth_getpeername},
@@ -218,7 +218,7 @@ static int meth_bind(lua_State *L)
     struct addrinfo bindhints;
     memset(&bindhints, 0, sizeof(bindhints));
     bindhints.ai_socktype = SOCK_STREAM;
-    bindhints.ai_family = tcp->domain;
+    bindhints.ai_family = tcp->family;
     bindhints.ai_flags = AI_PASSIVE;
     err = inet_trybind(&tcp->sock, address, port, &bindhints);
     if (err) {
@@ -243,7 +243,7 @@ static int meth_connect(lua_State *L)
     memset(&connecthints, 0, sizeof(connecthints));
     connecthints.ai_socktype = SOCK_STREAM;
     /* make sure we try to connect only to the same family */
-    connecthints.ai_family = tcp->domain;
+    connecthints.ai_family = tcp->family;
     timeout_markstart(&tcp->tm);
     err = inet_tryconnect(&tcp->sock, address, port,
 		    &tcp->tm, &connecthints);
@@ -267,6 +267,21 @@ static int meth_close(lua_State *L)
     socket_destroy(&tcp->sock);
     lua_pushnumber(L, 1);
     return 1;
+}
+
+/*-------------------------------------------------------------------------*\
+* Returns family as string
+\*-------------------------------------------------------------------------*/
+static int meth_getfamily(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
+    if (tcp->family == PF_INET6) {
+        lua_pushliteral(L, "inet6");
+        return 1;
+    } else {
+        lua_pushliteral(L, "inet4");
+        return 1;
+    }
 }
 
 /*-------------------------------------------------------------------------*\
@@ -346,9 +361,9 @@ static int meth_settimeout(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Creates a master tcp object
 \*-------------------------------------------------------------------------*/
-static int tcp_create(lua_State *L, int domain) {
+static int tcp_create(lua_State *L, int family) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, domain, SOCK_STREAM);
+    const char *err = inet_trycreate(&sock, family, SOCK_STREAM);
     /* try to allocate a system socket */
     if (!err) {
         /* allocate tcp object */
@@ -357,7 +372,7 @@ static int tcp_create(lua_State *L, int domain) {
         auxiliar_setclass(L, "tcp{master}", -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
-        if (domain == PF_INET6) {
+        if (family == PF_INET6) {
             int yes = 1;
             setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
                 (void *)&yes, sizeof(yes));
@@ -367,7 +382,7 @@ static int tcp_create(lua_State *L, int domain) {
                 (p_error) socket_ioerror, &tcp->sock);
         timeout_init(&tcp->tm, -1, -1);
         buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
-		tcp->domain = domain;
+		tcp->family = family;
         return 1;
     } else {
         lua_pushnil(L);

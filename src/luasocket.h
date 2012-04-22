@@ -11,7 +11,7 @@
 /*-------------------------------------------------------------------------*\
 * Current socket library version
 \*-------------------------------------------------------------------------*/
-#define LUASOCKET_VERSION    "LuaSocket 2.1.1-rc1"
+#define LUASOCKET_VERSION    "LuaSocket 2.1-rc1"
 #define LUASOCKET_COPYRIGHT  "Copyright (C) 1999-2012 Diego Nehab"
 #define LUASOCKET_AUTHORS    "Diego Nehab"
 

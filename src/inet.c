@@ -1,8 +1,6 @@
 /*=========================================================================*\
 * Internet domain functions
 * LuaSocket toolkit
-*
-* RCS ID: $Id: inet.c,v 1.28 2005/10/07 04:40:59 diego Exp $
 \*=========================================================================*/
 #include <stdio.h>
 #include <string.h>
@@ -270,8 +268,8 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
 \*-------------------------------------------------------------------------*/
-const char *inet_trycreate(p_socket ps, int domain, int type) {
-    return socket_strerror(socket_create(ps, domain, type, 0));
+const char *inet_trycreate(p_socket ps, int family, int type) {
+    return socket_strerror(socket_create(ps, family, type, 0));
 }
 
 /*-------------------------------------------------------------------------*\

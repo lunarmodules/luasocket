@@ -3,7 +3,6 @@
 -- non-blocking I/O via the dispatcher module.
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $$
 -----------------------------------------------------------------------------
 local url = require("socket.url")
 local dispatch = require("dispatch")

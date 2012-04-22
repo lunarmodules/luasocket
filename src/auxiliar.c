@@ -1,8 +1,6 @@
 /*=========================================================================*\
 * Auxiliar routines for class hierarchy manipulation
 * LuaSocket toolkit
-*
-* RCS ID: $Id: auxiliar.c,v 1.14 2005/10/07 04:40:59 diego Exp $
 \*=========================================================================*/
 #include <string.h>
 #include <stdio.h>

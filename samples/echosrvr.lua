@@ -2,7 +2,6 @@
 -- UDP sample: echo protocol server
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id: echosrvr.lua,v 1.12 2005/11/22 08:33:29 diego Exp $
 -----------------------------------------------------------------------------
 local socket = require("socket")
 host = host or "127.0.0.1"

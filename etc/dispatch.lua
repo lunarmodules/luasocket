@@ -2,7 +2,6 @@
 -- A hacked dispatcher module
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $$
 -----------------------------------------------------------------------------
 local base = _G
 local table = require("table")

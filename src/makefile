@@ -98,7 +98,7 @@ SOCKET_win32=wsocket.obj
 #
 SO=$(SO_$(PLAT))
 O=$(O_$(PLAT))
-SOCKET_V=2.1.1
+SOCKET_V=2.1
 MIME_V=1.0.3
 SOCKET_SO=socket.$(SO).$(SOCKET_V)
 MIME_SO=mime.$(SO).$(MIME_V)

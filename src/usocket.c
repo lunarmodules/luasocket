@@ -5,8 +5,6 @@
 * The code is now interrupt-safe.
 * The penalty of calling select to avoid busy-wait is only paid when
 * the I/O call fail in the first place. 
-*
-* RCS ID: $Id: usocket.c,v 1.38 2007/10/13 23:55:20 diego Exp $
 \*=========================================================================*/
 #include <string.h> 
 #include <signal.h>

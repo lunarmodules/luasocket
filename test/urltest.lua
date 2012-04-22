@@ -8,7 +8,7 @@ local check_build_url = function(parsed)
         print("built is different from expected")
         print(built)
         print(expected)
-        exit()
+        os.exit()
     end
 end
 
@@ -17,7 +17,7 @@ local check_protect = function(parsed, path, unsafe)
     if built ~= path then
         print(built, path)
         print("path composition failed.")
-        exit()
+        os.exit()
     end
 end
 
@@ -28,7 +28,7 @@ local check_invert = function(url)
     if rebuilt ~= url then
         print(url, rebuilt)
         print("original and rebuilt are different")
-        exit()
+        os.exit()
     end
 end
 
@@ -37,24 +37,24 @@ local check_parse_path = function(path, expect)
     for i = 1, math.max(table.getn(parsed), table.getn(expect)) do
         if parsed[i] ~= expect[i] then
             print(path)
-            exit()
+            os.exit()
         end
     end
     if expect.is_directory ~= parsed.is_directory then
         print(path)
         print("is_directory mismatch")
-        exit()
+        os.exit()
     end
     if expect.is_absolute ~= parsed.is_absolute then
         print(path)
         print("is_absolute mismatch")
-        exit()
+        os.exit()
     end
     local built = socket.url.build_path(expect)
     if built ~= path then
         print(built, path)
         print("path composition failed.")
-        exit()
+        os.exit()
     end
 end
 
@@ -63,7 +63,7 @@ local check_absolute_url = function(base, relative, absolute)
     if res ~= absolute then 
         io.write("absolute: In test for '", relative, "' expected '", 
             absolute, "' but got '", res, "'\n")
-        exit()
+        os.exit()
     end
 end
 
@@ -76,7 +76,7 @@ local check_parse_url = function(gaba)
             io.write("parse: In test for '", url, "' expected ", i, " = '", 
                    v, "' but got '", tostring(parsed[i]), "'\n")
             for i,v in pairs(parsed) do print(i,v) end
-            exit()
+            os.exit()
         end
     end
     for i, v in pairs(parsed) do
@@ -84,7 +84,7 @@ local check_parse_url = function(gaba)
             io.write("parse: In test for '", url, "' expected ", i, " = '", 
                    tostring(gaba[i]), "' but got '", v, "'\n")
             for i,v in pairs(parsed) do print(i,v) end
-            exit()
+            os.exit()
         end
     end
 end
@@ -304,11 +304,121 @@ check_parse_url{
     path = "path",
 }
 
+-- IPv6 tests
+
+check_parse_url{
+    url = "http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80/index.html",
+    scheme = "http",
+    host = "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210",
+    authority = "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80",
+    port = "80",
+    path = "/index.html"
+}
+
+check_parse_url{
+    url = "http://[1080:0:0:0:8:800:200C:417A]/index.html",
+    scheme = "http",
+    host = "1080:0:0:0:8:800:200C:417A",
+    authority = "[1080:0:0:0:8:800:200C:417A]",
+    path = "/index.html"
+}
+
+check_parse_url{
+    url = "http://[3ffe:2a00:100:7031::1]",
+    scheme = "http",
+    host = "3ffe:2a00:100:7031::1",
+    authority = "[3ffe:2a00:100:7031::1]",
+}
+
+check_parse_url{
+    url = "http://[1080::8:800:200C:417A]/foo",
+    scheme = "http",
+    host = "1080::8:800:200C:417A",
+    authority = "[1080::8:800:200C:417A]",
+    path = "/foo"
+}
+
+check_parse_url{
+    url = "http://[::192.9.5.5]/ipng",
+    scheme = "http",
+    host = "::192.9.5.5",
+    authority = "[::192.9.5.5]",
+    path = "/ipng"
+}
+
+check_parse_url{
+    url = "http://[::FFFF:129.144.52.38]:80/index.html",
+    scheme = "http",
+    host = "::FFFF:129.144.52.38",
+    port = "80",
+    authority = "[::FFFF:129.144.52.38]:80",
+    path = "/index.html"
+}
+
+check_parse_url{
+    url = "http://[2010:836B:4179::836B:4179]",
+    scheme = "http",
+    host = "2010:836B:4179::836B:4179",
+    authority = "[2010:836B:4179::836B:4179]",
+}
+
+check_parse_url{
+    url = "//userinfo@[::FFFF:129.144.52.38]:port/path;params?query#fragment",
+    authority = "userinfo@[::FFFF:129.144.52.38]:port", 
+    host = "::FFFF:129.144.52.38",
+    port = "port",
+    userinfo = "userinfo",
+    user = "userinfo",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+
+check_parse_url{
+    url = "scheme://user:password@[::192.9.5.5]:port/path;params?query#fragment",
+    scheme = "scheme",
+    authority = "user:password@[::192.9.5.5]:port", 
+    host = "::192.9.5.5",
+    port = "port",
+    userinfo = "user:password",
+    user = "user",
+    password = "password",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+
 print("testing URL building")
 check_build_url {
     url = "scheme://user:password@host:port/path;params?query#fragment",
     scheme = "scheme", 
     host = "host",
+    port = "port",
+    user = "user",
+    password = "password",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+
+check_build_url{
+    url = "//userinfo@[::FFFF:129.144.52.38]:port/path;params?query#fragment",
+    host = "::FFFF:129.144.52.38",
+    port = "port",
+    user = "userinfo",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+
+check_build_url{
+    url = "scheme://user:password@[::192.9.5.5]:port/path;params?query#fragment",
+    scheme = "scheme",
+    host = "::192.9.5.5",
     port = "port",
     user = "user",
     password = "password",
@@ -520,5 +630,6 @@ check_invert("/b/c/d;param#fragment")
 check_invert("/b/c/d;param?query#fragment")
 check_invert("/b/c/d?query")
 check_invert("/b/c/d;param?query")
+check_invert("http://he:man@[::192.168.1.1]/a/b/c/i.html;type=moo?this=that#mark")
 
 print("the library passed all tests")

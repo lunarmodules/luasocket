@@ -2,7 +2,6 @@
 -- UDP sample: daytime protocol client
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id: daytimeclnt.lua,v 1.11 2004/06/21 06:07:57 diego Exp $
 -----------------------------------------------------------------------------
 local socket = require"socket"
 host = host or "127.0.0.1"

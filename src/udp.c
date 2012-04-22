@@ -1,8 +1,6 @@
 /*=========================================================================*\
 * UDP object
 * LuaSocket toolkit
-*
-* RCS ID: $Id: udp.c,v 1.30 2009/05/27 09:31:35 diego Exp $
 \*=========================================================================*/
 #include <string.h>
 
@@ -32,6 +30,7 @@ static int meth_send(lua_State *L);
 static int meth_sendto(lua_State *L);
 static int meth_receive(lua_State *L);
 static int meth_receivefrom(lua_State *L);
+static int meth_getfamily(lua_State *L);
 static int meth_getsockname(lua_State *L);
 static int meth_getpeername(lua_State *L);
 static int meth_setsockname(lua_State *L);
@@ -50,6 +49,7 @@ static luaL_Reg udp_methods[] = {
     {"__tostring",  auxiliar_tostring},
     {"close",       meth_close},
     {"dirty",       meth_dirty},
+    {"getfamily",   meth_getfamily},
     {"getfd",       meth_getfd},
     {"getpeername", meth_getpeername},
     {"getsockname", meth_getsockname},
@@ -227,6 +227,21 @@ static int meth_receivefrom(lua_State *L) {
 }
 
 /*-------------------------------------------------------------------------*\
+* Returns family as string
+\*-------------------------------------------------------------------------*/
+static int meth_getfamily(lua_State *L)
+{
+    p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
+    if (udp->family == PF_INET6) {
+        lua_pushliteral(L, "inet6");
+        return 1;
+    } else {
+        lua_pushliteral(L, "inet4");
+        return 1;
+    }
+}
+
+/*-------------------------------------------------------------------------*\
 * Select support methods
 \*-------------------------------------------------------------------------*/
 static int meth_getfd(lua_State *L) {
@@ -302,7 +317,7 @@ static int meth_setpeername(lua_State *L) {
     memset(&connecthints, 0, sizeof(connecthints));
     connecthints.ai_socktype = SOCK_DGRAM;
     /* make sure we try to connect only to the same family */
-    connecthints.ai_family = udp->domain;
+    connecthints.ai_family = udp->family;
     err = inet_tryconnect(&udp->sock, address, port,
 		    tm, &connecthints);
     if (err) {
@@ -338,7 +353,7 @@ static int meth_setsockname(lua_State *L) {
 	struct addrinfo bindhints;
     memset(&bindhints, 0, sizeof(bindhints));
     bindhints.ai_socktype = SOCK_DGRAM;
-    bindhints.ai_family = udp->domain;
+    bindhints.ai_family = udp->family;
     bindhints.ai_flags = AI_PASSIVE;
     err = inet_trybind(&udp->sock, address, port, &bindhints);
     if (err) {
@@ -356,9 +371,9 @@ static int meth_setsockname(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Creates a master udp object
 \*-------------------------------------------------------------------------*/
-static int udp_create(lua_State *L, int domain) {
+static int udp_create(lua_State *L, int family) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, domain, SOCK_DGRAM);
+    const char *err = inet_trycreate(&sock, family, SOCK_DGRAM);
     /* try to allocate a system socket */
     if (!err) {
         /* allocate udp object */
@@ -366,14 +381,14 @@ static int udp_create(lua_State *L, int domain) {
         auxiliar_setclass(L, "udp{unconnected}", -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
-        if (domain == PF_INET6) {
+        if (family == PF_INET6) {
             int yes = 1;
             setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
                 (void *)&yes, sizeof(yes));
         }
         udp->sock = sock;
         timeout_init(&udp->tm, -1, -1);
-        udp->domain = domain;
+        udp->family = family;
         return 1;
     } else {
         lua_pushnil(L);

@@ -2,7 +2,6 @@
 -- SMTP client support for the Lua language.
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- RCS ID: $Id: smtp.lua,v 1.47 2009/05/27 09:31:35 diego Exp $
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------

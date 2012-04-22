@@ -2,7 +2,6 @@
 -- Little program to convert to and from Base64
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id: b64.lua,v 1.8 2004/06/16 04:28:21 diego Exp $
 -----------------------------------------------------------------------------
 local ltn12 = require("ltn12")
 local mime = require("mime")

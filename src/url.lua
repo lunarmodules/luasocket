@@ -2,7 +2,6 @@
 -- URI parsing, composition and relative URL resolution
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- RCS ID: $Id: url.lua,v 1.38 2006/04/03 04:45:42 diego Exp $
 -----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------
@@ -16,7 +15,7 @@ module("socket.url")
 -----------------------------------------------------------------------------
 -- Module version
 -----------------------------------------------------------------------------
-_VERSION = "URL 1.0.1"
+_VERSION = "URL 1.0.2"
 
 -----------------------------------------------------------------------------
 -- Encodes a string into its escaped hexadecimal representation
@@ -142,7 +141,7 @@ function parse(url, default)
         parsed.authority = n
         return ""
     end)
-    -- get query stringing
+    -- get query string
     url = string.gsub(url, "%?(.*)", function(q)
         parsed.query = q
         return ""
@@ -158,9 +157,12 @@ function parse(url, default)
     if not authority then return parsed end
     authority = string.gsub(authority,"^([^@]*)@",
         function(u) parsed.userinfo = u; return "" end)
-    authority = string.gsub(authority, ":([^:]*)$",
+    authority = string.gsub(authority, ":([^:%]]*)$",
         function(p) parsed.port = p; return "" end)
-    if authority ~= "" then parsed.host = authority end
+    if authority ~= "" then 
+        -- IPv6?
+        parsed.host = string.match(authority, "^%[(.+)%]$") or authority 
+    end
     local userinfo = parsed.userinfo
     if not userinfo then return parsed end
     userinfo = string.gsub(userinfo, ":([^:]*)$",
@@ -185,6 +187,9 @@ function build(parsed)
     local authority = parsed.authority
     if parsed.host then
         authority = parsed.host
+        if string.find(authority, ":") then -- IPv6?
+            authority = "[" .. authority .. "]"
+        end
         if parsed.port then authority = authority .. ":" .. parsed.port end
         local userinfo = parsed.userinfo
         if parsed.user then

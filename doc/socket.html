@@ -112,6 +112,29 @@ t = socket.gettime()
 print(socket.gettime() - t .. " seconds elapsed")
 </pre>
 
+<!-- socket.headers ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="headers.canonic">
+socket.headers.<b>canonic</b></p>
+
+<p> The <tt>socket.headers.canonic</tt> table 
+is used by the HTTP and SMTP modules to translate from 
+lowercase field names back into their canonic 
+capitalization. When a lowercase field name exists as a key
+in this table, the associated value is substituted in
+whenever the field name is sent out.
+</p>
+
+<p> 
+You can obtain the <tt>headers</tt> namespace if case run-time
+modifications are required by running:
+</p>
+
+<pre class=example>
+-- loads the headers module 
+local headers = require("headers")
+</pre>
+
 <!-- newtry +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=newtry> 

@@ -2,7 +2,6 @@
 -- TCP sample: Little program to send text lines to a given host/port
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id: talker.lua,v 1.9 2005/01/02 22:44:00 diego Exp $
 -----------------------------------------------------------------------------
 local socket = require("socket")
 host = host or "localhost"

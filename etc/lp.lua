@@ -3,7 +3,6 @@
 -- LuaSocket toolkit.
 -- Author: David Burgess
 -- Modified by Diego Nehab, but David is in charge
--- RCS ID: $Id: lp.lua,v 1.14 2005/11/21 07:04:44 diego Exp $
 -----------------------------------------------------------------------------
 --[[
      if you have any questions: RFC 1179

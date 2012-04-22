@@ -2,7 +2,6 @@
 -- Little program to convert to and from Quoted-Printable
 -- LuaSocket sample files
 -- Author: Diego Nehab
--- RCS ID: $Id: qp.lua,v 1.5 2004/06/17 21:46:22 diego Exp $
 -----------------------------------------------------------------------------
 local ltn12 = require("ltn12")
 local mime = require("mime")

@@ -2,7 +2,6 @@
 -- Canonic header field capitalization
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
--- RCS ID: $Id$
 -----------------------------------------------------------------------------
 module("socket.headers")
 

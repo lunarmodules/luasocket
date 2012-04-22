@@ -95,8 +95,9 @@ headers = {<br>
 </blockquote>
 
 <p>
-Field names are case insensitive (as  specified by the standard) and all
-functions  work with  lowercase field names.  
+Field names are case insensitive (as specified by the standard) and all
+functions work with lowercase field names (but see
+<a href=socket.html#headers.canonic><tt>socket.headers.canonic</tt></a>).
 Field values are left unmodified.
 </p>
 
@@ -116,6 +117,7 @@ the HTTP module:
 <li> <tt>TIMEOUT</tt>: sets the timeout for all I/O operations;
 <li> <tt>USERAGENT</tt>: default user agent reported to server.
 </ul>
+
 
 <!-- http.request ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
