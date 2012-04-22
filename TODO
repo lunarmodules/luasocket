@@ -1,3 +1,4 @@
+- document bind and connect behavior.
 - getsockname should also support IPv6, no?
 - shouldn't we instead make the code compatible to Lua 5.2
   without any compat stuff, and use a compatibility layer to
@@ -5,7 +6,6 @@
 - add what's new to manual
 - should there be an equivalent to tohostname for IPv6?
 - should we add service name resolution as well to getaddrinfo?
-- document bind and connect behavior based on address?
 
 - add http POST sample to manual
   people keep asking stupid questions
@@ -16,6 +16,7 @@
 
 Done:
 
+- connect and bind try all adresses returned by getaddrinfo
 - document headers.lua?
 - update copyright date everywhere? 
 - remove RCSID from files?
