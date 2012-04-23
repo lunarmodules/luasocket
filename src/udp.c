@@ -269,12 +269,12 @@ static int meth_dirty(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int meth_getpeername(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkclass(L, "udp{connected}", 1);
-    return inet_meth_getpeername(L, &udp->sock);
+    return inet_meth_getpeername(L, &udp->sock, udp->family);
 }
 
 static int meth_getsockname(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
-    return inet_meth_getsockname(L, &udp->sock);
+    return inet_meth_getsockname(L, &udp->sock, udp->family);
 }
 
 /*-------------------------------------------------------------------------*\

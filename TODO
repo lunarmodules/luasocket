@@ -1,5 +1,4 @@
 - document bind and connect behavior.
-- getsockname should also support IPv6, no?
 - shouldn't we instead make the code compatible to Lua 5.2
   without any compat stuff, and use a compatibility layer to
   make it work on 5.1?
@@ -15,6 +14,11 @@
 - fix makefile with decent defaults?
 
 Done:
+
+- added IPv6 support to getsockname
+- simplified getpeername implementation 
+- added family to return of getsockname and getpeername
+  and added modification to the manual to describe
 
 - connect and bind try all adresses returned by getaddrinfo
 - document headers.lua?

@@ -225,8 +225,9 @@ Returns information about the remote side of a connected client object.
 </p>
 
 <p class=return>
-Returns a string with the IP address of the peer, followed by the 
-port number that peer is using for the connection. 
+Returns a string with the IP address of the peer, the 
+port number that peer is using for the connection, 
+and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>"). 
 In case of error, the method returns <b><tt>nil</tt></b>. 
 </p>
 
@@ -247,8 +248,10 @@ Returns the local address information associated to the object.
 </p>
 
 <p class=return>
-The method returns a string with local IP address and a number with 
-the port. In case of error, the method returns <b><tt>nil</tt></b>.
+The method returns a string with local IP address, a number with 
+the local port, 
+and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>"). 
+In case of error, the method returns <b><tt>nil</tt></b>.
 </p>
 
 <!-- getstats +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

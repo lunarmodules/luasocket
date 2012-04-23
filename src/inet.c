@@ -165,61 +165,92 @@ static int inet_global_gethostname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Retrieves socket peer name
 \*-------------------------------------------------------------------------*/
-int inet_meth_getpeername(lua_State *L, p_socket ps)
+int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
 {
-    union {
-	struct sockaddr_storage sas;
-	struct sockaddr sa;
-	struct sockaddr_in sa4;
-	struct sockaddr_in6 sa6;
-    } peer;
-    socklen_t peer_len = sizeof(peer);
-
-    if (getpeername(*ps, &peer.sa, &peer_len) < 0) {
-        lua_pushnil(L);
-        lua_pushfstring(L, "getpeername failed (%d): %s", errno,
-                strerror(errno));
-    } else {
-        char ipaddr[INET6_ADDRSTRLEN] = "";
-        unsigned short port = 0;
-
-        switch (peer.sa.sa_family) {
-        case AF_INET:
-            inet_ntop(AF_INET, &peer.sa4.sin_addr, ipaddr, sizeof(ipaddr));
-            port = ntohs(peer.sa4.sin_port);
-            break;
-        case AF_INET6:
-            inet_ntop(AF_INET6, &peer.sa6.sin6_addr, ipaddr, sizeof(ipaddr));
-            port = ntohs(peer.sa6.sin6_port);
-            break;
+    switch (family) {
+        case PF_INET: {
+            struct sockaddr_in peer;
+            socklen_t peer_len = sizeof(peer);
+            char name[INET_ADDRSTRLEN];
+            if (getpeername(*ps, (SA *) &peer, &peer_len) < 0) {
+                lua_pushnil(L);
+                lua_pushstring(L, "getpeername failed");
+                return 2;
+            } else {
+                inet_ntop(family, &peer.sin_addr, name, sizeof(name));
+                lua_pushstring(L, name); 
+                lua_pushnumber(L, ntohs(peer.sin_port));
+                lua_pushliteral(L, "inet");
+                return 3;
+            }
+        }
+        case PF_INET6: {
+            struct sockaddr_in6 peer;
+            socklen_t peer_len = sizeof(peer);
+            char name[INET6_ADDRSTRLEN];
+            if (getpeername(*ps, (SA *) &peer, &peer_len) < 0) {
+                lua_pushnil(L);
+                lua_pushstring(L, "getpeername failed");
+                return 2;
+            } else {
+                inet_ntop(family, &peer.sin6_addr, name, sizeof(name));
+                lua_pushstring(L, name); 
+                lua_pushnumber(L, ntohs(peer.sin6_port));
+                lua_pushliteral(L, "inet6");
+                return 3;
+            }
+            return 2;
+        }
         default:
             lua_pushnil(L);
-            lua_pushfstring(L, "Unknown address family %d", peer.sa.sa_family);
+            lua_pushstring(L, "unknown family");
             return 2;
-            break;
-        }
-
-        lua_pushstring(L, ipaddr);
-        lua_pushnumber(L, port);
     }
-    return 2;
 }
 
 /*-------------------------------------------------------------------------*\
 * Retrieves socket local name
 \*-------------------------------------------------------------------------*/
-int inet_meth_getsockname(lua_State *L, p_socket ps)
+int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
 {
-    struct sockaddr_in local;
-    socklen_t local_len = sizeof(local);
-    if (getsockname(*ps, (SA *) &local, &local_len) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "getsockname failed");
-    } else {
-        lua_pushstring(L, inet_ntoa(local.sin_addr));
-        lua_pushnumber(L, ntohs(local.sin_port));
+    switch (family) {
+        case PF_INET: {
+            struct sockaddr_in local;
+            socklen_t local_len = sizeof(local);
+            char name[INET_ADDRSTRLEN];
+            if (getsockname(*ps, (SA *) &local, &local_len) < 0) {
+                lua_pushnil(L);
+                lua_pushstring(L, "getsockname failed");
+                return 2;
+            } else {
+                inet_ntop(family, &local.sin_addr, name, sizeof(name));
+                lua_pushstring(L, name); 
+                lua_pushnumber(L, ntohs(local.sin_port));
+                lua_pushliteral(L, "inet");
+                return 3;
+            }
+        }
+        case PF_INET6: {
+            struct sockaddr_in6 local;
+            socklen_t local_len = sizeof(local);
+            char name[INET6_ADDRSTRLEN];
+            if (getsockname(*ps, (SA *) &local, &local_len) < 0) {
+                lua_pushnil(L);
+                lua_pushstring(L, "getsockname failed");
+                return 2;
+            } else {
+                inet_ntop(family, &local.sin6_addr, name, sizeof(name));
+                lua_pushstring(L, name); 
+                lua_pushnumber(L, ntohs(local.sin6_port));
+                lua_pushliteral(L, "inet6");
+                return 3;
+            }
+        }
+        default:
+            lua_pushnil(L);
+            lua_pushstring(L, "unknown family");
+            return 2;
     }
-    return 2;
 }
 
 /*=========================================================================*\

@@ -337,13 +337,13 @@ error:
 static int meth_getpeername(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
-    return inet_meth_getpeername(L, &tcp->sock);
+    return inet_meth_getpeername(L, &tcp->sock, tcp->family);
 }
 
 static int meth_getsockname(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
-    return inet_meth_getsockname(L, &tcp->sock);
+    return inet_meth_getsockname(L, &tcp->sock, tcp->family);
 }
 
 /*-------------------------------------------------------------------------*\
