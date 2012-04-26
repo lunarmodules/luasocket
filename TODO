@@ -1,10 +1,11 @@
-- document bind and connect behavior.
+- document the new bind and connect behavior.
 - shouldn't we instead make the code compatible to Lua 5.2
   without any compat stuff, and use a compatibility layer to
   make it work on 5.1?
 - add what's new to manual
 - should there be an equivalent to tohostname for IPv6?
 - should we add service name resolution as well to getaddrinfo?
+- Maybe the sockaddr to presentation conversion should be done with getnameinfo()? 
 
 - add http POST sample to manual
   people keep asking stupid questions
