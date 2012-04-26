@@ -292,27 +292,13 @@ static int meth_listen(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_shutdown(lua_State *L)
 {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unix{client}", 1);
-    const char *how = luaL_optstring(L, 2, "both");
-    switch (how[0]) {
-        case 'b':
-            if (strcmp(how, "both")) goto error;
-            socket_shutdown(&un->sock, 2);
-            break;
-        case 's':
-            if (strcmp(how, "send")) goto error;
-            socket_shutdown(&un->sock, 1);
-            break;
-        case 'r':
-            if (strcmp(how, "receive")) goto error;
-            socket_shutdown(&un->sock, 0);
-            break;
-    }
+    /* SHUT_RD,  SHUT_WR,  SHUT_RDWR  have  the value 0, 1, 2, so we can use method index directly */
+    static const char* methods[] = { "receive", "send", "both", NULL };
+    p_unix tcp = (p_unix) auxiliar_checkclass(L, "unix{client}", 1);
+    int how = luaL_checkoption(L, 2, "both", methods);
+    socket_shutdown(&tcp->sock, how);
     lua_pushnumber(L, 1);
     return 1;
-error:
-    luaL_argerror(L, 2, "invalid shutdown method");
-    return 0;
 }
 
 /*-------------------------------------------------------------------------*\
