@@ -1,19 +1,17 @@
-PLAT?=macosx
+PLAT?=linux
 LUAV?=5.1
-prefix=../../../build/lua/$(LUAV)
-#prefix=/usr/local
+
+prefix=/usr/local
 #prefix=/opt/local
 #prefix=.
 
-LUAINC_macosx=../../../build/lua/$(LUAV)/include
-#LUAINC_macosx=/opt/local/include
-#LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.2.0-beta/src
-#LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.1.4/src
+LUAINC_macosx=/opt/local/include
 
-#LUAINC_linux=/usr/local/include/lua$(LUAV)
 LUAINC_linux=/usr/include/lua$(LUAV)
+#LUAINC_linux=/usr/local/include/lua$(LUAV)
 #LUAINC_linux=/usr/local/include
 
+# FIXME where does lua-for-windows put lua headers?
 LUAINC_win32="../../lua-5.1.3/src"
 LUALIB_win32="../../lua-5.1.3"
 

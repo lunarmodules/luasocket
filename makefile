@@ -1,4 +1,4 @@
-PLAT?= macosx
+PLAT?= linux
 PLATS= macosx linux win32
 
 #------
