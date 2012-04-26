@@ -1,21 +1,65 @@
-PLAT?=macosx
+# luasocket src/makefile
+#
+# Definitions in this section can be overriden on the command line or in the
+# environment.
+#
+# These are equivalent:
+#
+#    export PLAT=linux DEBUG=DEBUG LUAV=5.2 prefix=/sw
+#    make
+#
+# and
+#
+#   make PLAT=linux DEBUG=DEBUG LUAV=5.2 prefix=/sw
+
+# PLAT: linux macosx win32
+# platform to build for
+PLAT?=linux
+
+# LUAV: 5.1 5.2
+# lua version to build against
 LUAV?=5.1
-prefix=../../../build/lua/$(LUAV)
-#prefix=/usr/local
-#prefix=/opt/local
-#prefix=.
 
-LUAINC_macosx=../../../build/lua/$(LUAV)/include
-#LUAINC_macosx=/opt/local/include
-#LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.2.0-beta/src
-#LUAINC_macosx=../../../../projects/lua_env/luaenv/lua_versions/lua-5.1.4/src
+# DEBUG: NODEBUG DEBUG
+# debug mode causes luasocket to collect and returns timing information useful
+# for testing and debugging luasocket itself
+DEBUG?=NODEBUG
 
-#LUAINC_linux=/usr/local/include/lua$(LUAV)
-LUAINC_linux=/usr/include/lua$(LUAV)
-#LUAINC_linux=/usr/local/include
+# prefix: /usr/local /usr /opt/local /sw
+# the top of the default install tree
+prefix?=/usr/local
 
-LUAINC_win32="../../lua-5.1.3/src"
-LUALIB_win32="../../lua-5.1.3"
+# where lua headers are found for macosx builds
+# LUAINC_macosx: /opt/local/include
+LUAINC_macosx?=/opt/local/include
+# FIXME default should be where fink puts lua
+
+# LUAINC_linux: /usr/include/lua$(LUAV) /usr/local/include /usr/local/include/lua$(LUAV)
+# where lua headers are found for linux builds
+LUAINC_linux?=/usr/include/lua$(LUAV)
+
+# LUAINC_win32:
+# LUALIB_win32:
+# where lua headers and libraries are found for win32 builds
+LUAINC_win32?="../../lua-5.1.3/src"
+LUALIB_win32?="../../lua-5.1.3"
+# FIXME default should be where lua-for-windows puts lua
+
+# DESTDIR: (no default)
+# used by package managers to install into a temporary destination
+DESTDIR=
+
+#------
+# Definitions below can be overridden on the make command line, but
+# shouldn't have to be.
+
+print:
+	@echo PLAT=$(PLAT)
+	@echo LUAV=$(LUAV)
+	@echo DEBUG=$(DEBUG)
+	@echo prefix=$(prefix)
+	@echo LUAINC_$(PLAT)=$(LUAINC_$(PLAT))
+	@echo LUALIB_$(PLAT)=$(LUALIB_$(PLAT))
 
 #------
 # Install directories
@@ -44,7 +88,7 @@ PLATS= macosx linux win32
 SO_macosx=so
 O_macosx=o
 CC_macosx=gcc
-DEF_macosx= -DLUASOCKET_DEBUG -DUNIX_HAS_SUN_LEN -DLUA_COMPAT_MODULE \
+DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN -DLUA_COMPAT_MODULE \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_macosx= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
@@ -59,7 +103,7 @@ SOCKET_macosx=usocket.o
 SO_linux=so
 O_linux=o
 CC_linux=gcc
-DEF_linux=-DLUASOCKET_DEBUG \
+DEF_linux=-DLUASOCKET_$(DEBUG) \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra -Wimplicit -O2 -ggdb3 -fpic \
@@ -75,7 +119,7 @@ SO_win32=dll
 O_win32=obj
 CC_win32=cl
 DEF_win32= /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
-     /D "LUASOCKET_API=__declspec(dllexport)" /D "LUASOCKET_DEBUG" \
+     /D "LUASOCKET_API=__declspec(dllexport)" /D "LUASOCKET_$(DEBUG)" \
      /D "_CRT_SECURE_NO_WARNINGS" /D "_WINDLL"
 CFLAGS_win32=/I$(LUAINC) $(DEF) /O2 /Ot /MD /W3 /nologo
 LDFLAGS_win32= /nologo /link /NOLOGO /DLL /INCREMENTAL:NO \
