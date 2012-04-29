@@ -624,7 +624,9 @@ local tcp_methods = {
     "close",
     "connect",
     "dirty",
+    "getfamily",
     "getfd",
+    "getoption",
     "getpeername",
     "getsockname",
     "getstats",
@@ -644,9 +646,10 @@ test_methods(socket.tcp6(), tcp_methods)
 
 local udp_methods = {
     "close", 
-    "getpeername",
     "dirty",
+    "getfamily",
     "getfd",
+    "getoption",
     "getpeername",
     "getsockname",
     "receive", 
