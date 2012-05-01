@@ -662,6 +662,9 @@ local udp_methods = {
     "setsockname",
     "settimeout"
 }
+
+
+------------------------------------------------------------------------
 test_methods(socket.udp(), udp_methods)
 test_methods(socket.udp6(), udp_methods)
 
@@ -784,5 +787,9 @@ test_blockingtimeoutreceive(800091, 1, 3)
 test_blockingtimeoutreceive(800091, 2, 3)
 test_blockingtimeoutreceive(800091, 3, 2)
 test_blockingtimeoutreceive(800091, 3, 1)
+
+test("shutting server down")
+reconnect()
+remote("os.exit()")
 
 test(string.format("done in %.2fs", socket.gettime() - start))
