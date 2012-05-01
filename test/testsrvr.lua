@@ -15,6 +15,6 @@ while 1 do
         assert(command, emsg)
         assert(control:send(ack));
         print(command);
-		(load(command))();
+		((loadstring or load)(command))();
     end
 end

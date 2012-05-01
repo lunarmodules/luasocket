@@ -617,13 +617,16 @@ end
 
 ------------------------------------------------------------------------
 test("method registration")
-test_methods(socket.tcp(), {
+
+local tcp_methods = {
     "accept",
     "bind",
     "close",
     "connect",
     "dirty",
+    "getfamily",
     "getfd",
+    "getoption",
     "getpeername",
     "getsockname",
     "getstats",
@@ -637,13 +640,16 @@ test_methods(socket.tcp(), {
     "setsockname",
     "settimeout",
     "shutdown",
-})
+}
+test_methods(socket.tcp(), tcp_methods)
+test_methods(socket.tcp6(), tcp_methods)
 
-test_methods(socket.udp(), {
+local udp_methods = {
     "close", 
-    "getpeername",
     "dirty",
+    "getfamily",
     "getfd",
+    "getoption",
     "getpeername",
     "getsockname",
     "receive", 
@@ -655,7 +661,9 @@ test_methods(socket.udp(), {
     "setpeername",
     "setsockname",
     "settimeout"
-})
+}
+test_methods(socket.udp(), udp_methods)
+test_methods(socket.udp6(), udp_methods)
 
 test("partial receive")
 test_partialrecv()
