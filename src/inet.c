@@ -16,6 +16,7 @@
 static int inet_global_toip(lua_State *L);
 static int inet_global_getaddrinfo(lua_State *L);
 static int inet_global_tohostname(lua_State *L);
+static int inet_global_getnameinfo(lua_State *L);
 static void inet_pushresolved(lua_State *L, struct hostent *hp);
 static int inet_global_gethostname(lua_State *L);
 
@@ -24,6 +25,7 @@ static luaL_Reg func[] = {
     { "toip", inet_global_toip},
     { "getaddrinfo", inet_global_getaddrinfo},
     { "tohostname", inet_global_tohostname},
+    { "getnameinfo", inet_global_getnameinfo},
     { "gethostname", inet_global_gethostname},
     { NULL, NULL}
 };
@@ -74,6 +76,52 @@ static int inet_global_tohostname(lua_State *L) {
     lua_pushstring(L, hp->h_name);
     inet_pushresolved(L, hp);
     return 2;
+}
+
+static int inet_global_getnameinfo(lua_State *L) {
+    int i, ret;
+    char host[1024];
+    char serv[32];
+    struct addrinfo hints;
+    struct addrinfo *resolved, *iter;
+    const char *node = luaL_optstring(L, 1, NULL);
+    const char *service = luaL_optstring(L, 2, NULL);
+
+    if (!(node || service))
+        luaL_error(L, "You have to specify a hostname, a service, or both");
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = PF_UNSPEC;
+
+    /* getaddrinfo must get a node and a service argument */
+    ret = getaddrinfo(node ? node : "127.0.0.1", service ? service : "7",
+        &hints, &resolved);
+    if (ret != 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, socket_gaistrerror(ret));
+        return 2;
+    }
+
+    lua_newtable(L);
+    for (i = 1, iter = resolved; iter; i++, iter = iter->ai_next) {
+        getnameinfo(iter->ai_addr, iter->ai_addrlen, host,
+            node ? sizeof(host) : 0, serv, service ? sizeof(serv) : 0, 0);
+
+        if (node) {
+            lua_pushnumber(L, i);
+            lua_pushstring(L, host);
+            lua_settable(L, -3);
+        }
+    }
+    freeaddrinfo(resolved);
+
+    if (service) {
+        lua_pushstring(L, serv);
+        return 2;
+    } else {
+        return 1;
+    }
 }
 
 /*-------------------------------------------------------------------------*\
