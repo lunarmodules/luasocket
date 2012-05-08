@@ -439,12 +439,12 @@ const char *socket_gaistrerror(int err) {
         case EAI_FAMILY: return "ai_family not supported";
         case EAI_MEMORY: return "memory allocation failure";
         case EAI_NONAME: 
-            return "hostname or servname not provided, or not known";
+            return "host or service not provided, or not known";
         case EAI_OVERFLOW: return "argument buffer overflow";
 #ifdef EAI_PROTOCOL
         case EAI_PROTOCOL: return "resolved protocol is unknown";
 #endif
-        case EAI_SERVICE: return "servname not supported for socktype";
+        case EAI_SERVICE: return "service not supported for socket type";
         case EAI_SOCKTYPE: return "ai_socktype not supported";
         case EAI_SYSTEM: return strerror(errno); 
         default: return "unknown error";
