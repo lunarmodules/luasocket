@@ -1,0 +1,38 @@
+What's New
+
+This is just a bug-fix/update release.
+
+   * Fixed: manual sample of HTTP authentication now uses correct
+     "authorization" header (Alexandre Ittner);
+   * Fixed: failure on bind() was destroying the socket (Sam Roberts); 
+   * Fixed: receive() returns immediatelly if prefix can satisfy
+     bytes requested (M Joonas Pihlaja);
+   * Fixed: multicast didn't work on Windows, or anywhere
+     else for that matter (Herbert Leuwer, Adrian Sietsma);
+   * Fixed: select() now reports an error when called with more
+     sockets than FD_SETSIZE (Lorenzo Leonini);
+   * Fixed: manual links to home.html changed to index.html (Robert Hahn);
+   * Fixed: mime.unb64() would return an empty string on results that started
+     with a null character (Robert Raschke);
+   * Fixed: HTTP now automatically redirects on 303 and 307 (Jonathan Gray);
+   * Fixed: calling sleep() with negative numbers could
+     block forever, wasting CPU. Now it returns immediately (MPB);
+   * Improved: FTP commands are now sent in upper case to
+     help buggy servers (Anders Eurenius);
+   * Improved: known headers now sent in canonic
+     capitalization to help buggy servers (Joseph Stewart);
+   * Improved: Clarified tcp:receive() in the manual (MPB);
+   * Improved: Decent makefiles (LHF).
+   * Fixed: RFC links in documentation now point to IETF (Cosmin Apreutesei).
+
+
+    Yuri's bug?
+    Dahlberg
+    Sam Roberts
+    Thomas Harning Jr.
+    Sebastien Perin
+    remove getn in all files
+    ltn12.pump.all(
+      ltn12.source.file(io.open("original.png")),
+      ltn12.sink.file(io.open("copy.png", "wb"))
+    )
