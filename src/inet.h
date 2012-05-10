@@ -33,6 +33,9 @@ const char *inet_trybind(p_socket ps, const char *address, const char *serv,
 int inet_meth_getpeername(lua_State *L, p_socket ps, int family);
 int inet_meth_getsockname(lua_State *L, p_socket ps, int family);
 
+int inet_optfamily(lua_State* L, int narg, const char* def);
+int inet_optsocktype(lua_State* L, int narg, const char* def);
+
 #ifdef INET_ATON
 int inet_aton(const char *cp, struct in_addr *inp);
 #endif

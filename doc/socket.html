@@ -73,14 +73,19 @@ set to <tt><b>true</b></tt>.
 <!-- connect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=connect> 
-socket.<b>connect(</b>address, port [, locaddr, locport]<b>)</b>
+socket.<b>connect[46](</b>address, port [, locaddr] [, locport] [, family]<b>)</b>
 </p>
 
 <p class=description>
 This function is a shortcut that creates and returns a TCP client object
-connected to a remote <tt>host</tt> at a given <tt>port</tt>. Optionally,
+connected to a remote <tt>address</tt> at a given <tt>port</tt>. Optionally,
 the user can also specify the local address and port to bind
-(<tt>locaddr</tt> and <tt>locport</tt>).
+(<tt>locaddr</tt> and <tt>locport</tt>), or restrict the socket family
+to "<tt>inet</tt>" or "<tt>inet6</tt>".
+Without specifying <tt>family</tt> to <tt>connect</tt>, whether a tcp or tcp6
+connection is created depends on your system configuration. Two variations
+of connect are defined as simple helper functions that restrict the
+<tt>family</tt>, <tt>socket.connect4</tt> and <tt>socket.connect6</tt>.
 </p>
 
 <!-- debug ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
