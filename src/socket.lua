@@ -15,34 +15,12 @@ module("socket")
 -----------------------------------------------------------------------------
 -- Exported auxiliar functions
 -----------------------------------------------------------------------------
-function connect(address, port, laddress, lport)
-    if address == "*" then address = "0.0.0.0" end
-    local addrinfo, err = socket.dns.getaddrinfo(address);
-    if not addrinfo then return nil, err end
-    local sock, res
-    err = "no info on address"
-    for i, alt in base.ipairs(addrinfo) do 
-        if alt.family == "inet" then
-            sock, err = socket.tcp()
-        else
-            sock, err = socket.tcp6()
-        end
-        if not sock then return nil, err end
-        if laddress then
-            res, err = sock:bind(laddress, lport)
-            if not res then 
-                sock:close()
-                return nil, err 
-            end
-        end
-        res, err = sock:connect(alt.addr, port)
-        if not res then 
-            sock:close()
-        else
-            return sock 
-        end
-    end
-    return nil, err
+function connect4(address, port, laddress, lport)
+    return socket.connect(address, port, laddress, lport, "inet")
+end
+
+function connect6(address, port, laddress, lport)
+    return socket.connect(address, port, laddress, lport, "inet6")
 end
 
 function bind(host, port, backlog)
