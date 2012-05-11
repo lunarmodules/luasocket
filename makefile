@@ -23,10 +23,10 @@ test:
 	lua test/hello.lua
 
 install-both:
-	touch src/*.c
+	$(MAKE) clean 
 	@cd src; $(MAKE) $(PLAT) LUAV=5.1
 	@cd src; $(MAKE) install-unix LUAV=5.1
-	touch src/*.c
+	$(MAKE) clean 
 	@cd src; $(MAKE) $(PLAT) LUAV=5.2
 	@cd src; $(MAKE) install-unix LUAV=5.2
 

@@ -25,25 +25,35 @@ LUAV?=5.1
 # for testing and debugging luasocket itself
 DEBUG?=NODEBUG
 
-# prefix: /usr/local /usr /opt/local /sw
-# the top of the default install tree
-prefix?=/usr/local
-
 # where lua headers are found for macosx builds
-# LUAINC_macosx: /opt/local/include
-LUAINC_macosx?=/opt/local/include
-# FIXME default should be where fink puts lua
+# LUAINC_macosx: 
+# /opt/local/include
+LUAINC_macosx_base?=/opt/local/include
+LUAINC_macosx?=$(LUAINC_macosx_base)$(LUAV)
+# FIXME default should this default to fink or to macports?
+# What happens when more than one Lua version is installed?
+LUAPREFIX_macosx?=/opt/local/
 
-# LUAINC_linux: /usr/include/lua$(LUAV) /usr/local/include /usr/local/include/lua$(LUAV)
+# LUAINC_linux: 
+# /usr/include/lua$(LUAV) 
+# /usr/local/include 
+# /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
-LUAINC_linux?=/usr/include/lua$(LUAV)
+LUAINC_linux_base?=/usr/include
+LUAINC_linux?=$(LUAINC_linux_base)$(LUAV)
+LUAPREFIX_linux?=/usr/local
 
 # LUAINC_win32:
 # LUALIB_win32:
 # where lua headers and libraries are found for win32 builds
 LUAINC_win32?="../../lua-5.1.3/src"
 LUALIB_win32?="../../lua-5.1.3"
+LUAPREFIX_win32?=
 # FIXME default should be where lua-for-windows puts lua
+
+# prefix: /usr/local /usr /opt/local /sw
+# the top of the default install tree
+prefix?=$(LUAPREFIX_$(PLAT))
 
 # DESTDIR: (no default)
 # used by package managers to install into a temporary destination
