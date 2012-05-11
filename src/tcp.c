@@ -18,7 +18,7 @@
 \*=========================================================================*/
 static int global_create(lua_State *L);
 static int global_create6(lua_State *L);
-static int global_connect6(lua_State *L);
+static int global_connect(lua_State *L);
 static int meth_connect(lua_State *L);
 static int meth_listen(lua_State *L);
 static int meth_getfamily(lua_State *L);
@@ -89,7 +89,7 @@ static t_opt optset[] = {
 static luaL_Reg func[] = {
     {"tcp", global_create},
     {"tcp6", global_create6},
-    {"connect6", global_connect6},
+    {"connect", global_connect},
     {NULL, NULL}
 };
 
@@ -408,6 +408,7 @@ static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
                 freeaddrinfo(resolved);
                 return err;
             }
+            tcp->family = iterator->ai_family;
             /* all sockets initially non-blocking */
             socket_setnonblocking(&tcp->sock);
         }
@@ -424,11 +425,12 @@ static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
     return err;
 }
 
-static int global_connect6(lua_State *L) {
+static int global_connect(lua_State *L) {
     const char *remoteaddr = luaL_checkstring(L, 1);
     const char *remoteserv = luaL_checkstring(L, 2);
     const char *localaddr  = luaL_optstring(L, 3, NULL);
     const char *localserv  = luaL_optstring(L, 4, "0");
+    int family = inet_optfamily(L, 5, "unspec");
     p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
     struct addrinfo bindhints, connecthints;
     const char *err = NULL;
@@ -441,7 +443,7 @@ static int global_connect6(lua_State *L) {
     /* allow user to pick local address and port */
     memset(&bindhints, 0, sizeof(bindhints));
     bindhints.ai_socktype = SOCK_STREAM;
-    bindhints.ai_family = PF_UNSPEC;
+    bindhints.ai_family = family;
     bindhints.ai_flags = AI_PASSIVE;
     if (localaddr) {
         err = inet_trybind(&tcp->sock, localaddr, localserv, &bindhints);
@@ -450,6 +452,7 @@ static int global_connect6(lua_State *L) {
             lua_pushstring(L, err);
             return 2;
         }
+        tcp->family = bindhints.ai_family;
     }
     /* try to connect to remote address and port */
     memset(&connecthints, 0, sizeof(connecthints));
