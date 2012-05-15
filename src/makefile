@@ -75,9 +75,9 @@ print:
 # Install directories
 #
 
-INSTALL_DIR=mkdir -p
-INSTALL_DATA=cp
-INSTALL_EXEC=cp
+INSTALL_DIR=install -d
+INSTALL_DATA=install -m644
+INSTALL_EXEC=install
 INSTALL_TOP=$(DESTDIR)$(prefix)
 
 INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/$(LUAV)
