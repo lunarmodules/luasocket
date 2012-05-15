@@ -39,7 +39,7 @@ LUAPREFIX_macosx?=/opt/local/
 # /usr/local/include 
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
-LUAINC_linux_base?=/usr/include
+LUAINC_linux_base?=/usr/include/lua
 LUAINC_linux?=$(LUAINC_linux_base)$(LUAV)
 LUAPREFIX_linux?=/usr/local
 
