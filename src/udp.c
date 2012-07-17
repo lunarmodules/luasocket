@@ -153,16 +153,37 @@ static int meth_sendto(lua_State *L) {
     const char *ip = luaL_checkstring(L, 3);
     unsigned short port = (unsigned short) luaL_checknumber(L, 4);
     p_timeout tm = &udp->tm;
-    struct sockaddr_in addr;
     int err;
-    memset(&addr, 0, sizeof(addr));
-    if (!inet_aton(ip, &addr.sin_addr))
-        luaL_argerror(L, 3, "invalid ip address");
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    timeout_markstart(tm);
-    err = socket_sendto(&udp->sock, data, count, &sent,
-            (SA *) &addr, sizeof(addr), tm);
+    switch (udp->family) {
+	case PF_INET: {
+	    struct sockaddr_in addr;
+	    memset(&addr, 0, sizeof(addr));
+	    if (!inet_pton(AF_INET, ip, &addr.sin_addr))
+		luaL_argerror(L, 3, "invalid ip address");
+	    addr.sin_family = AF_INET;
+	    addr.sin_port = htons(port);
+	    timeout_markstart(tm);
+	    err = socket_sendto(&udp->sock, data, count, &sent,
+		    (SA *) &addr, sizeof(addr), tm);
+	    break;
+	}
+	case PF_INET6: {
+	    struct sockaddr_in6 addr;
+	    memset(&addr, 0, sizeof(addr));
+	    if (!inet_pton(AF_INET6, ip, &addr.sin6_addr))
+		luaL_argerror(L, 3, "invalid ip address");
+	    addr.sin6_family = AF_INET6;
+	    addr.sin6_port = htons(port);
+	    timeout_markstart(tm);
+	    err = socket_sendto(&udp->sock, data, count, &sent,
+		    (SA *) &addr, sizeof(addr), tm);
+	    break;
+	}
+	default:
+            lua_pushnil(L);
+            lua_pushfstring(L, "unknown family %d", udp->family);
+            return 2;
+    }
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, udp_strerror(err));
