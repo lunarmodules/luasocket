@@ -29,7 +29,7 @@ DEBUG?=NODEBUG
 # LUAINC_macosx: 
 # /opt/local/include
 LUAINC_macosx_base?=/opt/local/include
-LUAINC_macosx?=$(LUAINC_macosx_base)$(LUAV)
+LUAINC_macosx?=$(LUAINC_macosx_base)/lua$(LUAV)
 # FIXME default should this default to fink or to macports?
 # What happens when more than one Lua version is installed?
 LUAPREFIX_macosx?=/opt/local/

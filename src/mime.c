@@ -263,6 +263,8 @@ static int mime_global_b64(lua_State *L)
         lua_pushnil(L);
         return 2;
     }
+    /* make sure we don't confuse buffer stuff with arguments */
+    lua_settop(L, 2);
     /* process first part of the input */
     luaL_buffinit(L, &buffer);
     while (input < last) 
@@ -307,6 +309,8 @@ static int mime_global_unb64(lua_State *L)
         lua_pushnil(L);
         return 2;
     }
+    /* make sure we don't confuse buffer stuff with arguments */
+    lua_settop(L, 2);
     /* process first part of the input */
     luaL_buffinit(L, &buffer);
     while (input < last) 
@@ -458,6 +462,8 @@ static int mime_global_qp(lua_State *L)
         lua_pushnil(L);
         return 2;
     }
+    /* make sure we don't confuse buffer stuff with arguments */
+    lua_settop(L, 3);
     /* process first part of input */
     luaL_buffinit(L, &buffer);
     while (input < last)
@@ -531,6 +537,8 @@ static int mime_global_unqp(lua_State *L)
         lua_pushnil(L);
         return 2;
     }
+    /* make sure we don't confuse buffer stuff with arguments */
+    lua_settop(L, 2);
     /* process first part of input */
     luaL_buffinit(L, &buffer);
     while (input < last)
