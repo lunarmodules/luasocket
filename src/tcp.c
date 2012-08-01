@@ -192,12 +192,14 @@ static int meth_accept(lua_State *L)
         p_tcp clnt = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
         auxiliar_setclass(L, "tcp{client}", -1);
         /* initialize structure fields */
+        memset(clnt, 0, sizeof(t_tcp));
         socket_setnonblocking(&sock);
         clnt->sock = sock;
         io_init(&clnt->io, (p_send) socket_send, (p_recv) socket_recv,
                 (p_error) socket_ioerror, &clnt->sock);
         timeout_init(&clnt->tm, -1, -1);
         buffer_init(&clnt->buf, &clnt->io, &clnt->tm);
+        clnt->family = server->family;
         return 1;
     } else {
         lua_pushnil(L);
@@ -354,6 +356,7 @@ static int tcp_create(lua_State *L, int family) {
     if (!err) {
         /* allocate tcp object */
         p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
+        memset(tcp, 0, sizeof(t_tcp));
         /* set its type as master object */
         auxiliar_setclass(L, "tcp{master}", -1);
         /* initialize remaining structure fields */
@@ -368,7 +371,7 @@ static int tcp_create(lua_State *L, int family) {
                 (p_error) socket_ioerror, &tcp->sock);
         timeout_init(&tcp->tm, -1, -1);
         buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
-		tcp->family = family;
+        tcp->family = family;
         return 1;
     } else {
         lua_pushnil(L);
@@ -435,6 +438,7 @@ static int global_connect(lua_State *L) {
     struct addrinfo bindhints, connecthints;
     const char *err = NULL;
     /* initialize tcp structure */
+    memset(tcp, 0, sizeof(t_tcp));
     io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv,
             (p_error) socket_ioerror, &tcp->sock);
     timeout_init(&tcp->tm, -1, -1);
