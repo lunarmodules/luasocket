@@ -40,7 +40,7 @@ LUAPREFIX_macosx?=/opt/local/
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
 LUAINC_linux_base?=/usr/include
-LUAINC_linux?=$(LUAINC_linux_base)$(LUAV)
+LUAINC_linux?=$(LUAINC_linux_base)/lua$(LUAV)
 LUAPREFIX_linux?=/usr/local
 
 # LUAINC_win32:
@@ -289,7 +289,7 @@ local:
 	$(MAKE) install INSTALL_TOP_LIB=.. INSTALL_TOP_SHARE=..
 
 clean:
-	rm -f $(SOCKET_SO) $(SOCKET_OBJS)
+	rm -f $(SOCKET_SO) $(SOCKET_OBJS) $(SERIAL_OBJS)
 	rm -f $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
 
 .PHONY: all $(PLATS) default clean echo none
