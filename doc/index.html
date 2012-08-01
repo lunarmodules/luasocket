@@ -142,6 +142,9 @@ IPv6 addresses, and return the socket family as a third value;
 </ul>
 <li> Added: <tt>getoption</tt> method;
 <li> Fixed: <tt>url.unescape</tt> was returning additional values;
+<li> Fixed: <tt>mime.qp</tt>, <tt>mime.unqp</tt>, 
+    <tt>mime.b64</tt>, and <tt>mime.unb64</tt> could
+    mistaking their own stack slots for functions arguments;
 <li> Fixed: Receiving zero-length datagram is now possible;
 <li> Improved: Hidden all internal library symbols;
 <li> Improved: Better error messages;
