@@ -153,16 +153,37 @@ static int meth_sendto(lua_State *L) {
     const char *ip = luaL_checkstring(L, 3);
     unsigned short port = (unsigned short) luaL_checknumber(L, 4);
     p_timeout tm = &udp->tm;
-    struct sockaddr_in addr;
     int err;
-    memset(&addr, 0, sizeof(addr));
-    if (!inet_aton(ip, &addr.sin_addr))
-        luaL_argerror(L, 3, "invalid ip address");
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    timeout_markstart(tm);
-    err = socket_sendto(&udp->sock, data, count, &sent,
-            (SA *) &addr, sizeof(addr), tm);
+    switch (udp->family) {
+	case PF_INET: {
+	    struct sockaddr_in addr;
+	    memset(&addr, 0, sizeof(addr));
+	    if (!inet_pton(AF_INET, ip, &addr.sin_addr))
+		luaL_argerror(L, 3, "invalid ip address");
+	    addr.sin_family = AF_INET;
+	    addr.sin_port = htons(port);
+	    timeout_markstart(tm);
+	    err = socket_sendto(&udp->sock, data, count, &sent,
+		    (SA *) &addr, sizeof(addr), tm);
+	    break;
+	}
+	case PF_INET6: {
+	    struct sockaddr_in6 addr;
+	    memset(&addr, 0, sizeof(addr));
+	    if (!inet_pton(AF_INET6, ip, &addr.sin6_addr))
+		luaL_argerror(L, 3, "invalid ip address");
+	    addr.sin6_family = AF_INET6;
+	    addr.sin6_port = htons(port);
+	    timeout_markstart(tm);
+	    err = socket_sendto(&udp->sock, data, count, &sent,
+		    (SA *) &addr, sizeof(addr), tm);
+	    break;
+	}
+	default:
+            lua_pushnil(L);
+            lua_pushfstring(L, "unknown family %d", udp->family);
+            return 2;
+    }
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, udp_strerror(err));
@@ -201,29 +222,67 @@ static int meth_receive(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int meth_receivefrom(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkclass(L, "udp{unconnected}", 1);
-    struct sockaddr_in addr;
-    socklen_t addr_len = sizeof(addr);
     char buffer[UDP_DATAGRAMSIZE];
     size_t got, count = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
     int err;
     p_timeout tm = &udp->tm;
     timeout_markstart(tm);
     count = MIN(count, sizeof(buffer));
-    err = socket_recvfrom(&udp->sock, buffer, count, &got,
-            (SA *) &addr, &addr_len, tm);
-    /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
-    if (err == IO_CLOSED)
-        err = IO_DONE;
-    if (err == IO_DONE) {
-        lua_pushlstring(L, buffer, got);
-        lua_pushstring(L, inet_ntoa(addr.sin_addr));
-        lua_pushnumber(L, ntohs(addr.sin_port));
-        return 3;
-    } else {
-        lua_pushnil(L);
-        lua_pushstring(L, udp_strerror(err));
-        return 2;
+    switch (udp->family) {
+	case PF_INET: {
+	    struct sockaddr_in addr;
+	    socklen_t addr_len = sizeof(addr);
+	    err = socket_recvfrom(&udp->sock, buffer, count, &got,
+		    (SA *) &addr, &addr_len, tm);
+	    /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
+	    if (err == IO_CLOSED)
+		err = IO_DONE;
+	    if (err == IO_DONE) {
+		char addrstr[INET_ADDRSTRLEN];
+		lua_pushlstring(L, buffer, got);
+		if (!inet_ntop(AF_INET, &addr.sin_addr,
+			addrstr, sizeof(addrstr))) {
+		    lua_pushnil(L);
+		    lua_pushstring(L, "invalid source address");
+		    return 2;
+		}
+		lua_pushstring(L, addrstr);
+		lua_pushnumber(L, ntohs(addr.sin_port));
+		return 3;
+	    }
+	    break;
+	}
+	case PF_INET6: {
+	    struct sockaddr_in6 addr;
+	    socklen_t addr_len = sizeof(addr);
+	    err = socket_recvfrom(&udp->sock, buffer, count, &got,
+		    (SA *) &addr, &addr_len, tm);
+	    /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
+	    if (err == IO_CLOSED)
+		err = IO_DONE;
+	    if (err == IO_DONE) {
+		char addrstr[INET6_ADDRSTRLEN];
+		lua_pushlstring(L, buffer, got);
+		if (!inet_ntop(AF_INET6, &addr.sin6_addr,
+			addrstr, sizeof(addrstr))) {
+		    lua_pushnil(L);
+		    lua_pushstring(L, "invalid source address");
+		    return 2;
+		}
+		lua_pushstring(L, addrstr);
+		lua_pushnumber(L, ntohs(addr.sin6_port));
+		return 3;
+	    }
+	    break;
+	}
+        default:
+            lua_pushnil(L);
+            lua_pushfstring(L, "unknown family %d", udp->family);
+            return 2;
     }
+    lua_pushnil(L);
+    lua_pushstring(L, udp_strerror(err));
+    return 2;
 }
 
 /*-------------------------------------------------------------------------*\
