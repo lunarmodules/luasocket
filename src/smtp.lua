@@ -75,9 +75,9 @@ end
 function metat.__index:login(user, password)
     self.try(self.tp:command("AUTH", "LOGIN"))
     self.try(self.tp:check("3.."))
-    self.try(self.tp:command(mime.b64(user)))
+    self.try(self.tp:send(mime.b64(user) .. "\r\n"))
     self.try(self.tp:check("3.."))
-    self.try(self.tp:command(mime.b64(password)))
+    self.try(self.tp:send(mime.b64(password) .. "\r\n"))
     return self.try(self.tp:check("2.."))
 end
 
