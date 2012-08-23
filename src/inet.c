@@ -177,8 +177,8 @@ static int inet_global_getaddrinfo(lua_State *L)
     lua_newtable(L);
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-        getnameinfo(iterator->ai_addr, iterator->ai_addrlen, hbuf, sizeof(hbuf),
-                sbuf, 0, NI_NUMERICHOST);
+        getnameinfo(iterator->ai_addr, iterator->ai_addrlen, hbuf, 
+            sizeof(hbuf), sbuf, 0, NI_NUMERICHOST);
         lua_pushnumber(L, i);
         lua_newtable(L);
         switch (iterator->ai_family) {
@@ -368,6 +368,34 @@ const char *inet_trycreate(p_socket ps, int family, int type) {
 }
 
 /*-------------------------------------------------------------------------*\
+* "Disconnects" a DGRAM socket
+\*-------------------------------------------------------------------------*/
+const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
+{
+    switch (family) {
+        case PF_INET: {
+            struct sockaddr_in sin;
+            memset((char *) &sin, 0, sizeof(sin));
+            sin.sin_family = AF_UNSPEC;
+            sin.sin_addr.s_addr = INADDR_ANY;
+            return socket_strerror(socket_connect(ps, (SA *) &sin, 
+                sizeof(sin), tm));
+        }
+        case PF_INET6: {
+            struct sockaddr_in6 sin6;
+            struct in6_addr addrany = IN6ADDR_ANY_INIT; 
+            memset((char *) &sin6, 0, sizeof(sin6));
+            sin6.sin6_family = AF_UNSPEC;
+fprintf(stderr, "disconnecting\n");
+            sin6.sin6_addr = addrany;
+            return socket_strerror(socket_connect(ps, (SA *) &sin6, 
+                sizeof(sin6), tm));
+        }
+    }
+    return NULL;
+}
+
+/*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
 const char *inet_tryconnect(p_socket ps, const char *address,
@@ -382,17 +410,14 @@ const char *inet_tryconnect(p_socket ps, const char *address,
         if (resolved) freeaddrinfo(resolved);
         return err;
     }
-    /* iterate over all returned addresses trying to connect */
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         timeout_markstart(tm);
         /* try connecting to remote address */
-        err = socket_strerror(socket_connect(ps,
-            (SA *) iterator->ai_addr,
+        err = socket_strerror(socket_connect(ps, (SA *) iterator->ai_addr, 
             iterator->ai_addrlen, tm));
         /* if success, break out of loop */
         if (err == NULL) break;
     }
-
     freeaddrinfo(resolved);
     /* here, if err is set, we failed */
     return err;
@@ -407,12 +432,8 @@ const char *inet_trybind(p_socket ps, const char *address, const char *serv,
     struct addrinfo *iterator = NULL, *resolved = NULL;
     const char *err = NULL;
     t_socket sock = *ps;
-    /* translate luasocket special values to C */
-    if (strcmp(address, "*") == 0) address = NULL;
-    if  (!serv) serv = "0";
     /* try resolving */
-    err = socket_gaistrerror(getaddrinfo(address, serv,
-            bindhints, &resolved));
+    err = socket_gaistrerror(getaddrinfo(address, serv, bindhints, &resolved));
     if (err) {
         if (resolved) freeaddrinfo(resolved);
         return err;
@@ -420,7 +441,7 @@ const char *inet_trybind(p_socket ps, const char *address, const char *serv,
     /* iterate over resolved addresses until one is good */
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         if(sock == SOCKET_INVALID) {
-            err = socket_strerror( socket_create(&sock, iterator->ai_family,
+            err = socket_strerror(socket_create(&sock, iterator->ai_family,
                         iterator->ai_socktype, iterator->ai_protocol));
             if(err)
                 continue;

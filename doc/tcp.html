@@ -125,7 +125,9 @@ local host.
 <tt>Port</tt> must be an integer number in the range [0..64K). 
 If <tt>address</tt>
 is '<tt>*</tt>', the system binds to all local interfaces
-using the <tt>INADDR_ANY</tt> constant. If <tt>port</tt> is 0, the system automatically
+using the <tt>INADDR_ANY</tt> constant or
+<tt>IN6ADDR_ANY_INIT</tt>, according to the family. 
+If <tt>port</tt> is 0, the system automatically
 chooses an ephemeral port.  
 </p>
 

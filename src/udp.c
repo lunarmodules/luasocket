@@ -275,10 +275,10 @@ static int meth_receivefrom(lua_State *L) {
 	    }
 	    break;
 	}
-        default:
-            lua_pushnil(L);
-            lua_pushfstring(L, "unknown family %d", udp->family);
-            return 2;
+    default:
+        lua_pushnil(L);
+        lua_pushfstring(L, "unknown family %d", udp->family);
+        return 2;
     }
     lua_pushnil(L);
     lua_pushstring(L, udp_strerror(err));
@@ -366,27 +366,30 @@ static int meth_settimeout(lua_State *L) {
 static int meth_setpeername(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
     p_timeout tm = &udp->tm;
-    const char *address =  luaL_checkstring(L, 2);
+    const char *address = luaL_checkstring(L, 2);
     int connecting = strcmp(address, "*");
-    const char *port = connecting ?
-        luaL_checkstring(L, 3) :
-        luaL_optstring(L, 3, "0");
+    const char *port = connecting? luaL_checkstring(L, 3): "0";
     struct addrinfo connecthints;
     const char *err;
     memset(&connecthints, 0, sizeof(connecthints));
     connecthints.ai_socktype = SOCK_DGRAM;
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = udp->family;
-    err = inet_tryconnect(&udp->sock, address, port,
-		    tm, &connecthints);
-    if (err) {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
+    if (connecting) {
+        err = inet_tryconnect(&udp->sock, address, port, tm, &connecthints);
+        if (err) {
+            lua_pushnil(L);
+            lua_pushstring(L, err);
+            return 2;
+        }
+        auxiliar_setclass(L, "udp{connected}", 1);
+    } else {
+        /* we ignore possible errors because Mac OS X always
+         * returns EAFNOSUPPORT */
+        inet_trydisconnect(&udp->sock, udp->family, tm);
+        auxiliar_setclass(L, "udp{unconnected}", 1);
     }
     /* change class to connected or unconnected depending on address */
-    if (connecting) auxiliar_setclass(L, "udp{connected}", 1);
-    else auxiliar_setclass(L, "udp{unconnected}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }

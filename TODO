@@ -1,3 +1,5 @@
+- bizarre default values for getnameinfo should throw error instead!
+
 - document the new bind and connect behavior.
 - shouldn't we instead make the code compatible to Lua 5.2
   without any compat stuff, and use a compatibility layer to

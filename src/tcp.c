@@ -222,6 +222,7 @@ static int meth_bind(lua_State *L)
     bindhints.ai_socktype = SOCK_STREAM;
     bindhints.ai_family = tcp->family;
     bindhints.ai_flags = AI_PASSIVE;
+    address = strcmp(address, "*")? address: NULL;
     err = inet_trybind(&tcp->sock, address, port, &bindhints);
     if (err) {
         lua_pushnil(L);
@@ -247,8 +248,7 @@ static int meth_connect(lua_State *L)
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = tcp->family;
     timeout_markstart(&tcp->tm);
-    err = inet_tryconnect(&tcp->sock, address, port,
-		    &tcp->tm, &connecthints);
+    err = inet_tryconnect(&tcp->sock, address, port, &tcp->tm, &connecthints);
     /* have to set the class even if it failed due to non-blocking connects */
     auxiliar_setclass(L, "tcp{client}", 1);
     if (err) {
