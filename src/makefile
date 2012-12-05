@@ -26,7 +26,7 @@ LUAV?=5.1
 DEBUG?=NODEBUG
 
 # where lua headers are found for macosx builds
-# LUAINC_macosx: 
+# LUAINC_macosx:
 # /opt/local/include
 LUAINC_macosx_base?=/opt/local/include
 LUAINC_macosx?=$(LUAINC_macosx_base)/lua$(LUAV)
@@ -34,9 +34,9 @@ LUAINC_macosx?=$(LUAINC_macosx_base)/lua$(LUAV)
 # What happens when more than one Lua version is installed?
 LUAPREFIX_macosx?=/opt/local/
 
-# LUAINC_linux: 
-# /usr/include/lua$(LUAV) 
-# /usr/local/include 
+# LUAINC_linux:
+# /usr/include/lua$(LUAV)
+# /usr/local/include
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
 LUAINC_linux_base?=/usr/include
@@ -104,7 +104,7 @@ DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN -DLUA_COMPAT_MODULE \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_macosx= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
 	-fvisibility=hidden
-LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o 
+LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o
 LD_macosx= export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
 SOCKET_macosx=usocket.o
 
@@ -119,7 +119,7 @@ DEF_linux=-DLUASOCKET_$(DEBUG) \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra -Wimplicit -O2 -ggdb3 -fpic \
 	-fvisibility=hidden
-LDFLAGS_linux=-O -shared -fpic -o 
+LDFLAGS_linux=-O -shared -fpic -o
 LD_linux=gcc
 SOCKET_linux=usocket.o
 
@@ -183,6 +183,7 @@ SOCKET_OBJS= \
 	auxiliar.$(O) \
 	options.$(O) \
 	inet.$(O) \
+	if.$(O) \
 	$(SOCKET) \
 	except.$(O) \
 	select.$(O) \
@@ -258,20 +259,20 @@ none:
 all: $(SOCKET_SO) $(MIME_SO)
 
 $(SOCKET_SO): $(SOCKET_OBJS)
-	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@ 
+	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@
 
 $(MIME_SO): $(MIME_OBJS)
-	$(LD) $(MIME_OBJS) $(LDFLAGS)$@ 
+	$(LD) $(MIME_OBJS) $(LDFLAGS)$@
 
 all-unix: all $(UNIX_SO) $(SERIAL_SO)
 
 $(UNIX_SO): $(UNIX_OBJS)
-	$(LD) $(UNIX_OBJS) $(LDFLAGS)$@ 
+	$(LD) $(UNIX_OBJS) $(LDFLAGS)$@
 
 $(SERIAL_SO): $(SERIAL_OBJS)
 	$(LD) $(SERIAL_OBJS) $(LDFLAGS)$@
 
-install: 
+install:
 	$(INSTALL_DIR) $(INSTALL_TOP_SHARE)
 	$(INSTALL_DATA) $(TO_TOP_SHARE) $(INSTALL_TOP_SHARE)
 	$(INSTALL_DIR) $(INSTALL_SOCKET_SHARE)
@@ -301,6 +302,7 @@ auxiliar.$(O): auxiliar.c auxiliar.h
 buffer.$(O): buffer.c buffer.h io.h timeout.h
 except.$(O): except.c except.h
 inet.$(O): inet.c inet.h socket.h io.h timeout.h usocket.h
+if.$(O): if.c if.h
 io.$(O): io.c io.h timeout.h
 luasocket.$(O): luasocket.c luasocket.h auxiliar.h except.h \
 	timeout.h buffer.h io.h inet.h socket.h usocket.h tcp.h \
