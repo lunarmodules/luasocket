@@ -7,11 +7,13 @@
  *       All rights reserved
  *
  * Created:       Tue Dec  4 14:50:34 2012 mstenber
- * Last modified: Wed Dec  5 09:50:59 2012 mstenber
- * Edit time:     22 min
+ * Last modified: Wed Dec  5 18:48:55 2012 mstenber
+ * Edit time:     23 min
  *
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <net/if.h>
 
 #include "if.h"
