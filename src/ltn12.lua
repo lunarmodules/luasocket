@@ -19,7 +19,7 @@ pump = {}
 
 -- 2048 seems to be better in windows...
 BLOCKSIZE = 2048
-_VERSION = "LTN12 1.0.1"
+_VERSION = "LTN12 1.0.2"
 
 -----------------------------------------------------------------------------
 -- Filter stuff

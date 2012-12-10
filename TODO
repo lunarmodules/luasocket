@@ -1,5 +1,11 @@
 - bizarre default values for getnameinfo should throw error instead!
 
+> It's just too bad it can't talk to gmail -
+> reason 1: they absolutely want TLS
+> reason 2: unlike all the other SMTP implementations, they
+> don't
+> tolerate missing < > around adresses
+
 - document the new bind and connect behavior.
 - shouldn't we instead make the code compatible to Lua 5.2
   without any compat stuff, and use a compatibility layer to
