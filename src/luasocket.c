@@ -34,6 +34,7 @@
 #include "tcp.h"
 #include "udp.h"
 #include "select.h"
+#include "if.h"
 
 /*-------------------------------------------------------------------------*\
 * Internal function prototypes
@@ -54,6 +55,7 @@ static const luaL_Reg mod[] = {
     {"tcp", tcp_open},
     {"udp", udp_open},
     {"select", select_open},
+    {"iface", if_open},
     {NULL, NULL}
 };
 

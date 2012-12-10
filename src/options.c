@@ -10,12 +10,31 @@
 #include "options.h"
 #include "inet.h"
 
+/* Some platforms use IPV6_JOIN_GROUP instead if
+ * IPV6_ADD_MEMBERSHIP. The semantics are same, though. */
+#ifndef IPV6_ADD_MEMBERSHIP
+#ifdef IPV6_JOIN_GROUP
+#define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
+#endif /* IPV6_JOIN_GROUP */
+#endif /* !IPV6_ADD_MEMBERSHIP */
+
+/* Same with IPV6_DROP_MEMBERSHIP / IPV6_LEAVE_GROUP. */
+#ifndef IPV6_DROP_MEMBERSHIP
+#ifdef IPV6_LEAVE_GROUP
+#define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+#endif /* IPV6_LEAVE_GROUP */
+#endif /* !IPV6_DROP_MEMBERSHIP */
+
+
 /*=========================================================================*\
 * Internal functions prototypes
 \*=========================================================================*/
 static int opt_setmembership(lua_State *L, p_socket ps, int level, int name);
+static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name);
 static int opt_setboolean(lua_State *L, p_socket ps, int level, int name);
 static int opt_getboolean(lua_State *L, p_socket ps, int level, int name);
+static int opt_setint(lua_State *L, p_socket ps, int level, int name);
+static int opt_getint(lua_State *L, p_socket ps, int level, int name);
 static int opt_set(lua_State *L, p_socket ps, int level, int name, 
         void *val, int len);
 static int opt_get(lua_State *L, p_socket ps, int level, int name, 
@@ -106,6 +125,26 @@ int opt_set_broadcast(lua_State *L, p_socket ps)
     return opt_setboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
+int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
+{
+  return opt_setint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
+}
+
+int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps)
+{
+  return opt_getint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
+}
+
+int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps)
+{
+  return opt_setint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
+}
+
+int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps)
+{
+  return opt_getint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
+}
+
 int opt_set_ip_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
@@ -114,6 +153,16 @@ int opt_set_ip_multicast_loop(lua_State *L, p_socket ps)
 int opt_get_ip_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
+}
+
+int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps)
+{
+    return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
+}
+
+int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
 }
 
 int opt_set_linger(lua_State *L, p_socket ps)
@@ -150,9 +199,7 @@ int opt_get_linger(lua_State *L, p_socket ps)
 
 int opt_set_ip_multicast_ttl(lua_State *L, p_socket ps)
 {
-    int val = (int) luaL_checknumber(L, 3);    /* obj, name, int */
-    return opt_set(L, ps, IPPROTO_IP, IP_MULTICAST_TTL, 
-        (char *) &val, sizeof(val));
+    return opt_setint(L, ps, IPPROTO_IP, IP_MULTICAST_TTL);
 }
 
 int opt_set_ip_multicast_if(lua_State *L, p_socket ps)
@@ -179,6 +226,8 @@ int opt_get_ip_multicast_if(lua_State *L, p_socket ps)
     return 1;
 }
 
+
+
 int opt_set_ip_add_membership(lua_State *L, p_socket ps)
 {
     return opt_setmembership(L, ps, IPPROTO_IP, IP_ADD_MEMBERSHIP);
@@ -187,6 +236,21 @@ int opt_set_ip_add_membership(lua_State *L, p_socket ps)
 int opt_set_ip_drop_membersip(lua_State *L, p_socket ps)
 {
     return opt_setmembership(L, ps, IPPROTO_IP, IP_DROP_MEMBERSHIP);
+}
+
+int opt_set_ip6_add_membership(lua_State *L, p_socket ps)
+{
+    return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP);
+}
+
+int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps)
+{
+    return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP);
+}
+
+int opt_get_ip6_v6only(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
 }
 
 int opt_set_ip6_v6only(lua_State *L, p_socket ps)
@@ -215,6 +279,31 @@ static int opt_setmembership(lua_State *L, p_socket ps, int level, int name)
     if (strcmp(lua_tostring(L, -1), "*") &&
             !inet_aton(lua_tostring(L, -1), &val.imr_interface)) 
         luaL_argerror(L, 3, "invalid 'interface' ip address");
+    return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
+}
+
+static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
+{
+    struct ipv6_mreq val;                   /* obj, opt-name, table */
+    memset(&val, 0, sizeof(val));
+    if (!lua_istable(L, 3)) auxiliar_typeerror(L,3,lua_typename(L, LUA_TTABLE));
+    lua_pushstring(L, "multiaddr");
+    lua_gettable(L, 3);
+    if (!lua_isstring(L, -1)) 
+        luaL_argerror(L, 3, "string 'multiaddr' field expected");
+    if (!inet_pton(AF_INET6, lua_tostring(L, -1), &val.ipv6mr_multiaddr)) 
+        luaL_argerror(L, 3, "invalid 'multiaddr' ip address");
+    lua_pushstring(L, "interface");
+    lua_gettable(L, 3);
+    /* By default we listen to all interfaces. However, interface= can
+       override it. */
+    if (!lua_isnil(L, -1))
+      {
+        if (!lua_isnumber(L, -1)) 
+          luaL_argerror(L, 3, "string 'interface' field expected");
+        /* XXX - support non-numeric interface specification? */
+      }
+    val.ipv6mr_interface = lua_tonumber(L, -1);
     return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
 }
 
@@ -260,3 +349,19 @@ static int opt_setboolean(lua_State *L, p_socket ps, int level, int name)
     return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
 }
 
+static int opt_getint(lua_State *L, p_socket ps, int level, int name)
+{
+    int val = 0;
+    int len = sizeof(val);
+    int err = opt_get(L, ps, level, name, (char *) &val, &len);
+    if (err)
+        return err;
+    lua_pushnumber(L, val);
+    return 1;
+}
+
+static int opt_setint(lua_State *L, p_socket ps, int level, int name)
+{
+    int val = (int) lua_tonumber(L, 3);             /* obj, name, int */
+    return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
+}
