@@ -30,6 +30,7 @@ const char *inet_tryconnect(p_socket ps, const char *address,
 const char *inet_trybind(p_socket ps, const char *address, const char *serv,
         struct addrinfo *bindhints);
 const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm);
+const char *inet_tryaccept(p_socket server, int family, p_socket client, p_timeout tm);
 
 int inet_meth_getpeername(lua_State *L, p_socket ps, int family);
 int inet_meth_getsockname(lua_State *L, p_socket ps, int family);

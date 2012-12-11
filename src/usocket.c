@@ -181,11 +181,7 @@ int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
 * Accept with timeout
 \*-------------------------------------------------------------------------*/
 int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, p_timeout tm) {
-    SA daddr;
-    socklen_t dlen = sizeof(daddr);
     if (*ps == SOCKET_INVALID) return IO_CLOSED; 
-    if (!addr) addr = &daddr;
-    if (!len) len = &dlen;
     for ( ;; ) {
         int err;
         if ((*pa = accept(*ps, addr, len)) != SOCKET_INVALID) return IO_DONE;

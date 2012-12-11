@@ -186,9 +186,9 @@ static int meth_accept(lua_State *L)
     p_tcp server = (p_tcp) auxiliar_checkclass(L, "tcp{server}", 1);
     p_timeout tm = timeout_markstart(&server->tm);
     t_socket sock;
-    int err = socket_accept(&server->sock, &sock, NULL, NULL, tm);
+    const char *err = inet_tryaccept(&server->sock, server->family, &sock, tm);
     /* if successful, push client socket */
-    if (err == IO_DONE) {
+    if (err == NULL) {
         p_tcp clnt = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
         auxiliar_setclass(L, "tcp{client}", -1);
         /* initialize structure fields */
@@ -203,7 +203,7 @@ static int meth_accept(lua_State *L)
         return 1;
     } else {
         lua_pushnil(L);
-        lua_pushstring(L, socket_strerror(err));
+        lua_pushstring(L, err);
         return 2;
     }
 }

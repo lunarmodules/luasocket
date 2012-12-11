@@ -169,11 +169,7 @@ int socket_listen(p_socket ps, int backlog) {
 \*-------------------------------------------------------------------------*/
 int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, 
         p_timeout tm) {
-    SA daddr;
-    socklen_t dlen = sizeof(daddr);
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
-    if (!addr) addr = &daddr;
-    if (!len) len = &dlen;
     for ( ;; ) {
         int err;
         /* try to get client socket */

@@ -36,6 +36,7 @@
 
 typedef int t_socket;
 typedef t_socket *p_socket;
+typedef struct sockaddr_storage t_sockaddr_storage;
 
 #define SOCKET_INVALID (-1)
 

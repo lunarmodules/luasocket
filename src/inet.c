@@ -263,7 +263,6 @@ int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
                 lua_pushliteral(L, "inet6");
                 return 3;
             }
-            return 2;
         }
         default:
             lua_pushnil(L);
@@ -421,6 +420,21 @@ const char *inet_tryconnect(p_socket ps, const char *address,
     freeaddrinfo(resolved);
     /* here, if err is set, we failed */
     return err;
+}
+
+/*-------------------------------------------------------------------------*\
+* Tries to accept a socket
+\*-------------------------------------------------------------------------*/
+const char *inet_tryaccept(p_socket server, int family, p_socket client, p_timeout tm)
+{
+	socklen_t len;
+	t_sockaddr_storage addr;
+	if (family == PF_INET6) {
+		len = sizeof(struct sockaddr_in6);
+	} else {
+		len = sizeof(struct sockaddr_in);
+	}
+	return socket_strerror(socket_accept(server, client, (SA *) &addr, &len, tm));
 }
 
 /*-------------------------------------------------------------------------*\
