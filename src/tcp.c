@@ -418,7 +418,7 @@ static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
         /* finally try connecting to remote address */
         err = socket_strerror(socket_connect(&tcp->sock,
             (SA *) iterator->ai_addr,
-            iterator->ai_addrlen, tm));
+            (socklen_t) iterator->ai_addrlen, tm));
         /* if success, break out of loop */
         if (err == NULL) break;
     }

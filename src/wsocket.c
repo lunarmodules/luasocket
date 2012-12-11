@@ -181,8 +181,6 @@ int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len,
         /* call select to avoid busy wait */
         if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     } 
-    /* can't reach here */
-    return IO_UNKNOWN; 
 }
 
 /*-------------------------------------------------------------------------*\
@@ -214,8 +212,6 @@ int socket_send(p_socket ps, const char *data, size_t count,
         /* avoid busy wait */
         if ((err = socket_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     } 
-    /* can't reach here */
-    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -237,7 +233,6 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
         if (err != WSAEWOULDBLOCK) return err;
         if ((err = socket_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
     } 
-    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -258,7 +253,6 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
         if (err != WSAEWOULDBLOCK) return err;
         if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
-    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -280,7 +274,6 @@ int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
         if (err != WSAEWOULDBLOCK) return err;
         if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
-    return IO_UNKNOWN;
 }
 
 /*-------------------------------------------------------------------------*\

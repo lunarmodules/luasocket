@@ -114,7 +114,7 @@ SOCKET_macosx=usocket.o
 SO_linux=so
 O_linux=o
 CC_linux=gcc
-DEF_linux=-DLUASOCKET_$(DEBUG) \
+DEF_linux=-DLUASOCKET_$(DEBUG) -DLUA_COMPAT_MODULE \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra -Wimplicit -O2 -ggdb3 -fpic \
@@ -130,11 +130,12 @@ SO_win32=dll
 O_win32=obj
 CC_win32=cl
 DEF_win32= /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
-     /D "LUASOCKET_API=__declspec(dllexport)" /D "LUASOCKET_$(DEBUG)" \
-     /D "_CRT_SECURE_NO_WARNINGS" /D "_WINDLL"
-CFLAGS_win32=/I$(LUAINC) $(DEF) /O2 /Ot /MD /W3 /nologo
+     /D "LUASOCKET_API=__declspec(dllexport)" /D "_CRT_SECURE_NO_WARNINGS" \
+     /D "_WINDLL" /D "LUA_COMPAT_MODULE" /D "MIME_API=__declspec(dllexport)" \
+     /D "LUASOCKET_$(DEBUG)" 
+CFLAGS_win32=/I "$(LUAINC)" $(DEF) /O2 /Ot /MD /W3 /nologo
 LDFLAGS_win32= /nologo /link /NOLOGO /DLL /INCREMENTAL:NO \
-    /LIBPATH:$(LUALIB) \
+    /LIBPATH:"$(LUALIB)" \
     /MANIFEST \
     /MANIFESTFILE:"intermediate.manifest" \
     /MANIFESTUAC:"level='asInvoker' uiAccess='false'" \

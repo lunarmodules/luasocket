@@ -51,8 +51,8 @@ void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
 * object:getstats() interface
 \*-------------------------------------------------------------------------*/
 int buffer_meth_getstats(lua_State *L, p_buffer buf) {
-    lua_pushnumber(L, buf->received);
-    lua_pushnumber(L, buf->sent);
+    lua_pushnumber(L, (lua_Number) buf->received);
+    lua_pushnumber(L, (lua_Number) buf->sent);
     lua_pushnumber(L, timeout_gettime() - buf->birthday);
     return 3;
 }
@@ -61,8 +61,8 @@ int buffer_meth_getstats(lua_State *L, p_buffer buf) {
 * object:setstats() interface
 \*-------------------------------------------------------------------------*/
 int buffer_meth_setstats(lua_State *L, p_buffer buf) {
-    buf->received = (long) luaL_optnumber(L, 2, buf->received); 
-    buf->sent = (long) luaL_optnumber(L, 3, buf->sent); 
+    buf->received = (long) luaL_optnumber(L, 2, (lua_Number) buf->received); 
+    buf->sent = (long) luaL_optnumber(L, 3, (lua_Number) buf->sent); 
     if (lua_isnumber(L, 4)) buf->birthday = timeout_gettime() - lua_tonumber(L, 4);
     lua_pushnumber(L, 1);
     return 1;
@@ -90,9 +90,9 @@ int buffer_meth_send(lua_State *L, p_buffer buf) {
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, buf->io->error(buf->io->ctx, err)); 
-        lua_pushnumber(L, sent+start-1);
+        lua_pushnumber(L, (lua_Number) (sent+start-1));
     } else {
-        lua_pushnumber(L, sent+start-1);
+        lua_pushnumber(L, (lua_Number) (sent+start-1));
         lua_pushnil(L);
         lua_pushnil(L);
     }

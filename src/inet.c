@@ -105,8 +105,8 @@ static int inet_global_getnameinfo(lua_State *L) {
 
     lua_newtable(L);
     for (i = 1, iter = resolved; iter; i++, iter = iter->ai_next) {
-        getnameinfo(iter->ai_addr, iter->ai_addrlen, host,
-            node ? sizeof(host) : 0, serv, service ? sizeof(serv) : 0, 0);
+        getnameinfo(iter->ai_addr, (socklen_t) iter->ai_addrlen, host,
+            node ? (socklen_t) sizeof(host) : 0, serv, service ? (socklen_t) sizeof(serv) : 0, 0);
 
         if (node) {
             lua_pushnumber(L, i);
@@ -177,8 +177,8 @@ static int inet_global_getaddrinfo(lua_State *L)
     lua_newtable(L);
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-        getnameinfo(iterator->ai_addr, iterator->ai_addrlen, hbuf, 
-            sizeof(hbuf), sbuf, 0, NI_NUMERICHOST);
+        getnameinfo(iterator->ai_addr, (socklen_t) iterator->ai_addrlen, hbuf, 
+            (socklen_t) sizeof(hbuf), sbuf, 0, NI_NUMERICHOST);
         lua_pushnumber(L, i);
         lua_newtable(L);
         switch (iterator->ai_family) {
@@ -413,7 +413,7 @@ const char *inet_tryconnect(p_socket ps, const char *address,
         timeout_markstart(tm);
         /* try connecting to remote address */
         err = socket_strerror(socket_connect(ps, (SA *) iterator->ai_addr, 
-            iterator->ai_addrlen, tm));
+            (socklen_t) iterator->ai_addrlen, tm));
         /* if success, break out of loop */
         if (err == NULL) break;
     }
@@ -463,7 +463,7 @@ const char *inet_trybind(p_socket ps, const char *address, const char *serv,
         /* try binding to local address */
         err = socket_strerror(socket_bind(&sock,
             (SA *) iterator->ai_addr,
-            iterator->ai_addrlen));
+            (socklen_t) iterator->ai_addrlen));
 
         /* keep trying unless bind succeeded */
         if (err) {

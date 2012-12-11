@@ -139,7 +139,7 @@ static int meth_send(lua_State *L) {
         lua_pushstring(L, udp_strerror(err));
         return 2;
     }
-    lua_pushnumber(L, sent);
+    lua_pushnumber(L, (lua_Number) sent);
     return 1;
 }
 
@@ -189,7 +189,7 @@ static int meth_sendto(lua_State *L) {
         lua_pushstring(L, udp_strerror(err));
         return 2;
     }
-    lua_pushnumber(L, sent);
+    lua_pushnumber(L, (lua_Number) sent);
     return 1;
 }
 
