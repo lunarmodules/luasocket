@@ -33,6 +33,7 @@ canonic = {
     ["content-range"] = "Content-Range",
     ["content-transfer-encoding"] = "Content-Transfer-Encoding",
     ["content-type"] = "Content-Type",
+    ["cookie"] = "Cookie",
     ["date"] = "Date",
     ["diagnostic-code"] = "Diagnostic-Code",
     ["dsn-gateway"] = "DSN-Gateway",
