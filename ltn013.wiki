@@ -73,12 +73,12 @@ Fortunately, all these problems are very easy to solve and that's what we do in 
 We used the {{pcall}} function to shield the user from errors that could be raised by the underlying implementation.  Instead of directly using {{pcall}} (and thus duplicating code) every time we prefer a factory that does the same job:
         {{{
 local function pack(ok, ...)
-    return ok, arg
+    return ok, {...}
 end
 
 function protect(f)
     return function(...)
-        local ok, ret = pack(pcall(f, unpack(arg)))
+        local ok, ret = pack(pcall(f, ...))
         if ok then return unpack(ret)
         else return nil, ret[1] end
     end
@@ -157,7 +157,7 @@ function newtry(f)
             if f then f() end 
             error(arg[2], 0)  
         else 
-            return unpack(arg) 
+            return ...
         end
     end
 end
