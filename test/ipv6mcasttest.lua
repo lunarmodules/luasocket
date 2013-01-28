@@ -8,8 +8,8 @@
 -- Copyright (c) 2012 cisco Systems, Inc.
 --
 -- Created:       Wed Dec  5 09:55:46 2012 mstenber
--- Last modified: Wed Dec  5 18:33:09 2012 mstenber
--- Edit time:     50 min
+-- Last modified: Mon Jan 28 16:20:14 2013 mstenber
+-- Edit time:     54 min
 --
 
 -- exercise the new IPv6 related functionality:
@@ -96,7 +96,7 @@ local r, err = c:sendto(testdata, mcast .. '%' .. ifname, port)
 assert(r, 'sendto failed (mcast)')
 
 local data, host, port = s:receivefrom()
-assert(data)
+assert(data == testdata, 'weird data ' .. tostring(data))
 print('recvfrom', host, port)
 
 -- make sure we can send stuff back to link-local addr as well'

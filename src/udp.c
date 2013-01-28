@@ -246,6 +246,7 @@ static int meth_receivefrom(lua_State *L)
     lua_pushstring(L, gai_strerror(err));
     return 2;
   }
+  lua_pushlstring(L, buffer, got);
   lua_pushstring(L, addrstr);
   lua_pushstring(L, portstr);
   return 3;
