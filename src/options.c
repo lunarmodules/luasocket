@@ -3,6 +3,9 @@
 * LuaSocket toolkit
 \*=========================================================================*/
 #include <string.h> 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
 
 #include "lauxlib.h"
 
@@ -295,15 +298,27 @@ static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
         luaL_argerror(L, 3, "invalid 'multiaddr' ip address");
     lua_pushstring(L, "interface");
     lua_gettable(L, 3);
-    /* By default we listen to all interfaces. However, interface= can
-       override it. */
+    /* By default we listen to interface on default route
+     * (sigh). However, interface= can override it. We support either
+     * number, or name for it. */
     if (!lua_isnil(L, -1))
       {
-        if (!lua_isnumber(L, -1)) 
-          luaL_argerror(L, 3, "string 'interface' field expected");
-        /* XXX - support non-numeric interface specification? */
+        if (lua_isnumber(L, -1))
+          {
+            val.ipv6mr_interface = lua_tonumber(L, -1);
+          }
+        else if (lua_isstring(L, -1))
+          {
+            if (!(val.ipv6mr_interface = if_nametoindex(lua_tostring(L, -1))))
+              {
+                lua_pushnil(L);
+                lua_pushstring(L, "nonexistent interface");
+                return 2;
+              }
+          }
+        else
+          luaL_argerror(L, -1, "number/string 'interface' field expected");
       }
-    val.ipv6mr_interface = lua_tonumber(L, -1);
     return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
 }
 
