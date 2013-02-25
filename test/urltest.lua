@@ -34,7 +34,7 @@ end
 
 local check_parse_path = function(path, expect)
     local parsed = socket.url.parse_path(path)
-    for i = 1, math.max(table.getn(parsed), table.getn(expect)) do
+    for i = 1, math.max(#parsed, #expect) do
         if parsed[i] ~= expect[i] then
             print(path)
             os.exit()

@@ -31,7 +31,7 @@ function newset()
         insert = function(set, value)
             if not reverse[value] then
                 table.insert(set, value)
-                reverse[value] = table.getn(set)
+                reverse[value] = #set
             end
         end,
         remove = function(set, value)
