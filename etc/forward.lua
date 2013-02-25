@@ -3,7 +3,7 @@ local dispatch = require("dispatch")
 local handler = dispatch.newhandler()
 
 -- make sure the user knows how to invoke us
-if table.getn(arg) < 1 then
+if #arg < 1 then
     print("Usage")
     print("    lua forward.lua <iport:ohost:oport> ...")
     os.exit(1)

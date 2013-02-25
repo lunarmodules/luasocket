@@ -34,7 +34,7 @@ end
 function Public.parse_headers(headers_s)
     local headers_t = Public.split_headers(headers_s)
     local headers = {}
-    for i = 1, table.getn(headers_t) do
+    for i = 1, #headers_t do
         local name, value = Public.parse_header(headers_t[i])
         if name then
             name = string.lower(name)
@@ -74,7 +74,7 @@ end
 
 function Public.parse(mbox_s)
     local mbox = Public.split_mbox(mbox_s)
-    for i = 1, table.getn(mbox) do
+    for i = 1, #mbox do
         mbox[i] = Public.parse_message(mbox[i])
     end
     return mbox

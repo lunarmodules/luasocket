@@ -20,7 +20,7 @@ dofile("testsupport.lua")
 
 local total = function()
     local t = 0
-    for i = 1, table.getn(sent) do
+    for i = 1, #sent do
         t = t + sent[i].count
     end
     return t
@@ -83,7 +83,7 @@ end
 
 local check = function(sent, m)
     io.write("checking ", m.headers.title, ": ")
-    for i = 1, table.getn(sent) do
+    for i = 1, #sent do
         local s = sent[i]
         if s.title == m.headers.title and s.count > 0 then
             check_headers(s.headers, m.headers)
@@ -98,7 +98,7 @@ end
 
 local insert = function(sent, message)
     if type(message.rcpt) == "table" then
-        message.count = table.getn(message.rcpt)
+        message.count = #message.rcpt
     else message.count = 1 end
     message.headers = message.headers or {}
     message.headers.title = message.title
@@ -115,7 +115,7 @@ local wait = function(sentinel, n)
     io.write("waiting for ", n, " messages: ")
     while 1 do
         local mbox = parse(get())
-        if n == table.getn(mbox) then break end
+        if n == #mbox then break end
         if socket.time() - sentinel.time > 50 then 
             to = 1 
             break
@@ -237,7 +237,7 @@ empty()
 print("ok")
 
 io.write("sending messages: ")
-for i = 1, table.getn(sent) do
+for i = 1, #sent do
     ret, err = socket.smtp.mail(sent[i])
     if not ret then fail(err) end
     io.write("+")
@@ -249,9 +249,9 @@ wait(mark(), total())
 
 io.write("parsing mailbox: ")
 local mbox = parse(get())
-print(table.getn(mbox) .. " messages found!")
+print(#mbox .. " messages found!")
 
-for i = 1, table.getn(mbox) do
+for i = 1, #mbox do
     check(sent, mbox[i])
 end
 
