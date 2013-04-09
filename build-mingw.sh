@@ -1,5 +1,5 @@
 LUA=../lua-5.2.1/src/
-BUILD_FLAGS="-Wl,-s -O2 -shared -D LUA_COMPAT_MODULE -D IPV6_V6ONLY=1 -D WINVER=0x0501 -s -I src -I $LUA -L $LUA"
+BUILD_FLAGS="-Wl,-s -O2 -shared -D LUA_COMPAT_MODULE -D IPV6_V6ONLY=27 -D WINVER=0x0501 -s -I src -I $LUA -L $LUA"
 
 mkdir -p lib/mime lib/socket
 gcc $BUILD_FLAGS -o "lib/mime/core.dll" src/mime.c -llua \
