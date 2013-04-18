@@ -126,8 +126,9 @@ local function chain2(f1, f2)
 end
 
 function filter.chain(...)
+    local arg = {...}
     local f = arg[1]
-    for i = 2, table.getn(arg) do
+    for i = 2, #arg do
         f = chain2(f, arg[i])
     end
     return f
@@ -235,9 +236,10 @@ end
 We can make these ideas even more powerful if we use a new feature of Lua 5.0: coroutines.  Coroutines suffer from a great lack of advertisement, and I am going to play my part here.  Just like lexical scoping, coroutines taste odd at first, but once you get used with the concept, it can save your day. I have to admit that using coroutines to implement our file source would be overkill, so let's implement a concatenated source factory instead.
         {{{
 function source.cat(...)
+    local arg = {...}
     local co = coroutine.create(function()
         local i = 1
-        while i <= table.getn(arg) do
+        while i <= #arg do
             local chunk, err = arg[i]()
             if chunk then coroutine.yield(chunk)
             elseif err then return nil, err 

@@ -50,7 +50,7 @@ function socket.protect(f)
   return function(...)
     local co = coroutine.create(f)
     while true do
-      local results = {coroutine.resume(co, base.unpack(arg))}
+      local results = {coroutine.resume(co, ...)}
       local status = table.remove(results, 1)
       if not status then
         if base.type(results[1]) == 'table' then
@@ -104,8 +104,7 @@ local function cowrap(dispatcher, tcp, error)
     -- don't override explicitly.
     local metat = { __index = function(table, key)
         table[key] = function(...)
-            arg[1] = tcp
-            return tcp[key](base.unpack(arg))
+            return tcp[key](tcp,select(2,...))
         end
         return table[key]
     end}

@@ -4,24 +4,24 @@ local socket = require"socket.unix"
 host = "luasocket"
 
 function pass(...)
-    local s = string.format(unpack(arg))
+    local s = string.format(...)
     io.stderr:write(s, "\n")
 end
 
 function fail(...)
-    local s = string.format(unpack(arg))
+    local s = string.format(...)
     io.stderr:write("ERROR: ", s, "!\n")
 socket.sleep(3)
     os.exit()
 end
 
 function warn(...)
-    local s = string.format(unpack(arg))
+    local s = string.format(...)
     io.stderr:write("WARNING: ", s, "\n")
 end
 
 function remote(...)
-    local s = string.format(unpack(arg))
+    local s = string.format(...)
     s = string.gsub(s, "\n", ";")
     s = string.gsub(s, "%s+", " ")
     s = string.gsub(s, "^%s*", "")
