@@ -66,7 +66,7 @@ local check_request = function(request, expect, ignore)
     local response = {}
     response.code, response.headers, response.status = 
         socket.skip(1, http.request(request))
-    if t and table.getn(t) > 0 then response.body = table.concat(t) end
+    if t and #t > 0 then response.body = table.concat(t) end
     check_result(response, expect, ignore)
 end
 

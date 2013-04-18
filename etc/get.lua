@@ -135,7 +135,7 @@ end
 
 -- main program
 arg = arg or {}
-if table.getn(arg) < 1 then
+if #arg < 1 then
     io.write("Usage:\n  lua get.lua <remote-url> [<local-file>]\n")
     os.exit(1)
 else get(arg[1], arg[2]) end

@@ -29,7 +29,7 @@ end
 do
     local opt = {}
     local pat = "[%s%c%p]*([%w]*)=([\"]?[%w%s_!@#$%%^&*()<>:;]+[\"]\?\.?)"
-    for i = 2, table.getn(arg), 1 do
+    for i = 2, #arg, 1 do
       string.gsub(arg[i], pat, function(name, value) opt[name] = value end)
     end
     if not arg[2] then

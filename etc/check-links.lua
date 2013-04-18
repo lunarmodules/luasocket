@@ -11,7 +11,7 @@ dispatch.TIMEOUT = 10
 
 -- make sure the user knows how to invoke us
 arg = arg or {}
-if table.getn(arg) < 1 then
+if #arg < 1 then
     print("Usage:\n  luasocket check-links.lua [-n] {<url>}")
     exit()
 end
