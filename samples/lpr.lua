@@ -28,7 +28,7 @@ end
 
 do
     local opt = {}
-    local pat = "[%s%c%p]*([%w]*)=([\"]?[%w%s_!@#$%%^&*()<>:;]+[\"]\?\.?)"
+    local pat = "[%s%c%p]*([%w]*)=([\"]?[%w%s_!@#$%%^&*()<>:;]+[\"]?.?)"
     for i = 2, #arg, 1 do
       string.gsub(arg[i], pat, function(name, value) opt[name] = value end)
     end
