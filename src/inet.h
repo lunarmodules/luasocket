@@ -20,6 +20,7 @@
 
 #ifdef _WIN32
 #define INET_ATON
+#define INET_PTON
 #endif
 
 int inet_open(lua_State *L);
@@ -40,6 +41,11 @@ int inet_optsocktype(lua_State* L, int narg, const char* def);
 
 #ifdef INET_ATON
 int inet_aton(const char *cp, struct in_addr *inp);
+#endif
+
+#ifdef INET_PTON
+const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt);
+int inet_pton(int af, const char *src, void *dst);
 #endif
 
 #endif /* INET_H */
