@@ -1,7 +1,4 @@
 *.o
 *.so
 *.so.*
-macosx.cmd
-win32.cmd
-linux.cmd
 
