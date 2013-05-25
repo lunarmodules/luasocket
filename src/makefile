@@ -29,7 +29,7 @@ DEBUG?=NODEBUG
 # LUAINC_macosx: 
 # /opt/local/include
 LUAINC_macosx_base?=/opt/local/include
-LUAINC_macosx?=$(LUAINC_macosx_base)/lua$(LUAV)
+LUAINC_macosx?=$(LUAINC_macosx_base)/lua/$(LUAV)
 # FIXME default should this default to fink or to macports?
 # What happens when more than one Lua version is installed?
 LUAPREFIX_macosx?=/opt/local
@@ -43,7 +43,7 @@ LDIR_macosx?=share/lua/$(LUAV)
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
 LUAINC_linux_base?=/usr/include
-LUAINC_linux?=$(LUAINC_linux_base)/lua$(LUAV)
+LUAINC_linux?=$(LUAINC_linux_base)/lua/$(LUAV)
 LUAPREFIX_linux?=/usr/local
 CDIR_linux?=lib/lua/$(LUAV)
 LDIR_linux?=share/lua/$(LUAV)
