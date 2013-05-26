@@ -396,7 +396,7 @@ const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
 /*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_tryconnect(p_socket ps, const char *address,
+const char *inet_tryconnect(p_socket ps, int *family, const char *address,
         const char *serv, p_timeout tm, struct addrinfo *connecthints)
 {
     struct addrinfo *iterator = NULL, *resolved = NULL;
@@ -410,6 +410,23 @@ const char *inet_tryconnect(p_socket ps, const char *address,
     }
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         timeout_markstart(tm);
+        /* create new socket if necessary. if there was no
+         * bind, we need to create one for every new family
+         * that shows up while iterating. if there was a
+         * bind, all families will be the same and we will
+         * not enter this branch. */
+        if (*family != iterator->ai_family) {
+            socket_destroy(ps);
+            err = socket_strerror(socket_create(ps, iterator->ai_family, 
+                iterator->ai_socktype, iterator->ai_protocol));
+            if (err != NULL) {
+                freeaddrinfo(resolved);
+                return err;
+            }
+            *family = iterator->ai_family;
+            /* all sockets initially non-blocking */
+            socket_setnonblocking(ps);
+        }
         /* try connecting to remote address */
         err = socket_strerror(socket_connect(ps, (SA *) iterator->ai_addr, 
             (socklen_t) iterator->ai_addrlen, tm));
@@ -424,7 +441,8 @@ const char *inet_tryconnect(p_socket ps, const char *address,
 /*-------------------------------------------------------------------------*\
 * Tries to accept a socket
 \*-------------------------------------------------------------------------*/
-const char *inet_tryaccept(p_socket server, int family, p_socket client, p_timeout tm)
+const char *inet_tryaccept(p_socket server, int family, p_socket client, 
+    p_timeout tm)
 {
 	socklen_t len;
 	t_sockaddr_storage addr;

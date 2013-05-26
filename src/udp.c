@@ -376,7 +376,8 @@ static int meth_setpeername(lua_State *L) {
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = udp->family;
     if (connecting) {
-        err = inet_tryconnect(&udp->sock, address, port, tm, &connecthints);
+        err = inet_tryconnect(&udp->sock, &udp->family, address, 
+            port, tm, &connecthints);
         if (err) {
             lua_pushnil(L);
             lua_pushstring(L, err);

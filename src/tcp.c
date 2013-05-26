@@ -248,7 +248,8 @@ static int meth_connect(lua_State *L)
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = tcp->family;
     timeout_markstart(&tcp->tm);
-    err = inet_tryconnect(&tcp->sock, address, port, &tcp->tm, &connecthints);
+    err = inet_tryconnect(&tcp->sock, &tcp->family, address, port, 
+        &tcp->tm, &connecthints);
     /* have to set the class even if it failed due to non-blocking connects */
     auxiliar_setclass(L, "tcp{client}", 1);
     if (err) {
@@ -388,20 +389,11 @@ static int global_create6(lua_State *L) {
     return tcp_create(L, AF_INET6);
 }
 
-const char *strfamily(int family) {
-    switch (family) {
-        case PF_UNSPEC: return "unspec";
-        case PF_INET: return "inet";
-        case PF_INET6: return "inet6";
-        default: return "invalid";
-    }
-}
-
+#if 0
 static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
     struct addrinfo *connecthints, p_tcp tcp) {
     struct addrinfo *iterator = NULL, *resolved = NULL;
     const char *err = NULL;
-    int i = 0;
     /* try resolving */
     err = socket_gaistrerror(getaddrinfo(remoteaddr, remoteserv,
                 connecthints, &resolved));
@@ -442,6 +434,7 @@ static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
     /* here, if err is set, we failed */
     return err;
 }
+#endif
 
 static int global_connect(lua_State *L) {
     const char *remoteaddr = luaL_checkstring(L, 1);
@@ -479,7 +472,8 @@ static int global_connect(lua_State *L) {
     connecthints.ai_socktype = SOCK_STREAM;
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = bindhints.ai_family;
-    err = tryconnect6(remoteaddr, remoteserv, &connecthints, tcp);
+    err = inet_tryconnect(&tcp->sock, &tcp->family, remoteaddr, remoteserv,
+         &tcp->tm, &connecthints);
     if (err) {
         socket_destroy(&tcp->sock);
         lua_pushnil(L);
