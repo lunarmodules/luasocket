@@ -388,10 +388,20 @@ static int global_create6(lua_State *L) {
     return tcp_create(L, AF_INET6);
 }
 
+const char *strfamily(int family) {
+    switch (family) {
+        case PF_UNSPEC: return "unspec";
+        case PF_INET: return "inet";
+        case PF_INET6: return "inet6";
+        default: return "invalid";
+    }
+}
+
 static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
     struct addrinfo *connecthints, p_tcp tcp) {
     struct addrinfo *iterator = NULL, *resolved = NULL;
     const char *err = NULL;
+    int i = 0;
     /* try resolving */
     err = socket_gaistrerror(getaddrinfo(remoteaddr, remoteserv,
                 connecthints, &resolved));
@@ -402,8 +412,13 @@ static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
     /* iterate over all returned addresses trying to connect */
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         p_timeout tm = timeout_markstart(&tcp->tm);
-        /* create new socket if one wasn't created by the bind stage */
-        if (tcp->sock == SOCKET_INVALID) {
+        /* create new socket if necessary. if there was no
+         * bind, we need to create one for every new family
+         * that shows up while iterating. if there was a
+         * bind, all families will be the same and we will
+         * not enter this branch. */
+        if (tcp->family != iterator->ai_family) {
+            socket_destroy(&tcp->sock);
             err = socket_strerror(socket_create(&tcp->sock,
                 iterator->ai_family, iterator->ai_socktype,
                 iterator->ai_protocol));
@@ -444,6 +459,7 @@ static int global_connect(lua_State *L) {
     timeout_init(&tcp->tm, -1, -1);
     buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
     tcp->sock = SOCKET_INVALID;
+    tcp->family = PF_UNSPEC;
     /* allow user to pick local address and port */
     memset(&bindhints, 0, sizeof(bindhints));
     bindhints.ai_socktype = SOCK_STREAM;
