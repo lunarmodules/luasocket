@@ -176,9 +176,24 @@ static int inet_global_getaddrinfo(lua_State *L)
     }
     lua_newtable(L);
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
-        char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-        getnameinfo(iterator->ai_addr, (socklen_t) iterator->ai_addrlen, hbuf, 
-            (socklen_t) sizeof(hbuf), sbuf, 0, NI_NUMERICHOST);
+        char hbuf[NI_MAXHOST]
+#ifndef _WINDOWS
+        ,sbuf[NI_MAXSERV]
+#endif
+        ;
+        ret = getnameinfo(iterator->ai_addr, (socklen_t) iterator->ai_addrlen, hbuf, 
+            (socklen_t) sizeof(hbuf), 
+#ifdef _WINDOWS
+            NULL, 0,
+#else
+            sbuf, 0, 
+#endif
+            NI_NUMERICHOST);
+        if(ret){
+          lua_pushnil(L);
+          lua_pushstring(L, socket_gaistrerror(ret));
+          return 2;
+        }
         lua_pushnumber(L, i);
         lua_newtable(L);
         switch (iterator->ai_family) {
