@@ -642,7 +642,10 @@ local tcp_methods = {
     "shutdown",
 }
 test_methods(socket.tcp(), tcp_methods)
-test_methods(socket.tcp6(), tcp_methods)
+do local sock = socket.tcp6()
+if sock then test_methods(socket.tcp6(), tcp_methods)
+else io.stderr:write("Warning! IPv6 does not support!\n") end
+end
 
 local udp_methods = {
     "close", 
@@ -666,7 +669,10 @@ local udp_methods = {
 
 ------------------------------------------------------------------------
 test_methods(socket.udp(), udp_methods)
-test_methods(socket.udp6(), udp_methods)
+do local sock = socket.tcp6()
+if sock then test_methods(socket.udp6(), udp_methods)
+else io.stderr:write("Warning! IPv6 does not support!\n") end
+end
 
 test("partial receive")
 test_partialrecv()
