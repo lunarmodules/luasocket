@@ -2,6 +2,8 @@ local socket = require("socket")
 local ltn12 = require("ltn12")
 local mime = require("mime")
 
+local unpack = unpack or table.unpack
+
 dofile("testsupport.lua")
 
 local qptest = "qptest.bin"

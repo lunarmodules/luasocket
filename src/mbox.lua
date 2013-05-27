@@ -86,3 +86,5 @@ function Public.parse_message(message_s)
     message.headers = Public.parse_headers(message.headers)
     return message
 end
+
+return mbox
