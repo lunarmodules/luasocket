@@ -18,9 +18,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-#if !defined(LUA_VERSION_NUM) || (LUA_VERSION_NUM < 501)
-#include "compat-5.1.h"
-#endif
 
 /*=========================================================================*\
 * LuaSocket includes
@@ -80,6 +77,34 @@ static int global_unload(lua_State *L) {
     socket_close();
     return 0;
 }
+
+#if LUA_VERSION_NUM > 501
+
+int luaL_typerror (lua_State *L, int narg, const char *tname) {
+  const char *msg = lua_pushfstring(L, "%s expected, got %s",
+                                    tname, luaL_typename(L, narg));
+  return luaL_argerror(L, narg, msg);
+}
+
+#if ! defined(LUA_COMPAT_MODULE)
+void luaL_openlib(lua_State *L, const char *name, const luaL_Reg *funcs, int idx) {
+    if (name != NULL) {
+#ifdef LUASOCKET_USE_GLOBAL
+        lua_getglobal(L,name);
+        if (lua_isnil(L,-1)) {
+            lua_newtable(L);
+            lua_setglobal(L,name);
+            lua_getglobal(L,name);
+        }
+#else
+        lua_newtable(L);
+#endif
+    }
+    luaL_setfuncs(L,funcs,0);
+}
+#endif
+
+#endif
 
 /*-------------------------------------------------------------------------*\
 * Setup basic stuff.

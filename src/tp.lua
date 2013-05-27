@@ -11,12 +11,14 @@ local base = _G
 local string = require("string")
 local socket = require("socket")
 local ltn12 = require("ltn12")
-module("socket.tp")
+
+socket.tp = {}
+local _M = socket.tp
 
 -----------------------------------------------------------------------------
 -- Program constants
 -----------------------------------------------------------------------------
-TIMEOUT = 60
+_M.TIMEOUT = 60
 
 -----------------------------------------------------------------------------
 -- Implementation
@@ -109,10 +111,10 @@ function metat.__index:close()
 end
 
 -- connect with server and return c object
-function connect(host, port, timeout, create)
+function _M.connect(host, port, timeout, create)
     local c, e = (create or socket.tcp)()
     if not c then return nil, e end
-    c:settimeout(timeout or TIMEOUT)
+    c:settimeout(timeout or _M.TIMEOUT)
     local r, e = c:connect(host, port)
     if not r then
         c:close()
@@ -121,3 +123,4 @@ function connect(host, port, timeout, create)
     return base.setmetatable({c = c}, metat)
 end
 
+return _M

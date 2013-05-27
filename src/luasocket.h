@@ -22,10 +22,6 @@
 #define LUASOCKET_API extern
 #endif
 
-#if LUA_VERSION_NUM	> 501 & !( defined LUA_COMPAT_MODULE)
-#	error Lua 5.2 requires LUA_COMPAT_MODULE defined for luaL_openlib
-#endif
-
 /*-------------------------------------------------------------------------*\
 * Initializes the library.
 \*-------------------------------------------------------------------------*/
