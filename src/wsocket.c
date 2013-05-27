@@ -250,7 +250,11 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
         }
         if (taken == 0) return IO_CLOSED;
         err = WSAGetLastError();
-        if (err != WSAEWOULDBLOCK) return err;
+        /* On Windows, and on UDP, a connreset simply means the
+         * previous send failed. On TCP, it means our socket
+         * is now useless, so the error must pass. I am
+         * hoping waitfd will still get the error. */
+        if (err != WSAEWOULDBLOCK && err != WSAECONNRESET) return err;
         if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
 }
@@ -271,7 +275,11 @@ int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
         }
         if (taken == 0) return IO_CLOSED;
         err = WSAGetLastError();
-        if (err != WSAEWOULDBLOCK) return err;
+        /* On Windows, and on UDP, a connreset simply means the
+         * previous send failed. On TCP, it means our socket
+         * is now useless, so the error must pass. I am
+         * hoping waitfd will still get the error. */
+        if (err != WSAEWOULDBLOCK && err != WSAECONNRESET) return err;
         if ((err = socket_waitfd(ps, WAITFD_R, tm)) != IO_DONE) return err;
     }
 }
