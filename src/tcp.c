@@ -222,7 +222,6 @@ static int meth_bind(lua_State *L)
     bindhints.ai_socktype = SOCK_STREAM;
     bindhints.ai_family = tcp->family;
     bindhints.ai_flags = AI_PASSIVE;
-    address = strcmp(address, "*")? address: NULL;
     err = inet_trybind(&tcp->sock, address, port, &bindhints);
     if (err) {
         lua_pushnil(L);

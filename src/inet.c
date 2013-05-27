@@ -478,6 +478,9 @@ const char *inet_trybind(p_socket ps, const char *address, const char *serv,
     struct addrinfo *iterator = NULL, *resolved = NULL;
     const char *err = NULL;
     t_socket sock = *ps;
+    /* translate luasocket special values to C */
+    if (strcmp(address, "*") == 0) address = NULL;
+    if (!serv) serv = "0";
     /* try resolving */
     err = socket_gaistrerror(getaddrinfo(address, serv, bindhints, &resolved));
     if (err) {
