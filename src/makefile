@@ -160,7 +160,7 @@ DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) -DLUA_COMPAT_MODULE \
 	-DMIME_API='__declspec(dllexport)'
 CFLAGS_mingw= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
 	-fvisibility=hidden
-LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lwsock32 -lws2_32 -o 
+LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lws2_32 -o 
 LD_mingw=gcc
 SOCKET_mingw=wsocket.o
 
@@ -181,8 +181,8 @@ LDFLAGS_win32= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
     //MANIFEST //MANIFESTFILE:"intermediate.manifest" \
     //MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
 	//SUBSYSTEM:WINDOWS //OPT:REF //OPT:ICF //DYNAMICBASE:NO \
-    //MACHINE:X86 /LIBPATH:"$(shell cmd //c echo $(LUALIB))" lua$(subst .,,$(LUAV)).lib \
-	wsock32.lib ws2_32.lib //OUT:
+    //MACHINE:X86 /LIBPATH:"$(shell cmd //c echo $(LUALIB))" \
+	lua$(subst .,,$(LUAV)).lib ws2_32.lib //OUT:
 LD_win32=cl
 SOCKET_win32=wsocket.obj
 
