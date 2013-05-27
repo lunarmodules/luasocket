@@ -12,7 +12,7 @@
 #
 #   make PLAT=linux DEBUG=DEBUG LUAV=5.2 prefix=/sw
 
-# PLAT: linux macosx win32
+# PLAT: linux macosx win32 mingw
 # platform to build for
 PLAT?=linux
 
@@ -33,6 +33,9 @@ LUAINC_macosx?=$(LUAINC_macosx_base)/lua/$(LUAV)
 # FIXME default should this default to fink or to macports?
 # What happens when more than one Lua version is installed?
 LUAPREFIX_macosx?=/opt/local
+CDIR_macosx?=lib/lua/$(LUAV)
+LDIR_macosx?=share/lua/$(LUAV)
+
 
 # LUAINC_linux: 
 # /usr/include/lua$(LUAV) 
@@ -40,20 +43,40 @@ LUAPREFIX_macosx?=/opt/local
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
 LUAINC_linux_base?=/usr/include
-LUAINC_linux?=$(LUAINC_linux_base)/lua$(LUAV)
+LUAINC_linux?=$(LUAINC_linux_base)/lua/$(LUAV)
 LUAPREFIX_linux?=/usr/local
+CDIR_linux?=lib/lua/$(LUAV)
+LDIR_linux?=share/lua/$(LUAV)
+
+# where lua headers are found for mingw builds
+# LUAINC_mingw: 
+# /opt/local/include
+LUAINC_mingw_base?=/usr/include
+LUAINC_mingw?=$(LUAINC_mingw_base)/lua/$(LUAV)
+LUALIB_mingw_base?=/usr/bin
+LUALIB_mingw?=$(LUALIB_mingw_base)/lua/$(LUAV)/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_mingw?=/usr
+CDIR_mingw?=lua/$(LUAV)
+LDIR_mingw?=lua/$(LUAV)/lua
+
 
 # LUAINC_win32:
 # LUALIB_win32:
 # where lua headers and libraries are found for win32 builds
-LUAINC_win32?="../../lua-5.1.3/src"
-LUALIB_win32?="../../lua-5.1.3"
+LUAINC_win32_base?=
+LUAINC_win32?=$(LUAINC_win32_base)/lua/$(LUAV)
+PLATFORM_win32?=Release
 LUAPREFIX_win32?=
-# FIXME default should be where lua-for-windows puts lua
+CDIR_win32?=lua/$(LUAV)/$(PLATFORM_win32)
+LDIR_win32?=lua/$(LUAV)/$(PLATFORM_win32)/lua
+LUALIB_win32?=$(LUAPREFIX_win32)/lua/$(LUAV)/$(PLATFORM_win32)
 
 # prefix: /usr/local /usr /opt/local /sw
 # the top of the default install tree
 prefix?=$(LUAPREFIX_$(PLAT))
+
+CDIR?=$(CDIR_$(PLAT))
+LDIR?=$(LDIR_$(PLAT))
 
 # DESTDIR: (no default)
 # used by package managers to install into a temporary destination
@@ -63,13 +86,6 @@ DESTDIR=
 # Definitions below can be overridden on the make command line, but
 # shouldn't have to be.
 
-print:
-	@echo PLAT=$(PLAT)
-	@echo LUAV=$(LUAV)
-	@echo DEBUG=$(DEBUG)
-	@echo prefix=$(prefix)
-	@echo LUAINC_$(PLAT)=$(LUAINC_$(PLAT))
-	@echo LUALIB_$(PLAT)=$(LUALIB_$(PLAT))
 
 #------
 # Install directories
@@ -80,18 +96,28 @@ INSTALL_DATA=install -m644
 INSTALL_EXEC=install
 INSTALL_TOP=$(DESTDIR)$(prefix)
 
-INSTALL_TOP_SHARE=$(INSTALL_TOP)/share/lua/$(LUAV)
-INSTALL_TOP_LIB=$(INSTALL_TOP)/lib/lua/$(LUAV)
+INSTALL_TOP_LDIR=$(INSTALL_TOP)/$(LDIR)
+INSTALL_TOP_CDIR=$(INSTALL_TOP)/$(CDIR)
 
-INSTALL_SOCKET_SHARE=$(INSTALL_TOP_SHARE)/socket
-INSTALL_SOCKET_LIB=$(INSTALL_TOP_LIB)/socket
-INSTALL_MIME_SHARE=$(INSTALL_TOP_SHARE)/mime
-INSTALL_MIME_LIB=$(INSTALL_TOP_LIB)/mime
+INSTALL_SOCKET_LDIR=$(INSTALL_TOP_LDIR)/socket
+INSTALL_SOCKET_CDIR=$(INSTALL_TOP_CDIR)/socket
+INSTALL_MIME_LDIR=$(INSTALL_TOP_LDIR)/mime
+INSTALL_MIME_CDIR=$(INSTALL_TOP_CDIR)/mime
+
+print:
+	@echo PLAT=$(PLAT)
+	@echo LUAV=$(LUAV)
+	@echo DEBUG=$(DEBUG)
+	@echo prefix=$(prefix)
+	@echo LUAINC_$(PLAT)=$(LUAINC_$(PLAT))
+	@echo LUALIB_$(PLAT)=$(LUALIB_$(PLAT))
+	@echo INSTALL_TOP_CDIR=$(INSTALL_TOP_CDIR)
+	@echo INSTALL_TOP_LDIR=$(INSTALL_TOP_LDIR)
 
 #------
 # Supported platforms
 #
-PLATS= macosx linux win32
+PLATS= macosx linux win32 mingw
 
 #------
 # Compiler and linker settings
@@ -117,11 +143,27 @@ CC_linux=gcc
 DEF_linux=-DLUASOCKET_$(DEBUG) -DLUA_COMPAT_MODULE \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra -Wimplicit -O2 -ggdb3 -fpic \
-	-fvisibility=hidden
+CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra \
+	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden
 LDFLAGS_linux=-O -shared -fpic -o 
 LD_linux=gcc
 SOCKET_linux=usocket.o
+
+#------
+# Compiler and linker settings
+# for MingW
+SO_mingw=dll
+O_mingw=o
+CC_mingw=gcc
+DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) -DLUA_COMPAT_MODULE \
+	-DWINVER=0x0501 -DLUASOCKET_API='__declspec(dllexport)' \
+	-DMIME_API='__declspec(dllexport)'
+CFLAGS_mingw= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
+	-fvisibility=hidden
+LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lwsock32 -lws2_32 -o 
+LD_mingw=gcc
+SOCKET_mingw=wsocket.o
+
 
 #------
 # Compiler and linker settings
@@ -129,25 +171,25 @@ SOCKET_linux=usocket.o
 SO_win32=dll
 O_win32=obj
 CC_win32=cl
-DEF_win32= /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
-     /D "LUASOCKET_API=__declspec(dllexport)" /D "_CRT_SECURE_NO_WARNINGS" \
-     /D "_WINDLL" /D "LUA_COMPAT_MODULE" /D "MIME_API=__declspec(dllexport)" \
-     /D "LUASOCKET_$(DEBUG)" 
-CFLAGS_win32=/I "$(LUAINC)" $(DEF) /O2 /Ot /MD /W3 /nologo
-LDFLAGS_win32= /nologo /link /NOLOGO /DLL /INCREMENTAL:NO \
-    /LIBPATH:"$(LUALIB)" \
-    /MANIFEST \
-    /MANIFESTFILE:"intermediate.manifest" \
-    /MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
-	/SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /DYNAMICBASE:NO \
-    /MACHINE:X86 ws2_32.lib lua$(LUAV).lib /OUT:
+DEF_win32= //D "WIN32" //D "NDEBUG" //D "_WINDOWS" //D "_USRDLL" \
+     //D "LUASOCKET_API=__declspec(dllexport)" //D "_CRT_SECURE_NO_WARNINGS" \
+     //D "_WINDLL" //D "LUA_COMPAT_MODULE" \
+	 //D "MIME_API=__declspec(dllexport)" \
+     //D "LUASOCKET_$(DEBUG)" 
+CFLAGS_win32=//I "$(LUAINC)" $(DEF) //O2 //Ot //MD //W3 //nologo
+LDFLAGS_win32= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
+    //MANIFEST //MANIFESTFILE:"intermediate.manifest" \
+    //MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
+	//SUBSYSTEM:WINDOWS //OPT:REF //OPT:ICF //DYNAMICBASE:NO \
+    //MACHINE:X86 /LIBPATH:"$(shell cmd //c echo $(LUALIB))" lua$(subst .,,$(LUAV)).lib \
+	wsock32.lib ws2_32.lib //OUT:
 LD_win32=cl
 SOCKET_win32=wsocket.obj
 
 .SUFFIXES: .obj
 
 .c.obj:
-	$(CC) $(CFLAGS) /Fo"$@" /c $<
+	$(CC) $(CFLAGS) //Fo"$@" //c $<
 
 #------
 # Output file names
@@ -223,7 +265,7 @@ SERIAL_OBJS:=\
 #------
 # Files to install
 #
-TO_SOCKET_SHARE= \
+TO_SOCKET_LDIR= \
 	http.lua \
 	url.lua \
 	tp.lua \
@@ -231,7 +273,7 @@ TO_SOCKET_SHARE= \
 	headers.lua \
 	smtp.lua
 
-TO_TOP_SHARE= \
+TO_TOP_LDIR= \
 	ltn12.lua \
 	socket.lua \
 	mime.lua
@@ -249,6 +291,9 @@ win32:
 
 linux:
 	$(MAKE) all-unix PLAT=linux
+
+mingw:
+	$(MAKE) all PLAT=mingw
 
 none:
 	@echo "Please run"
@@ -273,21 +318,21 @@ $(SERIAL_SO): $(SERIAL_OBJS)
 	$(LD) $(SERIAL_OBJS) $(LDFLAGS)$@
 
 install: 
-	$(INSTALL_DIR) $(INSTALL_TOP_SHARE)
-	$(INSTALL_DATA) $(TO_TOP_SHARE) $(INSTALL_TOP_SHARE)
-	$(INSTALL_DIR) $(INSTALL_SOCKET_SHARE)
-	$(INSTALL_DATA) $(TO_SOCKET_SHARE) $(INSTALL_SOCKET_SHARE)
-	$(INSTALL_DIR) $(INSTALL_SOCKET_LIB)
-	$(INSTALL_EXEC) $(SOCKET_SO) $(INSTALL_SOCKET_LIB)/core.$(SO)
-	$(INSTALL_DIR) $(INSTALL_MIME_LIB)
-	$(INSTALL_EXEC) $(MIME_SO) $(INSTALL_MIME_LIB)/core.$(SO)
+	$(INSTALL_DIR) $(INSTALL_TOP_LDIR)
+	$(INSTALL_DATA) $(TO_TOP_LDIR) $(INSTALL_TOP_LDIR)
+	$(INSTALL_DIR) $(INSTALL_SOCKET_LDIR)
+	$(INSTALL_DATA) $(TO_SOCKET_LDIR) $(INSTALL_SOCKET_LDIR)
+	$(INSTALL_DIR) $(INSTALL_SOCKET_CDIR)
+	$(INSTALL_EXEC) $(SOCKET_SO) $(INSTALL_SOCKET_CDIR)/core.$(SO)
+	$(INSTALL_DIR) $(INSTALL_MIME_CDIR)
+	$(INSTALL_EXEC) $(MIME_SO) $(INSTALL_MIME_CDIR)/core.$(SO)
 
 install-unix: install
-	$(INSTALL_EXEC) $(UNIX_SO) $(INSTALL_SOCKET_LIB)/$(UNIX_SO)
-	$(INSTALL_EXEC) $(SERIAL_SO) $(INSTALL_SOCKET_LIB)/$(SERIAL_SO)
+	$(INSTALL_EXEC) $(UNIX_SO) $(INSTALL_SOCKET_CDIR)/$(UNIX_SO)
+	$(INSTALL_EXEC) $(SERIAL_SO) $(INSTALL_SOCKET_CDIR)/$(SERIAL_SO)
 
 local:
-	$(MAKE) install INSTALL_TOP_LIB=.. INSTALL_TOP_SHARE=..
+	$(MAKE) install INSTALL_TOP_CDIR=.. INSTALL_TOP_LDIR=..
 
 clean:
 	rm -f $(SOCKET_SO) $(SOCKET_OBJS) $(SERIAL_OBJS)

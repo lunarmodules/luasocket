@@ -1,7 +1,16 @@
 *.o
 *.so
 *.so.*
-macosx.cmd
-win32.cmd
-linux.cmd
+*.obj
+*.lib
+*.dll*
+*.user
+*.sdf
+Lua.props
+Debug
+Release
+*.manifest
+*.swp
+*.suo
+x64
 

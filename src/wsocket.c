@@ -400,13 +400,17 @@ const char *socket_gaistrerror(int err) {
         case EAI_MEMORY: return "memory allocation failure";
         case EAI_NONAME: 
             return "host or service not provided, or not known";
-//        case EAI_OVERFLOW: return "argument buffer overflow";
+#ifdef EAI_OVERFLOW
+        case EAI_OVERFLOW: return "argument buffer overflow";
+#endif
 #ifdef EAI_PROTOCOL
         case EAI_PROTOCOL: return "resolved protocol is unknown";
 #endif
         case EAI_SERVICE: return "service not supported for socket type";
         case EAI_SOCKTYPE: return "ai_socktype not supported";
-//        case EAI_SYSTEM: return strerror(errno); 
+#ifdef EAI_SYSTEM
+        case EAI_SYSTEM: return strerror(errno); 
+#endif
         default: return gai_strerror(err);
     }
 }
