@@ -19,8 +19,7 @@
 #include "timeout.h"
 
 #ifdef _WIN32
-#define INET_ATON
-#define INET_PTON
+#define LUASOCKET_INET_ATON
 #endif
 
 int inet_open(lua_State *L);
@@ -39,11 +38,11 @@ int inet_meth_getsockname(lua_State *L, p_socket ps, int family);
 int inet_optfamily(lua_State* L, int narg, const char* def);
 int inet_optsocktype(lua_State* L, int narg, const char* def);
 
-#ifdef INET_ATON
+#ifdef LUASOCKET_INET_ATON
 int inet_aton(const char *cp, struct in_addr *inp);
 #endif
 
-#ifdef INET_PTON
+#ifdef LUASOCKET_INET_PTON
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt);
 int inet_pton(int af, const char *src, void *dst);
 #endif

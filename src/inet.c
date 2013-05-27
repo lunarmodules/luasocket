@@ -502,7 +502,7 @@ const char *inet_trybind(p_socket ps, const char *address, const char *serv,
 * Some systems do not provide this so that we provide our own. It's not
 * marvelously fast, but it works just fine.
 \*-------------------------------------------------------------------------*/
-#ifdef INET_ATON
+#ifdef LUASOCKET_INET_ATON
 int inet_aton(const char *cp, struct in_addr *inp)
 {
     unsigned int a = 0, b = 0, c = 0, d = 0;
@@ -529,7 +529,7 @@ int inet_aton(const char *cp, struct in_addr *inp)
 * http://mingw-users.1079350.n2.nabble.com/IPv6-getaddrinfo-amp-inet-ntop-td5891996.html 
 \*-------------------------------------------------------------------------*/
 
-#ifdef INET_PTON
+#ifdef LUASOCKET_INET_PTON
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt) 
 {
     if (af == AF_INET) {
