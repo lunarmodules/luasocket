@@ -158,7 +158,7 @@ static int meth_sendto(lua_State *L) {
 	case PF_INET: {
 	    struct sockaddr_in addr;
 	    memset(&addr, 0, sizeof(addr));
-	    if (!inet_pton(AF_INET, ip, &addr.sin_addr))
+	    if (inet_pton(AF_INET, ip, &addr.sin_addr) != 1)
             luaL_argerror(L, 3, "invalid ip address");
 	    addr.sin_family = AF_INET;
 	    addr.sin_port = htons(port);
@@ -170,7 +170,7 @@ static int meth_sendto(lua_State *L) {
 	case PF_INET6: {
 	    struct sockaddr_in6 addr;
 	    memset(&addr, 0, sizeof(addr));
-	    if (!inet_pton(AF_INET6, ip, &addr.sin6_addr))
+	    if (!inet_pton(AF_INET6, ip, &addr.sin6_addr) != 1)
             luaL_argerror(L, 3, "invalid ip address");
 	    addr.sin6_family = AF_INET6;
 	    addr.sin6_port = htons(port);
