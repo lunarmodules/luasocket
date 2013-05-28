@@ -15,7 +15,8 @@ local string = require("string")
 local headers = require("socket.headers")
 local base = _G
 local table = require("table")
-module("socket.http")
+socket.http = {}
+local _M = socket.http
 
 -----------------------------------------------------------------------------
 -- Program constants
@@ -23,9 +24,9 @@ module("socket.http")
 -- connection timeout in seconds
 TIMEOUT = 60
 -- default port for document retrieval
-PORT = 80
+_M.PORT = 80
 -- user agent field sent in request
-USERAGENT = socket._VERSION
+_M.USERAGENT = socket._VERSION
 
 -----------------------------------------------------------------------------
 -- Reads MIME headers from a connection, unfolding where needed
@@ -105,15 +106,15 @@ end
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function open(host, port, create)
+function _M.open(host, port, create)
     -- create socket with user connect function, or with default
     local c = socket.try((create or socket.tcp)())
     local h = base.setmetatable({ c = c }, metat)
     -- create finalized try
     h.try = socket.newtry(function() h:close() end)
     -- set timeout before connecting
-    h.try(c:settimeout(TIMEOUT))
-    h.try(c:connect(host, port or PORT))
+    h.try(c:settimeout(_M.TIMEOUT))
+    h.try(c:connect(host, port or _M.PORT))
     -- here everything worked
     return h
 end
@@ -209,7 +210,7 @@ end
 local function adjustheaders(reqt)
     -- default headers
     local lower = {
-        ["user-agent"] = USERAGENT,
+        ["user-agent"] = _M.USERAGENT,
         ["host"] = reqt.host,
         ["connection"] = "close, TE",
         ["te"] = "trailers"
@@ -229,7 +230,7 @@ end
 -- default url parts
 local default = {
     host = "",
-    port = PORT,
+    port = _M.PORT,
     path ="/",
     scheme = "http"
 }
@@ -270,7 +271,7 @@ end
 -- forward declarations
 local trequest, tredirect
 
-function tredirect(reqt, location)
+--[[local]] function tredirect(reqt, location)
     local result, code, headers, status = trequest {
         -- the RFC says the redirect URL has to be absolute, but some
         -- servers do not respect that
@@ -288,11 +289,11 @@ function tredirect(reqt, location)
     return result, code, headers, status
 end
 
-function trequest(reqt)
+--[[local]] function trequest(reqt)
     -- we loop until we get what we want, or
     -- until we are sure there is no way to get it
     local nreqt = adjustrequest(reqt)
-    local h = open(nreqt.host, nreqt.port, nreqt.create)
+    local h = _M.open(nreqt.host, nreqt.port, nreqt.create)
     -- send request line and headers
     h:sendrequestline(nreqt.method, nreqt.uri)
     h:sendheaders(nreqt.headers)
@@ -345,7 +346,9 @@ local function srequest(u, b)
     return table.concat(t), code, headers, status
 end
 
-request = socket.protect(function(reqt, body)
+_M.request = socket.protect(function(reqt, body)
     if base.type(reqt) == "string" then return srequest(reqt, body)
     else return trequest(reqt) end
 end)
+
+return _M
