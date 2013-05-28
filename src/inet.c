@@ -559,12 +559,11 @@ const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt)
 int inet_pton(int af, const char *src, void *dst) 
 {
     struct addrinfo hints, *res;
+    int ret = 1;
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = af;
     hints.ai_flags = AI_NUMERICHOST;
-    if (getaddrinfo(src, NULL, &hints, &res) != 0) {
-        return -1;
-    }
+    if (getaddrinfo(src, NULL, &hints, &res) != 0) return -1;
     if (af == AF_INET) {
         struct sockaddr_in *in = (struct sockaddr_in *) res->ai_addr;
         memcpy(dst, &in->sin_addr, sizeof(in->sin_addr));
@@ -572,10 +571,10 @@ int inet_pton(int af, const char *src, void *dst)
         struct sockaddr_in6 *in = (struct sockaddr_in6 *) res->ai_addr;
         memcpy(dst, &in->sin6_addr, sizeof(in->sin6_addr));
     } else {
-        return -1;
+        ret = -1;
     }
     freeaddrinfo(res); 
-    return 0;
+    return ret;
 }
 
 #endif
