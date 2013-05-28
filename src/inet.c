@@ -79,24 +79,22 @@ static int inet_global_tohostname(lua_State *L) {
 }
 
 static int inet_global_getnameinfo(lua_State *L) {
+    char hbuf[NI_MAXHOST];
+    char sbuf[NI_MAXSERV];
     int i, ret;
-    char host[1024];
-    char serv[32];
     struct addrinfo hints;
     struct addrinfo *resolved, *iter;
-    const char *node = luaL_optstring(L, 1, NULL);
-    const char *service = luaL_optstring(L, 2, NULL);
+    const char *host = luaL_optstring(L, 1, NULL);
+    const char *serv = luaL_optstring(L, 2, NULL);
 
-    if (!(node || service))
-        luaL_error(L, "You have to specify a hostname, a service, or both");
+    if (!(host || serv))
+        luaL_error(L, "host and serv cannot be both nil");
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = PF_UNSPEC;
 
-    /* getaddrinfo must get a node and a service argument */
-    ret = getaddrinfo(node ? node : "127.0.0.1", service ? service : "7",
-        &hints, &resolved);
+    ret = getaddrinfo(host, serv, &hints, &resolved);
     if (ret != 0) {
         lua_pushnil(L);
         lua_pushstring(L, socket_gaistrerror(ret));
@@ -105,19 +103,19 @@ static int inet_global_getnameinfo(lua_State *L) {
 
     lua_newtable(L);
     for (i = 1, iter = resolved; iter; i++, iter = iter->ai_next) {
-        getnameinfo(iter->ai_addr, (socklen_t) iter->ai_addrlen, host,
-            node ? (socklen_t) sizeof(host) : 0, serv, service ? (socklen_t) sizeof(serv) : 0, 0);
-
-        if (node) {
+        getnameinfo(iter->ai_addr, (socklen_t) iter->ai_addrlen, 
+            hbuf, host? (socklen_t) sizeof(hbuf): 0, 
+            sbuf, serv? (socklen_t) sizeof(sbuf): 0, 0);
+        if (host) {
             lua_pushnumber(L, i);
-            lua_pushstring(L, host);
+            lua_pushstring(L, hbuf);
             lua_settable(L, -3);
         }
     }
     freeaddrinfo(resolved);
 
-    if (service) {
-        lua_pushstring(L, serv);
+    if (serv) {
+        lua_pushstring(L, sbuf);
         return 2;
     } else {
         return 1;
@@ -176,20 +174,10 @@ static int inet_global_getaddrinfo(lua_State *L)
     }
     lua_newtable(L);
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
-        char hbuf[NI_MAXHOST]
-#ifndef _WINDOWS
-        ,sbuf[NI_MAXSERV]
-#endif
-        ;
-        ret = getnameinfo(iterator->ai_addr, (socklen_t) iterator->ai_addrlen, hbuf, 
-            (socklen_t) sizeof(hbuf), 
-#ifdef _WINDOWS
-            NULL, 0,
-#else
-            sbuf, 0, 
-#endif
-            NI_NUMERICHOST);
-        if(ret){
+        char hbuf[NI_MAXHOST];
+        ret = getnameinfo(iterator->ai_addr, (socklen_t) iterator->ai_addrlen, 
+            hbuf, (socklen_t) sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+        if (ret){
           lua_pushnil(L);
           lua_pushstring(L, socket_gaistrerror(ret));
           return 2;
@@ -218,7 +206,6 @@ static int inet_global_getaddrinfo(lua_State *L)
     return 1;
 }
 
-
 /*-------------------------------------------------------------------------*\
 * Gets the host name
 \*-------------------------------------------------------------------------*/
@@ -235,7 +222,6 @@ static int inet_global_gethostname(lua_State *L)
         return 1;
     }
 }
-
 
 
 /*=========================================================================*\
@@ -520,7 +506,7 @@ const char *inet_trybind(p_socket ps, const char *address, const char *serv,
 * Some systems do not provide this so that we provide our own. It's not
 * marvelously fast, but it works just fine.
 \*-------------------------------------------------------------------------*/
-#ifdef INET_ATON
+#ifdef LUASOCKET_INET_ATON
 int inet_aton(const char *cp, struct in_addr *inp)
 {
     unsigned int a = 0, b = 0, c = 0, d = 0;
@@ -547,7 +533,7 @@ int inet_aton(const char *cp, struct in_addr *inp)
 * http://mingw-users.1079350.n2.nabble.com/IPv6-getaddrinfo-amp-inet-ntop-td5891996.html 
 \*-------------------------------------------------------------------------*/
 
-#ifdef INET_PTON
+#ifdef LUASOCKET_INET_PTON
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt) 
 {
     if (af == AF_INET) {
@@ -572,19 +558,23 @@ const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt)
 
 int inet_pton(int af, const char *src, void *dst) 
 {
-    struct addrinfo hints, *res, *ressave;
+    struct addrinfo hints, *res;
+    int ret = 1;
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = af;
-    if (getaddrinfo(src, NULL, &hints, &res) != 0) {
-        return -1;
+    hints.ai_flags = AI_NUMERICHOST;
+    if (getaddrinfo(src, NULL, &hints, &res) != 0) return -1;
+    if (af == AF_INET) {
+        struct sockaddr_in *in = (struct sockaddr_in *) res->ai_addr;
+        memcpy(dst, &in->sin_addr, sizeof(in->sin_addr));
+    } else if (af == AF_INET6) {
+        struct sockaddr_in6 *in = (struct sockaddr_in6 *) res->ai_addr;
+        memcpy(dst, &in->sin6_addr, sizeof(in->sin6_addr));
+    } else {
+        ret = -1;
     }
-    ressave = res;
-    while (res) {
-        memcpy(dst, res->ai_addr, res->ai_addrlen);
-        res = res->ai_next;
-    }
-    freeaddrinfo(ressave); 
-    return 0;
+    freeaddrinfo(res); 
+    return ret;
 }
 
 #endif
