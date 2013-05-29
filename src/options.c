@@ -254,6 +254,19 @@ static int opt_getboolean(lua_State *L, p_socket ps, int level, int name)
     return 1;
 }
 
+int opt_get_error(lua_State *L, p_socket ps)
+{
+  int val = 0;
+  socklen_t len = sizeof(val);
+  if (getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *) &val, &len) < 0) {
+    lua_pushnil(L);
+    lua_pushstring(L, "getsockopt failed");
+    return 2;
+  }
+  lua_pushstring(L, socket_strerror(val));
+  return 1;
+}
+
 static int opt_setboolean(lua_State *L, p_socket ps, int level, int name)
 {
     int val = auxiliar_checkboolean(L, 3);             /* obj, name, bool */

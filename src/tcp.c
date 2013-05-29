@@ -73,6 +73,7 @@ static t_opt optget[] = {
     {"reuseaddr",   opt_get_reuseaddr},
     {"tcp-nodelay", opt_get_tcp_nodelay},
     {"linger",      opt_get_linger},
+    {"error",       opt_get_error},
     {NULL,          NULL}
 };
 

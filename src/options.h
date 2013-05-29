@@ -42,6 +42,7 @@ int opt_get_linger(lua_State *L, p_socket ps);
 int opt_get_reuseaddr(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_loop(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_if(lua_State *L, p_socket ps);
+int opt_get_error(lua_State *L, p_socket ps);
 
 /* invokes the appropriate option handler */
 int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps);

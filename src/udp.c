@@ -85,6 +85,7 @@ static t_opt optset[] = {
 static t_opt optget[] = {
     {"ip-multicast-if",    opt_get_ip_multicast_if},
     {"ip-multicast-loop",  opt_get_ip_multicast_loop},
+    {"error",              opt_get_error},
     {NULL,                 NULL}
 };
 
