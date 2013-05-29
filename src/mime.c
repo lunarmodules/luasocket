@@ -81,13 +81,9 @@ static UC b64unbase[256];
 \*-------------------------------------------------------------------------*/
 MIME_API int luaopen_mime_core(lua_State *L)
 {
-#if LUA_VERSION_NUM > 501
+#if LUA_VERSION_NUM > 501 && !defined(LUA_COMPAT_MODULE)
     lua_newtable(L);
-#ifdef LUASOCKET_USE_GLOBAL
-    lua_setglobal(L,"mime");
-    lua_getglobal(L,"mime");
-#endif
-    luaL_setfuncs(L,func,0);
+    luaL_setfuncs(L, func, 0);
 #else
     luaL_openlib(L, "mime", func, 0);
 #endif

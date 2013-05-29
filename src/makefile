@@ -25,6 +25,10 @@ LUAV?=5.1
 # for testing and debugging luasocket itself
 DEBUG?=NODEBUG
 
+# COMPAT: COMPAT NOCOMPAT
+# when compiling for 5.2, use LUA_COMPAT_MODULE
+COMPAT?=NOCOMPAT
+
 # where lua headers are found for macosx builds
 # LUAINC_macosx: 
 # /opt/local/include
@@ -125,7 +129,7 @@ PLATS= macosx linux win32 mingw
 SO_macosx=so
 O_macosx=o
 CC_macosx=gcc
-DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN -DLUA_COMPAT_MODULE \
+DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN -DLUA_$(COMPAT)_MODULE \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_macosx= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
@@ -140,7 +144,7 @@ SOCKET_macosx=usocket.o
 SO_linux=so
 O_linux=o
 CC_linux=gcc
-DEF_linux=-DLUASOCKET_$(DEBUG) -DLUA_COMPAT_MODULE \
+DEF_linux=-DLUASOCKET_$(DEBUG) -DLUA_$(COMPAT)_MODULE \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra \
@@ -155,7 +159,7 @@ SOCKET_linux=usocket.o
 SO_mingw=dll
 O_mingw=o
 CC_mingw=gcc
-DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) -DLUA_COMPAT_MODULE \
+DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) -DLUA_$(COMPAT)_MODULE \
 	-DWINVER=0x0501 -DLUASOCKET_API='__declspec(dllexport)' \
 	-DMIME_API='__declspec(dllexport)'
 CFLAGS_mingw= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
@@ -173,7 +177,7 @@ O_win32=obj
 CC_win32=cl
 DEF_win32= //D "WIN32" //D "NDEBUG" //D "_WINDOWS" //D "_USRDLL" \
      //D "LUASOCKET_API=__declspec(dllexport)" //D "_CRT_SECURE_NO_WARNINGS" \
-     //D "_WINDLL" //D "LUA_COMPAT_MODULE" \
+     //D "_WINDLL" //D "LUA_$(COMPAT)_MODULE" \
 	 //D "MIME_API=__declspec(dllexport)" \
      //D "LUASOCKET_$(DEBUG)" 
 CFLAGS_win32=//I "$(LUAINC)" $(DEF) //O2 //Ot //MD //W3 //nologo
