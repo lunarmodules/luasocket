@@ -30,7 +30,7 @@ DEBUG?=NODEBUG
 COMPAT?=NOCOMPAT
 
 # where lua headers are found for macosx builds
-# LUAINC_macosx: 
+# LUAINC_macosx:
 # /opt/local/include
 LUAINC_macosx_base?=/opt/local/include
 LUAINC_macosx?=$(LUAINC_macosx_base)/lua/$(LUAV)
@@ -41,9 +41,9 @@ CDIR_macosx?=lib/lua/$(LUAV)
 LDIR_macosx?=share/lua/$(LUAV)
 
 
-# LUAINC_linux: 
-# /usr/include/lua$(LUAV) 
-# /usr/local/include 
+# LUAINC_linux:
+# /usr/include/lua$(LUAV)
+# /usr/local/include
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
 LUAINC_linux_base?=/usr/include
@@ -134,7 +134,7 @@ DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN -DLUA_$(COMPAT)_MODULE \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_macosx= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
 	-fvisibility=hidden
-LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o 
+LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o
 LD_macosx= export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
 SOCKET_macosx=usocket.o
 
@@ -308,15 +308,15 @@ none:
 all: $(SOCKET_SO) $(MIME_SO)
 
 $(SOCKET_SO): $(SOCKET_OBJS)
-	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@ 
+	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@
 
 $(MIME_SO): $(MIME_OBJS)
-	$(LD) $(MIME_OBJS) $(LDFLAGS)$@ 
+	$(LD) $(MIME_OBJS) $(LDFLAGS)$@
 
 all-unix: all $(UNIX_SO) $(SERIAL_SO)
 
 $(UNIX_SO): $(UNIX_OBJS)
-	$(LD) $(UNIX_OBJS) $(LDFLAGS)$@ 
+	$(LD) $(UNIX_OBJS) $(LDFLAGS)$@
 
 $(SERIAL_SO): $(SERIAL_OBJS)
 	$(LD) $(SERIAL_OBJS) $(LDFLAGS)$@

@@ -73,6 +73,7 @@ LUASOCKET_API int luaopen_socket_serial(lua_State *L) {
     auxiliar_add2group(L, "serial{client}", "serial{any}");
 #if LUA_VERSION_NUM > 501 && !defined(LUA_COMPAT_MODULE)
     lua_pushcfunction(L, global_create);
+    (void) func;
 #else
     /* set function into socket namespace */
     luaL_openlib(L, "socket", func, 0);
