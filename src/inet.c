@@ -246,9 +246,10 @@ int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
         lua_pushstring(L, socket_strerror(errno));
         return 2;
     }
-    if ((err = getnameinfo((struct sockaddr *) &peer, peer_len,
+	err = getnameinfo((struct sockaddr *) &peer, peer_len,
         name, INET6_ADDRSTRLEN,
-        port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV))) {
+        port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
+    if (err) {
         lua_pushnil(L);
         lua_pushstring(L, gai_strerror(err));
         return 2;
@@ -280,9 +281,9 @@ int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
         lua_pushstring(L, socket_strerror(errno));
         return 2;
     }
-    if ((err=getnameinfo((struct sockaddr *)&peer, peer_len,
-        name, INET6_ADDRSTRLEN,
-        port, 6, NI_NUMERICHOST | NI_NUMERICSERV))) {
+	err=getnameinfo((struct sockaddr *)&peer, peer_len, 
+		name, INET6_ADDRSTRLEN, port, 6, NI_NUMERICHOST | NI_NUMERICSERV);
+    if (err) {
         lua_pushnil(L);
         lua_pushstring(L, gai_strerror(err));
         return 2;

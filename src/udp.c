@@ -175,14 +175,15 @@ static int meth_sendto(lua_State *L) {
     aihint.ai_family = udp->family;
     aihint.ai_socktype = SOCK_DGRAM;
     aihint.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
-    if ((err = getaddrinfo(ip, port, &aihint, &ai))) {
+    err = getaddrinfo(ip, port, &aihint, &ai);
+	if (err) {
         lua_pushnil(L);
-        lua_pushstring(L, udp_strerror(err));
+        lua_pushstring(L, gai_strerror(err));
         return 2;
     }
     timeout_markstart(tm);
     err = socket_sendto(&udp->sock, data, count, &sent, ai->ai_addr, 
-        ai->ai_addrlen, tm);
+        (socklen_t) ai->ai_addrlen, tm);
     freeaddrinfo(ai);
     if (err != IO_DONE) {
         lua_pushnil(L);
@@ -243,8 +244,9 @@ static int meth_receivefrom(lua_State *L)
         lua_pushstring(L, udp_strerror(err));
         return 2;
     }
-    if ((err = getnameinfo((struct sockaddr *)&addr, addr_len, addrstr, 
-        INET6_ADDRSTRLEN, portstr, 6, NI_NUMERICHOST | NI_NUMERICSERV))) {
+    err = getnameinfo((struct sockaddr *)&addr, addr_len, addrstr, 
+        INET6_ADDRSTRLEN, portstr, 6, NI_NUMERICHOST | NI_NUMERICSERV);
+	if (err) {
         lua_pushnil(L);
         lua_pushstring(L, gai_strerror(err));
         return 2;

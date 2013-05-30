@@ -3,9 +3,6 @@
 * LuaSocket toolkit
 \*=========================================================================*/
 #include <string.h> 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <net/if.h>
 
 #include "lauxlib.h"
 
@@ -13,20 +10,6 @@
 #include "options.h"
 #include "inet.h"
 
-/* Some platforms use IPV6_JOIN_GROUP instead if
- * IPV6_ADD_MEMBERSHIP. The semantics are same, though. */
-#ifndef IPV6_ADD_MEMBERSHIP
-#ifdef IPV6_JOIN_GROUP
-#define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
-#endif /* IPV6_JOIN_GROUP */
-#endif /* !IPV6_ADD_MEMBERSHIP */
-
-/* Same with IPV6_DROP_MEMBERSHIP / IPV6_LEAVE_GROUP. */
-#ifndef IPV6_DROP_MEMBERSHIP
-#ifdef IPV6_LEAVE_GROUP
-#define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
-#endif /* IPV6_LEAVE_GROUP */
-#endif /* !IPV6_DROP_MEMBERSHIP */
 
 /*=========================================================================*\
 * Internal functions prototypes
@@ -296,19 +279,22 @@ static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
     lua_pushstring(L, "interface");
     lua_gettable(L, 3);
     /* By default we listen to interface on default route
-     * (sigh). However, interface= can override it. We support either
-     * number, or name for it. */
+     * (sigh). However, interface= can override it. We should 
+     * support either number, or name for it. Waiting for
+     * windows port of if_nametoindex */
     if (!lua_isnil(L, -1)) {
         if (lua_isnumber(L, -1)) {
-            val.ipv6mr_interface = lua_tonumber(L, -1);
+            val.ipv6mr_interface = (unsigned int) lua_tonumber(L, -1);
+#if 0
         } else if (lua_isstring(L, -1)) {
             if (!(val.ipv6mr_interface = if_nametoindex(lua_tostring(L, -1)))) {
                 lua_pushnil(L);
                 lua_pushstring(L, "nonexistent interface");
                 return 2;
             }
+#endif
         } else
-          luaL_argerror(L, -1, "number/string 'interface' field expected");
+          luaL_argerror(L, -1, "number 'interface' field expected");
     }
     return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
 }

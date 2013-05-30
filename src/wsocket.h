@@ -26,4 +26,8 @@ typedef t_socket *p_socket;
 #define SO_REUSEPORT SO_REUSEADDR
 #endif
 
+#ifndef AI_NUMERICSERV
+#define AI_NUMERICSERV (0)
+#endif
+
 #endif /* WSOCKET_H */
