@@ -142,7 +142,11 @@ function metat.__index:receive(recvt)
     if argument == "" then argument = nil end
     local command = recvt.command or "retr"
     self.try(self.tp:command(command, argument))
-    local code = self.try(self.tp:check{"1..", "2.."})
+    local code,reply = self.try(self.tp:check{"1..", "2.."})
+    if (code >= 200) and (code <= 299) then
+        recvt.sink(reply)
+        return 1
+    end
     if not self.pasvt then self:portconnect() end
     local source = socket.source("until-closed", self.data)
     local step = recvt.step or ltn12.pump.step
