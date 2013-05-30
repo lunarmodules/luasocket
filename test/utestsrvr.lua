@@ -1,10 +1,10 @@
-require("socket");
+socket=require("socket");
 os.remove("/tmp/luasocket")
-socket = require("socket.unix");
-host = "luasocket";
-server = socket.unix()
-print(server:bind(host))
-print(server:listen(5))
+socket.unix = require("socket.unix");
+host = host or "luasocket";
+server = assert(socket.unix())
+assert(server:bind(host))
+assert(server:listen(5))
 ack = "\n";
 while 1 do
     print("server: waiting for client connection...");
@@ -12,6 +12,6 @@ while 1 do
     while 1 do 
         command = assert(control:receive());
         assert(control:send(ack));
-        (loadstring(command))();
+        ((loadstring or load)(command))();
     end
 end
