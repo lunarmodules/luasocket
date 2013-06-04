@@ -285,14 +285,6 @@ static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
     if (!lua_isnil(L, -1)) {
         if (lua_isnumber(L, -1)) {
             val.ipv6mr_interface = (unsigned int) lua_tonumber(L, -1);
-#if 0
-        } else if (lua_isstring(L, -1)) {
-            if (!(val.ipv6mr_interface = if_nametoindex(lua_tostring(L, -1)))) {
-                lua_pushnil(L);
-                lua_pushstring(L, "nonexistent interface");
-                return 2;
-            }
-#endif
         } else
           luaL_argerror(L, -1, "number 'interface' field expected");
     }
