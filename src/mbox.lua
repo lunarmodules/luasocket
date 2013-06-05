@@ -1,8 +1,10 @@
-local Public = {}
+local _M = {}
 
-mbox = Public
+if module then
+    mbox = _M
+end 
 
-function Public.split_message(message_s)
+function _M.split_message(message_s)
     local message = {}
     message_s = string.gsub(message_s, "\r\n", "\n")
     string.gsub(message_s, "^(.-\n)\n", function (h) message.headers = h end)
@@ -16,7 +18,7 @@ function Public.split_message(message_s)
     return message.headers or "", message.body or ""
 end
 
-function Public.split_headers(headers_s)
+function _M.split_headers(headers_s)
     local headers = {}
     headers_s = string.gsub(headers_s, "\r\n", "\n")
     headers_s = string.gsub(headers_s, "\n[ ]+", " ")
@@ -24,18 +26,18 @@ function Public.split_headers(headers_s)
     return headers
 end
 
-function Public.parse_header(header_s)
+function _M.parse_header(header_s)
     header_s = string.gsub(header_s, "\n[ ]+", " ")
     header_s = string.gsub(header_s, "\n+", "")
     local _, __, name, value = string.find(header_s, "([^%s:]-):%s*(.*)")
     return name, value
 end
 
-function Public.parse_headers(headers_s)
-    local headers_t = Public.split_headers(headers_s)
+function _M.parse_headers(headers_s)
+    local headers_t = _M.split_headers(headers_s)
     local headers = {}
     for i = 1, #headers_t do
-        local name, value = Public.parse_header(headers_t[i])
+        local name, value = _M.parse_header(headers_t[i])
         if name then
             name = string.lower(name)
             if headers[name] then
@@ -46,7 +48,7 @@ function Public.parse_headers(headers_s)
     return headers
 end
 
-function Public.parse_from(from)
+function _M.parse_from(from)
     local _, __, name, address = string.find(from, "^%s*(.-)%s*%<(.-)%>")
     if not address then
         _, __, address = string.find(from, "%s*(.+)%s*")
@@ -58,7 +60,7 @@ function Public.parse_from(from)
     return name, address
 end
 
-function Public.split_mbox(mbox_s)
+function _M.split_mbox(mbox_s)
     mbox = {}
     mbox_s = string.gsub(mbox_s, "\r\n", "\n") .."\n\nFrom \n"
     local nj, i, j = 1, 1, 1
@@ -72,19 +74,19 @@ function Public.split_mbox(mbox_s)
     return mbox
 end
 
-function Public.parse(mbox_s)
-    local mbox = Public.split_mbox(mbox_s)
+function _M.parse(mbox_s)
+    local mbox = _M.split_mbox(mbox_s)
     for i = 1, #mbox do
-        mbox[i] = Public.parse_message(mbox[i])
+        mbox[i] = _M.parse_message(mbox[i])
     end
     return mbox
 end
 
-function Public.parse_message(message_s)
+function _M.parse_message(message_s)
     local message = {}
-    message.headers, message.body = Public.split_message(message_s)
-    message.headers = Public.parse_headers(message.headers)
+    message.headers, message.body = _M.split_message(message_s)
+    message.headers = _M.parse_headers(message.headers)
     return message
 end
 
-return mbox
+return _M

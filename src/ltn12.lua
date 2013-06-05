@@ -10,9 +10,10 @@
 local string = require("string")
 local table = require("table")
 local base = _G
-ltn12 = {}
-local _M = ltn12
-
+local _M = {}
+if module then -- heuristic for exporting a global package table
+    ltn12 = _M
+end
 local filter,source,sink,pump = {},{},{},{}
 
 _M.filter = filter
