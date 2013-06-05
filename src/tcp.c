@@ -3,6 +3,7 @@
 * LuaSocket toolkit
 \*=========================================================================*/
 #include <string.h>
+#include <assert.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -31,6 +32,7 @@ static int meth_getpeername(lua_State *L);
 static int meth_shutdown(lua_State *L);
 static int meth_receive(lua_State *L);
 static int meth_accept(lua_State *L);
+static int meth_acceptfd(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_getoption(lua_State *L);
 static int meth_setoption(lua_State *L);
@@ -44,6 +46,7 @@ static luaL_Reg tcp_methods[] = {
     {"__gc",        meth_close},
     {"__tostring",  auxiliar_tostring},
     {"accept",      meth_accept},
+    {"acceptfd",    meth_acceptfd},
     {"bind",        meth_bind},
     {"close",       meth_close},
     {"connect",     meth_connect},
@@ -214,6 +217,28 @@ static int meth_accept(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
+* Waits for and returns a client object attempting connection to the
+* server object
+\*-------------------------------------------------------------------------*/
+static int meth_acceptfd(lua_State *L)
+{
+    p_tcp server = (p_tcp) auxiliar_checkclass(L, "tcp{server}", 1);
+    p_timeout tm = timeout_markstart(&server->tm);
+    t_socket sock;
+    const char *err = inet_tryaccept(&server->sock, server->family, &sock, tm);
+    /* if successful, push client socket */
+    if (err == NULL) {
+        lua_pushnumber(L, sock);
+        assert((t_socket)lua_tonumber(L, -1) == sock); // do we need check at runtime?
+        return 1;
+    } else {
+        lua_pushnil(L);
+        lua_pushstring(L, err);
+        return 2;
+    }
+}
+
+/*-------------------------------------------------------------------------*\
 * Binds an object to an address
 \*-------------------------------------------------------------------------*/
 static int meth_bind(lua_State *L)
@@ -356,14 +381,24 @@ static int meth_settimeout(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int tcp_create(lua_State *L, int family) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, family, SOCK_STREAM);
+    const char *err;
+    const int is_inherite = lua_isnumber(L,1);
+    const char *obj_type = "tcp{master}";
+    if (is_inherite){
+      err = NULL;
+      sock = (t_socket)lua_tonumber(L, 1);
+      if(strstr(luaL_optstring(L,2,""),"client"))
+        obj_type = "tcp{client}";
+    }
+    else 
+        err = inet_trycreate(&sock, family, SOCK_STREAM);
     /* try to allocate a system socket */
     if (!err) {
         /* allocate tcp object */
         p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
         memset(tcp, 0, sizeof(t_tcp));
         /* set its type as master object */
-        auxiliar_setclass(L, "tcp{master}", -1);
+        auxiliar_setclass(L, obj_type, -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
         if (family == PF_INET6) {
