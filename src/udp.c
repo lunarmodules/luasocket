@@ -284,8 +284,11 @@ static int meth_getfd(lua_State *L) {
 /* this is very dangerous, but can be handy for those that are brave enough */
 static int meth_setfd(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
-    udp->sock = (t_socket) luaL_checknumber(L, 2);
-    return 0;
+    t_socket fd = udp->sock;
+    if(lua_gettop(L) == 1) udp->sock = SOCKET_INVALID;
+    else udp->sock = (t_socket) luaL_checknumber(L, 2);
+    lua_pushnumber(L, (int) fd);
+    return 1;
 }
 
 static int meth_dirty(lua_State *L) {
@@ -408,7 +411,14 @@ static int meth_setsockname(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int udp_create(lua_State *L, int family) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, family, SOCK_DGRAM);
+    const char *err;
+    const int is_inherite = lua_isnumber(L,1);
+    if (is_inherite){
+        err = NULL;
+        sock = (t_socket)lua_tonumber(L, 1);
+    }
+    else 
+        err = inet_trycreate(&sock, family, SOCK_DGRAM);
     /* try to allocate a system socket */
     if (!err) {
         /* allocate udp object */

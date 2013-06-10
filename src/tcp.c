@@ -171,8 +171,11 @@ static int meth_getfd(lua_State *L)
 static int meth_setfd(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
-    tcp->sock = (t_socket) luaL_checknumber(L, 2);
-    return 0;
+    t_socket fd = tcp->sock;
+    if(lua_gettop(L) == 1) tcp->sock = SOCKET_INVALID;
+    else tcp->sock = (t_socket) luaL_checknumber(L, 2);
+    lua_pushnumber(L, (int) fd);
+    return 1;
 }
 
 static int meth_dirty(lua_State *L)
@@ -356,14 +359,24 @@ static int meth_settimeout(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int tcp_create(lua_State *L, int family) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, family, SOCK_STREAM);
+    const char *err;
+    const int is_inherite = lua_isnumber(L,1);
+    const char *obj_type = "tcp{master}";
+    if (is_inherite){
+        err = NULL;
+        sock = (t_socket)lua_tonumber(L, 1);
+        if(strstr(luaL_optstring(L,2,""),"client"))
+            obj_type = "tcp{client}";
+    }
+    else 
+        err = inet_trycreate(&sock, family, SOCK_STREAM);
     /* try to allocate a system socket */
     if (!err) {
         /* allocate tcp object */
         p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
         memset(tcp, 0, sizeof(t_tcp));
         /* set its type as master object */
-        auxiliar_setclass(L, "tcp{master}", -1);
+        auxiliar_setclass(L, obj_type, -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
         if (family == PF_INET6) {
