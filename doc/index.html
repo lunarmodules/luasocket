@@ -49,7 +49,7 @@ functionality commonly needed by applications that deal with the Internet.
 The core support has been  implemented so that it  is both efficient and
 simple to use.  It is available to any Lua application once it has been
 properly initialized by the interpreter in use. The code has been tested
-and runs well on several Windows and Unix platforms. </p>
+and runs well on several Windows and UNIX platforms. </p>
 
 <p>
 Among the support modules, the most commonly used implement the 
@@ -78,7 +78,7 @@ LuaSocket.
 </p>
 
 <p>
-Copyright &copy; 1999-2012 Diego Nehab. All rights reserved. <br>
+Copyright &copy; 1999-2013 Diego Nehab. All rights reserved. <br>
 Author: <A href="http://www.impa.br/~diego">Diego Nehab</a>
 </p>
 
@@ -87,7 +87,7 @@ Author: <A href="http://www.impa.br/~diego">Diego Nehab</a>
 <h2 id=download>Download</h2>
 
 <p>
-LuaSocket version 2.1-rc1 is now available for download! 
+LuaSocket version 3.0-rc1 is now available for download! 
 It is compatible with  Lua&nbsp;5.1 and 5.2, and has    
 been tested on Windows&nbsp;XP, Linux, and Mac OS X. Chances
 are it works well on most UNIX distributions and Windows flavors.
@@ -96,7 +96,7 @@ are it works well on most UNIX distributions and Windows flavors.
 <p>
 The library can be downloaded in source code from the
 <a href="https://github.com/diegonehab/luasocket/downloads">LuaSocket
-project page</a> at GitHub. Besides the full C and Lua source code 
+project page</a> on GitHub. Besides the full C and Lua source code 
 for the library, the distribution contains several examples, 
 this user's manual and basic test procedures.
 </p>
@@ -113,11 +113,12 @@ manual to find out how to properly install the library.
 <p>
 This marks the first release of LuaSocket that
 wholeheartedly embraces the open-source development
-philosophy. After a long hiatus, Matthew Wild finally 
-convinced me it was time for a release including IPv6
-and Lua 5.2 support. Special thanks to Sam Roberts, Florian
-Zeitz, and Paul Aurich, Liam Devine, and everybody else that
-has helped bring this library back to life. 
+philosophy. After a long hiatus, Matthew Wild finally
+convinced me it was time for a release including IPv6 and
+Lua 5.2 support. It was more work than we anticipated.
+Special thanks to Sam Roberts, Florian Zeitz, and Paul
+Aurich, Liam Devine, Alexey Melnichuk, and everybody else
+that has helped bring this library back to life. 
 </p>
 
 <!-- whatsnew +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -125,12 +126,16 @@ has helped bring this library back to life.
 <h2 id=new>What's New</h2>
 
 <p>
-Main changes for LuaSocket&nbsp;2.1-rc1 are IPv6 support
+Main changes for LuaSocket&nbsp;3.0-rc1 are IPv6 support
 and Lua&nbsp;5.2 compatibility. 
 </p>
 
 <ul>
-<li> Added: Compatible with Lua&nbsp;5.2 (using <tt>LUA_COMPAT_MODULE</tt>);
+<li> Added: Compatible with Lua&nbsp;5.2 
+<ul>
+<li> Note that unless you define <tt>LUA_COMPAT_MODULE</tt>,
+package tables will <em>not</em> be exported as globals!
+</ul>
 <li> Added: IPv6 support;
 <ul>
 <li> <tt>Socket.connect</tt> and <tt>socket.bind</tt> support IPv6 addresses;
@@ -138,7 +143,8 @@ and Lua&nbsp;5.2 compatibility.
 IPv6 addresses, and return the socket family as a third value;
 <li> URL module updated to support IPv6 host names;
 <li> New <tt>socket.tcp6</tt> and <tt>socket.udp6</tt> functions;
-<li> New <tt>socket.dns.getaddrinfo</tt> function;
+<li> New <tt>socket.dns.getaddrinfo</tt> and 
+    <tt>socket.dns.getnameinfo</tt> functions;
 </ul>
 <li> Added: <tt>getoption</tt> method;
 <li> Fixed: <tt>url.unescape</tt> was returning additional values;
@@ -176,7 +182,7 @@ still available for those that have compatibility issues.
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Mon Apr 16 21:58:56 HKT 2012
+Tue Jun 11 18:50:23 HKT 2013
 </small>
 </p>
 </center>

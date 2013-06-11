@@ -23,7 +23,7 @@ _M.pump = pump
 
 -- 2048 seems to be better in windows...
 _M.BLOCKSIZE = 2048
-_M._VERSION = "LTN12 1.0.2"
+_M._VERSION = "LTN12 1.0.3"
 
 -----------------------------------------------------------------------------
 -- Filter stuff

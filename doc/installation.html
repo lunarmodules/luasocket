@@ -39,12 +39,6 @@ Installation">
 
 <h2>Installation</h2>
 
-<p> LuaSocket 2.1-rc still uses Lua&nbsp;5.1's package
-system. Users that have already made the switch to
-Lua&nbsp;5.2 should leave the default
-<tt>LUA_COMPAT_MODULE</tt> defined when compiling their Lua
-distribution for compatibility with LuaSocket. </p>
-
 <p> Here we describe the standard distribution.  If the
 standard doesn't meet your needs, we refer you to the Lua
 discussion list, where any question about the package scheme
@@ -92,17 +86,17 @@ it should be easy to use LuaSocket. Just fire the interpreter and use the
 <tt>require</tt> function to gain access to whatever module you need:</p>
 
 <pre class=example>
-Lua 5.1.5  Copyright (C) 1994-2012 Lua.org, PUC-Rio
+Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
 &gt; socket = require("socket")
 &gt; print(socket._VERSION)
---&gt; LuaSocket 2.1-rc1
+--&gt; LuaSocket 3.0-rc1
 </pre>
 
 <p> Each module loads their dependencies automatically, so you only need to
 load the modules you directly depend upon: </p>
 
 <pre class=example>
-Lua 5.1.5  Copyright (C) 1994-2012 Lua.org, PUC-Rio
+Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
 &gt; http = require("socket.http")
 &gt; print(http.request("http://www.impa.br/~diego/software/luasocket"))
 --&gt; homepage gets dumped to terminal
@@ -123,7 +117,7 @@ Lua 5.1.5  Copyright (C) 1994-2012 Lua.org, PUC-Rio
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Mon Apr 16 21:01:42 HKT 2012
+Tue Jun 11 19:06:14 HKT 2013
 </small>
 </p>
 </center>
