@@ -1,7 +1,7 @@
 #--------------------------------------------------------------------------
 # Distribution makefile
 #--------------------------------------------------------------------------
-DIST = luasocket-2.1-rc1
+DIST = luasocket-3.0-rc1
 
 TEST = \
 	test/README \
@@ -83,6 +83,10 @@ SRC = \
 MAKE = \
 	makefile \
 	luasocket.sln \
+	Lua51.props \
+	Lua52.props \
+	socket.vcproj.filters \
+	mime.vcproj.filters \
 	socket.vcproj \
 	mime.vcproj
 

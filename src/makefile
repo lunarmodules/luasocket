@@ -135,7 +135,7 @@ DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN -DLUA_$(COMPAT)_MODULE \
 	-DMIME_API='__attribute__((visibility("default")))'
 CFLAGS_macosx= -I$(LUAINC) $(DEF) -pedantic -Wall -O2 -fno-common \
 	-fvisibility=hidden
-LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o
+LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o 
 LD_macosx= export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
 SOCKET_macosx=usocket.o
 
