@@ -32,7 +32,7 @@ before_install:
 
 install:
   - export DEBUG=DEBUG
-  - sudo -E luarocks make rockspecs/luasocket-scm-0.rockspec 
+  - sudo -E luarocks make luasocket-scm-0.rockspec 
 
 script: 
   - cd test
