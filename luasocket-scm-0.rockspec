@@ -1,8 +1,8 @@
 package = "LuaSocket"
 version = "scm-0"
 source = {
-   url = "git://github.com/diegonehab/luasocket.git",
-   branch = "master"
+   url = "https://github.com/diegonehab/luasocket/archive/master.zip",
+   dir = "luasocket-master",
 }
 description = {
    summary = "Network support for the Lua language",
