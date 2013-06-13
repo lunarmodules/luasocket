@@ -1,5 +1,5 @@
 package = "LuaSocket"
-version = "3.0-1"
+version = "scm"
 source = {
    url = "git://github.com/diegonehab/luasocket.git",
    branch = "master"
@@ -38,7 +38,6 @@ local function make_plat(plat)
 		 "LUASOCKET_DEBUG",
 		 "NDEBUG",
 		 "LUASOCKET_API=__declspec(dllexport)",
-		 "UNIX_API=__declspec(dllexport)",
 		 "MIME_API=__declspec(dllexport)"
 	  },
 	  mingw32 = {
@@ -46,7 +45,6 @@ local function make_plat(plat)
 		 "LUASOCKET_INET_PTON",
 		 "WINVER=0x0501",
 		 "LUASOCKET_API=__declspec(dllexport)",
-		 "UNIX_API=__declspec(dllexport)",
 		 "MIME_API=__declspec(dllexport)"
 	  }
 	}
@@ -86,7 +84,8 @@ local function make_plat(plat)
 		  defines = defines[plat],
 		  incdir = "/src"
 		}
-	else
+	end
+    if  plat == "win32" or plat == "mingw32" then
 	    modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/wsocket.c"
 	    modules["socket.core"].libraries = { "ws2_32" }
 	end
