@@ -224,8 +224,8 @@ local ltn12 = require("ltn12")
 
 -- copy a file
 ltn12.pump.all(
-  ltn12.source.file(io.open("original.png")),
-  ltn12.sink.file(io.open("copy.png"))
+  ltn12.source.file(io.open("original.png", "rb")),
+  ltn12.sink.file(io.open("copy.png", "wb"))
 )
 </pre>
 
@@ -379,8 +379,8 @@ local ltn12 = require("ltn12")
 
 -- copy a file
 ltn12.pump.all(
-  ltn12.source.file(io.open("original.png")),
-  ltn12.sink.file(io.open("copy.png"))
+  ltn12.source.file(io.open("original.png", "rb")),
+  ltn12.sink.file(io.open("copy.png", "wb"))
 )
 </pre>
 
