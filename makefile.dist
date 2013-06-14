@@ -83,6 +83,7 @@ SRC = \
 MAKE = \
 	makefile \
 	luasocket.sln \
+	luasocket-scm-0.rockspec \
 	Lua51.props \
 	Lua52.props \
 	socket.vcproj.filters \
