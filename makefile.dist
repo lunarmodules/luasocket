@@ -65,6 +65,7 @@ SRC = \
 	src/udp.c \
 	src/udp.h \
 	src/unix.c \
+	src/serial.c \
 	src/unix.h \
 	src/usocket.c \
 	src/usocket.h \
@@ -86,10 +87,10 @@ MAKE = \
 	luasocket-scm-0.rockspec \
 	Lua51.props \
 	Lua52.props \
-	socket.vcproj.filters \
-	mime.vcproj.filters \
-	socket.vcproj \
-	mime.vcproj
+	socket.vcxproj.filters \
+	mime.vcxproj.filters \
+	socket.vcxproj \
+	mime.vcxproj
 
 DOC = \
 	doc/dns.html \
