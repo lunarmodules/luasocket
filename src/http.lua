@@ -22,7 +22,7 @@ local _M = socket.http
 -- Program constants
 -----------------------------------------------------------------------------
 -- connection timeout in seconds
-TIMEOUT = 60
+_M.TIMEOUT = 60
 -- default port for document retrieval
 _M.PORT = 80
 -- user agent field sent in request
