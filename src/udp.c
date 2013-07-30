@@ -84,18 +84,21 @@ static t_opt optset[] = {
     {"ipv6-add-membership",  opt_set_ip6_add_membership},
     {"ipv6-drop-membership", opt_set_ip6_drop_membersip},
     {"ipv6-v6only",          opt_set_ip6_v6only},
+    {"bindtodevice",         opt_set_bindtodevice},
     {NULL,                   NULL}
 };
 
 /* socket options for getoption */
 static t_opt optget[] = {
     {"ip-multicast-if",      opt_get_ip_multicast_if},
+    {"ip-multicast-ttl",     opt_get_ip_multicast_ttl},
     {"ip-multicast-loop",    opt_get_ip_multicast_loop},
     {"error",                opt_get_error},
     {"ipv6-unicast-hops",    opt_get_ip6_unicast_hops},
     {"ipv6-multicast-hops",  opt_get_ip6_unicast_hops},
     {"ipv6-multicast-loop",  opt_get_ip6_multicast_loop},
     {"ipv6-v6only",          opt_get_ip6_v6only},
+    {"bindtodevice",         opt_get_bindtodevice},
     {NULL,                   NULL}
 };
 
