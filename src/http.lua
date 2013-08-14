@@ -209,9 +209,11 @@ end
 
 local function adjustheaders(reqt)
     -- default headers
+    local host = reqt.host
+    if reqt.port then host = host .. ":" .. reqt.port end
     local lower = {
         ["user-agent"] = _M.USERAGENT,
-        ["host"] = reqt.host,
+        ["host"] = host,
         ["connection"] = "close, TE",
         ["te"] = "trailers"
     }
