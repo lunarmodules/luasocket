@@ -52,6 +52,15 @@ LUAPREFIX_linux?=/usr/local
 CDIR_linux?=lib/lua/$(LUAV)
 LDIR_linux?=share/lua/$(LUAV)
 
+# LUAINC_freebsd:
+# /usr/local/include/lua$(LUAV)
+# where lua headers are found for linux builds
+LUAINC_freebsd_base?=/usr/local/include/
+LUAINC_freebsd?=$(LUAINC_freebsd_base)/lua$(LUAV)
+LUAPREFIX_freebsd?=/usr/local/
+CDIR_freebsd?=lib/lua/$(LUAV)
+LDIR_freebsd?=share/lua/$(LUAV)
+
 # where lua headers are found for mingw builds
 # LUAINC_mingw: 
 # /opt/local/include
@@ -154,6 +163,22 @@ CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra \
 LDFLAGS_linux=-O -shared -fpic -o 
 LD_linux=gcc
 SOCKET_linux=usocket.o
+
+#------
+# Compiler and linker settings
+# for FreeBSD
+SO_freebsd=so
+O_freebsd=o
+CC_freebsd=gcc
+DEF_freebsd=-DLUASOCKET_$(DEBUG) -DLUA_$(COMPAT)_MODULE \
+	-DLUASOCKET_API='__attribute__((visibility("default")))' \
+	-DUNIX_API='__attribute__((visibility("default")))' \
+	-DMIME_API='__attribute__((visibility("default")))'
+CFLAGS_freebsd= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra \
+	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden
+LDFLAGS_freebsd=-O -shared -fpic -o 
+LD_freebsd=gcc
+SOCKET_freebsd=usocket.o
 
 #------
 # Compiler and linker settings
@@ -288,6 +313,10 @@ TO_TOP_LDIR= \
 # Targets
 #
 default: $(PLAT)
+
+
+freebsd:
+	$(MAKE) all-unix PLAT=freebsd
 
 macosx:
 	$(MAKE) all-unix PLAT=macosx
