@@ -20,6 +20,12 @@ PLAT?=linux
 # lua version to build against
 LUAV?=5.1
 
+# MYCFLAGS: to be set by user if needed
+MYCFLAGS=
+
+# MYLDFLAGS: to be set by user if needed
+MYLDFLAGS=
+
 # DEBUG: NODEBUG DEBUG
 # debug mode causes luasocket to collect and returns timing information useful
 # for testing and debugging luasocket itself
@@ -39,7 +45,6 @@ LUAINC_macosx?=$(LUAINC_macosx_base)/lua/$(LUAV)
 LUAPREFIX_macosx?=/opt/local
 CDIR_macosx?=lib/lua/$(LUAV)
 LDIR_macosx?=share/lua/$(LUAV)
-
 
 # LUAINC_linux:
 # /usr/include/lua$(LUAV)
@@ -62,7 +67,7 @@ CDIR_freebsd?=lib/lua/$(LUAV)
 LDIR_freebsd?=share/lua/$(LUAV)
 
 # where lua headers are found for mingw builds
-# LUAINC_mingw: 
+# LUAINC_mingw:
 # /opt/local/include
 LUAINC_mingw_base?=/usr/include
 LUAINC_mingw?=$(LUAINC_mingw_base)/lua/$(LUAV)
@@ -220,7 +225,7 @@ SOCKET_win32=wsocket.obj
 .SUFFIXES: .obj
 
 .c.obj:
-	$(CC) $(CFLAGS) //Fo"$@" //c $<
+	$(CC) $(LUASOCKET_CFLAGS) //Fo"$@" //c $<
 
 #------
 # Output file names
@@ -240,8 +245,8 @@ SOCKET=$(SOCKET_$(PLAT))
 #
 CC=$(CC_$(PLAT))
 DEF=$(DEF_$(PLAT))
-CFLAGS=$(CFLAGS_$(PLAT))
-LDFLAGS=$(LDFLAGS_$(PLAT))
+CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT))
+LDFLAGS=$(MYLDFLAGS) $(LDFLAGS_$(PLAT))
 LD=$(LD_$(PLAT))
 LUAINC= $(LUAINC_$(PLAT))
 LUALIB= $(LUALIB_$(PLAT))
@@ -284,7 +289,7 @@ UNIX_OBJS=\
 #------
 # Modules belonging to serial (device streams)
 #
-SERIAL_OBJS:=\
+SERIAL_OBJS=\
 	buffer.$(O) \
 	auxiliar.$(O) \
 	options.$(O) \
