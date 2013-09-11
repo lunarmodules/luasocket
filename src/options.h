@@ -44,7 +44,7 @@ int opt_get_reuseaddr(lua_State *L, p_socket ps);
 int opt_get_tcp_nodelay(lua_State *L, p_socket ps);
 int opt_get_keepalive(lua_State *L, p_socket ps);
 int opt_get_linger(lua_State *L, p_socket ps);
-int opt_get_reuseaddr(lua_State *L, p_socket ps);
+int opt_get_reuseport(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_loop(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_if(lua_State *L, p_socket ps);
 int opt_get_error(lua_State *L, p_socket ps);
