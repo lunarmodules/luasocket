@@ -187,6 +187,29 @@ int opt_set_ip_multicast_ttl(lua_State *L, p_socket ps)
     return opt_setint(L, ps, IPPROTO_IP, IP_MULTICAST_TTL);
 }
 
+int opt_get_ip_multicast_ttl(lua_State *L, p_socket ps)
+{
+    return opt_getint(L, ps, IPPROTO_IP, IP_MULTICAST_TTL);
+}
+
+int opt_set_bindtodevice(lua_State *L, p_socket ps)
+{
+    size_t len;
+    const char *device = luaL_checklstring(L, 3, &len);    /* obj, name, device */
+    return opt_set(L, ps, SOL_SOCKET, SO_BINDTODEVICE, (char *) device, len); 
+}
+
+int opt_get_bindtodevice(lua_State *L, p_socket ps)
+{
+    int len;
+    char device[IFNAMSIZ];
+    int err = opt_get(L, ps, SOL_SOCKET, SO_BINDTODEVICE, (char *) device, &len);
+    if (err)
+      return err;
+    lua_pushlstring(L, device, len);
+    return 1;
+}
+
 int opt_set_ip_multicast_if(lua_State *L, p_socket ps)
 {
     const char *address = luaL_checkstring(L, 3);    /* obj, name, ip */
