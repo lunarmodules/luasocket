@@ -247,10 +247,10 @@ local function adjustrequest(reqt)
         "invalid host '" .. base.tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)
-    -- ajust host and port if there is a proxy
-    nreqt.host, nreqt.port = adjustproxy(nreqt)
     -- adjust headers in request
     nreqt.headers = adjustheaders(nreqt)
+    -- ajust host and port if there is a proxy
+    nreqt.host, nreqt.port = adjustproxy(nreqt)
     return nreqt
 end
 
