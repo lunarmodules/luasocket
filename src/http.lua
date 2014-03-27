@@ -222,6 +222,15 @@ local function adjustheaders(reqt)
         lower["authorization"] = 
             "Basic " ..  (mime.b64(reqt.user .. ":" .. reqt.password))
     end
+    -- if we have proxy authentication information, pass it along
+    local proxy = reqt.proxy or _M.PROXY
+    if proxy then
+        proxy = url.parse(proxy)
+        if proxy.user and proxy.password then
+            lower["proxy-authorization"] = 
+                "Basic " ..  (mime.b64(proxy.user .. ":" .. proxy.password))
+        end
+    end
     -- override with user headers
     for i,v in base.pairs(reqt.headers or lower) do
         lower[string.lower(i)] = v
