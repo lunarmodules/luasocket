@@ -92,7 +92,6 @@ int socket_close(void) {
 \*-------------------------------------------------------------------------*/
 void socket_destroy(p_socket ps) {
     if (*ps != SOCKET_INVALID) {
-        socket_setblocking(ps);
         close(*ps);
         *ps = SOCKET_INVALID;
     }
