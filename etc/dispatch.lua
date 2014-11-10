@@ -5,6 +5,7 @@
 -----------------------------------------------------------------------------
 local base = _G
 local table = require("table")
+local string = require("string")
 local socket = require("socket")
 local coroutine = require("coroutine")
 module("dispatch")
@@ -43,25 +44,31 @@ end
 -----------------------------------------------------------------------------
 -- Mega hack. Don't try to do this at home.
 -----------------------------------------------------------------------------
--- we can't yield across calls to protect, so we rewrite it with coxpcall
+-- we can't yield across calls to protect on Lua 5.1, so we rewrite it with
+-- coroutines
 -- make sure you don't require any module that uses socket.protect before
 -- loading our hack
-function socket.protect(f)
-  return function(...)
-    local co = coroutine.create(f)
-    while true do
-      local results = {coroutine.resume(co, ...)}
-      local status = table.remove(results, 1)
-      if not status then
-        if base.type(results[1]) == 'table' then
-          return nil, results[1][1]
-        else base.error(results[1]) end
-      end
-      if coroutine.status(co) == "suspended" then
-        arg = {coroutine.yield(base.unpack(results))}
+if string.sub(base._VERSION, -3) == "5.1" then
+  local function _protect(co, status, ...)
+    if not status then
+      local msg = ...
+      if base.type(msg) == 'table' then
+        return nil, msg[1]
       else
-        return base.unpack(results)
+        base.error(msg, 0)
       end
+    end
+    if coroutine.status(co) == "suspended" then
+      return _protect(co, coroutine.resume(co, coroutine.yield(...)))
+    else
+      return ...
+    end
+  end
+
+  function socket.protect(f)
+    return function(...)
+      local co = coroutine.create(f)
+      return _protect(co, coroutine.resume(co, ...))
     end
   end
 end
