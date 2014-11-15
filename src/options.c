@@ -110,6 +110,7 @@ int opt_set_broadcast(lua_State *L, p_socket ps)
     return opt_setboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
+#ifdef IPV6_UNICAST_HOPS
 int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
@@ -119,7 +120,9 @@ int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
 }
+#endif
 
+#ifdef IPV6_MULTICAST_HOPS
 int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
@@ -129,6 +132,7 @@ int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps)
 {
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
 }
+#endif
 
 int opt_set_ip_multicast_loop(lua_State *L, p_socket ps)
 {
@@ -140,6 +144,7 @@ int opt_get_ip_multicast_loop(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
 }
 
+#ifdef IPV6_MULTICAST_LOOP
 int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
@@ -149,6 +154,7 @@ int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
 }
+#endif
 
 int opt_set_linger(lua_State *L, p_socket ps)
 {
@@ -221,16 +227,21 @@ int opt_set_ip_drop_membersip(lua_State *L, p_socket ps)
     return opt_setmembership(L, ps, IPPROTO_IP, IP_DROP_MEMBERSHIP);
 }
 
+#ifdef IPV6_ADD_MEMBERSHIP
 int opt_set_ip6_add_membership(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP);
 }
+#endif
 
+#ifdef IPV6_DROP_MEMBERSHIP
 int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP);
 }
+#endif
 
+#ifdef IPV6_V6ONLY
 int opt_get_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
@@ -240,6 +251,7 @@ int opt_set_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
 }
+#endif
 
 /*=========================================================================*\
 * Auxiliar functions

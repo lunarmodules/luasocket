@@ -32,12 +32,24 @@ int opt_set_ip_multicast_ttl(lua_State *L, p_socket ps);
 int opt_set_ip_multicast_loop(lua_State *L, p_socket ps);
 int opt_set_ip_add_membership(lua_State *L, p_socket ps);
 int opt_set_ip_drop_membersip(lua_State *L, p_socket ps);
+#ifdef IPV6_UNICAST_HOPS
 int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_MULTICAST_HOPS
 int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_MULTICAST_LOOP
 int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_ADD_MEMBERSHIP
 int opt_set_ip6_add_membership(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_DROP_MEMBERSHIP
 int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_V6ONLY
 int opt_set_ip6_v6only(lua_State *L, p_socket ps);
+#endif
 
 /* supported options for getoption */
 int opt_get_reuseaddr(lua_State *L, p_socket ps);
@@ -48,10 +60,18 @@ int opt_get_reuseaddr(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_loop(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_if(lua_State *L, p_socket ps);
 int opt_get_error(lua_State *L, p_socket ps);
+#ifdef IPV6_MULTICAST_LOOP
 int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_MULTICAST_HOPS
 int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_UNICAST_HOPS
 int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_V6ONLY
 int opt_get_ip6_v6only(lua_State *L, p_socket ps); 
+#endif
 
 /* invokes the appropriate option handler */
 int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps);
