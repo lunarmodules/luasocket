@@ -7,7 +7,9 @@ port = 8765
 function options(o)
     print("options for", o)
 
-    for _, opt in ipairs{"keepalive", "reuseaddr", "tcp-nodelay"} do
+    for _, opt in ipairs{
+    		"keepalive", "reuseaddr",
+     		"tcp-nodelay", "tcp-keepidle", "tcp-keepcnt", "tcp-keepintvl"} do
         print("getoption", opt, o:getoption(opt))
     end
 

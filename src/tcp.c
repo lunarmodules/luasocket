@@ -72,6 +72,15 @@ static t_opt optget[] = {
     {"keepalive",   opt_get_keepalive},
     {"reuseaddr",   opt_get_reuseaddr},
     {"tcp-nodelay", opt_get_tcp_nodelay},
+#ifdef TCP_KEEPIDLE
+    {"tcp-keepidle", opt_get_tcp_keepidle},
+#endif
+#ifdef TCP_KEEPCNT
+    {"tcp-keepcnt", opt_get_tcp_keepcnt},
+#endif
+#ifdef TCP_KEEPINTVL
+    {"tcp-keepintvl", opt_get_tcp_keepintvl},
+#endif
     {"linger",      opt_get_linger},
     {"error",       opt_get_error},
     {NULL,          NULL}
@@ -81,6 +90,15 @@ static t_opt optset[] = {
     {"keepalive",   opt_set_keepalive},
     {"reuseaddr",   opt_set_reuseaddr},
     {"tcp-nodelay", opt_set_tcp_nodelay},
+#ifdef TCP_KEEPIDLE
+    {"tcp-keepidle", opt_set_tcp_keepidle},
+#endif
+#ifdef TCP_KEEPCNT
+    {"tcp-keepcnt", opt_set_tcp_keepcnt},
+#endif
+#ifdef TCP_KEEPINTVL
+    {"tcp-keepintvl", opt_set_tcp_keepintvl},
+#endif
     {"ipv6-v6only", opt_set_ip6_v6only},
     {"linger",      opt_set_linger},
     {NULL,          NULL}
