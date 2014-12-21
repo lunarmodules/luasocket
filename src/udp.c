@@ -131,7 +131,7 @@ int udp_open(lua_State *L)
 /*=========================================================================*\
 * Lua methods
 \*=========================================================================*/
-const char *udp_strerror(int err) {
+static const char *udp_strerror(int err) {
     /* a 'closed' error on an unconnected means the target address was not
      * accepted by the transport layer */
     if (err == IO_CLOSED) return "refused";
