@@ -82,7 +82,6 @@ int socket_close(void) {
 \*-------------------------------------------------------------------------*/
 void socket_destroy(p_socket ps) {
     if (*ps != SOCKET_INVALID) {
-        socket_setblocking(ps);
         close(*ps);
         *ps = SOCKET_INVALID;
     }
@@ -130,9 +129,7 @@ int socket_bind(p_socket ps, SA *addr, socklen_t len) {
 \*-------------------------------------------------------------------------*/
 int socket_listen(p_socket ps, int backlog) {
     int err = IO_DONE; 
-    socket_setblocking(ps);
     if (listen(*ps, backlog)) err = errno; 
-    socket_setnonblocking(ps);
     return err;
 }
 
@@ -140,9 +137,7 @@ int socket_listen(p_socket ps, int backlog) {
 * 
 \*-------------------------------------------------------------------------*/
 void socket_shutdown(p_socket ps, int how) {
-    socket_setblocking(ps);
     shutdown(*ps, how);
-    socket_setnonblocking(ps);
 }
 
 /*-------------------------------------------------------------------------*\
