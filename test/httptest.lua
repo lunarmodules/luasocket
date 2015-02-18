@@ -1,4 +1,4 @@
--- needs Alias from /home/c/diego/tec/luasocket/test to 
+-- needs Alias from /home/c/diego/tec/luasocket/test to
 -- "/luasocket-test" and "/luasocket-test/"
 -- needs ScriptAlias from /home/c/diego/tec/luasocket/test/cgi
 -- to "/luasocket-test-cgi" and "/luasocket-test-cgi/"
@@ -36,22 +36,22 @@ index = readfile(index_file)
 local check_result = function(response, expect, ignore)
     for i,v in pairs(response) do
         if not ignore[i] then
-            if v ~= expect[i] then 
+            if v ~= expect[i] then
                 local f = io.open("err", "w")
                 f:write(tostring(v), "\n\n versus\n\n", tostring(expect[i]))
                 f:close()
-                fail(i .. " differs!") 
+                fail(i .. " differs!")
             end
         end
     end
     for i,v in pairs(expect) do
         if not ignore[i] then
-            if v ~= response[i] then 
+            if v ~= response[i] then
                 local f = io.open("err", "w")
                 f:write(tostring(response[i]), "\n\n versus\n\n", tostring(v))
                 v = string.sub(type(v) == "string" and v or "", 1, 70)
                 f:close()
-                fail(i .. " differs!") 
+                fail(i .. " differs!")
             end
         end
     end
@@ -61,10 +61,10 @@ end
 local check_request = function(request, expect, ignore)
     local t
     if not request.sink then request.sink, t = ltn12.sink.table() end
-    request.source = request.source or 
+    request.source = request.source or
         (request.body and ltn12.source.string(request.body))
     local response = {}
-    response.code, response.headers, response.status = 
+    response.code, response.headers, response.status =
         socket.skip(1, http.request(request))
     if t and #t > 0 then response.body = table.concat(t) end
     check_result(response, expect, ignore)
@@ -82,7 +82,7 @@ else fail(back.query) end
 ------------------------------------------------------------------------
 io.write("testing query string correctness: ")
 forth = "this+is+the+query+string"
-back = http.request("http://" .. host .. cgiprefix .. 
+back = http.request("http://" .. host .. cgiprefix ..
     "/query-string?" .. forth)
 if similar(back, forth) then print("ok")
 else fail("failed!") end
@@ -120,10 +120,10 @@ check_request(request, expect, ignore)
 ------------------------------------------------------------------------
 io.write("testing invalid url: ")
 local r, e = http.request{url = host .. prefix}
-assert(r == nil and e == "invalid host ''") 
+assert(r == nil and e == "invalid host ''")
 r, re = http.request(host .. prefix)
-assert(r == nil and e == re, tostring(r) ..", " .. tostring(re) .. 
-    " vs " .. tostring(e)) 
+assert(r == nil and e == re, tostring(r) ..", " .. tostring(re) ..
+    " vs " .. tostring(e))
 print("ok")
 
 io.write("testing invalid empty port: ")
@@ -212,7 +212,7 @@ os.remove(index_file .. "-back")
 io.write("testing ltn12.(sink|source).chain and mime.(encode|decode): ")
 
 local function b64length(len)
-    local a = math.ceil(len/3)*4 
+    local a = math.ceil(len/3)*4
     local l = math.ceil(a/76)
     return a + l*2
 end
@@ -313,7 +313,7 @@ ignore = {
     headers = 1
 }
 check_request(request, expect, ignore)
-    
+
 ------------------------------------------------------------------------
 io.write("testing document not found: ")
 request = {
@@ -429,9 +429,9 @@ print("ok")
 io.write("testing host not found: ")
 local c, e = socket.connect("example.invalid", 80)
 local r, re = http.request{url = "http://example.invalid/does/not/exist"}
-assert(r == nil and e == re, tostring(r) .. " " .. tostring(re)) 
+assert(r == nil and e == re, tostring(r) .. " " .. tostring(re))
 r, re = http.request("http://example.invalid/does/not/exist")
-assert(r == nil and e == re) 
+assert(r == nil and e == re)
 print("ok")
 
 ------------------------------------------------------------------------

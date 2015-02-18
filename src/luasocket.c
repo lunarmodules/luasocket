@@ -18,7 +18,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-
 /*=========================================================================*\
 * LuaSocket includes
 \*=========================================================================*/
@@ -31,6 +30,11 @@
 #include "tcp.h"
 #include "udp.h"
 #include "select.h"
+
+#if LUA_VERSION_NUM > 502 && !defined(LUA_COMPAT_APIINTCASTS)
+#define luaL_checkint(L,n)  ((int)luaL_checkinteger(L, (n)))
+#define luaL_optint(L,n,d)  ((int)luaL_optinteger(L, (n), (d)))
+#endif
 
 /*-------------------------------------------------------------------------*\
 * Internal function prototypes
@@ -77,14 +81,6 @@ static int global_unload(lua_State *L) {
     socket_close();
     return 0;
 }
-
-#if LUA_VERSION_NUM > 501
-int luaL_typerror (lua_State *L, int narg, const char *tname) {
-  const char *msg = lua_pushfstring(L, "%s expected, got %s",
-                                    tname, luaL_typename(L, narg));
-  return luaL_argerror(L, narg, msg);
-}
-#endif
 
 /*-------------------------------------------------------------------------*\
 * Setup basic stuff.
