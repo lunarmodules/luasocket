@@ -183,6 +183,7 @@ static int inet_global_getaddrinfo(lua_State *L)
         ret = getnameinfo(iterator->ai_addr, (socklen_t) iterator->ai_addrlen, 
             hbuf, (socklen_t) sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
         if (ret){
+          freeaddrinfo(resolved);
           lua_pushnil(L);
           lua_pushstring(L, socket_gaistrerror(ret));
           return 2;
