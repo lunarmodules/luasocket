@@ -89,7 +89,7 @@ static int process(int c, int last, const char *marker, luaL_Buffer *buffer) {
 The inner function makes use of Lua's auxiliary library's buffer interface for its efficiency and ease of use. The outer function simply interfaces with Lua.  It receives the context and the input chunk (as well as an optional end-of-line marker), and returns the transformed output and the new context.
         {{{
 static int eol(lua_State *L) {
-    int ctx = luaL_checkint(L, 1);
+    int ctx = (int)luaL_checkinteger(L, 1);
     size_t isize = 0;
     const char *input = luaL_optlstring(L, 2, NULL, &isize);
     const char *last = input + isize;

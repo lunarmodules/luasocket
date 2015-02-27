@@ -24,7 +24,7 @@ static int pushchar(int c, int last, const char *marker,
 }
 
 static int eol(lua_State *L) {
-  int context = luaL_checkint(L, 1);
+  int context = (int)luaL_checkinteger(L, 1);
   size_t isize = 0;
   const char *input = luaL_optlstring(L, 2, NULL, &isize);
   const char *last = input + isize;

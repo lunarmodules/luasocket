@@ -31,6 +31,17 @@
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#ifndef SOCKET_SELECT
+#include <sys/poll.h>
+#define WAITFD_R        POLLIN
+#define WAITFD_W        POLLOUT
+#define WAITFD_C        (POLLIN|POLLOUT)
+#else
+#define WAITFD_R        1
+#define WAITFD_W        2
+#define WAITFD_C        (WAITFD_R|WAITFD_W)
+#endif
+
 #ifndef SO_REUSEPORT
 #define SO_REUSEPORT SO_REUSEADDR
 #endif
