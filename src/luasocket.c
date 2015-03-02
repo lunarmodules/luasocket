@@ -31,11 +31,6 @@
 #include "udp.h"
 #include "select.h"
 
-#if LUA_VERSION_NUM > 502 && !defined(LUA_COMPAT_APIINTCASTS)
-#define luaL_checkint(L,n)  ((int)luaL_checkinteger(L, (n)))
-#define luaL_optint(L,n,d)  ((int)luaL_optinteger(L, (n), (d)))
-#endif
-
 /*-------------------------------------------------------------------------*\
 * Internal function prototypes
 \*-------------------------------------------------------------------------*/
@@ -68,7 +63,7 @@ static luaL_Reg func[] = {
 * Skip a few arguments
 \*-------------------------------------------------------------------------*/
 static int global_skip(lua_State *L) {
-    int amount = luaL_checkint(L, 1);
+    int amount = luaL_checkinteger(L, 1);
     int ret = lua_gettop(L) - amount - 1;
     return ret >= 0 ? ret : 0;
 }

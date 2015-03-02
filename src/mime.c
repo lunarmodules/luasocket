@@ -13,11 +13,6 @@
 
 #include "mime.h"
 
-#if LUA_VERSION_NUM > 502 && !defined(LUA_COMPAT_APIINTCASTS)
-#define luaL_checkint(L,n)  ((int)luaL_checkinteger(L, (n)))
-#define luaL_optint(L,n,d)  ((int)luaL_optinteger(L, (n), (d)))
-#endif
-
 /*=========================================================================*\
 * Don't want to trust escape character constants
 \*=========================================================================*/
@@ -666,7 +661,7 @@ static int eolprocess(int c, int last, const char *marker,
 \*-------------------------------------------------------------------------*/
 static int mime_global_eol(lua_State *L)
 {
-    int ctx = luaL_checkint(L, 1);
+    int ctx = luaL_checkinteger(L, 1);
     size_t isize = 0;
     const char *input = luaL_optlstring(L, 2, NULL, &isize);
     const char *last = input + isize;
