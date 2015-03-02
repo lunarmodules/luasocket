@@ -95,7 +95,7 @@ the FTP module:
 <!-- ftp.get ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=get>
-ftp.<b>get(</b>url<b>)</b><br>
+ftp.<b>get(</b>url [, create]<b>)</b><br>
 ftp.<b>get{</b><br>
 &nbsp;&nbsp;host = <i>string</i>,<br>
 &nbsp;&nbsp;sink = <i>LTN12 sink</i>,<br>
@@ -114,7 +114,10 @@ ftp.<b>get{</b><br>
 The <tt>get</tt> function has two forms. The simple form has fixed
 functionality: it downloads the contents of a URL and returns it as a
 string. The generic form allows a <em>lot</em> more control, as explained
-below.
+below. The <tt>create</tt> parameter is only used in the string form,
+and will be used as alternative for <a href=tcp.html#socket.tcp><tt>socket.tcp</tt></a>
+if it is provided. In the advanced form <tt>create</tt> has to be specified
+in the arguments table.
 </p>
 
 <p class=parameters>
@@ -180,7 +183,7 @@ end
 <!-- put ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=put>
-ftp.<b>put(</b>url, content<b>)</b><br>
+ftp.<b>put(</b>url, content [, create]<b>)</b><br>
 ftp.<b>put{</b><br>
 &nbsp;&nbsp;host = <i>string</i>,<br>
 &nbsp;&nbsp;source = <i>LTN12 sink</i>,<br>
@@ -198,7 +201,11 @@ ftp.<b>put{</b><br>
 <p class=description>
 The <tt>put</tt> function has two forms. The simple form has fixed
 functionality: it uploads a string of content into a URL. The generic form
-allows a <em>lot</em> more control, as explained below.  
+allows a <em>lot</em> more control, as explained below. The <tt>create</tt> 
+parameter is only used in the string form, and will be used as alternative 
+for <a href=tcp.html#socket.tcp><tt>socket.tcp</tt></a> if it is provided. 
+In the advanced form <tt>create</tt> has to be specified in the arguments 
+table.
 </p>
 
 <p class=parameters>

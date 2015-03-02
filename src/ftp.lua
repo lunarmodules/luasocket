@@ -232,14 +232,15 @@ local function parse(u)
     return t
 end
 
-local function sput(u, body)
+local function sput(u, body, create)
     local putt = parse(u)
     putt.source = ltn12.source.string(body)
+    putt.create = create
     return tput(putt)
 end
 
-_M.put = socket.protect(function(putt, body)
-    if base.type(putt) == "string" then return sput(putt, body)
+_M.put = socket.protect(function(putt, body, create)
+    if base.type(putt) == "string" then return sput(putt, body, create)
     else return tput(putt) end
 end)
 
@@ -256,10 +257,11 @@ local function tget(gett)
     return f:close()
 end
 
-local function sget(u)
+local function sget(u, create)
     local gett = parse(u)
     local t = {}
     gett.sink = ltn12.sink.table(t)
+    gett.create = create
     tget(gett)
     return table.concat(t)
 end
@@ -277,8 +279,8 @@ _M.command = socket.protect(function(cmdt)
     return f:close()
 end)
 
-_M.get = socket.protect(function(gett)
-    if base.type(gett) == "string" then return sget(gett)
+_M.get = socket.protect(function(gett, create)
+    if base.type(gett) == "string" then return sget(gett, create)
     else return tget(gett) end
 end)
 
