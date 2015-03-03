@@ -122,7 +122,7 @@ the HTTP module:
 <!-- http.request ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id="request">
-http.<b>request(</b>url [, body]<b>)</b><br>
+http.<b>request(</b>url [, body [, create]]<b>)</b><br>
 http.<b>request{</b><br>
 &nbsp;&nbsp;url = <i>string</i>,<br>
 &nbsp;&nbsp;[sink = <i>LTN12 sink</i>,]<br>
@@ -148,7 +148,9 @@ If the first argument of the <tt>request</tt> function is a string, it
 should be an <tt>url</tt>. In that case, if a <tt>body</tt>
 is provided as a string, the function will perform a <tt>POST</tt> method
 in the <tt>url</tt>. Otherwise, it performs a <tt>GET</tt> in the
-<tt>url</tt> 
+<tt>url</tt>. The <tt>create</tt> parameter is only used in the string form,
+and will be used as alternative for <a href=tcp.html#socket.tcp><tt>socket.tcp</tt></a>
+if it is provided.
 </p>
 
 <p class=parameters>

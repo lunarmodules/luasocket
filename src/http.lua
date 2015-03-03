@@ -329,11 +329,12 @@ end
     return 1, code, headers, status
 end
 
-local function srequest(u, b)
+local function srequest(u, b, create)
     local t = {}
     local reqt = {
         url = u,
-        sink = ltn12.sink.table(t)
+        sink = ltn12.sink.table(t),
+        create = create,
     }
     if b then
         reqt.source = ltn12.source.string(b)
@@ -347,8 +348,8 @@ local function srequest(u, b)
     return table.concat(t), code, headers, status
 end
 
-_M.request = socket.protect(function(reqt, body)
-    if base.type(reqt) == "string" then return srequest(reqt, body)
+_M.request = socket.protect(function(reqt, body, create)
+    if base.type(reqt) == "string" then return srequest(reqt, body, create)
     else return trequest(reqt) end
 end)
 
