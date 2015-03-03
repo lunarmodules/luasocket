@@ -111,7 +111,7 @@ static int mime_global_wrp(lua_State *L)
 {
     size_t size = 0;
     int left = (int) luaL_checknumber(L, 1);
-    const UC *input = (UC *) luaL_optlstring(L, 2, NULL, &size);
+    const UC *input = (const UC *) luaL_optlstring(L, 2, NULL, &size);
     const UC *last = input + size;
     int length = (int) luaL_optnumber(L, 3, 76);
     luaL_Buffer buffer;
@@ -259,7 +259,7 @@ static int mime_global_b64(lua_State *L)
 {
     UC atom[3];
     size_t isize = 0, asize = 0;
-    const UC *input = (UC *) luaL_optlstring(L, 1, NULL, &isize);
+    const UC *input = (const UC *) luaL_optlstring(L, 1, NULL, &isize);
     const UC *last = input + isize;
     luaL_Buffer buffer;
     /* end-of-input blackhole */
@@ -274,7 +274,7 @@ static int mime_global_b64(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = b64encode(*input++, atom, asize, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (const UC *) luaL_optlstring(L, 2, NULL, &isize);
     /* if second part is nil, we are done */
     if (!input) {
         size_t osize = 0;
@@ -305,7 +305,7 @@ static int mime_global_unb64(lua_State *L)
 {
     UC atom[4];
     size_t isize = 0, asize = 0;
-    const UC *input = (UC *) luaL_optlstring(L, 1, NULL, &isize);
+    const UC *input = (const UC *) luaL_optlstring(L, 1, NULL, &isize);
     const UC *last = input + isize;
     luaL_Buffer buffer;
     /* end-of-input blackhole */
@@ -320,7 +320,7 @@ static int mime_global_unb64(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = b64decode(*input++, atom, asize, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (const UC *) luaL_optlstring(L, 2, NULL, &isize);
     /* if second is nil, we are done */
     if (!input) {
         size_t osize = 0;
@@ -457,7 +457,7 @@ static int mime_global_qp(lua_State *L)
 
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = (UC *) luaL_optlstring(L, 1, NULL, &isize);
+    const UC *input = (const UC *) luaL_optlstring(L, 1, NULL, &isize);
     const UC *last = input + isize;
     const char *marker = luaL_optstring(L, 3, CRLF);
     luaL_Buffer buffer;
@@ -473,7 +473,7 @@ static int mime_global_qp(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpencode(*input++, atom, asize, marker, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (const UC *) luaL_optlstring(L, 2, NULL, &isize);
     /* if second part is nil, we are done */
     if (!input) {
         asize = qppad(atom, asize, &buffer);
@@ -533,7 +533,7 @@ static int mime_global_unqp(lua_State *L)
 {
     size_t asize = 0, isize = 0;
     UC atom[3];
-    const UC *input = (UC *) luaL_optlstring(L, 1, NULL, &isize);
+    const UC *input = (const UC *) luaL_optlstring(L, 1, NULL, &isize);
     const UC *last = input + isize;
     luaL_Buffer buffer;
     /* end-of-input blackhole */
@@ -548,7 +548,7 @@ static int mime_global_unqp(lua_State *L)
     luaL_buffinit(L, &buffer);
     while (input < last)
         asize = qpdecode(*input++, atom, asize, &buffer);
-    input = (UC *) luaL_optlstring(L, 2, NULL, &isize);
+    input = (const UC *) luaL_optlstring(L, 2, NULL, &isize);
     /* if second part is nil, we are done */
     if (!input) {
         luaL_pushresult(&buffer);
@@ -578,7 +578,7 @@ static int mime_global_qpwrp(lua_State *L)
 {
     size_t size = 0;
     int left = (int) luaL_checknumber(L, 1);
-    const UC *input = (UC *) luaL_optlstring(L, 2, NULL, &size);
+    const UC *input = (const UC *) luaL_optlstring(L, 2, NULL, &size);
     const UC *last = input + size;
     int length = (int) luaL_optnumber(L, 3, 76);
     luaL_Buffer buffer;
