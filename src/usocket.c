@@ -10,6 +10,7 @@
 #include <signal.h>
 
 #include "socket.h"
+#include "pierror.h"
 
 /*-------------------------------------------------------------------------*\
 * Wait for readable/writable/connected socket with timeout
@@ -394,7 +395,7 @@ int socket_gethostbyname(const char *addr, struct hostent **hp) {
 const char *socket_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case HOST_NOT_FOUND: return "host not found";
+        case HOST_NOT_FOUND: return PIE_HOSTNOTFOUND;
         default: return hstrerror(err);
     }
 }
@@ -402,13 +403,13 @@ const char *socket_hoststrerror(int err) {
 const char *socket_strerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case EADDRINUSE: return "address already in use";
-        case EISCONN: return "already connected";
-        case EACCES: return "permission denied";
-        case ECONNREFUSED: return "connection refused";
-        case ECONNABORTED: return "closed";
-        case ECONNRESET: return "closed";
-        case ETIMEDOUT: return "timeout";
+        case EADDRINUSE: return PIE_ADDRINUSE;
+        case EISCONN: return PIE_ISCONN;
+        case EACCES: return PIE_ACCESS;
+        case ECONNREFUSED: return PIE_CONNREFUSED;
+        case ECONNABORTED: return PIE_CONNABORTED;
+        case ECONNRESET: return PIE_CONNRESET;
+        case ETIMEDOUT: return PIE_TIMEDOUT;
         default: return strerror(err);
     }
 }
@@ -421,22 +422,21 @@ const char *socket_ioerror(p_socket ps, int err) {
 const char *socket_gaistrerror(int err) {
     if (err == 0) return NULL; 
     switch (err) {
-        case EAI_AGAIN: return "temporary failure in name resolution";
-        case EAI_BADFLAGS: return "invalid value for ai_flags";
+        case EAI_AGAIN: return PIE_AGAIN;
+        case EAI_BADFLAGS: return PIE_BADFLAGS;
 #ifdef EAI_BADHINTS
-        case EAI_BADHINTS: return "invalid value for hints";
+        case EAI_BADHINTS: return PIE_BADHINTS;
 #endif
-        case EAI_FAIL: return "non-recoverable failure in name resolution";
-        case EAI_FAMILY: return "ai_family not supported";
-        case EAI_MEMORY: return "memory allocation failure";
-        case EAI_NONAME: 
-            return "host or service not provided, or not known";
-        case EAI_OVERFLOW: return "argument buffer overflow";
+        case EAI_FAIL: return PIE_FAIL;
+        case EAI_FAMILY: return PIE_FAMILY;
+        case EAI_MEMORY: return PIE_MEMORY;
+        case EAI_NONAME: return PIE_NONAME;
+        case EAI_OVERFLOW: return PIE_OVERFLOW;
 #ifdef EAI_PROTOCOL
-        case EAI_PROTOCOL: return "resolved protocol is unknown";
+        case EAI_PROTOCOL: return PIE_PROTOCOL;
 #endif
-        case EAI_SERVICE: return "service not supported for socket type";
-        case EAI_SOCKTYPE: return "ai_socktype not supported";
+        case EAI_SERVICE: return PIE_SERVICE;
+        case EAI_SOCKTYPE: return PIE_SOCKTYPE;
         case EAI_SYSTEM: return strerror(errno); 
         default: return gai_strerror(err);
     }

@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "socket.h"
+#include "pierror.h"
 
 /* WinSock doesn't have a strerror... */
 static const char *wstrerror(int err);
@@ -330,7 +331,7 @@ int socket_gethostbyname(const char *addr, struct hostent **hp) {
 const char *socket_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case WSAHOST_NOT_FOUND: return "host not found";
+        case WSAHOST_NOT_FOUND: return PIE_HOST_NOT_FOUND;
         default: return wstrerror(err); 
     }
 }
@@ -338,13 +339,13 @@ const char *socket_hoststrerror(int err) {
 const char *socket_strerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
-        case WSAEADDRINUSE: return "address already in use";
-        case WSAECONNREFUSED: return "connection refused";
-        case WSAEISCONN: return "already connected";
-        case WSAEACCES: return "permission denied";
-        case WSAECONNABORTED: return "closed";
-        case WSAECONNRESET: return "closed";
-        case WSAETIMEDOUT: return "timeout";
+        case WSAEADDRINUSE: return PIE_ADDRINUSE;
+        case WSAECONNREFUSED : return PIE_CONNREFUSED;
+        case WSAEISCONN: return PIE_ISCONN;
+        case WSAEACCES: return PIE_ACCESS;
+        case WSAECONNABORTED: return PIE_CONNABORTED;
+        case WSAECONNRESET: return PIE_CONNRESET;
+        case WSAETIMEDOUT: return PIE_TIMEDOUT;
         default: return wstrerror(err);
     }
 }
@@ -357,7 +358,7 @@ const char *socket_ioerror(p_socket ps, int err) {
 static const char *wstrerror(int err) {
     switch (err) {
         case WSAEINTR: return "Interrupted function call";
-        case WSAEACCES: return "Permission denied";
+        case WSAEACCES: return PIE_ACCESS; // "Permission denied";
         case WSAEFAULT: return "Bad address";
         case WSAEINVAL: return "Invalid argument";
         case WSAEMFILE: return "Too many open files";
@@ -370,24 +371,23 @@ static const char *wstrerror(int err) {
         case WSAEPROTOTYPE: return "Protocol wrong type for socket";
         case WSAENOPROTOOPT: return "Bad protocol option";
         case WSAEPROTONOSUPPORT: return "Protocol not supported";
-        case WSAESOCKTNOSUPPORT: return "Socket type not supported";
+        case WSAESOCKTNOSUPPORT: return PIE_SOCKTYPE; // "Socket type not supported";
         case WSAEOPNOTSUPP: return "Operation not supported";
         case WSAEPFNOSUPPORT: return "Protocol family not supported";
-        case WSAEAFNOSUPPORT: 
-            return "Address family not supported by protocol family"; 
-        case WSAEADDRINUSE: return "Address already in use";
+        case WSAEAFNOSUPPORT: return PIE_FAMILY; // "Address family not supported by protocol family"; 
+        case WSAEADDRINUSE: return PIE_ADDRINUSE; // "Address already in use";
         case WSAEADDRNOTAVAIL: return "Cannot assign requested address";
         case WSAENETDOWN: return "Network is down";
         case WSAENETUNREACH: return "Network is unreachable";
         case WSAENETRESET: return "Network dropped connection on reset";
         case WSAECONNABORTED: return "Software caused connection abort";
-        case WSAECONNRESET: return "Connection reset by peer";
+        case WSAECONNRESET: return PIE_CONNRESET; // "Connection reset by peer";
         case WSAENOBUFS: return "No buffer space available";
-        case WSAEISCONN: return "Socket is already connected";
+        case WSAEISCONN: return PIE_ISCONN; // "Socket is already connected";
         case WSAENOTCONN: return "Socket is not connected";
         case WSAESHUTDOWN: return "Cannot send after socket shutdown";
-        case WSAETIMEDOUT: return "Connection timed out";
-        case WSAECONNREFUSED: return "Connection refused";
+        case WSAETIMEDOUT: return PIE_TIMEDOUT; // "Connection timed out";
+        case WSAECONNREFUSED: return PIE_CONNREFUSED; // "Connection refused";
         case WSAEHOSTDOWN: return "Host is down";
         case WSAEHOSTUNREACH: return "No route to host";
         case WSAEPROCLIM: return "Too many processes";
@@ -396,9 +396,9 @@ static const char *wstrerror(int err) {
         case WSANOTINITIALISED: 
             return "Successful WSAStartup not yet performed";
         case WSAEDISCON: return "Graceful shutdown in progress";
-        case WSAHOST_NOT_FOUND: return "Host not found";
+        case WSAHOST_NOT_FOUND: return PIE_HOST_NOT_FOUND; // "Host not found";
         case WSATRY_AGAIN: return "Nonauthoritative host not found";
-        case WSANO_RECOVERY: return "Nonrecoverable name lookup error"; 
+        case WSANO_RECOVERY: return PIE_FAIL; // "Nonrecoverable name lookup error"; 
         case WSANO_DATA: return "Valid name, no data record of requested type";
         default: return "Unknown error";
     }
@@ -407,24 +407,23 @@ static const char *wstrerror(int err) {
 const char *socket_gaistrerror(int err) {
     if (err == 0) return NULL; 
     switch (err) {
-        case EAI_AGAIN: return "temporary failure in name resolution";
-        case EAI_BADFLAGS: return "invalid value for ai_flags";
+        case EAI_AGAIN: return PIE_AGAIN;
+        case EAI_BADFLAGS: return PIE_BADFLAGS;
 #ifdef EAI_BADHINTS
-        case EAI_BADHINTS: return "invalid value for hints";
+        case EAI_BADHINTS: return PIE_BADHINTS;
 #endif
-        case EAI_FAIL: return "non-recoverable failure in name resolution";
-        case EAI_FAMILY: return "ai_family not supported";
-        case EAI_MEMORY: return "memory allocation failure";
-        case EAI_NONAME: 
-            return "host or service not provided, or not known";
+        case EAI_FAIL: return PIE_FAIL;
+        case EAI_FAMILY: return PIE_FAMILY;
+        case EAI_MEMORY: return PIE_MEMORY;
+        case EAI_NONAME: return PIE_NONAME;
 #ifdef EAI_OVERFLOW
-        case EAI_OVERFLOW: return "argument buffer overflow";
+        case EAI_OVERFLOW: return PIE_OVERFLOW;
 #endif
 #ifdef EAI_PROTOCOL
-        case EAI_PROTOCOL: return "resolved protocol is unknown";
+        case EAI_PROTOCOL: return PIE_PROTOCOL;
 #endif
-        case EAI_SERVICE: return "service not supported for socket type";
-        case EAI_SOCKTYPE: return "ai_socktype not supported";
+        case EAI_SERVICE: return PIE_SERVICE;
+        case EAI_SOCKTYPE: return PIE_SOCKTYPE;
 #ifdef EAI_SYSTEM
         case EAI_SYSTEM: return strerror(errno); 
 #endif
