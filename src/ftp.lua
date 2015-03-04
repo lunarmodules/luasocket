@@ -232,17 +232,6 @@ local function parse(u)
     return t
 end
 
-local function sput(u, body)
-    local putt = parse(u)
-    putt.source = ltn12.source.string(body)
-    return tput(putt)
-end
-
-_M.put = socket.protect(function(putt, body)
-    if base.type(putt) == "string" then return sput(putt, body)
-    else return tput(putt) end
-end)
-
 local function tget(gett)
     gett = override(gett)
     socket.try(gett.host, "missing hostname")
@@ -256,12 +245,17 @@ local function tget(gett)
     return f:close()
 end
 
-local function sget(u)
-    local gett = parse(u)
-    local t = {}
-    gett.sink = ltn12.sink.table(t)
-    tget(gett)
-    return table.concat(t)
+-- parses a simple form into the advanced form
+-- if `body` is provided, a PUT, otherwise a GET.
+-- If GET, then a field `target` is added to store the results
+_M.parseRequest = function(u, body)
+  local t = parse(u)
+  if body then
+    t.source = ltn12.source.string(body)
+  else
+    t.target = {}
+    t.sink = ltn12.sink.table(t.target)
+  end
 end
 
 _M.command = socket.protect(function(cmdt)
@@ -277,9 +271,24 @@ _M.command = socket.protect(function(cmdt)
     return f:close()
 end)
 
+_M.put = socket.protect(function(putt, body)
+    if base.type(putt) == "string" then 
+      putt = _M.parseRequest(putt, body)
+      tput(putt)
+      return table.concat(putt.target)
+    else 
+      return tput(putt) 
+    end
+end)
+
 _M.get = socket.protect(function(gett)
-    if base.type(gett) == "string" then return sget(gett)
-    else return tget(gett) end
+    if base.type(gett) == "string" then 
+      gett = _M.parseRequest(gett)
+      tget(gett)
+      return table.concat(gett.target)
+    else 
+      return tget(gett) 
+    end
 end)
 
 return _M
