@@ -355,7 +355,7 @@ _M.request = socket.protect(function(reqt, body)
       local t, code, headers, status = reqt.target, socket.skip(1, trequest(reqt))
       return table.concat(t), code, headers, status
     else
-      if not reqt.create then reqt.create = socket.tcp() end  -- set default create method
+      reqt.create = reqt.create or socket.tcp
       return trequest(reqt) 
     end
 end)

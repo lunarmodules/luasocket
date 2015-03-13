@@ -34,8 +34,9 @@ _M.PASSWORD = "anonymous@anonymous.org"
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function _M.open(server, port, create)
-    local tp = socket.try(tp.connect(server, port or _M.PORT, _M.TIMEOUT, create))
+function _M.open(params)
+    local c = function() return params:create() end  -- wrap create as a method call
+    local tp = socket.try(tp.connect(params.server, params.port or _M.PORT, _M.TIMEOUT, c))
     local f = base.setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)
@@ -203,7 +204,7 @@ end
 local function tput(putt)
     putt = override(putt)
     socket.try(putt.host, "missing hostname")
-    local f = _M.open(putt.host, putt.port, putt.create)
+    local f = _M.open(putt)
     f:greet()
     f:login(putt.user, putt.password)
     if putt.type then f:type(putt.type) end
@@ -235,7 +236,7 @@ end
 local function tget(gett)
     gett = override(gett)
     socket.try(gett.host, "missing hostname")
-    local f = _M.open(gett.host, gett.port, gett.create)
+    local f = _M.open(gett)
     f:greet()
     f:login(gett.user, gett.password)
     if gett.type then f:type(gett.type) end
@@ -262,7 +263,8 @@ _M.command = socket.protect(function(cmdt)
     cmdt = override(cmdt)
     socket.try(cmdt.host, "missing hostname")
     socket.try(cmdt.command, "missing command")
-    local f = _M.open(cmdt.host, cmdt.port, cmdt.create)
+    cmdt.create = cmdt.create or socket.tcp
+    local f = _M.open(cmdt)
     f:greet()
     f:login(cmdt.user, cmdt.password)
     f.try(f.tp:command(cmdt.command, cmdt.argument))
@@ -277,6 +279,7 @@ _M.put = socket.protect(function(putt, body)
       tput(putt)
       return table.concat(putt.target)
     else 
+      putt.create = putt.create or socket.tcp
       return tput(putt) 
     end
 end)
@@ -287,6 +290,7 @@ _M.get = socket.protect(function(gett)
       tget(gett)
       return table.concat(gett.target)
     else 
+      gett.create = gett.create or socket.tcp
       return tget(gett) 
     end
 end)
