@@ -106,15 +106,15 @@ end
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function _M.open(host, port, create)
-    -- create socket with user connect function, or with default
-    local c = socket.try((create or socket.tcp)())
+function _M.open(reqt)
+    -- create socket with user connect function
+    local c = socket.try(reqt:create())   -- method call, passing reqt table as self!
     local h = base.setmetatable({ c = c }, metat)
     -- create finalized try
     h.try = socket.newtry(function() h:close() end)
     -- set timeout before connecting
     h.try(c:settimeout(_M.TIMEOUT))
-    h.try(c:connect(host, port or _M.PORT))
+    h.try(c:connect(reqt.host, reqt.port or _M.PORT))
     -- here everything worked
     return h
 end
@@ -294,7 +294,7 @@ end
     -- we loop until we get what we want, or
     -- until we are sure there is no way to get it
     local nreqt = adjustrequest(reqt)
-    local h = _M.open(nreqt.host, nreqt.port, nreqt.create)
+    local h = _M.open(nreqt)
     -- send request line and headers
     h:sendrequestline(nreqt.method, nreqt.uri)
     h:sendheaders(nreqt.headers)
@@ -354,7 +354,8 @@ _M.request = socket.protect(function(reqt, body)
       reqt = _M.parseRequest(reqt, body)
       local t, code, headers, status = reqt.target, socket.skip(1, trequest(reqt))
       return table.concat(t), code, headers, status
-    else 
+    else
+      if not reqt.create then reqt.create = socket.tcp() end  -- set default create method
       return trequest(reqt) 
     end
 end)
