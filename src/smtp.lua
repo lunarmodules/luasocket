@@ -114,9 +114,12 @@ function metat.__index:send(mailt)
 end
 
 function _M.open(mailt)
-    local c = function() return mailt:create() end  -- wrap to do a method call
-    local tp = socket.try(tp.connect(mailt.server or _M.SERVER, mailt.port or _M.PORT,
-        _M.TIMEOUT, c))
+    local tp = socket.try(tp.connect(
+        mailt.server or _M.SERVER, 
+        mailt.port or _M.PORT,
+        _M.TIMEOUT, 
+        function() return mailt:create() end  -- wrap to do a method call
+      ))
     local s = base.setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
     s.try = socket.newtry(function()

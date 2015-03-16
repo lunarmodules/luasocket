@@ -352,7 +352,7 @@ end
 _M.request = socket.protect(function(reqt, body)
     if base.type(reqt) == "string" then 
       reqt = _M.parseRequest(reqt, body)
-      local t, code, headers, status = reqt.target, socket.skip(1, trequest(reqt))
+      local t, code, headers, status = reqt.target, socket.skip(1, _M.request(reqt))
       return table.concat(t), code, headers, status
     else
       reqt.create = reqt.create or socket.tcp

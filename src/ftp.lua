@@ -35,8 +35,12 @@ _M.PASSWORD = "anonymous@anonymous.org"
 local metat = { __index = {} }
 
 function _M.open(params)
-    local c = function() return params:create() end  -- wrap create as a method call
-    local tp = socket.try(tp.connect(params.server, params.port or _M.PORT, _M.TIMEOUT, c))
+    local tp = socket.try(tp.connect(
+        params.server, 
+        params.port or _M.PORT, 
+        _M.TIMEOUT, 
+        function() return params:create() end  -- wrap create as a method call
+      ))
     local f = base.setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)
