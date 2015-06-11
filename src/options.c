@@ -105,9 +105,19 @@ int opt_set_dontroute(lua_State *L, p_socket ps)
     return opt_setboolean(L, ps, SOL_SOCKET, SO_DONTROUTE);
 }
 
+int opt_get_dontroute(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_DONTROUTE);
+}
+
 int opt_set_broadcast(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
+}
+
+int opt_get_broadcast(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
 int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
