@@ -90,6 +90,10 @@ static t_opt optset[] = {
 
 /* socket options for getoption */
 static t_opt optget[] = {
+    {"dontroute",            opt_get_dontroute},
+    {"broadcast",            opt_get_broadcast},
+    {"reuseaddr",            opt_get_reuseaddr},
+    {"reuseport",            opt_get_reuseport},
     {"ip-multicast-if",      opt_get_ip_multicast_if},
     {"ip-multicast-loop",    opt_get_ip_multicast_loop},
     {"error",                opt_get_error},
