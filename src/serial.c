@@ -2,7 +2,7 @@
 * Serial stream
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <string.h> 
+#include <string.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -11,7 +11,7 @@
 #include "socket.h"
 #include "options.h"
 #include "unix.h"
-#include <sys/un.h> 
+#include <sys/un.h>
 
 /*
 Reuses userdata definition from unix.h, since it is useful for all
@@ -55,7 +55,7 @@ static luaL_Reg serial_methods[] = {
 };
 
 /* our socket creation function */
-/* this is an ad-hoc module that returns a single function 
+/* this is an ad-hoc module that returns a single function
  * as such, do not include other functions in this array. */
 static luaL_Reg func[] = {
     {"serial", global_create},
@@ -120,7 +120,7 @@ static int meth_getfd(lua_State *L) {
 /* this is very dangerous, but can be handy for those that are brave enough */
 static int meth_setfd(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkgroup(L, "serial{any}", 1);
-    un->sock = (t_socket) luaL_checknumber(L, 2); 
+    un->sock = (t_socket) luaL_checknumber(L, 2);
     return 0;
 }
 
@@ -131,7 +131,7 @@ static int meth_dirty(lua_State *L) {
 }
 
 /*-------------------------------------------------------------------------*\
-* Closes socket used by object 
+* Closes socket used by object
 \*-------------------------------------------------------------------------*/
 static int meth_close(lua_State *L)
 {
@@ -156,7 +156,7 @@ static int meth_settimeout(lua_State *L) {
 
 
 /*-------------------------------------------------------------------------*\
-* Creates a serial object 
+* Creates a serial object
 \*-------------------------------------------------------------------------*/
 static int global_create(lua_State *L) {
     const char* path = luaL_checkstring(L, 1);
@@ -180,7 +180,7 @@ static int global_create(lua_State *L) {
     /* initialize remaining structure fields */
     socket_setnonblocking(&sock);
     un->sock = sock;
-    io_init(&un->io, (p_send) socket_write, (p_recv) socket_read, 
+    io_init(&un->io, (p_send) socket_write, (p_recv) socket_read,
             (p_error) socket_ioerror, &un->sock);
     timeout_init(&un->tm, -1, -1);
     buffer_init(&un->buf, &un->io, &un->tm);

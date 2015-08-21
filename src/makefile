@@ -260,6 +260,7 @@ SOCKET_OBJS= \
 	buffer.$(O) \
 	io.$(O) \
 	auxiliar.$(O) \
+	compat.$(O) \
 	options.$(O) \
 	inet.$(O) \
 	$(SOCKET) \
@@ -272,7 +273,8 @@ SOCKET_OBJS= \
 # Modules belonging mime-core
 #
 MIME_OBJS= \
-	mime.$(O)
+	mime.$(O) \
+	compat.$(O)
 
 #------
 # Modules belonging unix (local domain sockets)
@@ -383,6 +385,7 @@ clean:
 #------
 # List of dependencies
 #
+compat.$(O): compat.c compat.h
 auxiliar.$(O): auxiliar.c auxiliar.h
 buffer.$(O): buffer.c buffer.h io.h timeout.h
 except.$(O): except.c except.h

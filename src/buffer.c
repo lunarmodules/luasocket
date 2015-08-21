@@ -4,6 +4,7 @@
 \*=========================================================================*/
 #include "lua.h"
 #include "lauxlib.h"
+#include "compat.h"
 
 #include "buffer.h"
 

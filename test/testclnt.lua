@@ -590,7 +590,7 @@ function test_writeafterclose()
         data = nil
     ]]))
     local sent, err, errsent
-    while not err do 
+    while not err do
         sent, err, errsent, time = data:send(str)
     end
     assert(err == "closed", "should have returned 'closed'")

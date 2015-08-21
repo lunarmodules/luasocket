@@ -6,6 +6,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "compat.h"
 
 #include "socket.h"
 #include "timeout.h"
@@ -16,10 +17,10 @@
 \*=========================================================================*/
 static t_socket getfd(lua_State *L);
 static int dirty(lua_State *L);
-static void collect_fd(lua_State *L, int tab, int itab, 
+static void collect_fd(lua_State *L, int tab, int itab,
         fd_set *set, t_socket *max_fd);
 static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set);
-static void return_fd(lua_State *L, fd_set *set, t_socket max_fd, 
+static void return_fd(lua_State *L, fd_set *set, t_socket max_fd,
         int itab, int tab, int start);
 static void make_assoc(lua_State *L, int tab);
 static int global_select(lua_State *L);
@@ -40,11 +41,7 @@ int select_open(lua_State *L) {
     lua_pushstring(L, "_SETSIZE");
     lua_pushnumber(L, FD_SETSIZE);
     lua_rawset(L, -3);
-#if LUA_VERSION_NUM > 501 && !defined(LUA_COMPAT_MODULE)
     luaL_setfuncs(L, func, 0);
-#else
-    luaL_openlib(L, NULL, func, 0);
-#endif
     return 0;
 }
 
@@ -98,10 +95,10 @@ static t_socket getfd(lua_State *L) {
         lua_pushvalue(L, -2);
         lua_call(L, 1, 1);
         if (lua_isnumber(L, -1)) {
-            double numfd = lua_tonumber(L, -1); 
+            double numfd = lua_tonumber(L, -1);
             fd = (numfd >= 0.0)? (t_socket) numfd: SOCKET_INVALID;
         }
-    } 
+    }
     lua_pop(L, 1);
     return fd;
 }
@@ -114,12 +111,12 @@ static int dirty(lua_State *L) {
         lua_pushvalue(L, -2);
         lua_call(L, 1, 1);
         is = lua_toboolean(L, -1);
-    } 
+    }
     lua_pop(L, 1);
     return is;
 }
 
-static void collect_fd(lua_State *L, int tab, int itab, 
+static void collect_fd(lua_State *L, int tab, int itab,
         fd_set *set, t_socket *max_fd) {
     int i = 1, n = 0;
     /* nil is the same as an empty table */
@@ -139,16 +136,16 @@ static void collect_fd(lua_State *L, int tab, int itab,
         if (fd != SOCKET_INVALID) {
             /* make sure we don't overflow the fd_set */
 #ifdef _WIN32
-            if (n >= FD_SETSIZE) 
+            if (n >= FD_SETSIZE)
                 luaL_argerror(L, tab, "too many sockets");
 #else
-            if (fd >= FD_SETSIZE) 
+            if (fd >= FD_SETSIZE)
                 luaL_argerror(L, tab, "descriptor too large for set size");
 #endif
             FD_SET(fd, set);
             n++;
             /* keep track of the largest descriptor so far */
-            if (*max_fd == SOCKET_INVALID || *max_fd < fd) 
+            if (*max_fd == SOCKET_INVALID || *max_fd < fd)
                 *max_fd = fd;
             /* make sure we can map back from descriptor to the object */
             lua_pushnumber(L, (lua_Number) fd);
@@ -162,9 +159,9 @@ static void collect_fd(lua_State *L, int tab, int itab,
 
 static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set) {
     int ndirty = 0, i = 1;
-    if (lua_isnil(L, tab)) 
+    if (lua_isnil(L, tab))
         return 0;
-    for ( ;; ) { 
+    for ( ;; ) {
         t_socket fd;
         lua_pushnumber(L, i);
         lua_gettable(L, tab);
@@ -185,7 +182,7 @@ static int check_dirty(lua_State *L, int tab, int dtab, fd_set *set) {
     return ndirty;
 }
 
-static void return_fd(lua_State *L, fd_set *set, t_socket max_fd, 
+static void return_fd(lua_State *L, fd_set *set, t_socket max_fd,
         int itab, int tab, int start) {
     t_socket fd;
     for (fd = 0; fd < max_fd; fd++) {

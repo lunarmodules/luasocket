@@ -6,6 +6,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "compat.h"
 
 #include "auxiliar.h"
 #include "socket.h"
@@ -108,11 +109,7 @@ int tcp_open(lua_State *L)
     auxiliar_add2group(L, "tcp{client}", "tcp{any}");
     auxiliar_add2group(L, "tcp{server}", "tcp{any}");
     /* define library functions */
-#if LUA_VERSION_NUM > 501 && !defined(LUA_COMPAT_MODULE)
     luaL_setfuncs(L, func, 0);
-#else
-    luaL_openlib(L, NULL, func, 0);
-#endif
     return 0;
 }
 
