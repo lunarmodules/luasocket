@@ -27,6 +27,7 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int global_create(lua_State *L);
+static int global_create4(lua_State *L);
 static int global_create6(lua_State *L);
 static int meth_send(lua_State *L);
 static int meth_sendto(lua_State *L);
@@ -107,6 +108,7 @@ static t_opt optget[] = {
 /* functions in library namespace */
 static luaL_Reg func[] = {
     {"udp", global_create},
+    {"udp4", global_create4},
     {"udp6", global_create6},
     {NULL, NULL}
 };
@@ -264,7 +266,7 @@ static int meth_receivefrom(lua_State *L)
 static int meth_getfamily(lua_State *L)
 {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
-    if (udp->family == PF_INET6) {
+    if (udp->family == AF_INET6) {
         lua_pushliteral(L, "inet6");
         return 1;
     } else {
@@ -391,7 +393,7 @@ static int meth_setsockname(lua_State *L) {
     bindhints.ai_socktype = SOCK_DGRAM;
     bindhints.ai_family = udp->family;
     bindhints.ai_flags = AI_PASSIVE;
-    err = inet_trybind(&udp->sock, address, port, &bindhints);
+    err = inet_trybind(&udp->sock, &udp->family, address, port, &bindhints);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -409,7 +411,12 @@ static int meth_setsockname(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int udp_create(lua_State *L, int family) {
     t_socket sock;
-    const char *err = inet_trycreate(&sock, family, SOCK_DGRAM);
+    /* if family is AF_UNSPEC, we create an AF_INET socket
+     * but store AF_UNSPEC into tcp-family. This will allow it
+     * later be replaced with an AF_INET6 socket if
+     * trybind or tryconnect prefer it instead. */
+    const char *err = inet_trycreate(&sock, family == AF_UNSPEC?
+        AF_INET: family, SOCK_DGRAM);
     /* try to allocate a system socket */
     if (!err) {
         /* allocate udp object */
@@ -417,7 +424,7 @@ static int udp_create(lua_State *L, int family) {
         auxiliar_setclass(L, "udp{unconnected}", -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
-        if (family == PF_INET6) {
+        if (family == AF_INET6) {
             int yes = 1;
             setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
                 (void *)&yes, sizeof(yes));
@@ -434,6 +441,10 @@ static int udp_create(lua_State *L, int family) {
 }
 
 static int global_create(lua_State *L) {
+    return udp_create(L, AF_UNSPEC);
+}
+
+static int global_create4(lua_State *L) {
     return udp_create(L, AF_INET);
 }
 
