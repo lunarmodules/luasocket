@@ -50,13 +50,12 @@ local function make_plat(plat)
 	}
 	local modules = {
 		["socket.core"] = {
-			sources = { "src/luasocket.c", "src/timeout.c", "src/buffer.c", "src/io.c", "src/auxiliar.c",
-						"src/options.c", "src/inet.c", "src/except.c", "src/select.c", "src/tcp.c", "src/udp.c" },
+			sources = { "src/luasocket.c", "src/timeout.c", "src/buffer.c", "src/io.c", "src/auxiliar.c", "src/options.c", "src/inet.c", "src/except.c", "src/select.c", "src/tcp.c", "src/udp.c", "src/compat.c" },
 			defines = defines[plat],
 			incdir = "/src"
 		},
-		["mime.core"] = { 
-			sources = { "src/mime.c" },
+		["mime.core"] = {
+			sources = { "src/mime.c", "src/compat.c" },
 			defines = defines[plat],
 			incdir = "/src"
 		},
@@ -73,14 +72,12 @@ local function make_plat(plat)
 	if plat == "unix" or plat == "macosx" then
 	    modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/usocket.c"
 		modules["socket.unix"] = {
-		  sources = { "src/buffer.c", "src/auxiliar.c", "src/options.c", "src/timeout.c", "src/io.c", 
-					  "src/usocket.c", "src/unix.c" },
+		  sources = { "src/buffer.c", "src/auxiliar.c", "src/options.c", "src/timeout.c", "src/io.c", "src/usocket.c", "src/unix.c" },
 		  defines = defines[plat],
 		  incdir = "/src"
 		}
 		modules["socket.serial"] = {
-		  sources = { "src/buffer.c", "src/auxiliar.c", "src/options.c", "src/timeout.c",
-					  "src/io.c", "src/usocket.c", "src/serial.c" },
+		  sources = { "src/buffer.c", "src/auxiliar.c", "src/options.c", "src/timeout.c", "src/io.c", "src/usocket.c", "src/serial.c" },
 		  defines = defines[plat],
 		  incdir = "/src"
 		}
