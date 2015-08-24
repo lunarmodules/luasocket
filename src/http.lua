@@ -221,6 +221,15 @@ local function adjustheaders(reqt)
         lower["authorization"] = 
             "Basic " ..  (mime.b64(reqt.user .. ":" .. reqt.password))
     end
+    -- if we have proxy authentication information, pass it along
+    local proxy = reqt.proxy or _M.PROXY
+    if proxy then
+        proxy = url.parse(proxy)
+        if proxy.user and proxy.password then
+            lower["proxy-authorization"] = 
+                "Basic " ..  (mime.b64(proxy.user .. ":" .. proxy.password))
+        end
+    end
     -- override with user headers
     for i,v in base.pairs(reqt.headers or lower) do
         lower[string.lower(i)] = v
@@ -246,10 +255,10 @@ local function adjustrequest(reqt)
         "invalid host '" .. base.tostring(nreqt.host) .. "'")
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)
-    -- ajust host and port if there is a proxy
-    nreqt.host, nreqt.port = adjustproxy(nreqt)
     -- adjust headers in request
     nreqt.headers = adjustheaders(nreqt)
+    -- ajust host and port if there is a proxy
+    nreqt.host, nreqt.port = adjustproxy(nreqt)
     return nreqt
 end
 
