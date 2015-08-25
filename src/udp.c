@@ -185,7 +185,7 @@ static int meth_sendto(lua_State *L) {
         return 2;
     }
     timeout_markstart(tm);
-    err = socket_sendto(&udp->sock, data, count, &sent, ai->ai_addr, 
+    err = socket_sendto(&udp->sock, data, count, &sent, ai->ai_addr,
         (socklen_t) ai->ai_addrlen, tm);
     freeaddrinfo(ai);
     if (err != IO_DONE) {
@@ -237,7 +237,7 @@ static int meth_receivefrom(lua_State *L)
     char portstr[6];
     timeout_markstart(tm);
     count = MIN(count, sizeof(buffer));
-    err = socket_recvfrom(&udp->sock, buffer, count, &got, (SA *) &addr, 
+    err = socket_recvfrom(&udp->sock, buffer, count, &got, (SA *) &addr,
             &addr_len, tm);
     /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
     if (err == IO_CLOSED)
@@ -247,7 +247,7 @@ static int meth_receivefrom(lua_State *L)
         lua_pushstring(L, udp_strerror(err));
         return 2;
     }
-    err = getnameinfo((struct sockaddr *)&addr, addr_len, addrstr, 
+    err = getnameinfo((struct sockaddr *)&addr, addr_len, addrstr,
         INET6_ADDRSTRLEN, portstr, 6, NI_NUMERICHOST | NI_NUMERICSERV);
 	if (err) {
         lua_pushnil(L);
@@ -351,7 +351,7 @@ static int meth_setpeername(lua_State *L) {
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = udp->family;
     if (connecting) {
-        err = inet_tryconnect(&udp->sock, &udp->family, address, 
+        err = inet_tryconnect(&udp->sock, &udp->family, address,
             port, tm, &connecthints);
         if (err) {
             lua_pushnil(L);
@@ -365,7 +365,6 @@ static int meth_setpeername(lua_State *L) {
         inet_trydisconnect(&udp->sock, udp->family, tm);
         auxiliar_setclass(L, "udp{unconnected}", 1);
     }
-    /* change class to connected or unconnected depending on address */
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -410,34 +409,25 @@ static int meth_setsockname(lua_State *L) {
 * Creates a master udp object
 \*-------------------------------------------------------------------------*/
 static int udp_create(lua_State *L, int family) {
-    t_socket sock;
-    /* if family is AF_UNSPEC, we create an AF_INET socket
-     * but store AF_UNSPEC into tcp-family. This will allow it
-     * later be replaced with an AF_INET6 socket if
-     * trybind or tryconnect prefer it instead. */
-    const char *err = inet_trycreate(&sock, family == AF_UNSPEC?
-        AF_INET: family, SOCK_DGRAM);
-    /* try to allocate a system socket */
-    if (!err) {
-        /* allocate udp object */
-        p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
-        auxiliar_setclass(L, "udp{unconnected}", -1);
-        /* initialize remaining structure fields */
-        socket_setnonblocking(&sock);
-        if (family == AF_INET6) {
-            int yes = 1;
-            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
-                (void *)&yes, sizeof(yes));
+    /* allocate udp object */
+    p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
+    auxiliar_setclass(L, "udp{unconnected}", -1);
+    /* if family is AF_UNSPEC, we leave the socket invalid and
+     * store AF_UNSPEC into family. This will allow it to later be
+     * replaced with an AF_INET6 or AF_INET socket upon first use. */
+    udp->sock = SOCKET_INVALID;
+    timeout_init(&udp->tm, -1, -1);
+    udp->family = family;
+    if (family != AF_UNSPEC) {
+        const char *err = inet_trycreate(&udp->sock, family, SOCK_DGRAM, 0);
+        if (err != NULL) {
+            lua_pushnil(L);
+            lua_pushstring(L, err);
+            return 2;
         }
-        udp->sock = sock;
-        timeout_init(&udp->tm, -1, -1);
-        udp->family = family;
-        return 1;
-    } else {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
+        socket_setnonblocking(&udp->sock);
     }
+    return 1;
 }
 
 static int global_create(lua_State *L) {

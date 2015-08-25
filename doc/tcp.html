@@ -65,6 +65,12 @@ href=#bind><tt>connect</tt></a>, depending on the address
 family obtained from the resolver.
 </p>
 
+<p class=note>
+Note: Before the choice between IPv4 and IPv6 happens,
+the internal socket object is invalid and therefore <a
+href=#setoption><tt>setoption</tt></a> will fail.
+</p>
+
 <!-- socket.tcp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id="socket.tcp4">

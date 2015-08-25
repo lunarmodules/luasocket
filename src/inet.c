@@ -352,8 +352,13 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
 \*-------------------------------------------------------------------------*/
-const char *inet_trycreate(p_socket ps, int family, int type) {
-    return socket_strerror(socket_create(ps, family, type, 0));
+const char *inet_trycreate(p_socket ps, int family, int type, int protocol) {
+    const char *err = socket_strerror(socket_create(ps, family, type, protocol));
+    if (err == NULL && family == AF_INET6) {
+        int yes = 1;
+        setsockopt(*ps, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&yes, sizeof(yes));
+    }
+    return err;
 }
 
 /*-------------------------------------------------------------------------*\
@@ -408,8 +413,8 @@ const char *inet_tryconnect(p_socket ps, int *family, const char *address,
          * not enter this branch. */
         if (current_family != iterator->ai_family || *ps == SOCKET_INVALID) {
             socket_destroy(ps);
-            err = socket_strerror(socket_create(ps, iterator->ai_family,
-                iterator->ai_socktype, iterator->ai_protocol));
+            err = inet_trycreate(ps, iterator->ai_family,
+                iterator->ai_socktype, iterator->ai_protocol);
             if (err) continue;
             current_family = iterator->ai_family;
             /* set non-blocking before connect */
@@ -466,8 +471,8 @@ const char *inet_trybind(p_socket ps, int *family, const char *address,
     for (iterator = resolved; iterator; iterator = iterator->ai_next) {
         if (current_family != iterator->ai_family || *ps == SOCKET_INVALID) {
             socket_destroy(ps);
-            err = socket_strerror(socket_create(ps, iterator->ai_family,
-                        iterator->ai_socktype, iterator->ai_protocol));
+            err = inet_trycreate(ps, iterator->ai_family,
+                        iterator->ai_socktype, iterator->ai_protocol);
             if (err) continue;
             current_family = iterator->ai_family;
         }

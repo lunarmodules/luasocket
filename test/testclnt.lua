@@ -304,15 +304,20 @@ function isclosed(c)
 end
 
 function active_close()
-    reconnect()
-    if isclosed(data) then fail("should not be closed") end
-    data:close()
-    if not isclosed(data) then fail("should be closed") end
-    data = nil
-    local udp = socket.udp()
+    local tcp = socket.tcp4()
+    if isclosed(tcp) then fail("should not be closed") end
+    tcp:close()
+    if not isclosed(tcp) then fail("should be closed") end
+    tcp = socket.tcp()
+    if not isclosed(tcp) then fail("should be closed") end
+    tcp = nil
+    local udp = socket.udp4()
     if isclosed(udp) then fail("should not be closed") end
     udp:close()
     if not isclosed(udp) then fail("should be closed") end
+    udp = socket.udp()
+    if not isclosed(udp) then fail("should be closed") end
+    udp = nil
     pass("ok")
 end
 
@@ -368,7 +373,7 @@ function test_selectbugs()
     pass("invalid input: ok")
     local toomany = {}
     for i = 1, socket._SETSIZE+1 do
-        toomany[#toomany+1] = socket.udp()
+        toomany[#toomany+1] = socket.udp4()
     end
     if #toomany > socket._SETSIZE then
         local e = pcall(socket.select, toomany, nil, 0.1)

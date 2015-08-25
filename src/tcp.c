@@ -355,39 +355,29 @@ static int meth_settimeout(lua_State *L)
 * Creates a master tcp object
 \*-------------------------------------------------------------------------*/
 static int tcp_create(lua_State *L, int family) {
-    t_socket sock;
-    /* if family is AF_UNSPEC, we create an AF_INET socket
-     * but store AF_UNSPEC into tcp-family. This will allow it
-     * later be replaced with an AF_INET6 socket if
-     * trybind or tryconnect prefer it instead. */
-    const char *err = inet_trycreate(&sock, family == AF_UNSPEC?
-        AF_INET: family, SOCK_STREAM);
-    /* try to allocate a system socket */
-    if (!err) {
-        /* allocate tcp object */
-        p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
-        memset(tcp, 0, sizeof(t_tcp));
-        /* set its type as master object */
-        auxiliar_setclass(L, "tcp{master}", -1);
-        /* initialize remaining structure fields */
-        socket_setnonblocking(&sock);
-        if (family == AF_INET6) {
-            int yes = 1;
-            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
-                (void *)&yes, sizeof(yes));
+    p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
+    memset(tcp, 0, sizeof(t_tcp));
+    /* set its type as master object */
+    auxiliar_setclass(L, "tcp{master}", -1);
+    /* if family is AF_UNSPEC, we leave the socket invalid and
+     * store AF_UNSPEC into family. This will allow it to later be
+     * replaced with an AF_INET6 or AF_INET socket upon first use. */
+    tcp->sock = SOCKET_INVALID;
+    tcp->family = family;
+    io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv,
+            (p_error) socket_ioerror, &tcp->sock);
+    timeout_init(&tcp->tm, -1, -1);
+    buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
+    if (family != AF_UNSPEC) {
+        const char *err = inet_trycreate(&tcp->sock, family, SOCK_STREAM, 0);
+        if (err != NULL) {
+            lua_pushnil(L);
+            lua_pushstring(L, err);
+            return 2;
         }
-        tcp->sock = sock;
-        io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv,
-                (p_error) socket_ioerror, &tcp->sock);
-        timeout_init(&tcp->tm, -1, -1);
-        buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
-        tcp->family = family;
-        return 1;
-    } else {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
+        socket_setnonblocking(&tcp->sock);
     }
+    return 1;
 }
 
 static int global_create(lua_State *L) {
