@@ -18,6 +18,7 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int global_create(lua_State *L);
+static int global_create4(lua_State *L);
 static int global_create6(lua_State *L);
 static int global_connect(lua_State *L);
 static int meth_connect(lua_State *L);
@@ -90,6 +91,7 @@ static t_opt optset[] = {
 /* functions in library namespace */
 static luaL_Reg func[] = {
     {"tcp", global_create},
+    {"tcp4", global_create4},
     {"tcp6", global_create6},
     {"connect", global_connect},
     {NULL, NULL}
@@ -213,8 +215,7 @@ static int meth_accept(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Binds an object to an address
 \*-------------------------------------------------------------------------*/
-static int meth_bind(lua_State *L)
-{
+static int meth_bind(lua_State *L) {
     p_tcp tcp = (p_tcp) auxiliar_checkclass(L, "tcp{master}", 1);
     const char *address =  luaL_checkstring(L, 2);
     const char *port = luaL_checkstring(L, 3);
@@ -224,7 +225,7 @@ static int meth_bind(lua_State *L)
     bindhints.ai_socktype = SOCK_STREAM;
     bindhints.ai_family = tcp->family;
     bindhints.ai_flags = AI_PASSIVE;
-    err = inet_trybind(&tcp->sock, address, port, &bindhints);
+    err = inet_trybind(&tcp->sock, &tcp->family, address, port, &bindhints);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -237,8 +238,7 @@ static int meth_bind(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Turns a master tcp object into a client object.
 \*-------------------------------------------------------------------------*/
-static int meth_connect(lua_State *L)
-{
+static int meth_connect(lua_State *L) {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
     const char *address =  luaL_checkstring(L, 2);
     const char *port = luaL_checkstring(L, 3);
@@ -249,7 +249,7 @@ static int meth_connect(lua_State *L)
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = tcp->family;
     timeout_markstart(&tcp->tm);
-    err = inet_tryconnect(&tcp->sock, &tcp->family, address, port, 
+    err = inet_tryconnect(&tcp->sock, &tcp->family, address, port,
         &tcp->tm, &connecthints);
     /* have to set the class even if it failed due to non-blocking connects */
     auxiliar_setclass(L, "tcp{client}", 1);
@@ -279,8 +279,11 @@ static int meth_close(lua_State *L)
 static int meth_getfamily(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
-    if (tcp->family == PF_INET6) {
+    if (tcp->family == AF_INET6) {
         lua_pushliteral(L, "inet6");
+        return 1;
+    } else if (tcp->family == AF_INET) {
+        lua_pushliteral(L, "inet4");
         return 1;
     } else {
         lua_pushliteral(L, "inet4");
@@ -352,90 +355,42 @@ static int meth_settimeout(lua_State *L)
 * Creates a master tcp object
 \*-------------------------------------------------------------------------*/
 static int tcp_create(lua_State *L, int family) {
-    t_socket sock;
-    const char *err = inet_trycreate(&sock, family, SOCK_STREAM);
-    /* try to allocate a system socket */
-    if (!err) {
-        /* allocate tcp object */
-        p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
-        memset(tcp, 0, sizeof(t_tcp));
-        /* set its type as master object */
-        auxiliar_setclass(L, "tcp{master}", -1);
-        /* initialize remaining structure fields */
-        socket_setnonblocking(&sock);
-        if (family == PF_INET6) {
-            int yes = 1;
-            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
-                (void *)&yes, sizeof(yes));
+    p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
+    memset(tcp, 0, sizeof(t_tcp));
+    /* set its type as master object */
+    auxiliar_setclass(L, "tcp{master}", -1);
+    /* if family is AF_UNSPEC, we leave the socket invalid and
+     * store AF_UNSPEC into family. This will allow it to later be
+     * replaced with an AF_INET6 or AF_INET socket upon first use. */
+    tcp->sock = SOCKET_INVALID;
+    tcp->family = family;
+    io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv,
+            (p_error) socket_ioerror, &tcp->sock);
+    timeout_init(&tcp->tm, -1, -1);
+    buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
+    if (family != AF_UNSPEC) {
+        const char *err = inet_trycreate(&tcp->sock, family, SOCK_STREAM, 0);
+        if (err != NULL) {
+            lua_pushnil(L);
+            lua_pushstring(L, err);
+            return 2;
         }
-        tcp->sock = sock;
-        io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv,
-                (p_error) socket_ioerror, &tcp->sock);
-        timeout_init(&tcp->tm, -1, -1);
-        buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
-        tcp->family = family;
-        return 1;
-    } else {
-        lua_pushnil(L);
-        lua_pushstring(L, err);
-        return 2;
+        socket_setnonblocking(&tcp->sock);
     }
+    return 1;
 }
 
 static int global_create(lua_State *L) {
+    return tcp_create(L, AF_UNSPEC);
+}
+
+static int global_create4(lua_State *L) {
     return tcp_create(L, AF_INET);
 }
 
 static int global_create6(lua_State *L) {
     return tcp_create(L, AF_INET6);
 }
-
-#if 0
-static const char *tryconnect6(const char *remoteaddr, const char *remoteserv,
-    struct addrinfo *connecthints, p_tcp tcp) {
-    struct addrinfo *iterator = NULL, *resolved = NULL;
-    const char *err = NULL;
-    /* try resolving */
-    err = socket_gaistrerror(getaddrinfo(remoteaddr, remoteserv,
-                connecthints, &resolved));
-    if (err != NULL) {
-        if (resolved) freeaddrinfo(resolved);
-        return err;
-    }
-    /* iterate over all returned addresses trying to connect */
-    for (iterator = resolved; iterator; iterator = iterator->ai_next) {
-        p_timeout tm = timeout_markstart(&tcp->tm);
-        /* create new socket if necessary. if there was no
-         * bind, we need to create one for every new family
-         * that shows up while iterating. if there was a
-         * bind, all families will be the same and we will
-         * not enter this branch. */
-        if (tcp->family != iterator->ai_family) {
-            socket_destroy(&tcp->sock);
-            err = socket_strerror(socket_create(&tcp->sock,
-                iterator->ai_family, iterator->ai_socktype,
-                iterator->ai_protocol));
-            if (err != NULL) {
-                freeaddrinfo(resolved);
-                return err;
-            }
-            tcp->family = iterator->ai_family;
-            /* all sockets initially non-blocking */
-            socket_setnonblocking(&tcp->sock);
-        }
-        /* finally try connecting to remote address */
-        err = socket_strerror(socket_connect(&tcp->sock,
-            (SA *) iterator->ai_addr,
-            (socklen_t) iterator->ai_addrlen, tm));
-        /* if success, break out of loop */
-        if (err == NULL) break;
-    }
-
-    freeaddrinfo(resolved);
-    /* here, if err is set, we failed */
-    return err;
-}
-#endif
 
 static int global_connect(lua_State *L) {
     const char *remoteaddr = luaL_checkstring(L, 1);
@@ -453,26 +408,26 @@ static int global_connect(lua_State *L) {
     timeout_init(&tcp->tm, -1, -1);
     buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
     tcp->sock = SOCKET_INVALID;
-    tcp->family = PF_UNSPEC;
+    tcp->family = AF_UNSPEC;
     /* allow user to pick local address and port */
     memset(&bindhints, 0, sizeof(bindhints));
     bindhints.ai_socktype = SOCK_STREAM;
     bindhints.ai_family = family;
     bindhints.ai_flags = AI_PASSIVE;
     if (localaddr) {
-        err = inet_trybind(&tcp->sock, localaddr, localserv, &bindhints);
+        err = inet_trybind(&tcp->sock, &tcp->family, localaddr, 
+            localserv, &bindhints);
         if (err) {
             lua_pushnil(L);
             lua_pushstring(L, err);
             return 2;
         }
-        tcp->family = bindhints.ai_family;
     }
     /* try to connect to remote address and port */
     memset(&connecthints, 0, sizeof(connecthints));
     connecthints.ai_socktype = SOCK_STREAM;
     /* make sure we try to connect only to the same family */
-    connecthints.ai_family = bindhints.ai_family;
+    connecthints.ai_family = tcp->family; 
     err = inet_tryconnect(&tcp->sock, &tcp->family, remoteaddr, remoteserv,
          &tcp->tm, &connecthints);
     if (err) {

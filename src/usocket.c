@@ -211,6 +211,8 @@ int socket_send(p_socket ps, const char *data, size_t count,
         err = errno;
         /* EPIPE means the connection was closed */
         if (err == EPIPE) return IO_CLOSED;
+        /* EPROTOTYPE means the connection is being closed (on Yosemite!)*/
+        if (err == EPROTOTYPE) continue;
         /* we call was interrupted, just try again */
         if (err == EINTR) continue;
         /* if failed fatal reason, report error */
@@ -239,6 +241,7 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
         }
         err = errno;
         if (err == EPIPE) return IO_CLOSED;
+        if (err == EPROTOTYPE) continue;
         if (err == EINTR) continue;
         if (err != EAGAIN) return err;
         if ((err = socket_waitfd(ps, WAITFD_W, tm)) != IO_DONE) return err;
@@ -317,6 +320,8 @@ int socket_write(p_socket ps, const char *data, size_t count,
         err = errno;
         /* EPIPE means the connection was closed */
         if (err == EPIPE) return IO_CLOSED;
+        /* EPROTOTYPE means the connection is being closed (on Yosemite!)*/
+        if (err == EPROTOTYPE) continue;
         /* we call was interrupted, just try again */
         if (err == EINTR) continue;
         /* if failed fatal reason, report error */
@@ -410,7 +415,9 @@ const char *socket_strerror(int err) {
         case ECONNABORTED: return PIE_CONNABORTED;
         case ECONNRESET: return PIE_CONNRESET;
         case ETIMEDOUT: return PIE_TIMEDOUT;
-        default: return strerror(err);
+        default: {
+            return strerror(err);
+        }
     }
 }
 

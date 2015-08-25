@@ -1,12 +1,12 @@
-#ifndef INET_H 
-#define INET_H 
+#ifndef INET_H
+#define INET_H
 /*=========================================================================*\
 * Internet domain functions
 * LuaSocket toolkit
 *
 * This module implements the creation and connection of internet domain
 * sockets, on top of the socket.h interface, and the interface of with the
-* resolver. 
+* resolver.
 *
 * The function inet_aton is provided for the platforms where it is not
 * available. The module also implements the interface of the internet
@@ -24,11 +24,11 @@
 
 int inet_open(lua_State *L);
 
-const char *inet_trycreate(p_socket ps, int family, int type);
+const char *inet_trycreate(p_socket ps, int family, int type, int protocol);
 const char *inet_tryconnect(p_socket ps, int *family, const char *address,
         const char *serv, p_timeout tm, struct addrinfo *connecthints);
-const char *inet_trybind(p_socket ps, const char *address, const char *serv,
-        struct addrinfo *bindhints);
+const char *inet_trybind(p_socket ps, int *family, const char *address,
+        const char *serv, struct addrinfo *bindhints);
 const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm);
 const char *inet_tryaccept(p_socket server, int family, p_socket client, p_timeout tm);
 

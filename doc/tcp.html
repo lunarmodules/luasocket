@@ -1,10 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
     "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 
 <head>
 <meta name="description" content="LuaSocket: The TCP/IP support">
-<meta name="keywords" content="Lua, LuaSocket, Socket, TCP, Library, Network, Support"> 
+<meta name="keywords" content="Lua, LuaSocket, Socket, TCP, Library, Network, Support">
 <title>LuaSocket: TCP/IP support</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
@@ -28,7 +28,7 @@
 <a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
-<a href="reference.html">reference</a> 
+<a href="reference.html">reference</a>
 </p>
 </center>
 <hr>
@@ -36,21 +36,54 @@
 
 <!-- tcp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<h2 id="tcp">TCP</h2> 
+<h2 id="tcp">TCP</h2>
 
 <!-- socket.tcp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id="socket.tcp"> 
+<p class=name id="socket.tcp">
 socket.<b>tcp()</b>
 </p>
 
-<p class=description> 
-Creates and returns an IPv4 TCP master object. A master object can
-be transformed into a server object with the method 
+<p class=description>
+Creates and returns an TCP master object. A master object can
+be transformed into a server object with the method
 <a href=#listen><tt>listen</tt></a> (after a call to <a
-href=#bind><tt>bind</tt></a>) or into a client object with 
-the method <a href=#connect><tt>connect</tt></a>. The only other 
-method supported by a master object is the 
+href=#bind><tt>bind</tt></a>) or into a client object with
+the method <a href=#connect><tt>connect</tt></a>. The only other
+method supported by a master object is the
+<a href=#close><tt>close</tt></a> method.</p>
+
+<p class=return>
+In case of success, a new master object is returned. In case of error,
+<b><tt>nil</tt></b> is returned, followed by an error message.
+</p>
+
+<p class=note>
+Note: The choice between IPv4 and IPv6 happens during a call to
+<a href=#bind><tt>bind</tt></a> or <a
+href=#bind><tt>connect</tt></a>, depending on the address
+family obtained from the resolver.
+</p>
+
+<p class=note>
+Note: Before the choice between IPv4 and IPv6 happens,
+the internal socket object is invalid and therefore <a
+href=#setoption><tt>setoption</tt></a> will fail.
+</p>
+
+<!-- socket.tcp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="socket.tcp4">
+socket.<b>tcp4()</b>
+</p>
+
+<p class=description>
+Creates and returns an IPv4 TCP master object. A master object can
+be transformed into a server object with the method
+<a href=#listen><tt>listen</tt></a> (after a call to <a
+href=#bind><tt>bind</tt></a>) or into a client object with
+the method <a href=#connect><tt>connect</tt></a>. The only other
+method supported by a master object is the
 <a href=#close><tt>close</tt></a> method.</p>
 
 <p class=return>
@@ -60,17 +93,17 @@ In case of success, a new master object is returned. In case of error,
 
 <!-- socket.tcp6 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id="socket.tcp6"> 
+<p class=name id="socket.tcp6">
 socket.<b>tcp6()</b>
 </p>
 
-<p class=description> 
+<p class=description>
 Creates and returns an IPv6 TCP master object. A master object can
-be transformed into a server object with the method 
+be transformed into a server object with the method
 <a href=#listen><tt>listen</tt></a> (after a call to <a
-href=#bind><tt>bind</tt></a>) or into a client object with 
-the method <a href=#connect><tt>connect</tt></a>. The only other 
-method supported by a master object is the 
+href=#bind><tt>bind</tt></a>) or into a client object with
+the method <a href=#connect><tt>connect</tt></a>. The only other
+method supported by a master object is the
 <a href=#close><tt>close</tt></a> method.</p>
 
 <p class=return>
@@ -85,7 +118,7 @@ Note: The TCP object returned will have the option
 
 <!-- accept +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id="accept"> 
+<p class=name id="accept">
 server:<b>accept()</b>
 </p>
 
@@ -95,9 +128,9 @@ object and returns a client object representing that connection.
 </p>
 
 <p class=return>
-If a connection is successfully initiated, a client object is returned.  
+If a connection is successfully initiated, a client object is returned.
 If a  timeout condition  is  met,  the method  returns <b><tt>nil</tt></b>
-followed by the error string '<tt>timeout</tt>'. Other errors are 
+followed by the error string '<tt>timeout</tt>'. Other errors are
 reported by <b><tt>nil</tt></b> followed by a message describing the error.
 </p>
 
@@ -107,28 +140,28 @@ with   a  server   object   in
 the <tt>recvt</tt>  parameter  before  a   call  to  <tt>accept</tt> does
 <em>not</em> guarantee  <tt>accept</tt> will  return immediately.  Use the <a
 href=#settimeout><tt>settimeout</tt></a> method or <tt>accept</tt>
-might block until <em>another</em> client shows up. 
+might block until <em>another</em> client shows up.
 </p>
 
 <!-- bind +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id="bind"> 
+<p class=name id="bind">
 master:<b>bind(</b>address, port<b>)</b>
 </p>
 
 <p class=description>
 Binds a master object to <tt>address</tt> and <tt>port</tt> on the
-local host. 
+local host.
 
 <p class=parameters>
-<tt>Address</tt> can be an IP address or a host name. 
-<tt>Port</tt> must be an integer number in the range [0..64K). 
+<tt>Address</tt> can be an IP address or a host name.
+<tt>Port</tt> must be an integer number in the range [0..64K).
 If <tt>address</tt>
 is '<tt>*</tt>', the system binds to all local interfaces
 using the <tt>INADDR_ANY</tt> constant or
-<tt>IN6ADDR_ANY_INIT</tt>, according to the family. 
+<tt>IN6ADDR_ANY_INIT</tt>, according to the family.
 If <tt>port</tt> is 0, the system automatically
-chooses an ephemeral port.  
+chooses an ephemeral port.
 </p>
 
 <p class=return>
@@ -137,13 +170,13 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 </p>
 
 <p class=note>
-Note: The function <a href=socket.html#bind><tt>socket.bind</tt></a> 
+Note: The function <a href=socket.html#bind><tt>socket.bind</tt></a>
 is available and is a shortcut for the creation of server sockets.
 </p>
 
 <!-- close ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id="close"> 
+<p class=name id="close">
 master:<b>close()</b><br>
 client:<b>close()</b><br>
 server:<b>close()</b>
@@ -154,14 +187,14 @@ Closes  a TCP object. The internal socket used by the object is closed
 and the local  address   to  which the object was
 bound is made  available to other  applications. No further  operations
 (except  for  further calls  to the <tt>close</tt> method)  are allowed on
-a closed socket. 
+a closed socket.
 </p>
 
 <p class=note>
 Note:  It is  important to  close all  used  sockets once  they are  not
 needed,  since, in  many systems,  each socket  uses a  file descriptor,
 which are limited system resources. Garbage-collected objects are
-automatically closed before destruction, though. 
+automatically closed before destruction, though.
 </p>
 
 <!-- connect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -172,19 +205,19 @@ master:<b>connect(</b>address, port<b>)</b>
 
 <p class=description>
 Attempts to connect a master object to a remote host, transforming it into a
-client object. 
-Client objects support methods 
+client object.
+Client objects support methods
 <a href=#send><tt>send</tt></a>,
-<a href=#receive><tt>receive</tt></a>, 
-<a href=#getsockname><tt>getsockname</tt></a>, 
+<a href=#receive><tt>receive</tt></a>,
+<a href=#getsockname><tt>getsockname</tt></a>,
 <a href=#getpeername><tt>getpeername</tt></a>,
-<a href=#settimeout><tt>settimeout</tt></a>, 
+<a href=#settimeout><tt>settimeout</tt></a>,
 and <a href=#close><tt>close</tt></a>.
 </p>
 
 <p class=parameters>
-<tt>Address</tt> can be an IP address or a host name. 
-<tt>Port</tt> must be an integer number in the range [1..64K). 
+<tt>Address</tt> can be an IP address or a host name.
+<tt>Port</tt> must be an integer number in the range [1..64K).
 </p>
 
 <p class=return>
@@ -193,14 +226,14 @@ describing the error. In case of success, the method returns 1.
 </p>
 
 <p class=note>
-Note: The function <a href=socket.html#connect><tt>socket.connect</tt></a> 
+Note: The function <a href=socket.html#connect><tt>socket.connect</tt></a>
 is available and is a shortcut for the creation of client sockets.
 </p>
 
 <p class=note>
-Note: Starting with LuaSocket 2.0, 
+Note: Starting with LuaSocket 2.0,
 the <a href=#settimeout><tt>settimeout</tt></a>
-method affects the behavior of <tt>connect</tt>, causing it to return 
+method affects the behavior of <tt>connect</tt>, causing it to return
 with an error in case of a timeout. If that happens, you can still call <a
 href=socket.html#select><tt>socket.select</tt></a> with the socket in the
 <tt>sendt</tt> table. The socket will be writable when the connection is
@@ -227,10 +260,10 @@ Returns information about the remote side of a connected client object.
 </p>
 
 <p class=return>
-Returns a string with the IP address of the peer, the 
-port number that peer is using for the connection, 
-and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>"). 
-In case of error, the method returns <b><tt>nil</tt></b>. 
+Returns a string with the IP address of the peer, the
+port number that peer is using for the connection,
+and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>").
+In case of error, the method returns <b><tt>nil</tt></b>.
 </p>
 
 <p class=note>
@@ -246,13 +279,13 @@ server:<b>getsockname()</b>
 </p>
 
 <p class=description>
-Returns the local address information associated to the object. 
+Returns the local address information associated to the object.
 </p>
 
 <p class=return>
-The method returns a string with local IP address, a number with 
-the local port, 
-and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>"). 
+The method returns a string with local IP address, a number with
+the local port,
+and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>").
 In case of error, the method returns <b><tt>nil</tt></b>.
 </p>
 
@@ -266,32 +299,32 @@ server:<b>getstats()</b><br>
 
 <p class=description>
 Returns accounting information on the socket, useful for throttling
-of bandwidth. 
+of bandwidth.
 </p>
 
 <p class=return>
 The method returns the number of bytes received, the number of bytes sent,
-and the age of the socket object in seconds. 
+and the age of the socket object in seconds.
 </p>
 
 <!-- listen ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id="listen"> 
+<p class=name id="listen">
 master:<b>listen(</b>backlog<b>)</b>
 </p>
 
 <p class=description>
 Specifies the socket is willing to receive connections, transforming the
-object into a server object.  Server objects support the 
-<a href=#accept><tt>accept</tt></a>,  
-<a href=#getsockname><tt>getsockname</tt></a>, 
-<a href=#setoption><tt>setoption</tt></a>, 
-<a href=#settimeout><tt>settimeout</tt></a>, 
-and <a href=#close><tt>close</tt></a> methods.  
+object into a server object.  Server objects support the
+<a href=#accept><tt>accept</tt></a>,
+<a href=#getsockname><tt>getsockname</tt></a>,
+<a href=#setoption><tt>setoption</tt></a>,
+<a href=#settimeout><tt>settimeout</tt></a>,
+and <a href=#close><tt>close</tt></a> methods.
 </p>
 
 <p class=parameters>
-The parameter <tt>backlog</tt> specifies the  number  of  client 
+The parameter <tt>backlog</tt> specifies the  number  of  client
 connections that can
 be queued waiting for service. If the queue is full and another  client
 attempts connection,  the connection is  refused.
@@ -310,11 +343,11 @@ client:<b>receive(</b>[pattern [, prefix]]<b>)</b>
 
 <p class=description>
 Reads data from a client object, according to the specified <em>read
-pattern</em>.  Patterns follow the Lua file I/O format, and the difference in performance between all patterns is negligible. 
+pattern</em>.  Patterns follow the Lua file I/O format, and the difference in performance between all patterns is negligible.
 </p>
 
 <p class=parameters>
-<tt>Pattern</tt> can be any of the following: 
+<tt>Pattern</tt> can be any of the following:
 </p>
 
 <ul>
@@ -325,7 +358,7 @@ terminated by a  LF character (ASCII&nbsp;10), optionally  preceded by a
 CR character (ASCII&nbsp;13). The CR and LF characters are not included in
 the returned line. In fact, <em>all</em> CR characters are
 ignored by the pattern. This is the default pattern;
-<li> <tt>number</tt>:  causes the  method to read  a specified <tt>number</tt> 
+<li> <tt>number</tt>:  causes the  method to read  a specified <tt>number</tt>
 of bytes from the socket.
 </ul>
 
@@ -347,10 +380,10 @@ closed  before  the transmission  was completed  or  the string
 <p class=note>
 <b>Important note</b>: This function was changed <em>severely</em>. It used
 to support multiple patterns (but I have never seen this feature used) and
-now it doesn't anymore.  Partial results used to be returned in the same 
+now it doesn't anymore.  Partial results used to be returned in the same
 way as successful results. This last feature violated the idea that all
 functions should return <tt><b>nil</b></tt> on error.  Thus it was changed
-too. 
+too.
 </p>
 
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -366,7 +399,7 @@ Sends <tt>data</tt> through client object.
 <p class=parameters>
 <tt>Data</tt> is the string to be sent. The optional arguments
 <tt>i</tt> and <tt>j</tt> work exactly like the standard
-<tt>string.sub</tt> Lua function to allow the selection of a 
+<tt>string.sub</tt> Lua function to allow the selection of a
 substring to be sent.
 </p>
 
@@ -385,10 +418,10 @@ there was  a  timeout  during  the operation.
 </p>
 
 <p class=note>
-Note: Output is <em>not</em> buffered. For small strings, 
-it is always better to concatenate them in Lua 
-(with the '<tt>..</tt>' operator) and send the result in one call 
-instead of calling the method several times. 
+Note: Output is <em>not</em> buffered. For small strings,
+it is always better to concatenate them in Lua
+(with the '<tt>..</tt>' operator) and send the result in one call
+instead of calling the method several times.
 </p>
 
 <!-- setoption ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -400,12 +433,12 @@ server:<b>setoption(</b>option [, value]<b>)</b>
 
 <p class=description>
 Sets options for the TCP object. Options are only needed by low-level or
-time-critical applications. You should only modify an option if you 
-are sure you need it. 
+time-critical applications. You should only modify an option if you
+are sure you need it.
 </p>
 
 <p class=parameters>
-<tt>Option</tt> is a string with the option name, and <tt>value</tt> 
+<tt>Option</tt> is a string with the option name, and <tt>value</tt>
 depends on the option being set:
 
 <ul>
@@ -413,7 +446,7 @@ depends on the option being set:
 <li> '<tt>keepalive</tt>':  Setting this option to <tt>true</tt> enables
 the periodic transmission of messages on a connected socket. Should the
 connected party fail to respond to these messages, the connection is
-considered broken and processes using the socket are notified; 
+considered broken and processes using the socket are notified;
 
 <li> '<tt>linger</tt>': Controls the action taken when unsent data are
 queued on a socket and a close is performed.  The value is a table with a
@@ -424,13 +457,13 @@ it is able to transmit the data or until '<tt>timeout</tt>' has passed. If
 '<tt>on</tt>' is <tt>false</tt> and a close is issued, the system will
 process the close in a manner that allows the process to continue as
 quickly as possible. I do not advise you to set this to anything other than
-zero; 
+zero;
 
 <li> '<tt>reuseaddr</tt>': Setting this option indicates that the rules
-used in validating addresses supplied in a call to 
+used in validating addresses supplied in a call to
 <a href=#bind><tt>bind</tt></a> should allow reuse of local addresses;
 
-<li> '<tt>tcp-nodelay</tt>': Setting this option to <tt>true</tt> 
+<li> '<tt>tcp-nodelay</tt>': Setting this option to <tt>true</tt>
 disables the Nagle's algorithm for the connection;
 
 <li> '<tt>ipv6-v6only</tt>':
@@ -485,7 +518,7 @@ server:<b>setstats(</b>received, sent, age<b>)</b><br>
 
 <p class=description>
 Resets accounting information on the socket, useful for throttling
-of bandwidth. 
+of bandwidth.
 </p>
 
 <p class=parameters>
@@ -495,7 +528,7 @@ of bandwidth.
 </p>
 
 <p class=return>
-The method returns 1 in case of success and <tt><b>nil</b></tt> otherwise. 
+The method returns 1 in case of success and <tt><b>nil</b></tt> otherwise.
 </p>
 
 <!-- settimeout +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -509,8 +542,8 @@ server:<b>settimeout(</b>value [, mode]<b>)</b>
 <p class=description>
 Changes the timeout  values for the object. By default,
 all I/O  operations are  blocking. That  is, any  call to  the methods
-<a href=#send><tt>send</tt></a>, 
-<a href=#receive><tt>receive</tt></a>, and 
+<a href=#send><tt>send</tt></a>,
+<a href=#receive><tt>receive</tt></a>, and
 <a href=#accept><tt>accept</tt></a>
 will  block indefinitely,  until the operation completes.  The
 <tt>settimeout</tt>  method defines a  limit on the  amount  of   time  the
@@ -521,7 +554,7 @@ time has elapsed, the affected methods give up and fail with an error code.
 <p class=parameters>
 The amount of time to wait is specified  as  the
 <tt>value</tt> parameter, in seconds. There  are two timeout  modes and
-both can be used together for fine tuning: 
+both can be used together for fine tuning:
 </p>
 
 <ul>
@@ -532,7 +565,7 @@ default mode;</li>
 
 <li> '<tt>t</tt>':  <em>total</em> timeout. Specifies the  upper limit on
 the amount of  time LuaSocket can block a Lua  script before returning from
-a call.</li> 
+a call.</li>
 </ul>
 
 <p class=parameters>
@@ -562,7 +595,7 @@ client:<b>shutdown(</b>mode<b>)</b><br>
 </p>
 
 <p class=description>
-Shuts down part of a full-duplex connection. 
+Shuts down part of a full-duplex connection.
 </p>
 
 <p class=parameters>
@@ -608,7 +641,7 @@ server:<b>getfd()</b>
 </p>
 
 <p class=description>
-Returns the underling socket descriptor or handle associated to the object. 
+Returns the underling socket descriptor or handle associated to the object.
 </p>
 
 <p class=return>

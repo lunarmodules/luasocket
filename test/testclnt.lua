@@ -8,7 +8,7 @@ function printf(...)
 end
 
 function pass(...)
-    printf(...) 
+    printf(...)
     io.stderr:write("\n")
 end
 
@@ -45,30 +45,30 @@ function check_timeout(tm, sl, elapsed, err, opp, mode, alldone)
             if not err then warn("must be buffered")
             elseif err == "timeout" then pass("proper timeout")
             else fail("unexpected error '%s'", err) end
-        else 
-            if err ~= "timeout" then fail("should have timed out") 
+        else
+            if err ~= "timeout" then fail("should have timed out")
             else pass("proper timeout") end
         end
     else
         if mode == "total" then
-            if elapsed > tm then 
+            if elapsed > tm then
                 if err ~= "timeout" then fail("should have timed out")
                 else pass("proper timeout") end
             elseif elapsed < tm then
-                if err then fail(err) 
+                if err then fail(err)
                 else pass("ok") end
-            else 
-                if alldone then 
-                    if err then fail("unexpected error '%s'", err) 
+            else
+                if alldone then
+                    if err then fail("unexpected error '%s'", err)
                     else pass("ok") end
                 else
-                    if err ~= "timeout" then fail(err) 
+                    if err ~= "timeout" then fail(err)
                     else pass("proper timeoutk") end
                 end
             end
-        else 
-            if err then fail(err) 
-            else pass("ok") end 
+        else
+            if err then fail(err)
+            else pass("ok") end
         end
     end
 end
@@ -104,8 +104,8 @@ control:setoption("tcp-nodelay", true)
 ------------------------------------------------------------------------
 function test_methods(sock, methods)
     for _, v in pairs(methods) do
-        if type(sock[v]) ~= "function" then 
-            fail(sock.class .. " method '" .. v .. "' not registered") 
+        if type(sock[v]) ~= "function" then
+            fail(sock.class .. " method '" .. v .. "' not registered")
         end
     end
     pass(sock.class .. " methods are ok")
@@ -121,7 +121,7 @@ function test_mixed(len)
     local p3 = "raw " .. string.rep("z", inter) .. "bytes"
     local p4 = "end" .. string.rep("w", inter) .. "bytes"
     local bp1, bp2, bp3, bp4
-remote (string.format("str = data:receive(%d)", 
+remote (string.format("str = data:receive(%d)",
             string.len(p1)+string.len(p2)+string.len(p3)+string.len(p4)))
     sent, err = data:send(p1..p2..p3..p4)
     if err then fail(err) end
@@ -166,7 +166,7 @@ function test_rawline(len)
     io.stderr:write("length " .. len .. ": ")
     local str, str10, back, err
     str = string.rep(string.char(47), math.mod(len, 10))
-    str10 = string.rep(string.char(120,21,77,4,5,0,7,36,44,100), 
+    str10 = string.rep(string.char(120,21,77,4,5,0,7,36,44,100),
             math.floor(len/10))
     str = str .. str10
 remote "str = data:receive()"
@@ -216,7 +216,7 @@ function test_totaltimeoutreceive(len, tm, sl)
     data:settimeout(tm, "total")
 local t = socket.gettime()
     str, err, partial, elapsed = data:receive(2*len)
-    check_timeout(tm, sl, elapsed, err, "receive", "total", 
+    check_timeout(tm, sl, elapsed, err, "receive", "total",
         string.len(str or partial) == 2*len)
 end
 
@@ -236,7 +236,7 @@ function test_totaltimeoutsend(len, tm, sl)
     data:settimeout(tm, "total")
     str = string.rep("a", 2*len)
     total, err, partial, elapsed = data:send(str)
-    check_timeout(tm, sl, elapsed, err, "send", "total", 
+    check_timeout(tm, sl, elapsed, err, "send", "total",
         total == 2*len)
 end
 
@@ -256,7 +256,7 @@ function test_blockingtimeoutreceive(len, tm, sl)
     ]], 2*tm, len, sl, sl))
     data:settimeout(tm)
     str, err, partial, elapsed = data:receive(2*len)
-    check_timeout(tm, sl, elapsed, err, "receive", "blocking", 
+    check_timeout(tm, sl, elapsed, err, "receive", "blocking",
         string.len(str or partial) == 2*len)
 end
 
@@ -290,10 +290,10 @@ function empty_connect()
         data = server:accept()
     ]]
     data, err = socket.connect("", port)
-    if not data then 
+    if not data then
         pass("ok")
         data = socket.connect(host, port)
-    else 
+    else
         pass("gethostbyname returns localhost on empty string...")
     end
 end
@@ -304,15 +304,20 @@ function isclosed(c)
 end
 
 function active_close()
-    reconnect()
-    if isclosed(data) then fail("should not be closed") end
-    data:close()
-    if not isclosed(data) then fail("should be closed") end
-    data = nil
-    local udp = socket.udp()
+    local tcp = socket.tcp4()
+    if isclosed(tcp) then fail("should not be closed") end
+    tcp:close()
+    if not isclosed(tcp) then fail("should be closed") end
+    tcp = socket.tcp()
+    if not isclosed(tcp) then fail("should be closed") end
+    tcp = nil
+    local udp = socket.udp4()
     if isclosed(udp) then fail("should not be closed") end
     udp:close()
     if not isclosed(udp) then fail("should be closed") end
+    udp = socket.udp()
+    if not isclosed(udp) then fail("should be closed") end
+    udp = nil
     pass("ok")
 end
 
@@ -327,7 +332,7 @@ function test_closed()
         data:close()
         data = nil
     ]], str))
-    -- try to get a line 
+    -- try to get a line
     back, err, partial = data:receive()
     if not err then fail("should have gotten 'closed'.")
     elseif err ~= "closed" then fail("got '"..err.."' instead of 'closed'.")
@@ -340,25 +345,25 @@ function test_closed()
         data = nil
     ]]
     total, err, partial = data:send(string.rep("ugauga", 100000))
-    if not err then 
+    if not err then
         pass("failed: output buffer is at least %d bytes long!", total)
-    elseif err ~= "closed" then 
+    elseif err ~= "closed" then
         fail("got '"..err.."' instead of 'closed'.")
-    else 
-        pass("graceful 'closed' received after %d bytes were sent", partial) 
+    else
+        pass("graceful 'closed' received after %d bytes were sent", partial)
     end
 end
 
 ------------------------------------------------------------------------
 function test_selectbugs()
     local r, s, e = socket.select(nil, nil, 0.1)
-    assert(type(r) == "table" and type(s) == "table" and 
+    assert(type(r) == "table" and type(s) == "table" and
         (e == "timeout" or e == "error"))
     pass("both nil: ok")
     local udp = socket.udp()
     udp:close()
     r, s, e = socket.select({ udp }, { udp }, 0.1)
-    assert(type(r) == "table" and type(s) == "table" and 
+    assert(type(r) == "table" and type(s) == "table" and
         (e == "timeout" or e == "error"))
     pass("closed sockets: ok")
     e = pcall(socket.select, "wrong", 1, 0.1)
@@ -368,7 +373,7 @@ function test_selectbugs()
     pass("invalid input: ok")
     local toomany = {}
     for i = 1, socket._SETSIZE+1 do
-        toomany[#toomany+1] = socket.udp()
+        toomany[#toomany+1] = socket.udp4()
     end
     if #toomany > socket._SETSIZE then
         local e = pcall(socket.select, toomany, nil, 0.1)
@@ -389,7 +394,7 @@ function accept_timeout()
     local t = socket.gettime()
     s:settimeout(1)
     local c, e = s:accept()
-    assert(not c, "should not accept") 
+    assert(not c, "should not accept")
     assert(e == "timeout", string.format("wrong error message (%s)", e))
     t = socket.gettime() - t
     assert(t < 2, string.format("took to long to give up (%gs)", t))
@@ -407,9 +412,9 @@ function connect_timeout()
     local t = socket.gettime()
     local r, e = c:connect("10.0.0.1", 81)
     assert(not r, "should not connect")
-    assert(socket.gettime() - t < 2, "took too long to give up.") 
+    assert(socket.gettime() - t < 2, "took too long to give up.")
     c:close()
-    pass("ok") 
+    pass("ok")
 end
 
 ------------------------------------------------------------------------
@@ -447,16 +452,14 @@ end
 
 ------------------------------------------------------------------------
 function rebind_test()
-    --local c ,c1 = socket.bind("localhost", 0)
    local c ,c1 = socket.bind("127.0.0.1", 0)
     if not c then pass ("failed to bind! " .. tostring(c) .. ' ' .. tostring(c1))  return end
 	assert(c,c1)
- 
     local i, p = c:getsockname()
     local s, e = socket.tcp()
     assert(s, e)
     s:setoption("reuseaddr", false)
-    r, e = s:bind("localhost", p)
+    r, e = s:bind(i, p)
     assert(not r, "managed to rebind!")
     assert(e)
     pass("ok")
@@ -476,9 +479,9 @@ function getstats_test()
         data:receive(c)
         t = t + c
         local r, s, a = data:getstats()
-        assert(r == t, "received count failed" .. tostring(r) 
+        assert(r == t, "received count failed" .. tostring(r)
             .. "/" .. tostring(t))
-        assert(s == t, "sent count failed" .. tostring(s) 
+        assert(s == t, "sent count failed" .. tostring(s)
             .. "/" .. tostring(t))
     end
     pass("ok")
@@ -486,7 +489,7 @@ end
 
 
 ------------------------------------------------------------------------
-function test_nonblocking(size) 
+function test_nonblocking(size)
     reconnect()
     printf("testing "  .. 2*size .. " bytes: ")
 remote(string.format([[
@@ -545,7 +548,7 @@ function test_readafterclose()
         data:close()
         data = nil
     ]]))
-    data:close() 
+    data:close()
     back, err, partial = data:receive("*a")
     assert(back == nil and err == "closed", "should have returned 'closed'")
     pass("ok")
@@ -555,7 +558,7 @@ function test_readafterclose()
         data:close()
         data = nil
     ]]))
-    data:close() 
+    data:close()
     back, err, partial = data:receive()
     assert(back == nil and err == "closed", "should have returned 'closed'")
     pass("ok")
@@ -565,7 +568,7 @@ function test_readafterclose()
         data:close()
         data = nil
     ]]))
-    data:close() 
+    data:close()
     back, err, partial = data:receive(1)
     assert(back == nil and err == "closed", "should have returned 'closed'")
     pass("ok")
@@ -575,7 +578,7 @@ function test_readafterclose()
         data:close()
         data = nil
     ]]))
-    data:close() 
+    data:close()
     back, err, partial = data:receive(0)
     assert(back == nil and err == "closed", "should have returned 'closed'")
     pass("ok")
@@ -593,7 +596,7 @@ function test_writeafterclose()
     while not err do
         sent, err, errsent, time = data:send(str)
     end
-    assert(err == "closed", "should have returned 'closed'")
+    assert(err == "closed", "got " .. err .. " instead of 'closed'")
     pass("ok")
 end
 
@@ -648,18 +651,18 @@ else io.stderr:write("Warning! IPv6 does not support!\n") end
 end
 
 local udp_methods = {
-    "close", 
+    "close",
     "dirty",
     "getfamily",
     "getfd",
     "getoption",
     "getpeername",
     "getsockname",
-    "receive", 
-    "receivefrom", 
-    "send", 
-    "sendto", 
-    "setfd", 
+    "receive",
+    "receivefrom",
+    "send",
+    "sendto",
+    "setfd",
     "setoption",
     "setpeername",
     "setsockname",
@@ -673,6 +676,9 @@ do local sock = socket.tcp6()
 if sock then test_methods(socket.udp6(), udp_methods)
 else io.stderr:write("Warning! IPv6 does not support!\n") end
 end
+
+test("closed connection detection: ")
+test_closed()
 
 test("partial receive")
 test_partialrecv()
@@ -696,9 +702,6 @@ rebind_test()
 
 test("active close: ")
 active_close()
-
-test("closed connection detection: ")
-test_closed()
 
 test("accept function: ")
 accept_timeout()
