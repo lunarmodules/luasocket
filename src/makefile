@@ -31,10 +31,6 @@ MYLDFLAGS=
 # for testing and debugging luasocket itself
 DEBUG?=NODEBUG
 
-# COMPAT: COMPAT NOCOMPAT
-# when compiling for 5.2, use LUA_COMPAT_MODULE
-COMPAT?=NOCOMPAT
-
 # where lua headers are found for macosx builds
 # LUAINC_macosx:
 # /opt/local/include
@@ -81,13 +77,14 @@ LDIR_mingw?=lua/$(LUAV)/lua
 # LUAINC_win32:
 # LUALIB_win32:
 # where lua headers and libraries are found for win32 builds
-LUAINC_win32_base?=
-LUAINC_win32?=$(LUAINC_win32_base)/lua/$(LUAV)
-PLATFORM_win32?=Release
 LUAPREFIX_win32?=
-CDIR_win32?=lua/$(LUAV)/$(PLATFORM_win32)
-LDIR_win32?=lua/$(LUAV)/$(PLATFORM_win32)/lua
-LUALIB_win32?=$(LUAPREFIX_win32)/lua/$(LUAV)/$(PLATFORM_win32)
+LUAINC_win32?=$(LUAPREFIX_win32)/include/lua/$(LUAV)
+PLATFORM_win32?=Release
+CDIR_win32?=bin/lua/$(LUAV)/$(PLATFORM_win32)
+LDIR_win32?=bin/lua/$(LUAV)/$(PLATFORM_win32)/lua
+LUALIB_win32?=$(LUAPREFIX_win32)/lib/lua/$(LUAV)/$(PLATFORM_win32)
+LUALIBNAME_win32?=lua$(subst .,,$(LUAV)).lib 
+
 
 # prefix: /usr/local /usr /opt/local /sw
 # the top of the default install tree
@@ -143,7 +140,7 @@ PLATS= macosx linux win32 mingw
 SO_macosx=so
 O_macosx=o
 CC_macosx=gcc
-DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN -DLUA_$(COMPAT)_MODULE \
+DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
@@ -159,7 +156,7 @@ SOCKET_macosx=usocket.o
 SO_linux=so
 O_linux=o
 CC_linux=gcc
-DEF_linux=-DLUASOCKET_$(DEBUG) -DLUA_$(COMPAT)_MODULE \
+DEF_linux=-DLUASOCKET_$(DEBUG) \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
@@ -175,7 +172,7 @@ SOCKET_linux=usocket.o
 SO_freebsd=so
 O_freebsd=o
 CC_freebsd=gcc
-DEF_freebsd=-DLUASOCKET_$(DEBUG) -DLUA_$(COMPAT)_MODULE \
+DEF_freebsd=-DLUASOCKET_$(DEBUG) \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
@@ -191,7 +188,7 @@ SOCKET_freebsd=usocket.o
 SO_mingw=dll
 O_mingw=o
 CC_mingw=gcc
-DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) -DLUA_$(COMPAT)_MODULE \
+DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) \
 	-DWINVER=0x0501 -DLUASOCKET_API='__declspec(dllexport)' \
 	-DMIME_API='__declspec(dllexport)'
 CFLAGS_mingw= -I$(LUAINC) $(DEF) -Wall -O2 -fno-common \
@@ -209,8 +206,7 @@ O_win32=obj
 CC_win32=cl
 DEF_win32= //D "WIN32" //D "NDEBUG" //D "_WINDOWS" //D "_USRDLL" \
      //D "LUASOCKET_API=__declspec(dllexport)" //D "_CRT_SECURE_NO_WARNINGS" \
-     //D "_WINDLL" //D "LUA_$(COMPAT)_MODULE" \
-	 //D "MIME_API=__declspec(dllexport)" \
+     //D "_WINDLL" //D "MIME_API=__declspec(dllexport)" \
      //D "LUASOCKET_$(DEBUG)" 
 CFLAGS_win32=//I "$(LUAINC)" $(DEF) //O2 //Ot //MD //W3 //nologo
 LDFLAGS_win32= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
@@ -218,14 +214,14 @@ LDFLAGS_win32= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
     //MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
 	//SUBSYSTEM:WINDOWS //OPT:REF //OPT:ICF //DYNAMICBASE:NO \
     //MACHINE:X86 /LIBPATH:"$(shell cmd //c echo $(LUALIB))" \
-	lua$(subst .,,$(LUAV)).lib ws2_32.lib //OUT:
+	$(LUALIBNAME_win32) ws2_32.lib //OUT:
 LD_win32=cl
 SOCKET_win32=wsocket.obj
 
 .SUFFIXES: .obj
 
 .c.obj:
-	$(CC) $(LUASOCKET_CFLAGS) //Fo"$@" //c $<
+	$(CC) $(CFLAGS) //Fo"$@" //c $<
 
 #------
 # Output file names
@@ -234,8 +230,8 @@ SO=$(SO_$(PLAT))
 O=$(O_$(PLAT))
 SOCKET_V=3.0-rc1
 MIME_V=1.0.3
-SOCKET_SO=socket.$(SO).$(SOCKET_V)
-MIME_SO=mime.$(SO).$(MIME_V)
+SOCKET_SO=socket-$(SOCKET_V).$(SO)
+MIME_SO=mime-$(MIME_V).$(SO)
 UNIX_SO=unix.$(SO)
 SERIAL_SO=serial.$(SO)
 SOCKET=$(SOCKET_$(PLAT))
