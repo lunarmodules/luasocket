@@ -41,6 +41,7 @@ static int meth_setpeername(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_setoption(lua_State *L);
 static int meth_getoption(lua_State *L);
+static int meth_getbufferlength(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
@@ -63,6 +64,7 @@ static luaL_Reg udp_methods[] = {
     {"setfd",       meth_setfd},
     {"setoption",   meth_setoption},
     {"getoption",   meth_getoption},
+    {"getoption",   meth_getbufferlength},
     {"setpeername", meth_setpeername},
     {"setsockname", meth_setsockname},
     {"settimeout",  meth_settimeout},
@@ -202,47 +204,55 @@ static int meth_sendto(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int meth_receive(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
-    char buffer[UDP_DATAGRAMSIZE];
-    size_t got, count = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
+    char buf[UDP_DATAGRAMSIZE];
+    size_t len = MAX(udp->len, UDP_DATAGRAMSIZE);
+    char *dgram = len > sizeof(buf)? udp->buf: buf;
+    size_t got, wanted = (size_t) luaL_optnumber(L, 2, len);
     int err;
     p_timeout tm = &udp->tm;
-    count = MIN(count, sizeof(buffer));
     timeout_markstart(tm);
-    err = socket_recv(&udp->sock, buffer, count, &got, tm);
+    wanted = MIN(wanted, len);
+    err = socket_recv(&udp->sock, dgram, wanted, &got, tm);
     /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
-    if (err == IO_CLOSED)
-        err = IO_DONE;
-    if (err != IO_DONE) {
+    if (err != IO_DONE && err != IO_CLOSED ) {
         lua_pushnil(L);
         lua_pushstring(L, udp_strerror(err));
         return 2;
     }
-    lua_pushlstring(L, buffer, got);
+    lua_pushlstring(L, dgram, got);
+    return 1;
+}
+
+/*-------------------------------------------------------------------------*\
+* Receives data from a UDP socket
+\*-------------------------------------------------------------------------*/
+static int meth_getbufferlength(lua_State *L) {
+    p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
+    lua_pushinteger(L, MAX(UDP_DATAGRAMSIZE, udp->len));
     return 1;
 }
 
 /*-------------------------------------------------------------------------*\
 * Receives data and sender from a UDP socket
 \*-------------------------------------------------------------------------*/
-static int meth_receivefrom(lua_State *L)
-{
+static int meth_receivefrom(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkclass(L, "udp{unconnected}", 1);
-    char buffer[UDP_DATAGRAMSIZE];
-    size_t got, count = (size_t) luaL_optnumber(L, 2, sizeof(buffer));
-    int err;
-    p_timeout tm = &udp->tm;
+    char buf[UDP_DATAGRAMSIZE];
+    size_t len = MAX(udp->len, UDP_DATAGRAMSIZE);
+    char *dgram = len > sizeof(buf)? udp->buf: buf;
+    size_t got, wanted = (size_t) luaL_optnumber(L, 2, len);
     struct sockaddr_storage addr;
     socklen_t addr_len = sizeof(addr);
     char addrstr[INET6_ADDRSTRLEN];
     char portstr[6];
+    int err;
+    p_timeout tm = &udp->tm;
     timeout_markstart(tm);
-    count = MIN(count, sizeof(buffer));
-    err = socket_recvfrom(&udp->sock, buffer, count, &got, (SA *) &addr,
+    wanted = MIN(wanted, len);
+    err = socket_recvfrom(&udp->sock, dgram, wanted, &got, (SA *) &addr,
             &addr_len, tm);
     /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
-    if (err == IO_CLOSED)
-        err = IO_DONE;
-    if (err != IO_DONE) {
+    if (err != IO_DONE && err != IO_CLOSED) {
         lua_pushnil(L);
         lua_pushstring(L, udp_strerror(err));
         return 2;
@@ -254,7 +264,7 @@ static int meth_receivefrom(lua_State *L)
         lua_pushstring(L, gai_strerror(err));
         return 2;
     }
-    lua_pushlstring(L, buffer, got);
+    lua_pushlstring(L, dgram, got);
     lua_pushstring(L, addrstr);
     lua_pushinteger(L, (int) strtol(portstr, (char **) NULL, 10));
     return 3;
@@ -409,13 +419,19 @@ static int meth_setsockname(lua_State *L) {
 * Creates a master udp object
 \*-------------------------------------------------------------------------*/
 static int udp_create(lua_State *L, int family) {
+    p_udp udp = NULL;
+    /* optional length for private datagram buffer. this is useful when
+     * you need larger datagrams than UDP_DATAGRAMSIZE */
+    size_t len = (size_t) luaL_optinteger(L, 1, 0);
+    if (len <= UDP_DATAGRAMSIZE) len = 0;
     /* allocate udp object */
-    p_udp udp = (p_udp) lua_newuserdata(L, sizeof(t_udp));
+    udp = (p_udp) lua_newuserdata(L, sizeof(t_udp) + len - 1);
     auxiliar_setclass(L, "udp{unconnected}", -1);
     /* if family is AF_UNSPEC, we leave the socket invalid and
      * store AF_UNSPEC into family. This will allow it to later be
      * replaced with an AF_INET6 or AF_INET socket upon first use. */
     udp->sock = SOCKET_INVALID;
+    udp->len = len;
     timeout_init(&udp->tm, -1, -1);
     udp->family = family;
     if (family != AF_UNSPEC) {

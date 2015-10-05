@@ -8,7 +8,7 @@
 * (AF_INET, SOCK_DGRAM).
 *
 * Two classes are defined: connected and unconnected. UDP objects are
-* originally unconnected. They can be "connected" to a given address 
+* originally unconnected. They can be "connected" to a given address
 * with a call to the setpeername function. The same function can be used to
 * break the connection.
 \*=========================================================================*/
@@ -17,13 +17,14 @@
 #include "timeout.h"
 #include "socket.h"
 
-/* can't be larger than wsocket.c MAXCHUNK!!! */
 #define UDP_DATAGRAMSIZE 8192
 
 typedef struct t_udp_ {
     t_socket sock;
     t_timeout tm;
     int family;
+    size_t len; /* length of datagram buffer below */
+    char buf[1]; /* allocate larger structure to hold actual buffer */
 } t_udp;
 typedef t_udp *p_udp;
 

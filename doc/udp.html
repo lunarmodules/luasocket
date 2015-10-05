@@ -42,7 +42,7 @@
 <!-- socket.udp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="socket.udp">
-socket.<b>udp()</b>
+socket.<b>udp(</b>[buffersize]<b>)</b>
 </p>
 
 <p class="description">
@@ -60,6 +60,13 @@ Unconnected objects support the
 <a href="#close"><tt>close</tt></a>.
 The <a href="#setpeername"><tt>setpeername</tt></a>
 is used to connect the object.
+</p>
+
+<p class="parameters">
+The optional <tt>buffersize</tt> parameter
+specifies the size of the largest datagram that will
+ever be received by the UDP object. The default value is
+8192.
 </p>
 
 <p class="return">
@@ -85,7 +92,7 @@ href=#setoption><tt>setoption</tt></a> will fail.
 <!-- socket.udp4 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="socket.udp">
-socket.<b>udp4()</b>
+socket.<b>udp4(</b>[buffersize]<b>)</b>
 </p>
 
 <p class="description">
@@ -105,6 +112,13 @@ The <a href="#setpeername"><tt>setpeername</tt></a>
 is used to connect the object.
 </p>
 
+<p class="parameters">
+The optional <tt>buffersize</tt> parameter
+specifies the size of the largest datagram that will
+ever be received by the UDP object. The default value is
+8192.
+</p>
+
 <p class="return">
 In case of success, a new unconnected UDP object
 returned. In case of error, <b><tt>nil</tt></b> is returned, followed by
@@ -114,7 +128,7 @@ an error message.
 <!-- socket.udp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="socket.udp6">
-socket.<b>udp6()</b>
+socket.<b>udp6(</b>[buffersize]<b>)</b>
 </p>
 
 <p class="description">
@@ -132,6 +146,13 @@ Unconnected objects support the
 <a href="#close"><tt>close</tt></a>.
 The <a href="#setpeername"><tt>setpeername</tt></a>
 is used to connect the object.
+</p>
+
+<p class="parameters">
+The optional <tt>buffersize</tt> parameter
+specifies the size of the largest datagram that will
+ever be received by the UDP object. The default value is
+8192.
 </p>
 
 <p class="return">
@@ -238,9 +259,10 @@ specifies the maximum size of the datagram to be retrieved. If
 there are more than <tt>size</tt> bytes available in the datagram,
 the excess bytes are discarded. If there are less then
 <tt>size</tt> bytes available in the current datagram, the
-available bytes are returned. If <tt>size</tt> is omitted, the
-maximum datagram size is used (which is currently limited by the
-implementation to 8192 bytes).
+available bytes are returned.
+If <tt>size</tt> is omitted, the
+<tt>buffersize</tt> argument at creation time is used
+(which defaults to 8192 bytes).
 </p>
 
 <p class="return">
