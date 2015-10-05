@@ -73,6 +73,7 @@ static luaL_Reg tcp_methods[] = {
 static t_opt optget[] = {
     {"keepalive",   opt_get_keepalive},
     {"reuseaddr",   opt_get_reuseaddr},
+    {"reuseport",   opt_get_reuseport},
     {"tcp-nodelay", opt_get_tcp_nodelay},
     {"linger",      opt_get_linger},
     {"error",       opt_get_error},
@@ -82,6 +83,7 @@ static t_opt optget[] = {
 static t_opt optset[] = {
     {"keepalive",   opt_set_keepalive},
     {"reuseaddr",   opt_set_reuseaddr},
+    {"reuseport",   opt_set_reuseport},
     {"tcp-nodelay", opt_set_tcp_nodelay},
     {"ipv6-v6only", opt_set_ip6_v6only},
     {"linger",      opt_set_linger},
