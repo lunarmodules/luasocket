@@ -39,7 +39,10 @@ static luaL_Reg func[] = {
 \*-------------------------------------------------------------------------*/
 int select_open(lua_State *L) {
     lua_pushstring(L, "_SETSIZE");
-    lua_pushnumber(L, FD_SETSIZE);
+    lua_pushinteger(L, FD_SETSIZE);
+    lua_rawset(L, -3);
+    lua_pushstring(L, "_SOCKETINVALID");
+    lua_pushinteger(L, SOCKET_INVALID);
     lua_rawset(L, -3);
     luaL_setfuncs(L, func, 0);
     return 0;

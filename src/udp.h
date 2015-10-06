@@ -23,8 +23,6 @@ typedef struct t_udp_ {
     t_socket sock;
     t_timeout tm;
     int family;
-    size_t len; /* length of datagram buffer below */
-    char buf[1]; /* allocate larger structure to hold actual buffer */
 } t_udp;
 typedef t_udp *p_udp;
 

@@ -90,13 +90,26 @@ of connect are defined as simple helper functions that restrict the
 
 <!-- debug ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id=debug> 
+<p class=name id=debug>
 socket.<b>_DEBUG</b>
 </p>
 
 <p class=description>
 This constant is set to <tt><b>true</b></tt> if the library was compiled
 with debug support.
+</p>
+
+<!-- datagramsize +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=debug>
+socket.<b>_DATAGRAMSIZE</b>
+</p>
+
+<p class=description>
+Default datagram size used by calls to
+<a href="udp.html#receive"<tt>receive</tt></a> and
+<a href="udp.html#receivefrom"><tt>receivefrom</tt></a>.
+(Unless changed in compile time, the value is 8192.)
 </p>
 
 <!-- get time +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -391,6 +404,16 @@ socket.<b>_SETSIZE</b>
 <p class=description>
 The maximum number of sockets that the <a
 href=#select><tt>select</tt></a> function can handle. 
+</p>
+
+<!-- socketinvalid ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=socketinvalid>
+socket.<b>_SOCKETINVALID</b>
+</p>
+
+<p class=description>
+The OS value for an invalid socket.
 </p>
 
 <!-- try ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

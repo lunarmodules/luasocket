@@ -42,7 +42,7 @@
 <!-- socket.udp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="socket.udp">
-socket.<b>udp(</b>[buffersize]<b>)</b>
+socket.<b>udp()</b>
 </p>
 
 <p class="description">
@@ -60,13 +60,6 @@ Unconnected objects support the
 <a href="#close"><tt>close</tt></a>.
 The <a href="#setpeername"><tt>setpeername</tt></a>
 is used to connect the object.
-</p>
-
-<p class="parameters">
-The optional <tt>buffersize</tt> parameter
-specifies the size of the largest datagram that will
-ever be received by the UDP object. The default value is
-8192.
 </p>
 
 <p class="return">
@@ -92,7 +85,7 @@ href=#setoption><tt>setoption</tt></a> will fail.
 <!-- socket.udp4 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="socket.udp">
-socket.<b>udp4(</b>[buffersize]<b>)</b>
+socket.<b>udp4()</b>
 </p>
 
 <p class="description">
@@ -112,13 +105,6 @@ The <a href="#setpeername"><tt>setpeername</tt></a>
 is used to connect the object.
 </p>
 
-<p class="parameters">
-The optional <tt>buffersize</tt> parameter
-specifies the size of the largest datagram that will
-ever be received by the UDP object. The default value is
-8192.
-</p>
-
 <p class="return">
 In case of success, a new unconnected UDP object
 returned. In case of error, <b><tt>nil</tt></b> is returned, followed by
@@ -128,7 +114,7 @@ an error message.
 <!-- socket.udp ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="socket.udp6">
-socket.<b>udp6(</b>[buffersize]<b>)</b>
+socket.<b>udp6()</b>
 </p>
 
 <p class="description">
@@ -146,13 +132,6 @@ Unconnected objects support the
 <a href="#close"><tt>close</tt></a>.
 The <a href="#setpeername"><tt>setpeername</tt></a>
 is used to connect the object.
-</p>
-
-<p class="parameters">
-The optional <tt>buffersize</tt> parameter
-specifies the size of the largest datagram that will
-ever be received by the UDP object. The default value is
-8192.
 </p>
 
 <p class="return">
@@ -261,8 +240,10 @@ the excess bytes are discarded. If there are less then
 <tt>size</tt> bytes available in the current datagram, the
 available bytes are returned.
 If <tt>size</tt> is omitted, the
-<tt>buffersize</tt> argument at creation time is used
-(which defaults to 8192 bytes).
+compile-time constant <a
+href=socket.html#datagramsize><tt>socket._DATAGRAMSIZE</tt></a> is used
+(it defaults to 8192 bytes). Larger sizes will cause a
+temporary buffer to be allocated for the operation.
 </p>
 
 <p class="return">
