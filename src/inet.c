@@ -423,8 +423,8 @@ const char *inet_tryconnect(p_socket ps, int *family, const char *address,
         /* try connecting to remote address */
         err = socket_strerror(socket_connect(ps, (SA *) iterator->ai_addr,
             (socklen_t) iterator->ai_addrlen, tm));
-        /* if success, break out of loop */
-        if (err == NULL) {
+        /* if success or timeout is zero, break out of loop */
+        if (err == NULL || timeout_iszero(tm)) {
             *family = current_family;
             break;
         }

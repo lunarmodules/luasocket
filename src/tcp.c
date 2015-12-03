@@ -417,7 +417,7 @@ static int global_connect(lua_State *L) {
     bindhints.ai_family = family;
     bindhints.ai_flags = AI_PASSIVE;
     if (localaddr) {
-        err = inet_trybind(&tcp->sock, &tcp->family, localaddr, 
+        err = inet_trybind(&tcp->sock, &tcp->family, localaddr,
             localserv, &bindhints);
         if (err) {
             lua_pushnil(L);
@@ -429,7 +429,7 @@ static int global_connect(lua_State *L) {
     memset(&connecthints, 0, sizeof(connecthints));
     connecthints.ai_socktype = SOCK_STREAM;
     /* make sure we try to connect only to the same family */
-    connecthints.ai_family = tcp->family; 
+    connecthints.ai_family = tcp->family;
     err = inet_tryconnect(&tcp->sock, &tcp->family, remoteaddr, remoteserv,
          &tcp->tm, &connecthints);
     if (err) {

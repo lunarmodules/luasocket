@@ -242,11 +242,14 @@ established.
 
 <p class=note>
 Note: Starting with LuaSocket 3.0, the host name resolution
-depends on whether the socket was created by <a
-href=#socket.tcp><tt>socket.tcp</tt></a> or <a
-href=#socket.tcp6><tt>socket.tcp6</tt></a>. Addresses from
-the appropriate family are tried in succession until the
-first success or until the last failure.
+depends on whether the socket was created by
+<a href=#socket.tcp><tt>socket.tcp</tt></a>,
+<a href=#socket.tcp4><tt>socket.tcp4</tt></a> or
+<a href=#socket.tcp6><tt>socket.tcp6</tt></a>. Addresses from
+the appropriate family (or both) are tried in the order
+returned by the resolver until the
+first success or until the last failure. If the timeout was
+set to zero, only the first address is tried.
 </p>
 
 <!-- getpeername ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
