@@ -28,6 +28,12 @@
 local base = _G
 local _M = {}
 
+local exception_metat = {}
+
+function exception_metat:__tostring()
+    return base.tostring(self[1])
+end
+
 local function do_nothing() end
 
 function _M.newtry(finalizer)
@@ -38,7 +44,7 @@ function _M.newtry(finalizer)
             return ...
         else
             base.pcall(finalizer)
-            base.error({err})
+            base.error(base.setmetatable({err}, exception_metat))
         end
     end
 end
@@ -48,7 +54,7 @@ local function handle_pcall_returns(ok, ...)
         return ...
     else
         local err = ...
-        if base.type(err) == "table" then
+        if base.getmetatable(err) == exception_metat then
             return nil, err[1]
         else
             base.error(err, 0)
