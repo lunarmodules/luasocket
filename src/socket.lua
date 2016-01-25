@@ -10,6 +10,7 @@ local base = _G
 local string = require("string")
 local math = require("math")
 local socket = require("socket.core")
+local except = require("socket.except")
 
 local _M = socket
 
@@ -53,7 +54,9 @@ function _M.bind(host, port, backlog)
     return nil, err
 end
 
+_M.newtry = except.newtry
 _M.try = _M.newtry()
+_M.protect = except.protect
 
 function _M.choose(table)
     return function(name, opt1, opt2)

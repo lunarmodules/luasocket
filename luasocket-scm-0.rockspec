@@ -50,7 +50,7 @@ local function make_plat(plat)
 	}
 	local modules = {
 		["socket.core"] = {
-			sources = { "src/luasocket.c", "src/timeout.c", "src/buffer.c", "src/io.c", "src/auxiliar.c", "src/options.c", "src/inet.c", "src/except.c", "src/select.c", "src/tcp.c", "src/udp.c", "src/compat.c" },
+			sources = { "src/luasocket.c", "src/timeout.c", "src/buffer.c", "src/io.c", "src/auxiliar.c", "src/options.c", "src/inet.c", "src/select.c", "src/tcp.c", "src/udp.c", "src/compat.c" },
 			defines = defines[plat],
 			incdir = "/src"
 		},
@@ -65,6 +65,7 @@ local function make_plat(plat)
 		["socket.ftp"] = "src/ftp.lua",
 		["socket.headers"] = "src/headers.lua",
 		["socket.smtp"] = "src/smtp.lua",
+		["socket.except"] = "src/except.lua",
 		ltn12 = "src/ltn12.lua",
 		socket = "src/socket.lua",
 		mime = "src/mime.lua"

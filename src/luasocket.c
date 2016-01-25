@@ -24,7 +24,6 @@
 \*=========================================================================*/
 #include "luasocket.h"
 #include "auxiliar.h"
-#include "except.h"
 #include "timeout.h"
 #include "buffer.h"
 #include "inet.h"
@@ -44,7 +43,6 @@ static int base_open(lua_State *L);
 \*-------------------------------------------------------------------------*/
 static const luaL_Reg mod[] = {
     {"auxiliar", auxiliar_open},
-    {"except", except_open},
     {"timeout", timeout_open},
     {"buffer", buffer_open},
     {"inet", inet_open},
