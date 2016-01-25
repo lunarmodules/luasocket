@@ -9,6 +9,7 @@
 -----------------------------------------------------------------------------
 local string = require("string")
 local table = require("table")
+local unpack = unpack or table.unpack
 local base = _G
 local _M = {}
 if module then -- heuristic for exporting a global package table
