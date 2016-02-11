@@ -43,7 +43,7 @@ end
 -- (thanks to Wim Couwenberg)
 function filter.chain(...)
     local arg = {...}
-    local n = select('#',...)
+    local n = base.select('#',...)
     local top, index = 1, 1
     local retry = ""
     return function(chunk)
