@@ -74,7 +74,7 @@ function metat.__index:command(cmd, arg)
 end
 
 function metat.__index:sink(snk, pat)
-    local chunk, err = c:receive(pat)
+    local chunk, err = self.c:receive(pat)
     return snk(chunk, err)
 end
 
