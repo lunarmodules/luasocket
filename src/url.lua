@@ -219,6 +219,7 @@ end
 --   corresponding absolute url
 -----------------------------------------------------------------------------
 function _M.absolute(base_url, relative_url)
+    local base_parsed
     if base.type(base_url) == "table" then
         base_parsed = base_url
         base_url = _M.build(base_parsed)
