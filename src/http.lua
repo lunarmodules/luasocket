@@ -106,17 +106,43 @@ end
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function _M.open(host, port, create)
-    -- create socket with user connect function, or with default
-    local c = socket.try((create or socket.tcp)())
-    local h = base.setmetatable({ c = c }, metat)
-    -- create finalized try
-    h.try = socket.newtry(function() h:close() end)
-    -- set timeout before connecting
-    h.try(c:settimeout(_M.TIMEOUT))
-    h.try(c:connect(host, port or _M.PORT))
-    -- here everything worked
-    return h
+local function _bindBeforeConnect(host, port, timeout)
+    -- Keep trying to get an ephemeral port, degrade gracefully.
+    -- Ports will free up as sockets move out of TIME_WAIT and
+    -- are released by the kernel (60 seconds or so).
+    local t = socket.gettime() + timeout
+    while socket.gettime() < t do
+        local c = socket.tcp()
+        c:settimeout(timeout)
+        c:setoption("reuseaddr", true)
+        c:bind("*", 0)
+        if c:connect(host, port) == 1 then
+            return c
+        end
+        c:close()
+    end
+end
+
+function _M.open(host, opt)
+    local port = opt.port or _M.port
+    local timeout = opt.timeout or _M.TIMEOUT
+    if opt.bindBeforeConnect == true then
+        local c = socket.try(_bindBeforeConnect(host, port, timeout))
+        local h = base.setmetatable({ c = c }, metat)
+        h.try = socket.newtry(function() h:close() end)
+        return h
+    else
+        -- create socket with user connect function, or with default
+        local c = socket.try((create or socket.tcp)())
+        local h = base.setmetatable({ c = c }, metat)
+        -- create finalized try
+        h.try = socket.newtry(function() h:close() end)
+        -- set timeout before connecting
+        h.try(c:settimeout(timeout))
+        h.try(c:connect(host, port))
+        -- here everything worked
+        return h
+    end
 end
 
 function metat.__index:sendrequestline(method, uri)
@@ -303,7 +329,7 @@ end
     -- we loop until we get what we want, or
     -- until we are sure there is no way to get it
     local nreqt = adjustrequest(reqt)
-    local h = _M.open(nreqt.host, nreqt.port, nreqt.create)
+    local h = _M.open(nreqt.host, nreqt)
     -- send request line and headers
     h:sendrequestline(nreqt.method, nreqt.uri)
     h:sendheaders(nreqt.headers)
@@ -338,12 +364,21 @@ end
     return 1, code, headers, status
 end
 
-local function srequest(u, b)
+local function srequest(u, b, o)
     local t = {}
     local reqt = {
         url = u,
         sink = ltn12.sink.table(t)
     }
+    if base.type(b) == "table" then
+        o = b
+        b = nil
+    end
+    if o ~= nil then
+        for k,v in pairs(o) do
+            reqt[k] = v
+        end
+    end
     if b then
         reqt.source = ltn12.source.string(b)
         reqt.headers = {
@@ -356,8 +391,8 @@ local function srequest(u, b)
     return table.concat(t), code, headers, status
 end
 
-_M.request = socket.protect(function(reqt, body)
-    if base.type(reqt) == "string" then return srequest(reqt, body)
+_M.request = socket.protect(function(reqt, body, opt)
+    if base.type(reqt) == "string" then return srequest(reqt, body, opt)
     else return trequest(reqt) end
 end)
 
