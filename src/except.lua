@@ -14,14 +14,19 @@
 -- the other values don't matter.
 
 -- The idea is to nest function calls with the "try" function. This function
--- checks the first value, and calls "error" on the second if the first is
--- nil. Otherwise, it returns all values it received.
+-- checks the first value, and, if it's falsy, wraps the second value
+-- in a table with metatable and calls "error" on it. Otherwise,
+-- it returns all values it received.
 
--- The protect function returns a new function that behaves exactly like the
--- function it receives, but the new function doesn't throw exceptions: it
--- returns nil followed by the error message instead.
+-- The "newtry" function is a factory for "try" functions that call a finalizer
+-- in protected mode before calling "error".
 
--- With these two function, it's easy to write functions that throw
+-- The "protect" function returns a new function that behaves exactly like the
+-- function it receives, but the new function catches exceptions
+-- thrown by "try" functions and returns nil followed by the error message
+-- instead.
+
+-- With these three function, it's easy to write functions that throw
 -- exceptions on error, but that don't interrupt the user script.
 -----------------------------------------------------------------------------
 
