@@ -283,7 +283,6 @@ SOCKET_OBJS= \
 	options.$(O) \
 	inet.$(O) \
 	$(SOCKET) \
-	except.$(O) \
 	select.$(O) \
 	tcp.$(O) \
 	udp.$(O)
@@ -328,7 +327,8 @@ TO_SOCKET_LDIR= \
 	tp.lua \
 	ftp.lua \
 	headers.lua \
-	smtp.lua
+	smtp.lua \
+	except.lua
 
 TO_TOP_LDIR= \
 	ltn12.lua \
@@ -410,10 +410,9 @@ clean:
 compat.$(O): compat.c compat.h
 auxiliar.$(O): auxiliar.c auxiliar.h
 buffer.$(O): buffer.c buffer.h io.h timeout.h
-except.$(O): except.c except.h
 inet.$(O): inet.c inet.h socket.h io.h timeout.h usocket.h
 io.$(O): io.c io.h timeout.h
-luasocket.$(O): luasocket.c luasocket.h auxiliar.h except.h \
+luasocket.$(O): luasocket.c luasocket.h auxiliar.h \
 	timeout.h buffer.h io.h inet.h socket.h usocket.h tcp.h \
 	udp.h select.h
 mime.$(O): mime.c mime.h
