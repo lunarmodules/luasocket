@@ -220,13 +220,6 @@ Returns an equivalent function that instead of throwing exceptions,
 returns <tt><b>nil</b></tt> followed by an error message. 
 </p>
 
-<p class=note>
-Note: Beware that if your function performs some illegal operation that
-raises an error, the protected function will catch the error and return it
-as a string. This is because the <a href=#try><tt>try</tt></a> function
-uses errors as the mechanism to throw exceptions.  
-</p>
-
 <!-- select +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=select> 
@@ -424,8 +417,7 @@ socket.<b>try(</b>ret<sub>1</sub> [, ret<sub>2</sub> ... ret<sub>N</sub>]<b>)</b
 
 <p class=description>
 Throws an exception in case of error. The exception can only be caught 
-by the <a href=#protect><tt>protect</tt></a> function. It does not explode
-into an error message.
+by the <a href=#protect><tt>protect</tt></a> function.
 </p>
 
 <p class=parameters>
@@ -436,7 +428,10 @@ nested with <tt>try</tt>.
 
 <p class=return> 
 The function returns <tt>ret</tt><sub>1</sub> to <tt>ret</tt><sub>N</sub> if
-<tt>ret</tt><sub>1</sub> is not <tt><b>nil</b></tt>. Otherwise, it calls <tt>error</tt> passing <tt>ret</tt><sub>2</sub>.
+<tt>ret</tt><sub>1</sub> is not <tt><b>nil</b></tt> or <tt><b>false</b></tt>.
+Otherwise, it calls <tt>error</tt> passing <tt>ret</tt><sub>2</sub> wrapped
+in a table with metatable used by <a href=#protect><tt>protect</tt></a> to
+distinguish exceptions from runtime errors.
 </p>
 
 <pre class=example>
