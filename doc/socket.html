@@ -167,8 +167,7 @@ is  raised.
 
 <p class=parameters> 
 <tt>Finalizer</tt> is a function that will be called before
-<tt>try</tt> throws the exception. It will be called 
-in <em>protected</em> mode.
+<tt>try</tt> throws the exception.
 </p>
 
 <p class=return> 
@@ -216,8 +215,9 @@ to throw exceptions.
 </p>
 
 <p class=return>
-Returns an equivalent function that instead of throwing exceptions,
-returns <tt><b>nil</b></tt> followed by an error message. 
+Returns an equivalent function that instead of throwing exceptions in case of
+a failed <a href=#try><tt>try</tt></a> call, returns <tt><b>nil</b></tt>
+followed by an error message.
 </p>
 
 <!-- select +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -416,8 +416,9 @@ socket.<b>try(</b>ret<sub>1</sub> [, ret<sub>2</sub> ... ret<sub>N</sub>]<b>)</b
 </p>
 
 <p class=description>
-Throws an exception in case of error. The exception can only be caught 
-by the <a href=#protect><tt>protect</tt></a> function.
+Throws an exception in case <tt>ret<sub>1</sub></tt> is falsy, using
+<tt>ret<sub>2</sub></tt> as the error message. The exception is supposed to be caught 
+by a <a href=#protect><tt>protect</tt></a>ed function only.
 </p>
 
 <p class=parameters>

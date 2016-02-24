@@ -42,14 +42,14 @@ static void wrap(lua_State *L) {
     lua_createtable(L, 1, 0);
     lua_pushvalue(L, -2);
     lua_rawseti(L, -2, 1);
-    lua_pushvalue(L, lua_upvalueindex(2));
+    lua_pushvalue(L, lua_upvalueindex(1));
     lua_setmetatable(L, -2);
 }
 
 static int finalize(lua_State *L) {
     if (!lua_toboolean(L, 1)) {
-        lua_pushvalue(L, lua_upvalueindex(1));
-        lua_pcall(L, 0, 0, 0);
+        lua_pushvalue(L, lua_upvalueindex(2));
+        lua_call(L, 0, 0);
         lua_settop(L, 2);
         wrap(L);
         lua_error(L);
@@ -66,6 +66,7 @@ static int global_newtry(lua_State *L) {
     lua_settop(L, 1);
     if (lua_isnil(L, 1)) lua_pushcfunction(L, do_nothing);
     lua_pushvalue(L, lua_upvalueindex(1));
+    lua_insert(L, -2);
     lua_pushcclosure(L, finalize, 2);
     return 1;
 }
@@ -75,7 +76,7 @@ static int global_newtry(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int unwrap(lua_State *L) {
     if (lua_istable(L, -1) && lua_getmetatable(L, -1)) {
-        int r = lua_rawequal(L, -1, lua_upvalueindex(2));
+        int r = lua_rawequal(L, -1, lua_upvalueindex(1));
         lua_pop(L, 1);
         if (r) {
             lua_pushnil(L);
@@ -106,7 +107,7 @@ static int protected_cont(lua_State *L) {
 
 static int protected_(lua_State *L) {
     int status;
-    lua_pushvalue(L, lua_upvalueindex(1));
+    lua_pushvalue(L, lua_upvalueindex(2));
     lua_insert(L, 1);
     status = lua_pcallk(L, lua_gettop(L) - 1, LUA_MULTRET, 0, 0, protected_cont);
     return protected_finish(L, status, 0);
@@ -115,6 +116,7 @@ static int protected_(lua_State *L) {
 static int global_protect(lua_State *L) {
     lua_settop(L, 1);
     lua_pushvalue(L, lua_upvalueindex(1));
+    lua_insert(L, 1);
     lua_pushcclosure(L, protected_, 2);
     return 1;
 }

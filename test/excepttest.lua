@@ -5,7 +5,6 @@ local finalizer_called
 local func = socket.protect(function(err, ...)
     local try = socket.newtry(function()
         finalizer_called = true
-        error("ignored")
     end)
 
     if err then
