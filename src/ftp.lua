@@ -34,8 +34,13 @@ _M.PASSWORD = "anonymous@anonymous.org"
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function _M.open(server, port, create)
-    local tp = socket.try(tp.connect(server, port or _M.PORT, _M.TIMEOUT, create))
+function _M.open(params)
+    local tp = socket.try(tp.connect(
+        params.server, 
+        params.port or _M.PORT, 
+        _M.TIMEOUT, 
+        function() return params:create() end  -- wrap create as a method call
+      ))
     local f = base.setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)
@@ -203,7 +208,7 @@ end
 local function tput(putt)
     putt = override(putt)
     socket.try(putt.host, "missing hostname")
-    local f = _M.open(putt.host, putt.port, putt.create)
+    local f = _M.open(putt)
     f:greet()
     f:login(putt.user, putt.password)
     if putt.type then f:type(putt.type) end
@@ -232,21 +237,10 @@ local function parse(u)
     return t
 end
 
-local function sput(u, body)
-    local putt = parse(u)
-    putt.source = ltn12.source.string(body)
-    return tput(putt)
-end
-
-_M.put = socket.protect(function(putt, body)
-    if base.type(putt) == "string" then return sput(putt, body)
-    else return tput(putt) end
-end)
-
 local function tget(gett)
     gett = override(gett)
     socket.try(gett.host, "missing hostname")
-    local f = _M.open(gett.host, gett.port, gett.create)
+    local f = _M.open(gett)
     f:greet()
     f:login(gett.user, gett.password)
     if gett.type then f:type(gett.type) end
@@ -256,19 +250,25 @@ local function tget(gett)
     return f:close()
 end
 
-local function sget(u)
-    local gett = parse(u)
-    local t = {}
-    gett.sink = ltn12.sink.table(t)
-    tget(gett)
-    return table.concat(t)
+-- parses a simple form into the advanced form
+-- if `body` is provided, a PUT, otherwise a GET.
+-- If GET, then a field `target` is added to store the results
+_M.parseRequest = function(u, body)
+  local t = parse(u)
+  if body then
+    t.source = ltn12.source.string(body)
+  else
+    t.target = {}
+    t.sink = ltn12.sink.table(t.target)
+  end
 end
 
 _M.command = socket.protect(function(cmdt)
     cmdt = override(cmdt)
     socket.try(cmdt.host, "missing hostname")
     socket.try(cmdt.command, "missing command")
-    local f = _M.open(cmdt.host, cmdt.port, cmdt.create)
+    cmdt.create = cmdt.create or socket.tcp
+    local f = _M.open(cmdt)
     f:greet()
     f:login(cmdt.user, cmdt.password)
     f.try(f.tp:command(cmdt.command, cmdt.argument))
@@ -277,9 +277,26 @@ _M.command = socket.protect(function(cmdt)
     return f:close()
 end)
 
+_M.put = socket.protect(function(putt, body)
+    if base.type(putt) == "string" then 
+      putt = _M.parseRequest(putt, body)
+      tput(putt)
+      return table.concat(putt.target)
+    else 
+      putt.create = putt.create or socket.tcp
+      return tput(putt) 
+    end
+end)
+
 _M.get = socket.protect(function(gett)
-    if base.type(gett) == "string" then return sget(gett)
-    else return tget(gett) end
+    if base.type(gett) == "string" then 
+      gett = _M.parseRequest(gett)
+      tget(gett)
+      return table.concat(gett.target)
+    else 
+      gett.create = gett.create or socket.tcp
+      return tget(gett) 
+    end
 end)
 
 return _M

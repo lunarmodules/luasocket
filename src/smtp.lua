@@ -113,9 +113,13 @@ function metat.__index:send(mailt)
     self:data(ltn12.source.chain(mailt.source, mime.stuff()), mailt.step)
 end
 
-function _M.open(server, port, create)
-    local tp = socket.try(tp.connect(server or _M.SERVER, port or _M.PORT,
-        _M.TIMEOUT, create))
+function _M.open(mailt)
+    local tp = socket.try(tp.connect(
+        mailt.server or _M.SERVER, 
+        mailt.port or _M.PORT,
+        _M.TIMEOUT, 
+        function() return mailt:create() end  -- wrap to do a method call
+      ))
     local s = base.setmetatable({tp = tp}, metat)
     -- make sure tp is closed if we get an exception
     s.try = socket.newtry(function()
@@ -245,7 +249,8 @@ end
 -- High level SMTP API
 -----------------------------------------------------------------------------
 _M.send = socket.protect(function(mailt)
-    local s = _M.open(mailt.server, mailt.port, mailt.create)
+    mailt.create = mailt.create or socket.tcp
+    local s = _M.open(mailt)
     local ext = s:greet(mailt.domain)
     s:auth(mailt.user, mailt.password, ext)
     s:send(mailt)

@@ -76,7 +76,7 @@ socket.sourcet["http-chunked"] = function(sock, headers)
             -- was it the last chunk?
             if size > 0 then
                 -- if not, get chunk and skip terminating CRLF
-                local chunk, err, part = sock:receive(size)
+                local chunk, err = sock:receive(size)
                 if chunk then sock:receive() end
                 return chunk, err
             else
@@ -106,15 +106,15 @@ end
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function _M.open(host, port, create)
-    -- create socket with user connect function, or with default
-    local c = socket.try((create or socket.tcp)())
+function _M.open(reqt)
+    -- create socket with user connect function
+    local c = socket.try(reqt:create())   -- method call, passing reqt table as self!
     local h = base.setmetatable({ c = c }, metat)
     -- create finalized try
     h.try = socket.newtry(function() h:close() end)
     -- set timeout before connecting
     h.try(c:settimeout(_M.TIMEOUT))
-    h.try(c:connect(host, port or _M.PORT))
+    h.try(c:connect(reqt.host, reqt.port or _M.PORT))
     -- here everything worked
     return h
 end
@@ -303,7 +303,7 @@ end
     -- we loop until we get what we want, or
     -- until we are sure there is no way to get it
     local nreqt = adjustrequest(reqt)
-    local h = _M.open(nreqt.host, nreqt.port, nreqt.create)
+    local h = _M.open(nreqt)
     -- send request line and headers
     h:sendrequestline(nreqt.method, nreqt.uri)
     h:sendheaders(nreqt.headers)
@@ -338,11 +338,14 @@ end
     return 1, code, headers, status
 end
 
-local function srequest(u, b)
+-- parses a shorthand form into the advanced table form.
+-- adds field `target` to the table. This will hold the return values.
+_M.parseRequest = function(u, b)
     local t = {}
     local reqt = {
         url = u,
-        sink = ltn12.sink.table(t)
+        sink = ltn12.sink.table(t),
+        target = t,
     }
     if b then
         reqt.source = ltn12.source.string(b)
@@ -352,13 +355,18 @@ local function srequest(u, b)
         }
         reqt.method = "POST"
     end
-    local code, headers, status = socket.skip(1, trequest(reqt))
-    return table.concat(t), code, headers, status
+    return reqt
 end
 
 _M.request = socket.protect(function(reqt, body)
-    if base.type(reqt) == "string" then return srequest(reqt, body)
-    else return trequest(reqt) end
+    if base.type(reqt) == "string" then 
+      reqt = _M.parseRequest(reqt, body)
+      local t, code, headers, status = reqt.target, socket.skip(1, _M.request(reqt))
+      return table.concat(t), code, headers, status
+    else
+      reqt.create = reqt.create or socket.tcp
+      return trequest(reqt) 
+    end
 end)
 
 return _M
