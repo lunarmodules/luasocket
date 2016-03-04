@@ -114,6 +114,124 @@ the SMTP module:
 <li> <tt>ZONE</tt>: default time zone.
 </ul>
 
+<!-- message ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id=message> 
+smtp.<b>message(</b>mesgt<b>)</b>
+</p>
+
+<p class=description>
+Returns a <em>simple</em>
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> source that sends an SMTP message body, possibly multipart (arbitrarily deep). 
+</p>
+
+<p class=parameters>
+The only parameter of the function is a table describing the message.
+<tt>Mesgt</tt> has the following form (notice the recursive structure):
+</p>
+
+<blockquote>
+<table summary="Mesgt table structure">
+<tr><td><tt>
+mesgt = {<br>
+&nbsp;&nbsp;headers = <i>header-table</i>,<br>
+&nbsp;&nbsp;body = <i>LTN12 source</i> or <i>string</i> or 
+<i>multipart-mesgt</i><br>
+}<br>
+&nbsp;<br>
+multipart-mesgt = {<br>
+&nbsp;&nbsp;[preamble = <i>string</i>,]<br>
+&nbsp;&nbsp;[1] = <i>mesgt</i>,<br>
+&nbsp;&nbsp;[2] = <i>mesgt</i>,<br>
+&nbsp;&nbsp;...<br>
+&nbsp;&nbsp;[<i>n</i>] = <i>mesgt</i>,<br>
+&nbsp;&nbsp;[epilogue = <i>string</i>,]<br>
+}<br>
+</tt></td></tr>
+</table>
+</blockquote>
+
+<p class=parameters>
+For a simple message, all that is needed is a set of <tt>headers</tt>
+and the <tt>body</tt>. The message <tt>body</tt> can be given as a string
+or as a <em>simple</em> 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
+source. For multipart messages, the body is a table that
+recursively defines each part as an independent message, plus an optional
+<tt>preamble</tt> and <tt>epilogue</tt>.
+</p>
+
+<p class=return> 
+The function returns a <em>simple</em> 
+<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
+source that produces the
+message contents as defined by <tt>mesgt</tt>, chunk by chunk. 
+Hopefully, the following
+example will make things clear. When in doubt, refer to the appropriate RFC
+as listed in the introduction.  </p>
+
+<pre class=example>
+-- load the smtp support and its friends
+local smtp = require("socket.smtp")
+local mime = require("mime")
+local ltn12 = require("ltn12")
+
+-- creates a source to send a message with two parts. The first part is 
+-- plain text, the second part is a PNG image, encoded as base64.
+source = smtp.message{
+  headers = {
+     -- Remember that headers are *ignored* by smtp.send. 
+     from = "Sicrano de Oliveira &lt;sicrano@example.com&gt;",
+     to = "Fulano da Silva &lt;fulano@example.com&gt;",
+     subject = "Here is a message with attachments"
+  },
+  body = {
+    preamble = "If your client doesn't understand attachments, \r\n" ..
+               "it will still display the preamble and the epilogue.\r\n" ..
+               "Preamble will probably appear even in a MIME enabled client.",
+    -- first part: no headers means plain text, us-ascii.
+    -- The mime.eol low-level filter normalizes end-of-line markers.
+    [1] = { 
+      body = mime.eol(0, [[
+        Lines in a message body should always end with CRLF. 
+        The smtp module will *NOT* perform translation. However, the 
+        send function *DOES* perform SMTP stuffing, whereas the message
+        function does *NOT*.
+      ]])
+    },
+    -- second part: headers describe content to be a png image, 
+    -- sent under the base64 transfer content encoding.
+    -- notice that nothing happens until the message is actually sent. 
+    -- small chunks are loaded into memory right before transmission and 
+    -- translation happens on the fly.
+    [2] = { 
+      headers = {
+        ["content-type"] = 'image/png; name="image.png"',
+        ["content-disposition"] = 'attachment; filename="image.png"',
+        ["content-description"] = 'a beautiful image',
+        ["content-transfer-encoding"] = "BASE64"
+      },
+      body = ltn12.source.chain(
+        ltn12.source.file(io.open("image.png", "rb")),
+        ltn12.filter.chain(
+          mime.encode("base64"),
+          mime.wrap()
+        )
+      )
+    },
+    epilogue = "This might also show up, but after the attachments"
+  }
+}
+
+-- finally send it
+r, e = smtp.send{
+    from = "&lt;sicrano@example.com&gt;",
+    rcpt = "&lt;fulano@example.com&gt;",
+    source = source,
+}
+</pre>
+
+
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class=name id=send> 
@@ -272,123 +390,6 @@ r, e = smtp.send{
   from = from,
   rcpt = rcpt, 
   source = smtp.message(mesgt)
-}
-</pre>
-
-<!-- message ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<p class=name id=message> 
-smtp.<b>message(</b>mesgt<b>)</b>
-</p>
-
-<p class=description>
-Returns a <em>simple</em>
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> source that sends an SMTP message body, possibly multipart (arbitrarily deep). 
-</p>
-
-<p class=parameters>
-The only parameter of the function is a table describing the message.
-<tt>Mesgt</tt> has the following form (notice the recursive structure):
-</p>
-
-<blockquote>
-<table summary="Mesgt table structure">
-<tr><td><tt>
-mesgt = {<br>
-&nbsp;&nbsp;headers = <i>header-table</i>,<br>
-&nbsp;&nbsp;body = <i>LTN12 source</i> or <i>string</i> or 
-<i>multipart-mesgt</i><br>
-}<br>
-&nbsp;<br>
-multipart-mesgt = {<br>
-&nbsp;&nbsp;[preamble = <i>string</i>,]<br>
-&nbsp;&nbsp;[1] = <i>mesgt</i>,<br>
-&nbsp;&nbsp;[2] = <i>mesgt</i>,<br>
-&nbsp;&nbsp;...<br>
-&nbsp;&nbsp;[<i>n</i>] = <i>mesgt</i>,<br>
-&nbsp;&nbsp;[epilogue = <i>string</i>,]<br>
-}<br>
-</tt></td></tr>
-</table>
-</blockquote>
-
-<p class=parameters>
-For a simple message, all that is needed is a set of <tt>headers</tt>
-and the <tt>body</tt>. The message <tt>body</tt> can be given as a string
-or as a <em>simple</em> 
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
-source. For multipart messages, the body is a table that
-recursively defines each part as an independent message, plus an optional
-<tt>preamble</tt> and <tt>epilogue</tt>.
-</p>
-
-<p class=return> 
-The function returns a <em>simple</em> 
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> 
-source that produces the
-message contents as defined by <tt>mesgt</tt>, chunk by chunk. 
-Hopefully, the following
-example will make things clear. When in doubt, refer to the appropriate RFC
-as listed in the introduction.  </p>
-
-<pre class=example>
--- load the smtp support and its friends
-local smtp = require("socket.smtp")
-local mime = require("mime")
-local ltn12 = require("ltn12")
-
--- creates a source to send a message with two parts. The first part is 
--- plain text, the second part is a PNG image, encoded as base64.
-source = smtp.message{
-  headers = {
-     -- Remember that headers are *ignored* by smtp.send. 
-     from = "Sicrano de Oliveira &lt;sicrano@example.com&gt;",
-     to = "Fulano da Silva &lt;fulano@example.com&gt;",
-     subject = "Here is a message with attachments"
-  },
-  body = {
-    preamble = "If your client doesn't understand attachments, \r\n" ..
-               "it will still display the preamble and the epilogue.\r\n" ..
-               "Preamble will probably appear even in a MIME enabled client.",
-    -- first part: no headers means plain text, us-ascii.
-    -- The mime.eol low-level filter normalizes end-of-line markers.
-    [1] = { 
-      body = mime.eol(0, [[
-        Lines in a message body should always end with CRLF. 
-        The smtp module will *NOT* perform translation. However, the 
-        send function *DOES* perform SMTP stuffing, whereas the message
-        function does *NOT*.
-      ]])
-    },
-    -- second part: headers describe content to be a png image, 
-    -- sent under the base64 transfer content encoding.
-    -- notice that nothing happens until the message is actually sent. 
-    -- small chunks are loaded into memory right before transmission and 
-    -- translation happens on the fly.
-    [2] = { 
-      headers = {
-        ["content-type"] = 'image/png; name="image.png"',
-        ["content-disposition"] = 'attachment; filename="image.png"',
-        ["content-description"] = 'a beautiful image',
-        ["content-transfer-encoding"] = "BASE64"
-      },
-      body = ltn12.source.chain(
-        ltn12.source.file(io.open("image.png", "rb")),
-        ltn12.filter.chain(
-          mime.encode("base64"),
-          mime.wrap()
-        )
-      )
-    },
-    epilogue = "This might also show up, but after the attachments"
-  }
-}
-
--- finally send it
-r, e = smtp.send{
-    from = "&lt;sicrano@example.com&gt;",
-    rcpt = "&lt;fulano@example.com&gt;",
-    source = source,
 }
 </pre>
 

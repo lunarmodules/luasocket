@@ -36,6 +36,7 @@ static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_getoption(lua_State *L);
 static int meth_setoption(lua_State *L);
+static int meth_gettimeout(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
@@ -65,6 +66,7 @@ static luaL_Reg tcp_methods[] = {
     {"setpeername", meth_connect},
     {"setsockname", meth_bind},
     {"settimeout",  meth_settimeout},
+    {"gettimeout",  meth_gettimeout},
     {"shutdown",    meth_shutdown},
     {NULL,          NULL}
 };
@@ -348,6 +350,12 @@ static int meth_settimeout(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
     return timeout_meth_settimeout(L, &tcp->tm);
+}
+
+static int meth_gettimeout(lua_State *L)
+{
+    p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
+    return timeout_meth_gettimeout(L, &tcp->tm);
 }
 
 /*=========================================================================*\

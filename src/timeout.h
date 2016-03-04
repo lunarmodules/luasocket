@@ -22,6 +22,7 @@ p_timeout timeout_markstart(p_timeout tm);
 double timeout_getstart(p_timeout tm);
 double timeout_gettime(void);
 int timeout_meth_settimeout(lua_State *L, p_timeout tm);
+int timeout_meth_gettimeout(lua_State *L, p_timeout tm);
 
 #define timeout_iszero(tm)   ((tm)->block == 0.0)
 

@@ -36,6 +36,7 @@ static int meth_receivefrom(lua_State *L);
 static int meth_getfamily(lua_State *L);
 static int meth_getsockname(lua_State *L);
 static int meth_getpeername(lua_State *L);
+static int meth_gettimeout(lua_State *L);
 static int meth_setsockname(lua_State *L);
 static int meth_setpeername(lua_State *L);
 static int meth_close(lua_State *L);
@@ -66,6 +67,7 @@ static luaL_Reg udp_methods[] = {
     {"setpeername", meth_setpeername},
     {"setsockname", meth_setsockname},
     {"settimeout",  meth_settimeout},
+    {"gettimeout",  meth_gettimeout},
     {NULL,          NULL}
 };
 
@@ -345,6 +347,11 @@ static int meth_getoption(lua_State *L) {
 static int meth_settimeout(lua_State *L) {
     p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
     return timeout_meth_settimeout(L, &udp->tm);
+}
+
+static int meth_gettimeout(lua_State *L) {
+    p_udp udp = (p_udp) auxiliar_checkgroup(L, "udp{any}", 1);
+    return timeout_meth_gettimeout(L, &udp->tm);
 }
 
 /*-------------------------------------------------------------------------*\

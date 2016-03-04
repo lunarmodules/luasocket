@@ -173,6 +173,16 @@ int timeout_meth_settimeout(lua_State *L, p_timeout tm) {
     return 1;
 }
 
+/*-------------------------------------------------------------------------*\
+* Gets timeout values for IO operations
+* Lua Output: block, total
+\*-------------------------------------------------------------------------*/
+int timeout_meth_gettimeout(lua_State *L, p_timeout tm) {
+    lua_pushnumber(L, tm->block);
+    lua_pushnumber(L, tm->total);
+    return 2;
+}
+
 /*=========================================================================*\
 * Test support functions
 \*=========================================================================*/

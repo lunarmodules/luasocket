@@ -72,34 +72,6 @@ local mime = require("mime")
 
 <h3 id=high>High-level filters</h3>
 
-<!-- normalize ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<p class=name id="normalize">
-mime.<b>normalize(</b>[marker]<b>)</b>
-</p>
-
-<p class=description>
-Converts most common end-of-line markers to a specific given marker. 
-</p>
-
-<p class=parameters>
-<tt>Marker</tt> is the new marker. It defaults to CRLF, the canonic 
-end-of-line marker defined by the MIME standard.
-</p>
-
-<p class=return>
-The function returns a filter that performs the conversion. 
-</p>
-
-<p class=note>
-Note: There is no perfect solution to this problem. Different end-of-line
-markers are an evil that will probably plague developers forever. 
-This function, however, will work perfectly for text created with any of
-the most common end-of-line markers, i.e. the Mac OS (CR), the Unix (LF), 
-or the DOS (CRLF) conventions. Even if the data has mixed end-of-line
-markers, the function will still work well, although it doesn't 
-guarantee that the number of empty lines will be correct.
-</p>
 
 <!-- decode +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -158,6 +130,35 @@ base64 = ltn12.filter.chain(
   mime.wrap("base64")
 )
 </pre>
+
+<!-- normalize ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="normalize">
+mime.<b>normalize(</b>[marker]<b>)</b>
+</p>
+
+<p class=description>
+Converts most common end-of-line markers to a specific given marker. 
+</p>
+
+<p class=parameters>
+<tt>Marker</tt> is the new marker. It defaults to CRLF, the canonic 
+end-of-line marker defined by the MIME standard.
+</p>
+
+<p class=return>
+The function returns a filter that performs the conversion. 
+</p>
+
+<p class=note>
+Note: There is no perfect solution to this problem. Different end-of-line
+markers are an evil that will probably plague developers forever. 
+This function, however, will work perfectly for text created with any of
+the most common end-of-line markers, i.e. the Mac OS (CR), the Unix (LF), 
+or the DOS (CRLF) conventions. Even if the data has mixed end-of-line
+markers, the function will still work well, although it doesn't 
+guarantee that the number of empty lines will be correct.
+</p>
 
 <!-- stuff +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -466,7 +467,7 @@ marker.
 <p>
 <small>
 Last modified by Diego Nehab on <br>
-Thu Apr 20 00:25:44 EDT 2006
+Fri Mar  4 15:19:17 BRT 2016
 </small>
 </p>
 </center>
