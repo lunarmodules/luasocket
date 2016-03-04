@@ -112,12 +112,15 @@ the HTTP module:
 </p>
 
 <ul>
-<li> <tt>PORT</tt>: default port used for connections; 
-<li> <tt>PROXY</tt>: default proxy used for connections; 
+<li> <tt>PROXY</tt>: default proxy used for connections;
 <li> <tt>TIMEOUT</tt>: sets the timeout for all I/O operations;
 <li> <tt>USERAGENT</tt>: default user agent reported to server.
 </ul>
 
+<p class=note id="post">
+Note: These constants are global. Changing them will also
+change the behavior other code that might be using LuaSocket.
+</p>
 
 <!-- http.request ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
