@@ -22,6 +22,9 @@ _M.source = source
 _M.sink = sink
 _M.pump = pump
 
+local unpack = unpack or table.unpack
+local select = base.select
+
 -- 2048 seems to be better in windows...
 _M.BLOCKSIZE = 2048
 _M._VERSION = "LTN12 1.0.3"

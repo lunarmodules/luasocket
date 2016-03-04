@@ -243,7 +243,9 @@ non-numeric indices) in the arrays will be silently ignored.
 
 <p class=return> The function returns a list with the sockets ready for
 reading, a list with the sockets ready for writing and an error message.
-The error message is "<tt>timeout</tt>" if a timeout condition was met and
+The error message is "<tt>timeout</tt>" if a timeout
+condition was met, "<tt>select failed</tt>" if the call
+to <tt>select</tt> failed, and
 <tt><b>nil</b></tt> otherwise. The returned tables are
 doubly keyed both by integers and also by the sockets
 themselves, to simplify the test if a specific socket has
@@ -251,7 +253,7 @@ changed status.
 </p>
 
 <p class=note>
-<b>Note: </b>: <tt>select</tt> can monitor a limited number
+<b>Note:</b> <tt>select</tt> can monitor a limited number
 of sockets, as defined by the constant <tt>socket._SETSIZE</tt>. This
 number may be as high as 1024 or as low as 64 by default,
 depending on the system. It is usually possible to change this

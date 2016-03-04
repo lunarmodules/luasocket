@@ -271,8 +271,17 @@ _M.command = socket.protect(function(cmdt)
     local f = _M.open(cmdt.host, cmdt.port, cmdt.create)
     f:greet()
     f:login(cmdt.user, cmdt.password)
-    f.try(f.tp:command(cmdt.command, cmdt.argument))
-    if cmdt.check then f.try(f.tp:check(cmdt.check)) end
+    if type(cmdt.command) == "table" then
+        local argument = cmdt.argument or {}
+        local check = cmdt.check or {}
+        for i,cmd in ipairs(cmdt.command) do
+            f.try(f.tp:command(cmd, argument[i]))
+            if check[i] then f.try(f.tp:check(check[i])) end
+        end
+    else
+        f.try(f.tp:command(cmdt.command, cmdt.argument))
+        if cmdt.check then f.try(f.tp:check(cmdt.check)) end
+    end
     f:quit()
     return f:close()
 end)
