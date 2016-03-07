@@ -46,6 +46,14 @@ end
 -- metatable for sock object
 local metat = { __index = {} }
 
+function metat.__index:getpeername()
+    return self.c:getpeername()
+end
+
+function metat.__index:getsockname()
+    return self.c:getpeername()
+end
+
 function metat.__index:check(ok)
     local code, reply = get_reply(self.c)
     if not code then return nil, reply end

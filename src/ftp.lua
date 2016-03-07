@@ -51,7 +51,7 @@ end
 function metat.__index:pasvconnect()
     self.data = self.try(socket.tcp())
     self.try(self.data:settimeout(_M.TIMEOUT))
-    self.try(self.data:connect(self.pasvt.ip, self.pasvt.port))
+    self.try(self.data:connect(self.pasvt.address, self.pasvt.port))
 end
 
 function metat.__index:login(user, password)
@@ -71,31 +71,64 @@ function metat.__index:pasv()
     local a, b, c, d, p1, p2 = socket.skip(2, string.find(reply, pattern))
     self.try(a and b and c and d and p1 and p2, reply)
     self.pasvt = {
-        ip = string.format("%d.%d.%d.%d", a, b, c, d),
+        address = string.format("%d.%d.%d.%d", a, b, c, d),
         port = p1*256 + p2
     }
     if self.server then
         self.server:close()
         self.server = nil
     end
-    return self.pasvt.ip, self.pasvt.port
+    return self.pasvt.address, self.pasvt.port
 end
 
-function metat.__index:port(ip, port)
+function metat.__index:epsv()
+    self.try(self.tp:command("epsv"))
+    local code, reply = self.try(self.tp:check("229"))
+    local pattern = "%((.)(.-)%1(.-)%1(.-)%1%)"
+    local d, prt, address, port = string.match(reply, pattern)
+    self.try(port, "invalid epsv response")
+    self.pasvt = {
+        address = self.tp:getpeername(),
+        port = port
+    }
+    if self.server then
+        self.server:close()
+        self.server = nil
+    end
+    return self.pasvt.address, self.pasvt.port
+end
+
+
+function metat.__index:port(address, port)
     self.pasvt = nil
-    if not ip then
-        ip, port = self.try(self.tp:getcontrol():getsockname())
-        self.server = self.try(socket.bind(ip, 0))
-        ip, port = self.try(self.server:getsockname())
+    if not address then
+        address, port = self.try(self.tp:getsockname())
+        self.server = self.try(socket.bind(address, 0))
+        address, port = self.try(self.server:getsockname())
         self.try(self.server:settimeout(_M.TIMEOUT))
     end
     local pl = math.mod(port, 256)
     local ph = (port - pl)/256
-    local arg = string.gsub(string.format("%s,%d,%d", ip, ph, pl), "%.", ",")
+    local arg = string.gsub(string.format("%s,%d,%d", address, ph, pl), "%.", ",")
     self.try(self.tp:command("port", arg))
     self.try(self.tp:check("2.."))
     return 1
 end
+
+function metat.__index:eprt(family, address, port)
+    self.pasvt = nil
+    if not address then
+        address, port = self.try(self.tp:getsockname())
+        self.server = self.try(socket.bind(address, 0))
+        address, port = self.try(self.server:getsockname())
+        self.try(self.server:settimeout(_M.TIMEOUT))
+    end
+    local arg = string.format("|%s|%s|%d|", family, address, port)
+    self.try(self.tp:command("eprt", arg))
+    self.try(self.tp:check("2.."))
+    return 1
+end
+
 
 function metat.__index:send(sendt)
     self.try(self.pasvt or self.server, "need port or pasv first")
@@ -110,12 +143,12 @@ function metat.__index:send(sendt)
     -- send the transfer command and check the reply
     self.try(self.tp:command(command, argument))
     local code, reply = self.try(self.tp:check{"2..", "1.."})
-    -- if there is not a a pasvt table, then there is a server
+    -- if there is not a pasvt table, then there is a server
     -- and we already sent a PORT command
     if not self.pasvt then self:portconnect() end
     -- get the sink, source and step for the transfer
     local step = sendt.step or ltn12.pump.step
-    local readt = {self.tp.c}
+    local readt = { self.tp }
     local checkstep = function(src, snk)
         -- check status in control connection while downloading
         local readyt = socket.select(readt, nil, 0)
@@ -207,7 +240,7 @@ local function tput(putt)
     f:greet()
     f:login(putt.user, putt.password)
     if putt.type then f:type(putt.type) end
-    f:pasv()
+    f:epsv()
     local sent = f:send(putt)
     f:quit()
     f:close()
@@ -219,7 +252,7 @@ local default = {
     scheme = "ftp"
 }
 
-local function parse(u)
+local function genericform(u)
     local t = socket.try(url.parse(u, default))
     socket.try(t.scheme == "ftp", "wrong scheme '" .. t.scheme .. "'")
     socket.try(t.host, "missing hostname")
@@ -232,8 +265,10 @@ local function parse(u)
     return t
 end
 
+_M.genericform = genericform
+
 local function sput(u, body)
-    local putt = parse(u)
+    local putt = genericform(u)
     putt.source = ltn12.source.string(body)
     return tput(putt)
 end
@@ -250,14 +285,14 @@ local function tget(gett)
     f:greet()
     f:login(gett.user, gett.password)
     if gett.type then f:type(gett.type) end
-    f:pasv()
+    f:epsv()
     f:receive(gett)
     f:quit()
     return f:close()
 end
 
 local function sget(u)
-    local gett = parse(u)
+    local gett = genericform(u)
     local t = {}
     gett.sink = ltn12.sink.table(t)
     tget(gett)

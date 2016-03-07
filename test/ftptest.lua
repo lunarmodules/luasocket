@@ -3,18 +3,30 @@ local ftp = require("socket.ftp")
 local url = require("socket.url")
 local ltn12 = require("ltn12")
 
+-- use dscl to create user "luasocket" with password "password"
+-- with home in /Users/diego/luasocket/test/ftp
+-- with group com.apple.access_ftp
+-- with shell set to /sbin/nologin
+-- set /etc/ftpchroot to chroot luasocket
+-- must set group com.apple.access_ftp on user _ftp (for anonymous access)
+-- copy index.html to /var/empty/pub (home of user ftp)
+-- start ftp server with
+-- sudo -s launchctl load -w /System/Library/LaunchDaemons/ftp.plist
+-- copy index.html to /Users/diego/luasocket/test/ftp
+-- stop with
+-- sudo -s launchctl unload -w /System/Library/LaunchDaemons/ftp.plist
+
 -- override protection to make sure we see all errors
 --socket.protect = function(s) return s end
 
 dofile("testsupport.lua")
 
-local host, port, index_file, index, back, err, ret
+local host = host or "localhost"
+local port, index_file, index, back, err, ret
 
 local t = socket.gettime()
 
-host = host or "localhost"
 index_file = "index.html"
-
 
 -- a function that returns a directory listing
 local function nlst(u)
@@ -55,27 +67,27 @@ assert(not err and back == index, err)
 print("ok")
 
 io.write("erasing before upload: ")
-ret, err = dele("ftp://luasocket:pedrovian@" .. host .. "/index.up.html")
-if not ret then print(err) 
+ret, err = dele("ftp://luasocket:password@" .. host .. "/index.up.html")
+if not ret then print(err)
 else print("ok") end
 
 io.write("testing upload: ")
-ret, err = ftp.put("ftp://luasocket:pedrovian@" .. host .. "/index.up.html;type=i", index)
+ret, err = ftp.put("ftp://luasocket:password@" .. host .. "/index.up.html;type=i", index)
 assert(ret and not err, err)
 print("ok")
 
 io.write("downloading uploaded file: ")
-back, err = ftp.get("ftp://luasocket:pedrovian@" .. host .. "/index.up.html;type=i")
+back, err = ftp.get("ftp://luasocket:password@" .. host .. "/index.up.html;type=i")
 assert(ret and not err and index == back, err)
 print("ok")
 
 io.write("erasing after upload/download: ")
-ret, err = dele("ftp://luasocket:pedrovian@" .. host .. "/index.up.html")
-assert(ret and not err, err) 
+ret, err = dele("ftp://luasocket:password@" .. host .. "/index.up.html")
+assert(ret and not err, err)
 print("ok")
 
 io.write("testing weird-character translation: ")
-back, err = ftp.get("ftp://luasocket:pedrovian@" .. host .. "/%23%3f;type=i")
+back, err = ftp.get("ftp://luasocket:password@" .. host .. "/%23%3f;type=i")
 assert(not err and back == index, err)
 print("ok")
 
@@ -84,7 +96,7 @@ local back = {}
 ret, err = ftp.get{
     url = "//stupid:mistake@" .. host .. "/index.html",
     user = "luasocket",
-    password = "pedrovian",
+    password = "password",
     type = "i",
     sink = ltn12.sink.table(back)
 }

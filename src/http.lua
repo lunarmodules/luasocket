@@ -346,11 +346,13 @@ end
     return 1, code, headers, status
 end
 
-local function srequest(u, b)
+-- turns an url and a body into a generic request
+local function genericform(u, b)
     local t = {}
     local reqt = {
         url = u,
-        sink = ltn12.sink.table(t)
+        sink = ltn12.sink.table(t),
+        target = t
     }
     if b then
         reqt.source = ltn12.source.string(b)
@@ -360,8 +362,15 @@ local function srequest(u, b)
         }
         reqt.method = "POST"
     end
-    local code, headers, status = socket.skip(1, trequest(reqt))
-    return table.concat(t), code, headers, status
+    return reqt
+end
+
+_M.genericform = genericform
+
+local function srequest(u, b)
+    local reqt = genericform(u, b)
+    local _, code, headers, status = trequest(reqt)
+    return table.concat(reqt.target), code, headers, status
 end
 
 _M.request = socket.protect(function(reqt, body)
