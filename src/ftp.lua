@@ -23,7 +23,7 @@ local _M = socket.ftp
 -- timeout in seconds before the program gives up on a connection
 _M.TIMEOUT = 60
 -- default port for ftp service
-_M.PORT = 21
+local PORT = 21
 -- this is the default anonymous password. used when no password is
 -- provided in url. should be changed to your e-mail.
 _M.USER = "ftp"
@@ -35,7 +35,7 @@ _M.PASSWORD = "anonymous@anonymous.org"
 local metat = { __index = {} }
 
 function _M.open(server, port, create)
-    local tp = socket.try(tp.connect(server, port or _M.PORT, _M.TIMEOUT, create))
+    local tp = socket.try(tp.connect(server, port or PORT, _M.TIMEOUT, create))
     local f = base.setmetatable({ tp = tp }, metat)
     -- make sure everything gets closed in an exception
     f.try = socket.newtry(function() f:close() end)
