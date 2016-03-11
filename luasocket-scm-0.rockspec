@@ -69,8 +69,11 @@ local function make_plat(plat)
 		socket = "src/socket.lua",
 		mime = "src/mime.lua"
 	}
-	if plat == "unix" or plat == "macosx" then
+	if plat == "unix" or plat == "macosx" or plat == "haiku" then
 	    modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/usocket.c"
+	    if plat == "haiku" then
+	    	modules["socket.core"].libraries = {"network"}
+	    end
 		modules["socket.unix"] = {
 		  sources = { "src/buffer.c", "src/auxiliar.c", "src/options.c", "src/timeout.c", "src/io.c", "src/usocket.c", "src/unix.c" },
 		  defines = defines[plat],
@@ -94,6 +97,7 @@ build = {
    platforms = {
      unix = make_plat("unix"),
      macosx = make_plat("macosx"),
+     haiku = make_plat("haiku"),
      win32 = make_plat("win32"),
      mingw32 = make_plat("mingw32")
    },
