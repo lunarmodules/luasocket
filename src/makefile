@@ -21,10 +21,10 @@ PLAT?=linux
 LUAV?=5.1
 
 # MYCFLAGS: to be set by user if needed
-MYCFLAGS=
+MYCFLAGS?=
 
 # MYLDFLAGS: to be set by user if needed
-MYLDFLAGS=
+MYLDFLAGS?=
 
 # DEBUG: NODEBUG DEBUG
 # debug mode causes luasocket to collect and returns timing information useful
@@ -135,6 +135,8 @@ print:
 	@echo LUALIB_$(PLAT)=$(LUALIB_$(PLAT))
 	@echo INSTALL_TOP_CDIR=$(INSTALL_TOP_CDIR)
 	@echo INSTALL_TOP_LDIR=$(INSTALL_TOP_LDIR)
+	@echo CFLAGS=$(CFLAGS)
+	@echo LDFLAGS=$(LDFLAGS)
 
 #------
 # Supported platforms
