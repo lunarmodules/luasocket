@@ -307,6 +307,8 @@ UNIX_OBJS=\
 	timeout.$(O) \
 	io.$(O) \
 	usocket.$(O) \
+	unixtcp.$(O) \
+	unixudp.$(O) \
 	unix.$(O)
 
 #------
