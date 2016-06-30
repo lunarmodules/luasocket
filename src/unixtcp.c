@@ -6,6 +6,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "compat.h"
 
 #include "auxiliar.h"
 #include "socket.h"
@@ -90,7 +91,7 @@ int unixtcp_open(lua_State *L)
     auxiliar_add2group(L, "unixtcp{server}", "unixtcp{any}");
 
     luaL_setfuncs(L, func, 0);
-    return 1;
+    return 0;
 }
 
 /*=========================================================================*\

@@ -309,6 +309,7 @@ UNIX_OBJS=\
 	usocket.$(O) \
 	unixtcp.$(O) \
 	unixudp.$(O) \
+	compat.$(O) \
 	unix.$(O)
 
 #------

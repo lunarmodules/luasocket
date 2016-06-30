@@ -7,6 +7,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "compat.h"
 
 #include "auxiliar.h"
 #include "socket.h"
@@ -86,7 +87,7 @@ int unixudp_open(lua_State *L)
     auxiliar_add2group(L, "unixudp{unconnected}", "select{able}");
 
     luaL_setfuncs(L, func, 0);
-    return 1;
+    return 0;
 }
 
 /*=========================================================================*\
