@@ -161,7 +161,7 @@ static int meth_sendto(lua_State *L)
 }
 
 static int meth_receive(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixudp{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixudp{any}", 1);
     char buf[UNIXUDP_DATAGRAMSIZE];
     size_t got, wanted = (size_t) luaL_optnumber(L, 2, sizeof(buf));
     char *dgram = wanted > sizeof(buf)? (char *) malloc(wanted): buf;
@@ -317,7 +317,7 @@ static const char *unixudp_tryconnect(p_unix un, const char *path)
 
 static int meth_connect(lua_State *L)
 {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixudp{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixudp{any}", 1);
     const char *path =  luaL_checkstring(L, 2);
     const char *err = unixudp_tryconnect(un, path);
     if (err) {
