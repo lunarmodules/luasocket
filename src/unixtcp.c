@@ -33,6 +33,7 @@ static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
 static int meth_getstats(lua_State *L);
 static int meth_setstats(lua_State *L);
+static int meth_getsockname(lua_State *L);
 
 static const char *unixtcp_tryconnect(p_unix un, const char *path);
 static const char *unixtcp_trybind(p_unix un, const char *path);
@@ -56,6 +57,7 @@ static luaL_Reg unixtcp_methods[] = {
     {"setoption",   meth_setoption},
     {"setpeername", meth_connect},
     {"setsockname", meth_bind},
+    {"getsockname", meth_getsockname},
     {"settimeout",  meth_settimeout},
     {"shutdown",    meth_shutdown},
     {NULL,          NULL}
@@ -212,6 +214,22 @@ static int meth_bind(lua_State *L) {
         return 2;
     }
     lua_pushnumber(L, 1);
+    return 1;
+}
+
+static int meth_getsockname(lua_State *L)
+{
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
+    struct sockaddr_un peer = {0};
+    socklen_t peer_len = sizeof(peer);
+
+    if (getsockname(un->sock, (SA *) &peer, &peer_len) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, socket_strerror(errno));
+        return 2;
+    }
+
+    lua_pushstring(L, peer.sun_path);
     return 1;
 }
 
