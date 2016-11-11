@@ -102,7 +102,7 @@ LDIR?=$(LDIR_$(PLAT))
 
 # DESTDIR: (no default)
 # used by package managers to install into a temporary destination
-DESTDIR=
+DESTDIR?=
 
 #------
 # Definitions below can be overridden on the make command line, but
