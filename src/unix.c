@@ -5,15 +5,15 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-#include "unixtcp.h"
-#include "unixudp.h"
+#include "unixstream.h"
+#include "unixdgram.h"
 
 /*-------------------------------------------------------------------------*\
 * Modules and functions
 \*-------------------------------------------------------------------------*/
 static const luaL_Reg mod[] = {
-    {"tcp", unixtcp_open},
-    {"udp", unixudp_open},
+    {"stream", unixstream_open},
+    {"dgram", unixdgram_open},
     {NULL, NULL}
 };
 

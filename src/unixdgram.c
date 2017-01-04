@@ -1,8 +1,9 @@
 /*=========================================================================*\
-* Unix domain socket tcp sub module
+* Unix domain socket dgram submodule
 * LuaSocket toolkit
 \*=========================================================================*/
 #include <string.h>
+#include <stdlib.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -11,86 +12,81 @@
 #include "auxiliar.h"
 #include "socket.h"
 #include "options.h"
-#include "unixtcp.h"
+#include "unix.h"
 #include <sys/un.h>
+
+#define UNIXDGRAM_DATAGRAMSIZE 8192
 
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
 static int global_create(lua_State *L);
 static int meth_connect(lua_State *L);
-static int meth_listen(lua_State *L);
 static int meth_bind(lua_State *L);
 static int meth_send(lua_State *L);
-static int meth_shutdown(lua_State *L);
 static int meth_receive(lua_State *L);
-static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_setoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
+static int meth_gettimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
 static int meth_dirty(lua_State *L);
-static int meth_getstats(lua_State *L);
-static int meth_setstats(lua_State *L);
+static int meth_receivefrom(lua_State *L);
+static int meth_sendto(lua_State *L);
 static int meth_getsockname(lua_State *L);
 
-static const char *unixtcp_tryconnect(p_unix un, const char *path);
-static const char *unixtcp_trybind(p_unix un, const char *path);
+static const char *unixdgram_tryconnect(p_unix un, const char *path);
+static const char *unixdgram_trybind(p_unix un, const char *path);
 
-/* unixtcp object methods */
-static luaL_Reg unixtcp_methods[] = {
+/* unixdgram object methods */
+static luaL_Reg unixdgram_methods[] = {
     {"__gc",        meth_close},
     {"__tostring",  auxiliar_tostring},
-    {"accept",      meth_accept},
     {"bind",        meth_bind},
     {"close",       meth_close},
     {"connect",     meth_connect},
     {"dirty",       meth_dirty},
     {"getfd",       meth_getfd},
-    {"getstats",    meth_getstats},
-    {"setstats",    meth_setstats},
-    {"listen",      meth_listen},
-    {"receive",     meth_receive},
     {"send",        meth_send},
+    {"sendto",      meth_sendto},
+    {"receive",     meth_receive},
+    {"receivefrom", meth_receivefrom},
     {"setfd",       meth_setfd},
     {"setoption",   meth_setoption},
     {"setpeername", meth_connect},
     {"setsockname", meth_bind},
     {"getsockname", meth_getsockname},
     {"settimeout",  meth_settimeout},
-    {"shutdown",    meth_shutdown},
+    {"gettimeout",  meth_gettimeout},
     {NULL,          NULL}
 };
 
 /* socket option handlers */
 static t_opt optset[] = {
-    {"keepalive",   opt_set_keepalive},
     {"reuseaddr",   opt_set_reuseaddr},
-    {"linger",      opt_set_linger},
     {NULL,          NULL}
 };
 
 /* functions in library namespace */
 static luaL_Reg func[] = {
-    {"tcp", global_create},
+    {"dgram", global_create},
     {NULL, NULL}
 };
 
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int unixtcp_open(lua_State *L)
+int unixdgram_open(lua_State *L)
 {
     /* create classes */
-    auxiliar_newclass(L, "unixtcp{master}", unixtcp_methods);
-    auxiliar_newclass(L, "unixtcp{client}", unixtcp_methods);
-    auxiliar_newclass(L, "unixtcp{server}", unixtcp_methods);
-
+    auxiliar_newclass(L, "unixdgram{connected}", unixdgram_methods);
+    auxiliar_newclass(L, "unixdgram{unconnected}", unixdgram_methods);
     /* create class groups */
-    auxiliar_add2group(L, "unixtcp{master}", "unixtcp{any}");
-    auxiliar_add2group(L, "unixtcp{client}", "unixtcp{any}");
-    auxiliar_add2group(L, "unixtcp{server}", "unixtcp{any}");
+    auxiliar_add2group(L, "unixdgram{connected}",   "unixdgram{any}");
+    auxiliar_add2group(L, "unixdgram{unconnected}", "unixdgram{any}");
+    auxiliar_add2group(L, "unixdgram{connected}",   "select{able}");
+    auxiliar_add2group(L, "unixdgram{unconnected}", "select{able}");
 
     luaL_setfuncs(L, func, 0);
     return 0;
@@ -99,34 +95,139 @@ int unixtcp_open(lua_State *L)
 /*=========================================================================*\
 * Lua methods
 \*=========================================================================*/
+static const char *unixdgram_strerror(int err)
+{
+    /* a 'closed' error on an unconnected means the target address was not
+     * accepted by the transport layer */
+    if (err == IO_CLOSED) return "refused";
+    else return socket_strerror(err);
+}
+
+static int meth_send(lua_State *L)
+{
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unixdgram{connected}", 1);
+    p_timeout tm = &un->tm;
+    size_t count, sent = 0;
+    int err;
+    const char *data = luaL_checklstring(L, 2, &count);
+    timeout_markstart(tm);
+    err = socket_send(&un->sock, data, count, &sent, tm);
+    if (err != IO_DONE) {
+        lua_pushnil(L);
+        lua_pushstring(L, unixdgram_strerror(err));
+        return 2;
+    }
+    lua_pushnumber(L, (lua_Number) sent);
+    return 1;
+}
+
 /*-------------------------------------------------------------------------*\
-* Just call buffered IO methods
+* Send data through unconnected unixdgram socket
 \*-------------------------------------------------------------------------*/
-static int meth_send(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixtcp{client}", 1);
-    return buffer_meth_send(L, &un->buf);
+static int meth_sendto(lua_State *L)
+{
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unixdgram{unconnected}", 1);
+    size_t count, sent = 0;
+    const char *data = luaL_checklstring(L, 2, &count);
+    const char *path = luaL_checkstring(L, 3);
+    p_timeout tm = &un->tm;
+    int err;
+    struct sockaddr_un remote;
+    size_t len = strlen(path);
+
+    if (len >= sizeof(remote.sun_path)) {
+		lua_pushnil(L);
+		lua_pushstring(L, "path too long");
+		return 2;
+	}
+
+    memset(&remote, 0, sizeof(remote));
+    strcpy(remote.sun_path, path);
+    remote.sun_family = AF_UNIX;
+    timeout_markstart(tm);
+#ifdef UNIX_HAS_SUN_LEN
+    remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len)
+        + len + 1;
+    err = socket_sendto(&un->sock, data, count, &sent, (SA *) &remote, remote.sun_len, tm);
+#else
+    err = socket_sendto(&un->sock, data, count, &sent, (SA *) &remote,
+		   	sizeof(remote.sun_family) + len, tm);
+#endif
+    if (err != IO_DONE) {
+        lua_pushnil(L);
+        lua_pushstring(L, unixdgram_strerror(err));
+        return 2;
+    }
+    lua_pushnumber(L, (lua_Number) sent);
+    return 1;
 }
 
 static int meth_receive(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixtcp{client}", 1);
-    return buffer_meth_receive(L, &un->buf);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
+    char buf[UNIXDGRAM_DATAGRAMSIZE];
+    size_t got, wanted = (size_t) luaL_optnumber(L, 2, sizeof(buf));
+    char *dgram = wanted > sizeof(buf)? (char *) malloc(wanted): buf;
+    int err;
+    p_timeout tm = &un->tm;
+    timeout_markstart(tm);
+    if (!dgram) {
+        lua_pushnil(L);
+        lua_pushliteral(L, "out of memory");
+        return 2;
+    }
+    err = socket_recv(&un->sock, dgram, wanted, &got, tm);
+    /* Unlike STREAM, recv() of zero is not closed, but a zero-length packet. */
+    if (err != IO_DONE && err != IO_CLOSED) {
+        lua_pushnil(L);
+        lua_pushstring(L, unixdgram_strerror(err));
+        if (wanted > sizeof(buf)) free(dgram);
+        return 2;
+    }
+    lua_pushlstring(L, dgram, got);
+    if (wanted > sizeof(buf)) free(dgram);
+    return 1;
 }
 
-static int meth_getstats(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixtcp{client}", 1);
-    return buffer_meth_getstats(L, &un->buf);
-}
+/*-------------------------------------------------------------------------*\
+* Receives data and sender from a DGRAM socket
+\*-------------------------------------------------------------------------*/
+static int meth_receivefrom(lua_State *L) {
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unixdgram{unconnected}", 1);
+    char buf[UNIXDGRAM_DATAGRAMSIZE];
+    size_t got, wanted = (size_t) luaL_optnumber(L, 2, sizeof(buf));
+    char *dgram = wanted > sizeof(buf)? (char *) malloc(wanted): buf;
+    struct sockaddr_un addr;
+    socklen_t addr_len = sizeof(addr);
+    int err;
+    p_timeout tm = &un->tm;
+    timeout_markstart(tm);
+    if (!dgram) {
+        lua_pushnil(L);
+        lua_pushliteral(L, "out of memory");
+        return 2;
+    }
+    err = socket_recvfrom(&un->sock, dgram, wanted, &got, (SA *) &addr,
+            &addr_len, tm);
+    /* Unlike STREAM, recv() of zero is not closed, but a zero-length packet. */
+    if (err != IO_DONE && err != IO_CLOSED) {
+        lua_pushnil(L);
+        lua_pushstring(L, unixdgram_strerror(err));
+        if (wanted > sizeof(buf)) free(dgram);
+        return 2;
+    }
 
-static int meth_setstats(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixtcp{client}", 1);
-    return buffer_meth_setstats(L, &un->buf);
+    lua_pushlstring(L, dgram, got);
+	/* the path may be empty, when client send without bind */
+    lua_pushstring(L, addr.sun_path);
+    if (wanted > sizeof(buf)) free(dgram);
+    return 2;
 }
 
 /*-------------------------------------------------------------------------*\
 * Just call option handler
 \*-------------------------------------------------------------------------*/
 static int meth_setoption(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
     return opt_meth_setoption(L, optset, &un->sock);
 }
 
@@ -134,56 +235,29 @@ static int meth_setoption(lua_State *L) {
 * Select support methods
 \*-------------------------------------------------------------------------*/
 static int meth_getfd(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
     lua_pushnumber(L, (int) un->sock);
     return 1;
 }
 
 /* this is very dangerous, but can be handy for those that are brave enough */
 static int meth_setfd(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
     un->sock = (t_socket) luaL_checknumber(L, 2);
     return 0;
 }
 
 static int meth_dirty(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
-    lua_pushboolean(L, !buffer_isempty(&un->buf));
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
+    (void) un;
+    lua_pushboolean(L, 0);
     return 1;
-}
-
-/*-------------------------------------------------------------------------*\
-* Waits for and returns a client object attempting connection to the
-* server object
-\*-------------------------------------------------------------------------*/
-static int meth_accept(lua_State *L) {
-    p_unix server = (p_unix) auxiliar_checkclass(L, "unixtcp{server}", 1);
-    p_timeout tm = timeout_markstart(&server->tm);
-    t_socket sock;
-    int err = socket_accept(&server->sock, &sock, NULL, NULL, tm);
-    /* if successful, push client socket */
-    if (err == IO_DONE) {
-        p_unix clnt = (p_unix) lua_newuserdata(L, sizeof(t_unix));
-        auxiliar_setclass(L, "unixtcp{client}", -1);
-        /* initialize structure fields */
-        socket_setnonblocking(&sock);
-        clnt->sock = sock;
-        io_init(&clnt->io, (p_send)socket_send, (p_recv)socket_recv,
-                (p_error) socket_ioerror, &clnt->sock);
-        timeout_init(&clnt->tm, -1, -1);
-        buffer_init(&clnt->buf, &clnt->io, &clnt->tm);
-        return 1;
-    } else {
-        lua_pushnil(L);
-        lua_pushstring(L, socket_strerror(err));
-        return 2;
-    }
 }
 
 /*-------------------------------------------------------------------------*\
 * Binds an object to an address
 \*-------------------------------------------------------------------------*/
-static const char *unixtcp_trybind(p_unix un, const char *path) {
+static const char *unixdgram_trybind(p_unix un, const char *path) {
     struct sockaddr_un local;
     size_t len = strlen(path);
     int err;
@@ -204,10 +278,11 @@ static const char *unixtcp_trybind(p_unix un, const char *path) {
     return socket_strerror(err);
 }
 
-static int meth_bind(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixtcp{master}", 1);
+static int meth_bind(lua_State *L)
+{
+    p_unix un = (p_unix) auxiliar_checkclass(L, "unixdgram{unconnected}", 1);
     const char *path =  luaL_checkstring(L, 2);
-    const char *err = unixtcp_trybind(un, path);
+    const char *err = unixdgram_trybind(un, path);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -219,7 +294,7 @@ static int meth_bind(lua_State *L) {
 
 static int meth_getsockname(lua_State *L)
 {
-    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
     struct sockaddr_un peer = {0};
     socklen_t peer_len = sizeof(peer);
 
@@ -234,9 +309,9 @@ static int meth_getsockname(lua_State *L)
 }
 
 /*-------------------------------------------------------------------------*\
-* Turns a master unixtcp object into a client object.
+* Turns a master unixdgram object into a client object.
 \*-------------------------------------------------------------------------*/
-static const char *unixtcp_tryconnect(p_unix un, const char *path)
+static const char *unixdgram_tryconnect(p_unix un, const char *path)
 {
     struct sockaddr_un remote;
     int err;
@@ -260,16 +335,16 @@ static const char *unixtcp_tryconnect(p_unix un, const char *path)
 
 static int meth_connect(lua_State *L)
 {
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixtcp{master}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
     const char *path =  luaL_checkstring(L, 2);
-    const char *err = unixtcp_tryconnect(un, path);
+    const char *err = unixdgram_tryconnect(un, path);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
         return 2;
     }
-    /* turn master object into a client object */
-    auxiliar_setclass(L, "unixtcp{client}", 1);
+    /* turn unconnected object into a connected object */
+    auxiliar_setclass(L, "unixdgram{connected}", 1);
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -279,41 +354,8 @@ static int meth_connect(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_close(lua_State *L)
 {
-    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
     socket_destroy(&un->sock);
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
-/*-------------------------------------------------------------------------*\
-* Puts the sockt in listen mode
-\*-------------------------------------------------------------------------*/
-static int meth_listen(lua_State *L)
-{
-    p_unix un = (p_unix) auxiliar_checkclass(L, "unixtcp{master}", 1);
-    int backlog = (int) luaL_optnumber(L, 2, 32);
-    int err = socket_listen(&un->sock, backlog);
-    if (err != IO_DONE) {
-        lua_pushnil(L);
-        lua_pushstring(L, socket_strerror(err));
-        return 2;
-    }
-    /* turn master object into a server object */
-    auxiliar_setclass(L, "unixtcp{server}", 1);
-    lua_pushnumber(L, 1);
-    return 1;
-}
-
-/*-------------------------------------------------------------------------*\
-* Shuts the connection down partially
-\*-------------------------------------------------------------------------*/
-static int meth_shutdown(lua_State *L)
-{
-    /* SHUT_RD,  SHUT_WR,  SHUT_RDWR  have  the value 0, 1, 2, so we can use method index directly */
-    static const char* methods[] = { "receive", "send", "both", NULL };
-    p_unix tcp = (p_unix) auxiliar_checkclass(L, "unixtcp{client}", 1);
-    int how = luaL_checkoption(L, 2, "both", methods);
-    socket_shutdown(&tcp->sock, how);
     lua_pushnumber(L, 1);
     return 1;
 }
@@ -321,26 +363,34 @@ static int meth_shutdown(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Just call tm methods
 \*-------------------------------------------------------------------------*/
-static int meth_settimeout(lua_State *L) {
-    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixtcp{any}", 1);
+static int meth_settimeout(lua_State *L)
+{
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
     return timeout_meth_settimeout(L, &un->tm);
+}
+
+static int meth_gettimeout(lua_State *L)
+{
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
+    return timeout_meth_gettimeout(L, &un->tm);
 }
 
 /*=========================================================================*\
 * Library functions
 \*=========================================================================*/
 /*-------------------------------------------------------------------------*\
-* Creates a master unixtcp object
+* Creates a master unixdgram object
 \*-------------------------------------------------------------------------*/
-static int global_create(lua_State *L) {
+static int global_create(lua_State *L)
+{
     t_socket sock;
-    int err = socket_create(&sock, AF_UNIX, SOCK_STREAM, 0);
+    int err = socket_create(&sock, AF_UNIX, SOCK_DGRAM, 0);
     /* try to allocate a system socket */
     if (err == IO_DONE) {
-        /* allocate unixtcp object */
+        /* allocate unixdgram object */
         p_unix un = (p_unix) lua_newuserdata(L, sizeof(t_unix));
         /* set its type as master object */
-        auxiliar_setclass(L, "unixtcp{master}", -1);
+        auxiliar_setclass(L, "unixdgram{unconnected}", -1);
         /* initialize remaining structure fields */
         socket_setnonblocking(&sock);
         un->sock = sock;
