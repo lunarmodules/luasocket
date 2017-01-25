@@ -189,6 +189,27 @@ static int meth_sendto(lua_State *L) {
         lua_pushstring(L, gai_strerror(err));
         return 2;
     }
+
+    /* create socket if on first sendto if AF_UNSPEC was set */
+    if (udp->family == AF_UNSPEC && udp->sock == SOCKET_INVALID) {
+        struct addrinfo *ap;
+        const char *errstr = NULL;
+        for (ap = ai; ap != NULL; ap = ap->ai_next) {
+            errstr = inet_trycreate(&udp->sock, ap->ai_family, SOCK_DGRAM, 0);
+            if (errstr == NULL) {
+                socket_setnonblocking(&udp->sock);
+                udp->family = ap->ai_family;
+                break;
+            }
+        }
+        if (errstr != NULL) {
+            lua_pushnil(L);
+            lua_pushstring(L, errstr);
+            freeaddrinfo(ai);
+            return 2;
+        }
+    }
+
     timeout_markstart(tm);
     err = socket_sendto(&udp->sock, data, count, &sent, ai->ai_addr,
         (socklen_t) ai->ai_addrlen, tm);
