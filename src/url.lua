@@ -193,7 +193,13 @@ function _M.build(parsed)
         if string.find(authority, ":") then -- IPv6?
             authority = "[" .. authority .. "]"
         end
-        if parsed.port then authority = authority .. ":" .. parsed.port end
+        local port = parsed.port
+        if port then
+            if type(port) == "number" then
+                port = string.format("%d", port)
+            end
+            authority = authority .. ":" .. port
+        end
         local userinfo = parsed.userinfo
         if parsed.user then
             userinfo = parsed.user
