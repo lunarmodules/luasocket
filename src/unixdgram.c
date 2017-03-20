@@ -206,6 +206,7 @@ static int meth_receivefrom(lua_State *L) {
         lua_pushliteral(L, "out of memory");
         return 2;
     }
+    addr.sun_path[0] = '\0';
     err = socket_recvfrom(&un->sock, dgram, wanted, &got, (SA *) &addr,
             &addr_len, tm);
     /* Unlike STREAM, recv() of zero is not closed, but a zero-length packet. */
