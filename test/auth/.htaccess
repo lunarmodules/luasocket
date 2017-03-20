@@ -1,4 +1,4 @@
 AuthName "test-auth"
     AuthType Basic
-    AuthUserFile /Users/diego/impa/luasocket/test/auth/.htpasswd
+    AuthUserFile /home/diego/impa/luasocket/test/auth/.htpasswd
     Require valid-user

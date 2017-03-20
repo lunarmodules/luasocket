@@ -183,8 +183,9 @@ end
 --   a stringing with the corresponding URL
 -----------------------------------------------------------------------------
 function _M.build(parsed)
-    local ppath = _M.parse_path(parsed.path or "")
-    local url = _M.build_path(ppath)
+    --local ppath = _M.parse_path(parsed.path or "")
+    --local url = _M.build_path(ppath)
+    local url = parsed.path or ""
     if parsed.params then url = url .. ";" .. parsed.params end
     if parsed.query then url = url .. "?" .. parsed.query end
     local authority = parsed.authority
