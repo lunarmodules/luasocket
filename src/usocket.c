@@ -76,7 +76,7 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
 * Initializes module
 \*-------------------------------------------------------------------------*/
 int socket_open(void) {
-    /* instals a handler to ignore sigpipe or it will crash us */
+    /* installs a handler to ignore sigpipe or it will crash us */
     signal(SIGPIPE, SIG_IGN);
     return 1;
 }
