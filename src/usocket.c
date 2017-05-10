@@ -200,6 +200,8 @@ int socket_send(p_socket ps, const char *data, size_t count,
     *sent = 0;
     /* avoid making system calls on closed sockets */
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    /* ensure SIG_IGN is set for SIGPIPE signals for this socket */
+    signal(SIGPIPE, SIG_IGN);
     /* loop until we send something or we give up on error */
     for ( ;; ) {
         long put = (long) send(*ps, data, count, 0);
@@ -233,6 +235,8 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
     int err;
     *sent = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    /* ensure SIG_IGN is set for SIGPIPE signals for this socket */
+    signal(SIGPIPE, SIG_IGN);
     for ( ;; ) {
         long put = (long) sendto(*ps, data, count, 0, addr, len); 
         if (put >= 0) {
@@ -309,6 +313,8 @@ int socket_write(p_socket ps, const char *data, size_t count,
     *sent = 0;
     /* avoid making system calls on closed sockets */
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    /* ensure SIG_IGN is set for SIGPIPE signals for this socket */
+    signal(SIGPIPE, SIG_IGN);
     /* loop until we send something or we give up on error */
     for ( ;; ) {
         long put = (long) write(*ps, data, count);
