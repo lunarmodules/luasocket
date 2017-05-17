@@ -73,7 +73,7 @@ function metat.__index:check(ok)
 end
 
 function metat.__index:command(cmd, arg)
-    cmd = string.upper(cmd)
+    cmd = string.find(cmd, " ") and string.upper(cmd:match("(.-)%s")) .. cmd:match(".-(%s.+)") or string.upper(cmd)
     if arg then
         return self.c:send(cmd .. " " .. arg.. "\r\n")
     else
