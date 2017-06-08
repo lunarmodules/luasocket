@@ -110,8 +110,16 @@ end
 local metat = { __index = {} }
 
 function _M.open(host, port, create)
-    -- create socket with user connect function, or with default
-    local c = socket.try((create or socket.tcp)())
+    -- create socket with user connect function, or do a lookup to default to
+    -- either tcp or tcp6 instead
+    if not create then
+	    create = socket.tcp
+	    local addrinfo, err = socket.dns.getaddrinfo(host)
+	    if addrinfo and addrinfo[1] and addrinfo[1].family == "inet6" then
+		    create = socket.tcp6
+	    end
+    end
+    local c = socket.try(create())
     local h = base.setmetatable({ c = c }, metat)
     -- create finalized try
     h.try = socket.newtry(function() h:close() end)
