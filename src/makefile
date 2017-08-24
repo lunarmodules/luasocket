@@ -48,7 +48,7 @@ LDIR_macosx?=share/lua/$(LUAV)
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
 LUAINC_linux_base?=/usr/include
-LUAINC_linux?=$(LUAINC_linux_base)/lua/$(LUAV)
+LUAINC_linux?=$(LUAINC_linux_base)/lua$(LUAV)
 LUAPREFIX_linux?=/usr/local
 CDIR_linux?=lib/lua/$(LUAV)
 LDIR_linux?=share/lua/$(LUAV)
