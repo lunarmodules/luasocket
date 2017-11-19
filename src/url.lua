@@ -131,11 +131,6 @@ function _M.parse(url, default)
     if not url or url == "" then return nil, "invalid url" end
     -- remove whitespace
     -- url = string.gsub(url, "%s", "")
-    -- get fragment
-    url = string.gsub(url, "#(.*)$", function(f)
-        parsed.fragment = f
-        return ""
-    end)
     -- get scheme
     url = string.gsub(url, "^([%w][%w%+%-%.]*)%:",
         function(s) parsed.scheme = s; return "" end)
@@ -147,6 +142,11 @@ function _M.parse(url, default)
     -- get query string
     url = string.gsub(url, "%?(.*)", function(q)
         parsed.query = q
+        return ""
+    end)
+    -- get fragment
+    url = string.gsub(url, "#(.*)$", function(f)
+        parsed.fragment = f
         return ""
     end)
     -- get params
