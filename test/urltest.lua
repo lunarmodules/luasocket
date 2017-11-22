@@ -91,6 +91,75 @@ end
 
 print("testing URL parsing")
 check_parse_url{
+    url = "scheme://user:pass$%?#wd@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    authority = "user:pass$%?#wd@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "user:pass$%?#wd",
+    password = "pass$%?#wd",
+    user = "user",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+check_parse_url{
+    url = "scheme://user:pass?#wd@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    authority = "user:pass?#wd@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "user:pass?#wd",
+    password = "pass?#wd",
+    user = "user",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+check_parse_url{
+    url = "scheme://user:pass-wd@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    authority = "user:pass-wd@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "user:pass-wd",
+    password = "pass-wd",
+    user = "user",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+check_parse_url{
+    url = "scheme://user:pass#wd@host:port/path;params?query#fragment",
+    scheme = "scheme", 
+    authority = "user:pass#wd@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "user:pass#wd",
+    password = "pass#wd",
+    user = "user",
+    path = "/path",
+    params = "params",
+    query = "query",
+    fragment = "fragment"
+}
+check_parse_url{
+    url = "scheme://user:pass#wd@host:port/path;params?query",
+    scheme = "scheme", 
+    authority = "user:pass#wd@host:port", 
+    host = "host",
+    port = "port",
+    userinfo = "user:pass#wd",
+    password = "pass#wd",
+    user = "user",
+    path = "/path",
+    params = "params",
+    query = "query",
+}
+check_parse_url{
     url = "scheme://userinfo@host:port/path;params?query#fragment",
     scheme = "scheme", 
     authority = "userinfo@host:port", 
@@ -608,9 +677,9 @@ check_parse_path("eu/tu", { "eu", "tu" })
 print("testing path protection")
 check_protect({ "eu", "-_.!~*'():@&=+$,", "tu" }, "eu/-_.!~*'():@&=+$,/tu")
 check_protect({ "eu ", "~diego" }, "eu%20/~diego")
-check_protect({ "/eu>", "<diego?" }, "%2feu%3e/%3cdiego%3f")
-check_protect({ "\\eu]", "[diego`" }, "%5ceu%5d/%5bdiego%60")
-check_protect({ "{eu}", "|diego\127" }, "%7beu%7d/%7cdiego%7f")
+check_protect({ "/eu>", "<diego?" }, "%2Feu%3E/%3Cdiego%3F")
+check_protect({ "\\eu]", "[diego`" }, "%5Ceu%5D/%5Bdiego%60")
+check_protect({ "{eu}", "|diego\127" }, "%7Beu%7D/%7Cdiego%7F")
 check_protect({ "eu ", "~diego" }, "eu /~diego", 1)
 check_protect({ "/eu>", "<diego?" }, "/eu>/<diego?", 1)
 check_protect({ "\\eu]", "[diego`" }, "\\eu]/[diego`", 1)
