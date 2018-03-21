@@ -440,7 +440,9 @@ LUASOCKET_PRIVATE const char *socket_gaistrerror(int err) {
         case EAI_FAMILY: return PIE_FAMILY;
         case EAI_MEMORY: return PIE_MEMORY;
         case EAI_NONAME: return PIE_NONAME;
+#ifdef EAI_OVERFLOW
         case EAI_OVERFLOW: return PIE_OVERFLOW;
+#endif
 #ifdef EAI_PROTOCOL
         case EAI_PROTOCOL: return PIE_PROTOCOL;
 #endif
