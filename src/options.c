@@ -115,6 +115,26 @@ int opt_set_broadcast(lua_State *L, p_socket ps)
     return opt_setboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
+int opt_set_recv_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_setint(L, ps, SOL_SOCKET, SO_RCVBUF);
+}
+
+int opt_get_recv_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_getint(L, ps, SOL_SOCKET, SO_RCVBUF);
+}
+
+int opt_get_send_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_getint(L, ps, SOL_SOCKET, SO_SNDBUF);
+}
+
+int opt_set_send_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_setint(L, ps, SOL_SOCKET, SO_SNDBUF);
+}
+
 int opt_get_broadcast(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, SOL_SOCKET, SO_BROADCAST);

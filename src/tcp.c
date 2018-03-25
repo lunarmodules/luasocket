@@ -79,6 +79,8 @@ static t_opt optget[] = {
     {"tcp-nodelay", opt_get_tcp_nodelay},
     {"linger",      opt_get_linger},
     {"error",       opt_get_error},
+	{"recv-buffer-size",     opt_get_recv_buf_size},
+	{"send-buffer-size",     opt_get_send_buf_size},
     {NULL,          NULL}
 };
 
@@ -89,6 +91,8 @@ static t_opt optset[] = {
     {"tcp-nodelay", opt_set_tcp_nodelay},
     {"ipv6-v6only", opt_set_ip6_v6only},
     {"linger",      opt_set_linger},
+	{"recv-buffer-size",     opt_set_recv_buf_size},
+	{"send-buffer-size",     opt_set_send_buf_size},
     {NULL,          NULL}
 };
 
