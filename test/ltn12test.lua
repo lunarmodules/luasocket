@@ -181,6 +181,15 @@ assert(table.concat(t) == s, "mismatch")
 print("ok")
 
 --------------------------------
+io.write("testing source.table: ")
+local inp = {'a','b','c','d','e'}
+local source = ltn12.source.table(inp)
+sink, t = ltn12.sink.table()
+assert(ltn12.pump.all(source, sink), "returned error")
+for i = 1, #inp do assert(t[i] == inp[i], "mismatch") end
+print("ok")
+
+--------------------------------
 io.write("testing source.chain (with split): ")
 source = ltn12.source.string(s)
 filter = split(5)

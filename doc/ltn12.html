@@ -405,6 +405,16 @@ Creates and returns a source that produces the contents of a
 <tt>string</tt>, chunk by chunk. 
 </p>
 
+<!-- table +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="source.table">
+ltn12.source.<b>table(</b>table<b>)</b>
+</p>
+
+<p class=description>
+Creates and returns a source that produces the numerically-indexed values of a <tt>table</tt> successively beginning at 1.  The source returns nil (end-of-stream) whenever a nil value is produced by the current index, which proceeds forward regardless.
+</p>
+
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <div class=footer>
