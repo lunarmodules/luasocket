@@ -27,9 +27,13 @@ _M.TIMEOUT = 60
 _M.USERAGENT = socket._VERSION
 
 -- supported schemes
-local SCHEMES = { ["http"] = true }
--- default port for document retrieval
-local PORT = 80
+local SCHEMES = {
+    http = { port = 80 }
+    , https = { port = 443 }}
+
+-- default scheme and port for document retrieval
+local SCHEME = 'http'
+local PORT = SCHEMES[SCHEME].port
 
 -----------------------------------------------------------------------------
 -- Reads MIME headers from a connection, unfolding where needed
@@ -212,10 +216,14 @@ end
 
 local function adjustheaders(reqt)
     -- default headers
-    local host = string.gsub(reqt.authority, "^.-@", "")
+    local headhost = reqt.host
+    local headport = tostring(reqt.port)
+    local schemeport = tostring(SCHEMES[reqt.scheme].port)
+    if headport ~= schemeport then
+        headhost = headhost .. ':' .. headport end
     local lower = {
         ["user-agent"] = _M.USERAGENT,
-        ["host"] = host,
+        ["host"] = headhost,
         ["connection"] = "close, TE",
         ["te"] = "trailers"
     }
@@ -246,7 +254,7 @@ local default = {
     host = "",
     port = PORT,
     path ="/",
-    scheme = "http"
+    scheme = SCHEME
 }
 
 local function adjustrequest(reqt)
