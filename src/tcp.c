@@ -127,7 +127,14 @@ int tcp_open(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_send(lua_State *L) {
     p_tcp tcp = (p_tcp) auxiliar_checkclass(L, "tcp{client}", 1);
-    return buffer_meth_send(L, &tcp->buf);
+    p_buffer buf = &tcp->buf;
+    if (buf->tm == NULL) {
+        buf->tm = &tcp->tm;
+    }
+    if (buf->io == NULL) {
+        buf->io = &tcp->io;
+    }
+    return buffer_meth_send(L, buf);
 }
 
 static int meth_receive(lua_State *L) {
