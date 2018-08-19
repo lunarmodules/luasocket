@@ -61,7 +61,7 @@ end
 local check_absolute_url = function(base, relative, absolute)
     local res = socket.url.absolute(base, relative)
     if res ~= absolute then 
-        io.write("absolute: In test for '", relative, "' expected '", 
+        io.write("absolute: In test for base='", base, "', rel='", relative, "' expected '", 
             absolute, "' but got '", res, "'\n")
         os.exit()
     end
@@ -637,6 +637,17 @@ check_absolute_url("http://a/b/c/d;p?q#f", "g;x", "http://a/b/c/g;x")
 check_absolute_url("http://a/b/c/d;p?q#f", "g;x?y#s", "http://a/b/c/g;x?y#s")
 check_absolute_url("http://a/b/c/d;p?q#f", ".", "http://a/b/c/")
 check_absolute_url("http://a/b/c/d;p?q#f", "./", "http://a/b/c/")
+check_absolute_url("http://a/b/c/d;p?q#f", "./g", "http://a/b/c/g")
+check_absolute_url("http://a/b/c/d;p?q#f", "./g/", "http://a/b/c/g/")
+check_absolute_url("http://a/b/c/d;p?q#f", "././g", "http://a/b/c/g")
+check_absolute_url("http://a/b/c/d;p?q#f", "././g/", "http://a/b/c/g/")
+check_absolute_url("http://a/b/c/d;p?q#f", "g/.", "http://a/b/c/g/")
+check_absolute_url("http://a/b/c/d;p?q#f", "g/./", "http://a/b/c/g/")
+check_absolute_url("http://a/b/c/d;p?q#f", "g/./.", "http://a/b/c/g/")
+check_absolute_url("http://a/b/c/d;p?q#f", "g/././", "http://a/b/c/g/")
+check_absolute_url("http://a/b/c/d;p?q#f", "./.", "http://a/b/c/")
+check_absolute_url("http://a/b/c/d;p?q#f", "././.", "http://a/b/c/")
+check_absolute_url("http://a/b/c/d;p?q#f", "././g/./.", "http://a/b/c/g/")
 check_absolute_url("http://a/b/c/d;p?q#f", "..", "http://a/b/")
 check_absolute_url("http://a/b/c/d;p?q#f", "../", "http://a/b/")
 check_absolute_url("http://a/b/c/d;p?q#f", "../g", "http://a/b/g")
@@ -655,6 +666,17 @@ check_absolute_url("http://a/b/c/d;p?q#f", "./g/.", "http://a/b/c/g/")
 check_absolute_url("http://a/b/c/d;p?q#f", "g/./h", "http://a/b/c/g/h")
 check_absolute_url("http://a/b/c/d;p?q#f", "g/../h", "http://a/b/c/h")
 
+check_absolute_url("http://a/b/c/d:p?q#f/", "../g/", "http://a/b/g/")
+check_absolute_url("http://a/b/c/d:p?q#f/", "../g", "http://a/b/g")
+check_absolute_url("http://a/b/c/d:p?q#f/", "../.g/", "http://a/b/.g/")
+check_absolute_url("http://a/b/c/d:p?q#f/", "../.g", "http://a/b/.g")
+check_absolute_url("http://a/b/c/d:p?q#f/", "../.g.h/", "http://a/b/.g.h/")
+check_absolute_url("http://a/b/c/d:p?q#f/", "../.g.h", "http://a/b/.g.h")
+
+check_absolute_url("http://a/b/c/d:p?q#f/", "g.h/", "http://a/b/c/g.h/")
+check_absolute_url("http://a/b/c/d:p?q#f/", "../g.h/", "http://a/b/g.h/")
+check_absolute_url("http://a/", "../g.h/", "http://a/g.h/")
+
 -- extra tests
 check_absolute_url("//a/b/c/d;p?q#f", "d/e/f", "//a/b/c/d/e/f")
 check_absolute_url("/a/b/c/d;p?q#f", "d/e/f", "/a/b/c/d/e/f")
@@ -662,6 +684,7 @@ check_absolute_url("a/b/c/d", "d/e/f", "a/b/c/d/e/f")
 check_absolute_url("a/b/c/d/../", "d/e/f", "a/b/c/d/e/f")
 check_absolute_url("http://velox.telemar.com.br", "/dashboard/index.html", 
    "http://velox.telemar.com.br/dashboard/index.html")
+check_absolute_url("http://example.com/", "../.badhost.com/", "http://example.com/.badhost.com/")
 
 print("testing path parsing and composition")
 check_parse_path("/eu/tu/ele", { "eu", "tu", "ele"; is_absolute = 1 })

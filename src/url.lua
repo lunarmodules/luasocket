@@ -88,20 +88,18 @@ local function absolute_path(base_path, relative_path)
     if string.sub(relative_path, 1, 1) == "/" then return relative_path end
     local path = string.gsub(base_path, "[^/]*$", "")
     path = path .. relative_path
-    path = string.gsub(path, "([^/]*%./)", function (s)
-        if s ~= "./" then return s else return "" end
-    end)
-    path = string.gsub(path, "/%.$", "/")
-    local reduced
-    while reduced ~= path do
-        reduced = path
-        path = string.gsub(reduced, "([^/]*/%.%./)", function (s)
-            if s ~= "../../" then return "" else return s end
-        end)
-    end
-    path = string.gsub(reduced, "([^/]*/%.%.)$", function (s)
-        if s ~= "../.." then return "" else return s end
-    end)
+    repeat
+      local was = path
+      path = path:gsub('/%./', '/')
+    until path == was
+    repeat
+      local was = path
+      path = path:gsub('[^/]+/%.%./([^/]+)', '%1')
+    until path == was
+    path = path:gsub('[^/]+/%.%./*$', '')
+    path = path:gsub('/%.%.$', '/')
+    path = path:gsub('/%.$', '/')
+    path = path:gsub('^/%.%.', '')
     return path
 end
 
