@@ -692,6 +692,10 @@ check_absolute_url("http://example.com/a/b/c/d/", "../../q", "http://example.com
 check_absolute_url("http://example.com/a/b/c/d/", "../../../q", "http://example.com/a/q")
 check_absolute_url("http://example.com", ".badhost.com", "http://example.com/.badhost.com")
 check_absolute_url("http://example.com/a/b/c/d/", "..//../../../q", "http://example.com/a/q")
+check_absolute_url("http://example.com/a/b/c/d/", "..//a/../../../../q", "http://example.com/a/q")
+check_absolute_url("http://example.com/a/b/c/d/", "..//a/..//../../../q", "http://example.com/a/b/q")
+check_absolute_url("http://example.com/a/b/c/d/", "..//a/..///../../../../q", "http://example.com/a/b/q")
+check_absolute_url("http://example.com/a/b/c/d/", "../x/a/../y/z/../../../../q", "http://example.com/a/b/q")
 
 print("testing path parsing and composition")
 check_parse_path("/eu/tu/ele", { "eu", "tu", "ele"; is_absolute = 1 })
