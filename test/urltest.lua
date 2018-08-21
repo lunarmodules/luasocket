@@ -685,6 +685,7 @@ check_absolute_url("a/b/c/d/../", "d/e/f", "a/b/c/d/e/f")
 check_absolute_url("http://velox.telemar.com.br", "/dashboard/index.html", 
    "http://velox.telemar.com.br/dashboard/index.html")
 check_absolute_url("http://example.com/", "../.badhost.com/", "http://example.com/.badhost.com/")
+check_absolute_url("http://example.com/", "...badhost.com/", "http://example.com/...badhost.com/")
 
 print("testing path parsing and composition")
 check_parse_path("/eu/tu/ele", { "eu", "tu", "ele"; is_absolute = 1 })

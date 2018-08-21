@@ -94,7 +94,7 @@ local function remove_dot_components(path)
     path = path:gsub('[^/]+/%.%./*$', '')
     path = path:gsub('/%.%.$', '/')
     path = path:gsub('/%.$', '/')
-    path = path:gsub('^/%.%.', '')
+    path = path:gsub('^/%.%./', '/')
     return path
 end
 
