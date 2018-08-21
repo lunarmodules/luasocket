@@ -83,9 +83,10 @@ end
 -- Returns
 --   dot-normalized path
 local function remove_dot_components(path)
+    local marker = string.char(1)
     repeat
         local was = path
-        path = path:gsub('//', '/'..0x00..'/', 1)
+        path = path:gsub('//', '/'..marker..'/', 1)
     until path == was
     repeat
         local was = path
@@ -99,7 +100,7 @@ local function remove_dot_components(path)
     path = path:gsub('/%.%.$', '/')
     path = path:gsub('/%.$', '/')
     path = path:gsub('^/%.%./', '/')
-    path = path:gsub(0x00, '')
+    path = path:gsub(marker, '')
     return path
 end
 
