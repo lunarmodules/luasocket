@@ -89,6 +89,10 @@ local function remove_dot_components(path)
     until path == was
     repeat
         local was = path
+        path = path:gsub('//%.%./([^/]+)', '/%1', 1)
+    until path == was
+    repeat
+        local was = path
         path = path:gsub('[^/]+/%.%./([^/]+)', '%1', 1)
     until path == was
     path = path:gsub('[^/]+/%.%./*$', '')
