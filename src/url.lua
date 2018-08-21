@@ -110,6 +110,7 @@ local function absolute_path(base_path, relative_path)
     if string.sub(relative_path, 1, 1) == "/" then
       return remove_dot_components(relative_path) end
     base_path = base_path:gsub("[^/]*$", "")
+    if not base_path:find'/$' then base_path = base_path .. '/' end
     local path = base_path .. relative_path
     path = remove_dot_components(path)
     return path
