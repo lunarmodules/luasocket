@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <BUILD>z:\data\build\vc14\</BUILD>
+    <LUABIN>$(BUILD)\bin\lua\5.3\</LUABIN>
+    <LUALIB>$(BUILD)\lib\lua\5.3\</LUALIB>
+    <LUAINC>$(BUILD)\include\lua\5.3\</LUAINC>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_PropertySheetDisplayName>Lua53</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="LUALIB">
+      <Value>$(LUALIB)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LUAINC">
+      <Value>$(LUAINC)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LUABIN">
+      <Value>$(LUABIN)</Value>
+    </BuildMacro>
+    <BuildMacro Include="BUILD">
+      <Value>$(BUILD)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

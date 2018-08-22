@@ -6,7 +6,6 @@
 *.dll*
 *.user
 *.sdf
-Lua.props
 Debug
 Release
 *.manifest
