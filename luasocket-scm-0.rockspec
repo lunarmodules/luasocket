@@ -75,7 +75,7 @@ local function make_plat(plat)
 	    	modules["socket.core"].libraries = {"network"}
 	    end
 		modules["socket.unix"] = {
-		  sources = { "src/buffer.c", "src/auxiliar.c", "src/options.c", "src/timeout.c", "src/io.c", "src/usocket.c", "src/unix.c" },
+		  sources = { "src/buffer.c", "src/auxiliar.c", "src/options.c", "src/timeout.c", "src/io.c", "src/usocket.c", "src/unix.c", "src/unixdgram.c", "src/unixstream.c" },
 		  defines = defines[plat],
 		  incdir = "/src"
 		}
