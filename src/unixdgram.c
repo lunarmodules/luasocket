@@ -17,6 +17,12 @@
 
 #define UNIXDGRAM_DATAGRAMSIZE 8192
 
+// provide a SUN_LEN macro if sys/un.h doesn't (e.g. Android)
+#ifndef SUN_LEN
+#define SUN_LEN(ptr) \
+  ((size_t) (((struct sockaddr_un *) 0)->sun_path)  \
+   + strlen ((ptr)->sun_path))
+#endif
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
@@ -265,7 +271,7 @@ static const char *unixdgram_trybind(p_unix un, const char *path) {
     memset(&local, 0, sizeof(local));
     strcpy(local.sun_path, path);
     local.sun_family = AF_UNIX;
-    size_t addrlen = sizeof(local) - sizeof(local.sun_path) + len;
+    size_t addrlen = SUN_LEN(&local);
 #ifdef UNIX_HAS_SUN_LEN
     local.sun_len = addrlen + 1;
 #endif
@@ -316,7 +322,7 @@ static const char *unixdgram_tryconnect(p_unix un, const char *path)
     strcpy(remote.sun_path, path);
     remote.sun_family = AF_UNIX;
     timeout_markstart(&un->tm);
-    size_t addrlen = sizeof(remote) - sizeof(remote.sun_path) + len;
+    size_t addrlen = SUN_LEN(&remote);
 #ifdef UNIX_HAS_SUN_LEN
     remote.sun_len = addrlen + 1;
 #endif
