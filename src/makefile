@@ -181,7 +181,7 @@ SOCKET_linux=usocket.o
 SO_freebsd=so
 O_freebsd=o
 CC_freebsd=gcc
-DEF_freebsd=-DLUASOCKET_$(DEBUG) \
+DEF_freebsd=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
@@ -360,7 +360,7 @@ linux:
 
 mingw:
 	$(MAKE) all PLAT=mingw
-	
+
 solaris:
 	$(MAKE) all-unix PLAT=solaris
 
