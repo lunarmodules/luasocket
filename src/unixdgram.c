@@ -17,6 +17,12 @@
 
 #define UNIXDGRAM_DATAGRAMSIZE 8192
 
+// provide a SUN_LEN macro if sys/un.h doesn't (e.g. Android)
+#ifndef SUN_LEN
+#define SUN_LEN(ptr) \
+  ((size_t) (((struct sockaddr_un *) 0)->sun_path)  \
+   + strlen ((ptr)->sun_path))
+#endif
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
@@ -261,20 +267,15 @@ static int meth_dirty(lua_State *L) {
 static const char *unixdgram_trybind(p_unix un, const char *path) {
     struct sockaddr_un local;
     size_t len = strlen(path);
-    int err;
     if (len >= sizeof(local.sun_path)) return "path too long";
     memset(&local, 0, sizeof(local));
     strcpy(local.sun_path, path);
     local.sun_family = AF_UNIX;
+    size_t addrlen = SUN_LEN(&local);
 #ifdef UNIX_HAS_SUN_LEN
-    local.sun_len = sizeof(local.sun_family) + sizeof(local.sun_len)
-        + len + 1;
-    err = socket_bind(&un->sock, (SA *) &local, local.sun_len);
-
-#else
-    err = socket_bind(&un->sock, (SA *) &local,
-            sizeof(local.sun_family) + len);
+    local.sun_len = addrlen + 1;
 #endif
+    int err = socket_bind(&un->sock, (SA *) &local, addrlen);
     if (err != IO_DONE) socket_destroy(&un->sock);
     return socket_strerror(err);
 }
@@ -315,21 +316,17 @@ static int meth_getsockname(lua_State *L)
 static const char *unixdgram_tryconnect(p_unix un, const char *path)
 {
     struct sockaddr_un remote;
-    int err;
     size_t len = strlen(path);
     if (len >= sizeof(remote.sun_path)) return "path too long";
     memset(&remote, 0, sizeof(remote));
     strcpy(remote.sun_path, path);
     remote.sun_family = AF_UNIX;
     timeout_markstart(&un->tm);
+    size_t addrlen = SUN_LEN(&remote);
 #ifdef UNIX_HAS_SUN_LEN
-    remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len)
-        + len + 1;
-    err = socket_connect(&un->sock, (SA *) &remote, remote.sun_len, &un->tm);
-#else
-    err = socket_connect(&un->sock, (SA *) &remote,
-            sizeof(remote.sun_family) + len, &un->tm);
+    remote.sun_len = addrlen + 1;
 #endif
+    int err = socket_connect(&un->sock, (SA *) &remote, addrlen, &un->tm);
     if (err != IO_DONE) socket_destroy(&un->sock);
     return socket_strerror(err);
 }
