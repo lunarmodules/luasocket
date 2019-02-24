@@ -35,7 +35,7 @@ DEBUG?=NODEBUG
 # LUAINC_macosx:
 # /opt/local/include
 LUAINC_macosx_base?=/opt/local/include
-LUAINC_macosx?=$(LUAINC_macosx_base)/lua/$(LUAV)
+LUAINC_macosx?=$(LUAINC_macosx_base)/lua/$(LUAV) $(LUAINC_macosx_base)/lua$(LUAV)
 # FIXME default should this default to fink or to macports?
 # What happens when more than one Lua version is installed?
 LUAPREFIX_macosx?=/opt/local
@@ -48,7 +48,7 @@ LDIR_macosx?=share/lua/$(LUAV)
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for linux builds
 LUAINC_linux_base?=/usr/include
-LUAINC_linux?=$(LUAINC_linux_base)/lua/$(LUAV)
+LUAINC_linux?=$(LUAINC_linux_base)/lua/$(LUAV) $(LUAINC_linux_base)/lua$(LUAV)
 LUAPREFIX_linux?=/usr/local
 CDIR_linux?=lib/lua/$(LUAV)
 LDIR_linux?=share/lua/$(LUAV)
@@ -57,7 +57,7 @@ LDIR_linux?=share/lua/$(LUAV)
 # /usr/local/include/lua$(LUAV)
 # where lua headers are found for freebsd builds
 LUAINC_freebsd_base?=/usr/local/include/
-LUAINC_freebsd?=$(LUAINC_freebsd_base)/lua$(LUAV)
+LUAINC_freebsd?=$(LUAINC_freebsd_base)/lua/$(LUAV) $(LUAINC_freebsd_base)/lua$(LUAV)
 LUAPREFIX_freebsd?=/usr/local/
 CDIR_freebsd?=lib/lua/$(LUAV)
 LDIR_freebsd?=share/lua/$(LUAV)
@@ -66,7 +66,7 @@ LDIR_freebsd?=share/lua/$(LUAV)
 # LUAINC_mingw:
 # /opt/local/include
 LUAINC_mingw_base?=/usr/include
-LUAINC_mingw?=$(LUAINC_mingw_base)/lua/$(LUAV)
+LUAINC_mingw?=$(LUAINC_mingw_base)/lua/$(LUAV) $(LUAINC_mingw_base)/lua$(LUAV)
 LUALIB_mingw_base?=/usr/bin
 LUALIB_mingw?=$(LUALIB_mingw_base)/lua/$(LUAV)/lua$(subst .,,$(LUAV)).dll
 LUAPREFIX_mingw?=/usr
@@ -78,7 +78,7 @@ LDIR_mingw?=lua/$(LUAV)/lua
 # LUALIB_win32:
 # where lua headers and libraries are found for win32 builds
 LUAPREFIX_win32?=
-LUAINC_win32?=$(LUAPREFIX_win32)/include/lua/$(LUAV)
+LUAINC_win32?=$(LUAPREFIX_win32)/include/lua/$(LUAV) $(LUAPREFIX_win32)/include/lua$(LUAV)
 PLATFORM_win32?=Release
 CDIR_win32?=bin/lua/$(LUAV)/$(PLATFORM_win32)
 LDIR_win32?=bin/lua/$(LUAV)/$(PLATFORM_win32)/lua
@@ -88,7 +88,7 @@ LUALIBNAME_win32?=lua$(subst .,,$(LUAV)).lib
 
 # LUAINC_solaris:
 LUAINC_solaris_base?=/usr/include
-LUAINC_solaris?=$(LUAINC_solaris_base)/lua/$(LUAV)
+LUAINC_solaris?=$(LUAINC_solaris_base)/lua/$(LUAV) $(LUAINC_solaris_base)/lua$(LUAV)
 LUAPREFIX_solaris?=/usr/local
 CDIR_solaris?=lib/lua/$(LUAV)
 LDIR_solaris?=share/lua/$(LUAV)
@@ -153,7 +153,7 @@ DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_macosx= -I$(LUAINC) $(DEF) -Wall -O2 -fno-common \
+CFLAGS_macosx=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common \
 	-fvisibility=hidden
 LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o 
 LD_macosx= export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
@@ -169,7 +169,7 @@ DEF_linux=-DLUASOCKET_$(DEBUG) \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_linux= -I$(LUAINC) $(DEF) -Wall -Wshadow -Wextra \
+CFLAGS_linux=$(LUAINC:%=-I%) $(DEF) -Wall -Wshadow -Wextra \
 	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden
 LDFLAGS_linux=-O -shared -fpic -o 
 LD_linux=gcc
@@ -185,7 +185,7 @@ DEF_freebsd=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_freebsd= -I$(LUAINC) $(DEF) -Wall -Wshadow -Wextra \
+CFLAGS_freebsd=$(LUAINC:%=-I%) $(DEF) -Wall -Wshadow -Wextra \
 	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden
 LDFLAGS_freebsd=-O -shared -fpic -o 
 LD_freebsd=gcc
@@ -201,7 +201,7 @@ DEF_solaris=-DLUASOCKET_$(DEBUG) \
 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
 	-DUNIX_API='__attribute__((visibility("default")))' \
 	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_solaris=-I$(LUAINC) $(DEF) -Wall -Wshadow -Wextra \
+CFLAGS_solaris=$(LUAINC:%=-I%) $(DEF) -Wall -Wshadow -Wextra \
 	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden   
 LDFLAGS_solaris=-lnsl -lsocket -lresolv -O -shared -fpic -o 
 LD_solaris=gcc
@@ -216,7 +216,7 @@ CC_mingw=gcc
 DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) \
 	-DWINVER=0x0501 -DLUASOCKET_API='__declspec(dllexport)' \
 	-DMIME_API='__declspec(dllexport)'
-CFLAGS_mingw= -I$(LUAINC) $(DEF) -Wall -O2 -fno-common \
+CFLAGS_mingw=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common \
 	-fvisibility=hidden
 LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lws2_32 -o 
 LD_mingw=gcc
@@ -233,7 +233,7 @@ DEF_win32= //D "WIN32" //D "NDEBUG" //D "_WINDOWS" //D "_USRDLL" \
      //D "LUASOCKET_API=__declspec(dllexport)" //D "_CRT_SECURE_NO_WARNINGS" \
      //D "_WINDLL" //D "MIME_API=__declspec(dllexport)" \
      //D "LUASOCKET_$(DEBUG)" 
-CFLAGS_win32=//I "$(LUAINC)" $(DEF) //O2 //Ot //MD //W3 //nologo
+CFLAGS_win32=$(LUAINC:%=//I "%") $(DEF) //O2 //Ot //MD //W3 //nologo
 LDFLAGS_win32= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
     //MANIFEST //MANIFESTFILE:"intermediate.manifest" \
     //MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
