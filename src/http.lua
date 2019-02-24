@@ -277,7 +277,9 @@ local function shouldredirect(reqt, code, headers)
     return (reqt.redirect ~= false) and
            (code == 301 or code == 302 or code == 303 or code == 307) and
            (not reqt.method or reqt.method == "GET" or reqt.method == "HEAD")
-           and (not reqt.nredirects or reqt.nredirects < 5)
+        and ((false == reqt.maxredirects)
+                or ((reqt.nredirects or 0)
+                        < (reqt.maxredirects or 5)))
 end
 
 local function shouldreceivebody(reqt, code)
@@ -299,6 +301,7 @@ local trequest, tredirect
         sink = reqt.sink,
         headers = reqt.headers,
         proxy = reqt.proxy,
+        maxredirects = reqt.maxredirects,
         nredirects = (reqt.nredirects or 0) + 1,
         create = reqt.create
     }
