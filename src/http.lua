@@ -151,10 +151,15 @@ function metat.__index:sendbody(headers, source, step)
 end
 
 function metat.__index:receivestatusline()
-    local status = self.try(self.c:receive(5))
+    local status,ec = self.try(self.c:receive(5))
     -- identify HTTP/0.9 responses, which do not contain a status line
     -- this is just a heuristic, but is what the RFC recommends
-    if status ~= "HTTP/" then return nil, status end
+    if status ~= "HTTP/" then
+        if ec == "timeout" then
+            return 408
+        end 
+        return nil, status 
+    end
     -- otherwise proceed reading a status line
     status = self.try(self.c:receive("*l", status))
     local code = socket.skip(2, string.find(status, "HTTP/%d*%.%d* (%d%d%d)"))
@@ -336,6 +341,8 @@ end
     if not code then
         h:receive09body(status, nreqt.sink, nreqt.step)
         return 1, 200
+    elseif code == 408 then
+        return 1, code
     end
     local headers
     -- ignore any 100-continue messages
