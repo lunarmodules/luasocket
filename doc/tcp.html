@@ -477,6 +477,12 @@ used in validating addresses supplied in a call to
 <li> '<tt>tcp-nodelay</tt>': Setting this option to <tt>true</tt>
 disables the Nagle's algorithm for the connection;
 
+<li> '<tt>tcp-keepidle</tt>': value in seconds for <tt>TCP_KEEPIDLE</tt> Linux only!!
+
+<li> '<tt>tcp-keepcnt</tt>': value for <tt>TCP_KEEPCNT</tt> Linux only!!
+
+<li> '<tt>tcp-keepintvl</tt>': value for <tt>TCP_KEEPINTVL</tt> Linux only!!
+
 <li> '<tt>ipv6-v6only</tt>':
 Setting this option to <tt>true</tt> restricts an <tt>inet6</tt> socket to
 sending and receiving only IPv6 packets.

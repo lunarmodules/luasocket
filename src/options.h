@@ -22,6 +22,15 @@ typedef t_opt *p_opt;
 int opt_set_dontroute(lua_State *L, p_socket ps);
 int opt_set_broadcast(lua_State *L, p_socket ps);
 int opt_set_tcp_nodelay(lua_State *L, p_socket ps);
+#ifdef TCP_KEEPIDLE
+int opt_set_tcp_keepidle(lua_State *L, p_socket ps);
+#endif
+#ifdef TCP_KEEPCNT
+int opt_set_tcp_keepcnt(lua_State *L, p_socket ps);
+#endif
+#ifdef TCP_KEEPINTVL
+int opt_set_tcp_keepintvl(lua_State *L, p_socket ps);
+#endif
 int opt_set_keepalive(lua_State *L, p_socket ps);
 int opt_set_linger(lua_State *L, p_socket ps);
 int opt_set_reuseaddr(lua_State *L, p_socket ps);
@@ -44,6 +53,15 @@ int opt_get_broadcast(lua_State *L, p_socket ps);
 int opt_get_reuseaddr(lua_State *L, p_socket ps);
 int opt_get_reuseport(lua_State *L, p_socket ps);
 int opt_get_tcp_nodelay(lua_State *L, p_socket ps);
+#ifdef TCP_KEEPIDLE
+int opt_get_tcp_keepidle(lua_State *L, p_socket ps);
+#endif
+#ifdef TCP_KEEPCNT
+int opt_get_tcp_keepcnt(lua_State *L, p_socket ps);
+#endif
+#ifdef TCP_KEEPINTVL
+int opt_get_tcp_keepintvl(lua_State *L, p_socket ps);
+#endif
 int opt_get_keepalive(lua_State *L, p_socket ps);
 int opt_get_linger(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_loop(lua_State *L, p_socket ps);

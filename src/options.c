@@ -90,6 +90,42 @@ int opt_get_tcp_nodelay(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, IPPROTO_TCP, TCP_NODELAY);
 }
 
+#ifdef TCP_KEEPIDLE
+int opt_get_tcp_keepidle(lua_State *L, p_socket ps)
+{
+    return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPIDLE);
+}
+
+int opt_set_tcp_keepidle(lua_State *L, p_socket ps)
+{
+    return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPIDLE);
+}
+#endif
+
+#ifdef TCP_KEEPCNT
+int opt_get_tcp_keepcnt(lua_State *L, p_socket ps)
+{
+    return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPCNT);
+}
+
+int opt_set_tcp_keepcnt(lua_State *L, p_socket ps)
+{
+    return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPCNT);
+}
+#endif
+
+#ifdef TCP_KEEPINTVL
+int opt_get_tcp_keepintvl(lua_State *L, p_socket ps)
+{
+    return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPINTVL);
+}
+
+int opt_set_tcp_keepintvl(lua_State *L, p_socket ps)
+{
+    return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPINTVL);
+}
+#endif
+
 int opt_set_keepalive(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE);
