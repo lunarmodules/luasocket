@@ -104,22 +104,22 @@ int unixstream_open(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_send(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixstream{client}", 1);
-    return buffer_meth_send(L, &un->buf);
+    return luasocket_buffer_meth_send(L, &un->buf);
 }
 
 static int meth_receive(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixstream{client}", 1);
-    return buffer_meth_receive(L, &un->buf);
+    return luasocket_buffer_meth_receive(L, &un->buf);
 }
 
 static int meth_getstats(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixstream{client}", 1);
-    return buffer_meth_getstats(L, &un->buf);
+    return luasocket_buffer_meth_getstats(L, &un->buf);
 }
 
 static int meth_setstats(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixstream{client}", 1);
-    return buffer_meth_setstats(L, &un->buf);
+    return luasocket_buffer_meth_setstats(L, &un->buf);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -148,7 +148,7 @@ static int meth_setfd(lua_State *L) {
 
 static int meth_dirty(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkgroup(L, "unixstream{any}", 1);
-    lua_pushboolean(L, !buffer_isempty(&un->buf));
+    lua_pushboolean(L, !luasocket_buffer_isempty(&un->buf));
     return 1;
 }
 
@@ -171,7 +171,7 @@ static int meth_accept(lua_State *L) {
         io_init(&clnt->io, (p_send)socket_send, (p_recv)socket_recv,
                 (p_error) socket_ioerror, &clnt->sock);
         timeout_init(&clnt->tm, -1, -1);
-        buffer_init(&clnt->buf, &clnt->io, &clnt->tm);
+        luasocket_buffer_init(&clnt->buf, &clnt->io, &clnt->tm);
         return 1;
     } else {
         lua_pushnil(L);
@@ -347,7 +347,7 @@ static int global_create(lua_State *L) {
         io_init(&un->io, (p_send) socket_send, (p_recv) socket_recv,
                 (p_error) socket_ioerror, &un->sock);
         timeout_init(&un->tm, -1, -1);
-        buffer_init(&un->buf, &un->io, &un->tm);
+        luasocket_buffer_init(&un->buf, &un->io, &un->tm);
         return 1;
     } else {
         lua_pushnil(L);

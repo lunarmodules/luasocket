@@ -74,22 +74,22 @@ LUASOCKET_API int luaopen_socket_serial(lua_State *L) {
 \*-------------------------------------------------------------------------*/
 static int meth_send(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "serial{client}", 1);
-    return buffer_meth_send(L, &un->buf);
+    return luasocket_buffer_meth_send(L, &un->buf);
 }
 
 static int meth_receive(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "serial{client}", 1);
-    return buffer_meth_receive(L, &un->buf);
+    return luasocket_buffer_meth_receive(L, &un->buf);
 }
 
 static int meth_getstats(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "serial{client}", 1);
-    return buffer_meth_getstats(L, &un->buf);
+    return luasocket_buffer_meth_getstats(L, &un->buf);
 }
 
 static int meth_setstats(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "serial{client}", 1);
-    return buffer_meth_setstats(L, &un->buf);
+    return luasocket_buffer_meth_setstats(L, &un->buf);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -110,7 +110,7 @@ static int meth_setfd(lua_State *L) {
 
 static int meth_dirty(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkgroup(L, "serial{any}", 1);
-    lua_pushboolean(L, !buffer_isempty(&un->buf));
+    lua_pushboolean(L, !luasocket_buffer_isempty(&un->buf));
     return 1;
 }
 
@@ -167,6 +167,6 @@ static int global_create(lua_State *L) {
     io_init(&un->io, (p_send) socket_write, (p_recv) socket_read,
             (p_error) socket_ioerror, &un->sock);
     timeout_init(&un->tm, -1, -1);
-    buffer_init(&un->buf, &un->io, &un->tm);
+    luasocket_buffer_init(&un->buf, &un->io, &un->tm);
     return 1;
 }

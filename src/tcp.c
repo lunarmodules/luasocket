@@ -127,22 +127,22 @@ int tcp_open(lua_State *L)
 \*-------------------------------------------------------------------------*/
 static int meth_send(lua_State *L) {
     p_tcp tcp = (p_tcp) auxiliar_checkclass(L, "tcp{client}", 1);
-    return buffer_meth_send(L, &tcp->buf);
+    return luasocket_buffer_meth_send(L, &tcp->buf);
 }
 
 static int meth_receive(lua_State *L) {
     p_tcp tcp = (p_tcp) auxiliar_checkclass(L, "tcp{client}", 1);
-    return buffer_meth_receive(L, &tcp->buf);
+    return luasocket_buffer_meth_receive(L, &tcp->buf);
 }
 
 static int meth_getstats(lua_State *L) {
     p_tcp tcp = (p_tcp) auxiliar_checkclass(L, "tcp{client}", 1);
-    return buffer_meth_getstats(L, &tcp->buf);
+    return luasocket_buffer_meth_getstats(L, &tcp->buf);
 }
 
 static int meth_setstats(lua_State *L) {
     p_tcp tcp = (p_tcp) auxiliar_checkclass(L, "tcp{client}", 1);
-    return buffer_meth_setstats(L, &tcp->buf);
+    return luasocket_buffer_meth_setstats(L, &tcp->buf);
 }
 
 /*-------------------------------------------------------------------------*\
@@ -181,7 +181,7 @@ static int meth_setfd(lua_State *L)
 static int meth_dirty(lua_State *L)
 {
     p_tcp tcp = (p_tcp) auxiliar_checkgroup(L, "tcp{any}", 1);
-    lua_pushboolean(L, !buffer_isempty(&tcp->buf));
+    lua_pushboolean(L, !luasocket_buffer_isempty(&tcp->buf));
     return 1;
 }
 
@@ -206,7 +206,7 @@ static int meth_accept(lua_State *L)
         io_init(&clnt->io, (p_send) socket_send, (p_recv) socket_recv,
                 (p_error) socket_ioerror, &clnt->sock);
         timeout_init(&clnt->tm, -1, -1);
-        buffer_init(&clnt->buf, &clnt->io, &clnt->tm);
+        luasocket_buffer_init(&clnt->buf, &clnt->io, &clnt->tm);
         clnt->family = server->family;
         return 1;
     } else {
@@ -377,7 +377,7 @@ static int tcp_create(lua_State *L, int family) {
     io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv,
             (p_error) socket_ioerror, &tcp->sock);
     timeout_init(&tcp->tm, -1, -1);
-    buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
+    luasocket_buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
     if (family != AF_UNSPEC) {
         const char *err = inet_trycreate(&tcp->sock, family, SOCK_STREAM, 0);
         if (err != NULL) {
@@ -416,7 +416,7 @@ static int global_connect(lua_State *L) {
     io_init(&tcp->io, (p_send) socket_send, (p_recv) socket_recv,
             (p_error) socket_ioerror, &tcp->sock);
     timeout_init(&tcp->tm, -1, -1);
-    buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
+    luasocket_buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
     tcp->sock = SOCKET_INVALID;
     tcp->family = AF_UNSPEC;
     /* allow user to pick local address and port */

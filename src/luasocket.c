@@ -46,7 +46,7 @@ static const luaL_Reg mod[] = {
     {"auxiliar", auxiliar_open},
     {"except", except_open},
     {"timeout", timeout_open},
-    {"buffer", buffer_open},
+    {"buffer", luasocket_buffer_open},
     {"inet", inet_open},
     {"tcp", tcp_open},
     {"udp", udp_open},

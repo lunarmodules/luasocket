@@ -14,8 +14,8 @@
 static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b);
 static int recvline(p_buffer buf, luaL_Buffer *b);
 static int recvall(p_buffer buf, luaL_Buffer *b);
-static int buffer_get(p_buffer buf, const char **data, size_t *count);
-static void buffer_skip(p_buffer buf, size_t count);
+static int luasocket_buffer_get(p_buffer buf, const char **data, size_t *count);
+static void luasocket_buffer_skip(p_buffer buf, size_t count);
 static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent);
 
 /* min and max macros */
@@ -32,7 +32,7 @@ static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent);
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int buffer_open(lua_State *L) {
+int luasocket_buffer_open(lua_State *L) {
     (void) L;
     return 0;
 }
@@ -40,7 +40,7 @@ int buffer_open(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Initializes C structure
 \*-------------------------------------------------------------------------*/
-void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
+void luasocket_buffer_init(p_buffer buf, p_io io, p_timeout tm) {
     buf->first = buf->last = 0;
     buf->io = io;
     buf->tm = tm;
@@ -51,7 +51,7 @@ void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
 /*-------------------------------------------------------------------------*\
 * object:getstats() interface
 \*-------------------------------------------------------------------------*/
-int buffer_meth_getstats(lua_State *L, p_buffer buf) {
+int luasocket_buffer_meth_getstats(lua_State *L, p_buffer buf) {
     lua_pushnumber(L, (lua_Number) buf->received);
     lua_pushnumber(L, (lua_Number) buf->sent);
     lua_pushnumber(L, timeout_gettime() - buf->birthday);
@@ -61,7 +61,7 @@ int buffer_meth_getstats(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * object:setstats() interface
 \*-------------------------------------------------------------------------*/
-int buffer_meth_setstats(lua_State *L, p_buffer buf) {
+int luasocket_buffer_meth_setstats(lua_State *L, p_buffer buf) {
     buf->received = (long) luaL_optnumber(L, 2, (lua_Number) buf->received);
     buf->sent = (long) luaL_optnumber(L, 3, (lua_Number) buf->sent);
     if (lua_isnumber(L, 4)) buf->birthday = timeout_gettime() - lua_tonumber(L, 4);
@@ -72,7 +72,7 @@ int buffer_meth_setstats(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * object:send() interface
 \*-------------------------------------------------------------------------*/
-int buffer_meth_send(lua_State *L, p_buffer buf) {
+int luasocket_buffer_meth_send(lua_State *L, p_buffer buf) {
     int top = lua_gettop(L);
     int err = IO_DONE;
     size_t size = 0, sent = 0;
@@ -105,7 +105,7 @@ int buffer_meth_send(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * object:receive() interface
 \*-------------------------------------------------------------------------*/
-int buffer_meth_receive(lua_State *L, p_buffer buf) {
+int luasocket_buffer_meth_receive(lua_State *L, p_buffer buf) {
     int err = IO_DONE, top = lua_gettop(L);
     luaL_Buffer b;
     size_t size;
@@ -154,7 +154,7 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * Determines if there is any data in the read buffer
 \*-------------------------------------------------------------------------*/
-int buffer_isempty(p_buffer buf) {
+int luasocket_buffer_isempty(p_buffer buf) {
     return buf->first >= buf->last;
 }
 
@@ -189,10 +189,10 @@ static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b) {
     size_t total = 0;
     while (err == IO_DONE) {
         size_t count; const char *data;
-        err = buffer_get(buf, &data, &count);
+        err = luasocket_buffer_get(buf, &data, &count);
         count = MIN(count, wanted - total);
         luaL_addlstring(b, data, count);
-        buffer_skip(buf, count);
+        luasocket_buffer_skip(buf, count);
         total += count;
         if (total >= wanted) break;
     }
@@ -207,10 +207,10 @@ static int recvall(p_buffer buf, luaL_Buffer *b) {
     size_t total = 0;
     while (err == IO_DONE) {
         const char *data; size_t count;
-        err = buffer_get(buf, &data, &count);
+        err = luasocket_buffer_get(buf, &data, &count);
         total += count;
         luaL_addlstring(b, data, count);
-        buffer_skip(buf, count);
+        luasocket_buffer_skip(buf, count);
     }
     if (err == IO_CLOSED) {
         if (total > 0) return IO_DONE;
@@ -226,7 +226,7 @@ static int recvline(p_buffer buf, luaL_Buffer *b) {
     int err = IO_DONE;
     while (err == IO_DONE) {
         size_t count, pos; const char *data;
-        err = buffer_get(buf, &data, &count);
+        err = luasocket_buffer_get(buf, &data, &count);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
             /* we ignore all \r's */
@@ -234,10 +234,10 @@ static int recvline(p_buffer buf, luaL_Buffer *b) {
             pos++;
         }
         if (pos < count) { /* found '\n' */
-            buffer_skip(buf, pos+1); /* skip '\n' too */
+            luasocket_buffer_skip(buf, pos+1); /* skip '\n' too */
             break; /* we are done */
         } else /* reached the end of the buffer */
-            buffer_skip(buf, pos);
+            luasocket_buffer_skip(buf, pos);
     }
     return err;
 }
@@ -246,10 +246,10 @@ static int recvline(p_buffer buf, luaL_Buffer *b) {
 * Skips a given number of bytes from read buffer. No data is read from the
 * transport layer
 \*-------------------------------------------------------------------------*/
-static void buffer_skip(p_buffer buf, size_t count) {
+static void luasocket_buffer_skip(p_buffer buf, size_t count) {
     buf->received += count;
     buf->first += count;
-    if (buffer_isempty(buf))
+    if (luasocket_buffer_isempty(buf))
         buf->first = buf->last = 0;
 }
 
@@ -257,11 +257,11 @@ static void buffer_skip(p_buffer buf, size_t count) {
 * Return any data available in buffer, or get more data from transport layer
 * if buffer is empty
 \*-------------------------------------------------------------------------*/
-static int buffer_get(p_buffer buf, const char **data, size_t *count) {
+static int luasocket_buffer_get(p_buffer buf, const char **data, size_t *count) {
     int err = IO_DONE;
     p_io io = buf->io;
     p_timeout tm = buf->tm;
-    if (buffer_isempty(buf)) {
+    if (luasocket_buffer_isempty(buf)) {
         size_t got;
         err = io->recv(io->ctx, buf->data, BUF_SIZE, &got, tm);
         buf->first = 0;

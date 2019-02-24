@@ -395,7 +395,7 @@ static int global_create(lua_State *L)
         io_init(&un->io, (p_send) socket_send, (p_recv) socket_recv,
                 (p_error) socket_ioerror, &un->sock);
         timeout_init(&un->tm, -1, -1);
-        buffer_init(&un->buf, &un->io, &un->tm);
+        luasocket_buffer_init(&un->buf, &un->io, &un->tm);
         return 1;
     } else {
         lua_pushnil(L);
