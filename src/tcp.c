@@ -88,6 +88,8 @@ static t_opt optget[] = {
 #endif
     {"linger",      opt_get_linger},
     {"error",       opt_get_error},
+	{"recv-buffer-size",     opt_get_recv_buf_size},
+	{"send-buffer-size",     opt_get_send_buf_size},
     {NULL,          NULL}
 };
 
@@ -107,6 +109,8 @@ static t_opt optset[] = {
 #endif
     {"ipv6-v6only", opt_set_ip6_v6only},
     {"linger",      opt_set_linger},
+	{"recv-buffer-size",     opt_set_recv_buf_size},
+	{"send-buffer-size",     opt_set_send_buf_size},
     {NULL,          NULL}
 };
 
