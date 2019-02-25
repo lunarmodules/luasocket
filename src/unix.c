@@ -2,6 +2,8 @@
 * Unix domain socket
 * LuaSocket toolkit
 \*=========================================================================*/
+#include "luasocket.h"
+
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -45,7 +47,7 @@ static int compat_socket_unix_call(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int luaopen_socket_unix(lua_State *L)
+LUASOCKET_API int luaopen_socket_unix(lua_State *L)
 {
     int i;
     lua_newtable(L);
