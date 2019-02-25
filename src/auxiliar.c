@@ -2,10 +2,10 @@
 * Auxiliar routines for class hierarchy manipulation
 * LuaSocket toolkit
 \*=========================================================================*/
+#include "luasocket.h"
+#include "auxiliar.h"
 #include <string.h>
 #include <stdio.h>
-
-#include "auxiliar.h"
 
 /*=========================================================================*\
 * Exported functions
@@ -13,7 +13,7 @@
 /*-------------------------------------------------------------------------*\
 * Initializes the module
 \*-------------------------------------------------------------------------*/
-int auxiliar_open(lua_State *L) {
+LUASOCKET_PRIVATE int auxiliar_open(lua_State *L) {
     (void) L;
     return 0;
 }
@@ -22,7 +22,7 @@ int auxiliar_open(lua_State *L) {
 * Creates a new class with given methods
 * Methods whose names start with __ are passed directly to the metatable.
 \*-------------------------------------------------------------------------*/
-void auxiliar_newclass(lua_State *L, const char *classname, luaL_Reg *func) {
+LUASOCKET_PRIVATE void auxiliar_newclass(lua_State *L, const char *classname, luaL_Reg *func) {
     luaL_newmetatable(L, classname); /* mt */
     /* create __index table to place methods */
     lua_pushstring(L, "__index");    /* mt,"__index" */
@@ -45,7 +45,7 @@ void auxiliar_newclass(lua_State *L, const char *classname, luaL_Reg *func) {
 /*-------------------------------------------------------------------------*\
 * Prints the value of a class in a nice way
 \*-------------------------------------------------------------------------*/
-int auxiliar_tostring(lua_State *L) {
+LUASOCKET_PRIVATE int auxiliar_tostring(lua_State *L) {
     char buf[32];
     if (!lua_getmetatable(L, 1)) goto error;
     lua_pushstring(L, "__index");
@@ -66,7 +66,7 @@ error:
 /*-------------------------------------------------------------------------*\
 * Insert class into group
 \*-------------------------------------------------------------------------*/
-void auxiliar_add2group(lua_State *L, const char *classname, const char *groupname) {
+LUASOCKET_PRIVATE void auxiliar_add2group(lua_State *L, const char *classname, const char *groupname) {
     luaL_getmetatable(L, classname);
     lua_pushstring(L, groupname);
     lua_pushboolean(L, 1);
@@ -77,7 +77,7 @@ void auxiliar_add2group(lua_State *L, const char *classname, const char *groupna
 /*-------------------------------------------------------------------------*\
 * Make sure argument is a boolean
 \*-------------------------------------------------------------------------*/
-int auxiliar_checkboolean(lua_State *L, int objidx) {
+LUASOCKET_PRIVATE int auxiliar_checkboolean(lua_State *L, int objidx) {
     if (!lua_isboolean(L, objidx))
         auxiliar_typeerror(L, objidx, lua_typename(L, LUA_TBOOLEAN));
     return lua_toboolean(L, objidx);
@@ -87,7 +87,7 @@ int auxiliar_checkboolean(lua_State *L, int objidx) {
 * Return userdata pointer if object belongs to a given class, abort with
 * error otherwise
 \*-------------------------------------------------------------------------*/
-void *auxiliar_checkclass(lua_State *L, const char *classname, int objidx) {
+LUASOCKET_PRIVATE void *auxiliar_checkclass(lua_State *L, const char *classname, int objidx) {
     void *data = auxiliar_getclassudata(L, classname, objidx);
     if (!data) {
         char msg[45];
@@ -101,7 +101,7 @@ void *auxiliar_checkclass(lua_State *L, const char *classname, int objidx) {
 * Return userdata pointer if object belongs to a given group, abort with
 * error otherwise
 \*-------------------------------------------------------------------------*/
-void *auxiliar_checkgroup(lua_State *L, const char *groupname, int objidx) {
+LUASOCKET_PRIVATE void *auxiliar_checkgroup(lua_State *L, const char *groupname, int objidx) {
     void *data = auxiliar_getgroupudata(L, groupname, objidx);
     if (!data) {
         char msg[45];
@@ -114,7 +114,7 @@ void *auxiliar_checkgroup(lua_State *L, const char *groupname, int objidx) {
 /*-------------------------------------------------------------------------*\
 * Set object class
 \*-------------------------------------------------------------------------*/
-void auxiliar_setclass(lua_State *L, const char *classname, int objidx) {
+LUASOCKET_PRIVATE void auxiliar_setclass(lua_State *L, const char *classname, int objidx) {
     luaL_getmetatable(L, classname);
     if (objidx < 0) objidx--;
     lua_setmetatable(L, objidx);
@@ -124,7 +124,7 @@ void auxiliar_setclass(lua_State *L, const char *classname, int objidx) {
 * Get a userdata pointer if object belongs to a given group. Return NULL
 * otherwise
 \*-------------------------------------------------------------------------*/
-void *auxiliar_getgroupudata(lua_State *L, const char *groupname, int objidx) {
+LUASOCKET_PRIVATE void *auxiliar_getgroupudata(lua_State *L, const char *groupname, int objidx) {
     if (!lua_getmetatable(L, objidx))
         return NULL;
     lua_pushstring(L, groupname);
@@ -142,7 +142,7 @@ void *auxiliar_getgroupudata(lua_State *L, const char *groupname, int objidx) {
 * Get a userdata pointer if object belongs to a given class. Return NULL
 * otherwise
 \*-------------------------------------------------------------------------*/
-void *auxiliar_getclassudata(lua_State *L, const char *classname, int objidx) {
+LUASOCKET_PRIVATE void *auxiliar_getclassudata(lua_State *L, const char *classname, int objidx) {
     return luaL_testudata(L, objidx, classname);
 }
 
@@ -150,7 +150,7 @@ void *auxiliar_getclassudata(lua_State *L, const char *classname, int objidx) {
 * Throws error when argument does not have correct type.
 * Used to be part of lauxlib in Lua 5.1, was dropped from 5.2.
 \*-------------------------------------------------------------------------*/
-int auxiliar_typeerror (lua_State *L, int narg, const char *tname) {
+LUASOCKET_PRIVATE int auxiliar_typeerror (lua_State *L, int narg, const char *tname) {
   const char *msg = lua_pushfstring(L, "%s expected, got %s", tname,
       luaL_typename(L, narg));
   return luaL_argerror(L, narg, msg);
