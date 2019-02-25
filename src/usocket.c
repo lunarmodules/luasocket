@@ -6,11 +6,13 @@
 * The penalty of calling select to avoid busy-wait is only paid when
 * the I/O call fail in the first place.
 \*=========================================================================*/
-#include <string.h>
-#include <signal.h>
+#include "luasocket.h"
 
 #include "socket.h"
 #include "pierror.h"
+
+#include <string.h>
+#include <signal.h>
 
 /*-------------------------------------------------------------------------*\
 * Wait for readable/writable/connected socket with timeout
@@ -21,7 +23,7 @@
 #define WAITFD_R        POLLIN
 #define WAITFD_W        POLLOUT
 #define WAITFD_C        (POLLIN|POLLOUT)
-int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
     int ret;
     struct pollfd pfd;
     pfd.fd = *ps;
@@ -43,7 +45,7 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
 #define WAITFD_W        2
 #define WAITFD_C        (WAITFD_R|WAITFD_W)
 
-int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
     int ret;
     fd_set rfds, wfds, *rp, *wp;
     struct timeval tv, *tp;
@@ -75,7 +77,7 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int socket_open(void) {
+LUASOCKET_PRIVATE int socket_open(void) {
     /* installs a handler to ignore sigpipe or it will crash us */
     signal(SIGPIPE, SIG_IGN);
     return 1;
@@ -84,14 +86,14 @@ int socket_open(void) {
 /*-------------------------------------------------------------------------*\
 * Close module
 \*-------------------------------------------------------------------------*/
-int socket_close(void) {
+LUASOCKET_PRIVATE int socket_close(void) {
     return 1;
 }
 
 /*-------------------------------------------------------------------------*\
 * Close and inutilize socket
 \*-------------------------------------------------------------------------*/
-void socket_destroy(p_socket ps) {
+LUASOCKET_PRIVATE void socket_destroy(p_socket ps) {
     if (*ps != SOCKET_INVALID) {
         close(*ps);
         *ps = SOCKET_INVALID;
@@ -101,7 +103,7 @@ void socket_destroy(p_socket ps) {
 /*-------------------------------------------------------------------------*\
 * Select with timeout control
 \*-------------------------------------------------------------------------*/
-int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
+LUASOCKET_PRIVATE int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
         p_timeout tm) {
     int ret;
     do {
@@ -118,7 +120,7 @@ int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
 /*-------------------------------------------------------------------------*\
 * Creates and sets up a socket
 \*-------------------------------------------------------------------------*/
-int socket_create(p_socket ps, int domain, int type, int protocol) {
+LUASOCKET_PRIVATE int socket_create(p_socket ps, int domain, int type, int protocol) {
     *ps = socket(domain, type, protocol);
     if (*ps != SOCKET_INVALID) return IO_DONE;
     else return errno;
@@ -127,7 +129,7 @@ int socket_create(p_socket ps, int domain, int type, int protocol) {
 /*-------------------------------------------------------------------------*\
 * Binds or returns error message
 \*-------------------------------------------------------------------------*/
-int socket_bind(p_socket ps, SA *addr, socklen_t len) {
+LUASOCKET_PRIVATE int socket_bind(p_socket ps, SA *addr, socklen_t len) {
     int err = IO_DONE;
     socket_setblocking(ps);
     if (bind(*ps, addr, len) < 0) err = errno;
@@ -138,7 +140,7 @@ int socket_bind(p_socket ps, SA *addr, socklen_t len) {
 /*-------------------------------------------------------------------------*\
 *
 \*-------------------------------------------------------------------------*/
-int socket_listen(p_socket ps, int backlog) {
+LUASOCKET_PRIVATE int socket_listen(p_socket ps, int backlog) {
     int err = IO_DONE;
     if (listen(*ps, backlog)) err = errno;
     return err;
@@ -147,14 +149,14 @@ int socket_listen(p_socket ps, int backlog) {
 /*-------------------------------------------------------------------------*\
 *
 \*-------------------------------------------------------------------------*/
-void socket_shutdown(p_socket ps, int how) {
+LUASOCKET_PRIVATE void socket_shutdown(p_socket ps, int how) {
     shutdown(*ps, how);
 }
 
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
     int err;
     /* avoid calling on closed sockets */
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
@@ -176,7 +178,7 @@ int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
 /*-------------------------------------------------------------------------*\
 * Accept with timeout
 \*-------------------------------------------------------------------------*/
-int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, p_timeout tm) {
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
         int err;
@@ -193,7 +195,7 @@ int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len, p_timeout 
 /*-------------------------------------------------------------------------*\
 * Send with timeout
 \*-------------------------------------------------------------------------*/
-int socket_send(p_socket ps, const char *data, size_t count,
+LUASOCKET_PRIVATE int socket_send(p_socket ps, const char *data, size_t count,
         size_t *sent, p_timeout tm)
 {
     int err;
@@ -227,7 +229,7 @@ int socket_send(p_socket ps, const char *data, size_t count,
 /*-------------------------------------------------------------------------*\
 * Sendto with timeout
 \*-------------------------------------------------------------------------*/
-int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
+LUASOCKET_PRIVATE int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
         SA *addr, socklen_t len, p_timeout tm)
 {
     int err;
@@ -252,7 +254,7 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
 /*-------------------------------------------------------------------------*\
 * Receive with timeout
 \*-------------------------------------------------------------------------*/
-int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
     int err;
     *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
@@ -274,7 +276,7 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
 /*-------------------------------------------------------------------------*\
 * Recvfrom with timeout
 \*-------------------------------------------------------------------------*/
-int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
+LUASOCKET_PRIVATE int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
         SA *addr, socklen_t *len, p_timeout tm) {
     int err;
     *got = 0;
@@ -302,7 +304,7 @@ int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
 * with send/recv replaced with write/read. We can't just use write/read
 * in the socket version, because behaviour when size is zero is different.
 \*-------------------------------------------------------------------------*/
-int socket_write(p_socket ps, const char *data, size_t count,
+LUASOCKET_PRIVATE int socket_write(p_socket ps, const char *data, size_t count,
         size_t *sent, p_timeout tm)
 {
     int err;
@@ -337,7 +339,7 @@ int socket_write(p_socket ps, const char *data, size_t count,
 * Read with timeout
 * See note for socket_write
 \*-------------------------------------------------------------------------*/
-int socket_read(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_read(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm) {
     int err;
     *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
@@ -359,7 +361,7 @@ int socket_read(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
 /*-------------------------------------------------------------------------*\
 * Put socket into blocking mode
 \*-------------------------------------------------------------------------*/
-void socket_setblocking(p_socket ps) {
+LUASOCKET_PRIVATE void socket_setblocking(p_socket ps) {
     int flags = fcntl(*ps, F_GETFL, 0);
     flags &= (~(O_NONBLOCK));
     fcntl(*ps, F_SETFL, flags);
@@ -368,7 +370,7 @@ void socket_setblocking(p_socket ps) {
 /*-------------------------------------------------------------------------*\
 * Put socket into non-blocking mode
 \*-------------------------------------------------------------------------*/
-void socket_setnonblocking(p_socket ps) {
+LUASOCKET_PRIVATE void socket_setnonblocking(p_socket ps) {
     int flags = fcntl(*ps, F_GETFL, 0);
     flags |= O_NONBLOCK;
     fcntl(*ps, F_SETFL, flags);
@@ -377,7 +379,7 @@ void socket_setnonblocking(p_socket ps) {
 /*-------------------------------------------------------------------------*\
 * DNS helpers
 \*-------------------------------------------------------------------------*/
-int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
+LUASOCKET_PRIVATE int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
     *hp = gethostbyaddr(addr, len, AF_INET);
     if (*hp) return IO_DONE;
     else if (h_errno) return h_errno;
@@ -385,7 +387,7 @@ int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
     else return IO_UNKNOWN;
 }
 
-int socket_gethostbyname(const char *addr, struct hostent **hp) {
+LUASOCKET_PRIVATE int socket_gethostbyname(const char *addr, struct hostent **hp) {
     *hp = gethostbyname(addr);
     if (*hp) return IO_DONE;
     else if (h_errno) return h_errno;
@@ -397,7 +399,7 @@ int socket_gethostbyname(const char *addr, struct hostent **hp) {
 * Error translation functions
 * Make sure important error messages are standard
 \*-------------------------------------------------------------------------*/
-const char *socket_hoststrerror(int err) {
+LUASOCKET_PRIVATE const char *socket_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
         case HOST_NOT_FOUND: return PIE_HOST_NOT_FOUND;
@@ -405,7 +407,7 @@ const char *socket_hoststrerror(int err) {
     }
 }
 
-const char *socket_strerror(int err) {
+LUASOCKET_PRIVATE const char *socket_strerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
         case EADDRINUSE: return PIE_ADDRINUSE;
@@ -421,12 +423,12 @@ const char *socket_strerror(int err) {
     }
 }
 
-const char *socket_ioerror(p_socket ps, int err) {
+LUASOCKET_PRIVATE const char *socket_ioerror(p_socket ps, int err) {
     (void) ps;
     return socket_strerror(err);
 }
 
-const char *socket_gaistrerror(int err) {
+LUASOCKET_PRIVATE const char *socket_gaistrerror(int err) {
     if (err == 0) return NULL;
     switch (err) {
         case EAI_AGAIN: return PIE_AGAIN;
