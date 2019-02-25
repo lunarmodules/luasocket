@@ -2,8 +2,7 @@
 * Unix domain socket dgram submodule
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <string.h>
-#include <stdlib.h>
+#include "luasocket.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -13,6 +12,10 @@
 #include "socket.h"
 #include "options.h"
 #include "unix.h"
+
+#include <string.h>
+#include <stdlib.h>
+
 #include <sys/un.h>
 
 #define UNIXDGRAM_DATAGRAMSIZE 8192
@@ -83,7 +86,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int unixdgram_open(lua_State *L)
+LUASOCKET_PRIVATE int unixdgram_open(lua_State *L)
 {
     /* create classes */
     auxiliar_newclass(L, "unixdgram{connected}", unixdgram_methods);
