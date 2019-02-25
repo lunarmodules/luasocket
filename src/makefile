@@ -149,12 +149,8 @@ PLATS= macosx linux win32 mingw solaris
 SO_macosx=so
 O_macosx=o
 CC_macosx=gcc
-DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN \
-	-DLUASOCKET_API='__attribute__((visibility("default")))' \
-	-DUNIX_API='__attribute__((visibility("default")))' \
-	-DMIME_API='__attribute__((visibility("default")))'
-CFLAGS_macosx=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common \
-	-fvisibility=hidden
+DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
+CFLAGS_macosx=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
 LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o 
 LD_macosx= export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
 SOCKET_macosx=usocket.o
@@ -165,12 +161,9 @@ SOCKET_macosx=usocket.o
 SO_linux=so
 O_linux=o
 CC_linux=gcc
-DEF_linux=-DLUASOCKET_$(DEBUG) \
-	-DLUASOCKET_API='__attribute__((visibility("default")))' \
-	-DUNIX_API='__attribute__((visibility("default")))' \
-	-DMIME_API='__attribute__((visibility("default")))'
+DEF_linux=-DLUASOCKET_$(DEBUG)
 CFLAGS_linux=$(LUAINC:%=-I%) $(DEF) -Wall -Wshadow -Wextra \
-	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden
+	-Wimplicit -O2 -ggdb3 -fpic
 LDFLAGS_linux=-O -shared -fpic -o 
 LD_linux=gcc
 SOCKET_linux=usocket.o
@@ -181,12 +174,9 @@ SOCKET_linux=usocket.o
 SO_freebsd=so
 O_freebsd=o
 CC_freebsd=gcc
-DEF_freebsd=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN \
-	-DLUASOCKET_API='__attribute__((visibility("default")))' \
-	-DUNIX_API='__attribute__((visibility("default")))' \
-	-DMIME_API='__attribute__((visibility("default")))'
+DEF_freebsd=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
 CFLAGS_freebsd=$(LUAINC:%=-I%) $(DEF) -Wall -Wshadow -Wextra \
-	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden
+	-Wimplicit -O2 -ggdb3 -fpic
 LDFLAGS_freebsd=-O -shared -fpic -o 
 LD_freebsd=gcc
 SOCKET_freebsd=usocket.o
@@ -197,12 +187,9 @@ SOCKET_freebsd=usocket.o
 SO_solaris=so
 O_solaris=o
 CC_solaris=gcc
-DEF_solaris=-DLUASOCKET_$(DEBUG) \
-	-DLUASOCKET_API='__attribute__((visibility("default")))' \
-	-DUNIX_API='__attribute__((visibility("default")))' \
-	-DMIME_API='__attribute__((visibility("default")))'
+DEF_solaris=-DLUASOCKET_$(DEBUG)
 CFLAGS_solaris=$(LUAINC:%=-I%) $(DEF) -Wall -Wshadow -Wextra \
-	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden   
+	-Wimplicit -O2 -ggdb3 -fpic
 LDFLAGS_solaris=-lnsl -lsocket -lresolv -O -shared -fpic -o 
 LD_solaris=gcc
 SOCKET_solaris=usocket.o
@@ -214,10 +201,8 @@ SO_mingw=dll
 O_mingw=o
 CC_mingw=gcc
 DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) \
-	-DWINVER=0x0501 -DLUASOCKET_API='__declspec(dllexport)' \
-	-DMIME_API='__declspec(dllexport)'
-CFLAGS_mingw=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common \
-	-fvisibility=hidden
+	-DWINVER=0x0501
+CFLAGS_mingw=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
 LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lws2_32 -o 
 LD_mingw=gcc
 SOCKET_mingw=wsocket.o
@@ -230,8 +215,8 @@ SO_win32=dll
 O_win32=obj
 CC_win32=cl
 DEF_win32= //D "WIN32" //D "NDEBUG" //D "_WINDOWS" //D "_USRDLL" \
-     //D "LUASOCKET_API=__declspec(dllexport)" //D "_CRT_SECURE_NO_WARNINGS" \
-     //D "_WINDLL" //D "MIME_API=__declspec(dllexport)" \
+     //D "_CRT_SECURE_NO_WARNINGS" \
+     //D "_WINDLL"  \
      //D "LUASOCKET_$(DEBUG)" 
 CFLAGS_win32=$(LUAINC:%=//I "%") $(DEF) //O2 //Ot //MD //W3 //nologo
 LDFLAGS_win32= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
