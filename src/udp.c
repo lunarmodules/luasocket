@@ -2,8 +2,7 @@
 * UDP object
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <string.h>
-#include <stdlib.h>
+#include "luasocket.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -14,6 +13,9 @@
 #include "inet.h"
 #include "options.h"
 #include "udp.h"
+
+#include <string.h>
+#include <stdlib.h>
 
 /* min and max macros */
 #ifndef MIN
@@ -122,7 +124,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int udp_open(lua_State *L) {
+LUASOCKET_PRIVATE int udp_open(lua_State *L) {
     /* create classes */
     auxiliar_newclass(L, "udp{connected}", udp_methods);
     auxiliar_newclass(L, "udp{unconnected}", udp_methods);
