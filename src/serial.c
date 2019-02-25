@@ -2,6 +2,8 @@
 * Serial stream
 * LuaSocket toolkit
 \*=========================================================================*/
+#include "luasocket.h"
+
 #include <string.h>
 
 #include "lua.h"
