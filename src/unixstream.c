@@ -2,7 +2,7 @@
 * Unix domain socket stream sub module
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <string.h>
+#include "luasocket.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -12,6 +12,8 @@
 #include "socket.h"
 #include "options.h"
 #include "unixstream.h"
+
+#include <string.h>
 #include <sys/un.h>
 
 /*=========================================================================*\
@@ -80,7 +82,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int unixstream_open(lua_State *L)
+LUASOCKET_PRIVATE int unixstream_open(lua_State *L)
 {
     /* create classes */
     auxiliar_newclass(L, "unixstream{master}", unixstream_methods);

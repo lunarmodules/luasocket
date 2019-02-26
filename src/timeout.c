@@ -2,9 +2,7 @@
 * Timeout management functions
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <stdio.h>
-#include <limits.h>
-#include <float.h>
+#include "luasocket.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -12,6 +10,10 @@
 
 #include "auxiliar.h"
 #include "timeout.h"
+
+#include <stdio.h>
+#include <limits.h>
+#include <float.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -46,7 +48,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initialize structure
 \*-------------------------------------------------------------------------*/
-void timeout_init(p_timeout tm, double block, double total) {
+LUASOCKET_PRIVATE void timeout_init(p_timeout tm, double block, double total) {
     tm->block = block;
     tm->total = total;
 }
@@ -59,7 +61,7 @@ void timeout_init(p_timeout tm, double block, double total) {
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-double timeout_get(p_timeout tm) {
+LUASOCKET_PRIVATE double timeout_get(p_timeout tm) {
     if (tm->block < 0.0 && tm->total < 0.0) {
         return -1;
     } else if (tm->block < 0.0) {
@@ -80,7 +82,7 @@ double timeout_get(p_timeout tm) {
 * Returns
 *   start field of structure
 \*-------------------------------------------------------------------------*/
-double timeout_getstart(p_timeout tm) {
+LUASOCKET_PRIVATE double timeout_getstart(p_timeout tm) {
     return tm->start;
 }
 
@@ -92,7 +94,7 @@ double timeout_getstart(p_timeout tm) {
 * Returns
 *   the number of ms left or -1 if there is no time limit
 \*-------------------------------------------------------------------------*/
-double timeout_getretry(p_timeout tm) {
+LUASOCKET_PRIVATE double timeout_getretry(p_timeout tm) {
     if (tm->block < 0.0 && tm->total < 0.0) {
         return -1;
     } else if (tm->block < 0.0) {
@@ -112,7 +114,7 @@ double timeout_getretry(p_timeout tm) {
 * Input
 *   tm: timeout control structure
 \*-------------------------------------------------------------------------*/
-p_timeout timeout_markstart(p_timeout tm) {
+LUASOCKET_PRIVATE p_timeout timeout_markstart(p_timeout tm) {
     tm->start = timeout_gettime();
     return tm;
 }
@@ -123,7 +125,7 @@ p_timeout timeout_markstart(p_timeout tm) {
 *   time in s.
 \*-------------------------------------------------------------------------*/
 #ifdef _WIN32
-double timeout_gettime(void) {
+LUASOCKET_PRIVATE double timeout_gettime(void) {
     FILETIME ft;
     double t;
     GetSystemTimeAsFileTime(&ft);
@@ -133,7 +135,7 @@ double timeout_gettime(void) {
     return (t - 11644473600.0);
 }
 #else
-double timeout_gettime(void) {
+LUASOCKET_PRIVATE double timeout_gettime(void) {
     struct timeval v;
     gettimeofday(&v, (struct timezone *) NULL);
     /* Unix Epoch time (time since January 1, 1970 (UTC)) */
@@ -144,7 +146,7 @@ double timeout_gettime(void) {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int timeout_open(lua_State *L) {
+LUASOCKET_PRIVATE int timeout_open(lua_State *L) {
     luaL_setfuncs(L, func, 0);
     return 0;
 }
@@ -155,7 +157,7 @@ int timeout_open(lua_State *L) {
 *   time: time out value in seconds
 *   mode: "b" for block timeout, "t" for total timeout. (default: b)
 \*-------------------------------------------------------------------------*/
-int timeout_meth_settimeout(lua_State *L, p_timeout tm) {
+LUASOCKET_PRIVATE int timeout_meth_settimeout(lua_State *L, p_timeout tm) {
     double t = luaL_optnumber(L, 2, -1);
     const char *mode = luaL_optstring(L, 3, "b");
     switch (*mode) {
@@ -177,7 +179,7 @@ int timeout_meth_settimeout(lua_State *L, p_timeout tm) {
 * Gets timeout values for IO operations
 * Lua Output: block, total
 \*-------------------------------------------------------------------------*/
-int timeout_meth_gettimeout(lua_State *L, p_timeout tm) {
+LUASOCKET_PRIVATE int timeout_meth_gettimeout(lua_State *L, p_timeout tm) {
     lua_pushnumber(L, tm->block);
     lua_pushnumber(L, tm->total);
     return 2;
@@ -199,7 +201,7 @@ static int timeout_lua_gettime(lua_State *L)
 * Sleep for n seconds.
 \*-------------------------------------------------------------------------*/
 #ifdef _WIN32
-int timeout_lua_sleep(lua_State *L)
+LUASOCKET_PRIVATE int timeout_lua_sleep(lua_State *L)
 {
     double n = luaL_checknumber(L, 1);
     if (n < 0.0) n = 0.0;
@@ -209,7 +211,7 @@ int timeout_lua_sleep(lua_State *L)
     return 0;
 }
 #else
-int timeout_lua_sleep(lua_State *L)
+LUASOCKET_PRIVATE int timeout_lua_sleep(lua_State *L)
 {
     double n = luaL_checknumber(L, 1);
     struct timespec t, r;

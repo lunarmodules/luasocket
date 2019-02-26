@@ -2,6 +2,8 @@
 * Simple exception support
 * LuaSocket toolkit
 \*=========================================================================*/
+#include "luasocket.h"
+
 #include <stdio.h>
 
 #include "lua.h"
@@ -124,7 +126,7 @@ static int global_protect(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Init module
 \*-------------------------------------------------------------------------*/
-int except_open(lua_State *L) {
+LUASOCKET_PRIVATE int except_open(lua_State *L) {
     lua_newtable(L); /* metatable for wrapped exceptions */
     lua_pushboolean(L, 0);
     lua_setfield(L, -2, "__metatable");

@@ -2,7 +2,7 @@
 * Select implementation
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <string.h>
+#include "luasocket.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -11,6 +11,8 @@
 #include "socket.h"
 #include "timeout.h"
 #include "select.h"
+
+#include <string.h>
 
 /*=========================================================================*\
 * Internal function prototypes.
@@ -37,7 +39,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int select_open(lua_State *L) {
+LUASOCKET_PRIVATE int select_open(lua_State *L) {
     lua_pushstring(L, "_SETSIZE");
     lua_pushinteger(L, FD_SETSIZE);
     lua_rawset(L, -3);

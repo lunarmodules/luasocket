@@ -2,6 +2,8 @@
 * Internet domain functions
 * LuaSocket toolkit
 \*=========================================================================*/
+#include "luasocket.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +40,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int inet_open(lua_State *L)
+LUASOCKET_PRIVATE int inet_open(lua_State *L)
 {
     lua_pushstring(L, "dns");
     lua_newtable(L);
@@ -143,7 +145,7 @@ static int inet_global_toip(lua_State *L)
     return 2;
 }
 
-int inet_optfamily(lua_State* L, int narg, const char* def)
+LUASOCKET_PRIVATE int inet_optfamily(lua_State* L, int narg, const char* def)
 {
     static const char* optname[] = { "unspec", "inet", "inet6", NULL };
     static int optvalue[] = { AF_UNSPEC, AF_INET, AF_INET6, 0 };
@@ -151,7 +153,7 @@ int inet_optfamily(lua_State* L, int narg, const char* def)
     return optvalue[luaL_checkoption(L, narg, def, optname)];
 }
 
-int inet_optsocktype(lua_State* L, int narg, const char* def)
+LUASOCKET_PRIVATE int inet_optsocktype(lua_State* L, int narg, const char* def)
 {
     static const char* optname[] = { "stream", "dgram", NULL };
     static int optvalue[] = { SOCK_STREAM, SOCK_DGRAM, 0 };
@@ -242,7 +244,7 @@ static int inet_global_gethostname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Retrieves socket peer name
 \*-------------------------------------------------------------------------*/
-int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
+LUASOCKET_PRIVATE int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
 {
     int err;
     struct sockaddr_storage peer;
@@ -276,7 +278,7 @@ int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
 /*-------------------------------------------------------------------------*\
 * Retrieves socket local name
 \*-------------------------------------------------------------------------*/
-int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
+LUASOCKET_PRIVATE int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
 {
     int err;
     struct sockaddr_storage peer;
@@ -352,7 +354,7 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
 \*-------------------------------------------------------------------------*/
-const char *inet_trycreate(p_socket ps, int family, int type, int protocol) {
+LUASOCKET_PRIVATE const char *inet_trycreate(p_socket ps, int family, int type, int protocol) {
     const char *err = socket_strerror(socket_create(ps, family, type, protocol));
     if (err == NULL && family == AF_INET6) {
         int yes = 1;
@@ -364,7 +366,7 @@ const char *inet_trycreate(p_socket ps, int family, int type, int protocol) {
 /*-------------------------------------------------------------------------*\
 * "Disconnects" a DGRAM socket
 \*-------------------------------------------------------------------------*/
-const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
+LUASOCKET_PRIVATE const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
 {
     switch (family) {
         case AF_INET: {
@@ -391,7 +393,7 @@ const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
 /*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_tryconnect(p_socket ps, int *family, const char *address,
+LUASOCKET_PRIVATE const char *inet_tryconnect(p_socket ps, int *family, const char *address,
         const char *serv, p_timeout tm, struct addrinfo *connecthints)
 {
     struct addrinfo *iterator = NULL, *resolved = NULL;
@@ -437,7 +439,7 @@ const char *inet_tryconnect(p_socket ps, int *family, const char *address,
 /*-------------------------------------------------------------------------*\
 * Tries to accept a socket
 \*-------------------------------------------------------------------------*/
-const char *inet_tryaccept(p_socket server, int family, p_socket client,
+LUASOCKET_PRIVATE const char *inet_tryaccept(p_socket server, int family, p_socket client,
     p_timeout tm) {
 	socklen_t len;
 	t_sockaddr_storage addr;
@@ -453,7 +455,7 @@ const char *inet_tryaccept(p_socket server, int family, p_socket client,
 /*-------------------------------------------------------------------------*\
 * Tries to bind socket to (address, port)
 \*-------------------------------------------------------------------------*/
-const char *inet_trybind(p_socket ps, int *family, const char *address,
+LUASOCKET_PRIVATE const char *inet_trybind(p_socket ps, int *family, const char *address,
     const char *serv, struct addrinfo *bindhints) {
     struct addrinfo *iterator = NULL, *resolved = NULL;
     const char *err = NULL;
@@ -497,7 +499,7 @@ const char *inet_trybind(p_socket ps, int *family, const char *address,
 * Some systems do not provide these so that we provide our own.
 \*-------------------------------------------------------------------------*/
 #ifdef LUASOCKET_INET_ATON
-int inet_aton(const char *cp, struct in_addr *inp)
+LUASOCKET_PRIVATE int inet_aton(const char *cp, struct in_addr *inp)
 {
     unsigned int a = 0, b = 0, c = 0, d = 0;
     int n = 0, r;
@@ -519,7 +521,7 @@ int inet_aton(const char *cp, struct in_addr *inp)
 #endif
 
 #ifdef LUASOCKET_INET_PTON
-int inet_pton(int af, const char *src, void *dst)
+LUASOCKET_PRIVATE int inet_pton(int af, const char *src, void *dst)
 {
     struct addrinfo hints, *res;
     int ret = 1;

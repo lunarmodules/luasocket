@@ -5,6 +5,8 @@
 * The penalty of calling select to avoid busy-wait is only paid when
 * the I/O call fail in the first place.
 \*=========================================================================*/
+#include "luasocket.h"
+
 #include <string.h>
 
 #include "socket.h"
@@ -16,7 +18,7 @@ static const char *wstrerror(int err);
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int socket_open(void) {
+LUASOCKET_PRIVATE int socket_open(void) {
     WSADATA wsaData;
     WORD wVersionRequested = MAKEWORD(2, 0);
     int err = WSAStartup(wVersionRequested, &wsaData );
@@ -32,7 +34,7 @@ int socket_open(void) {
 /*-------------------------------------------------------------------------*\
 * Close module
 \*-------------------------------------------------------------------------*/
-int socket_close(void) {
+LUASOCKET_PRIVATE int socket_close(void) {
     WSACleanup();
     return 1;
 }
@@ -45,7 +47,7 @@ int socket_close(void) {
 #define WAITFD_E        4
 #define WAITFD_C        (WAITFD_E|WAITFD_W)
 
-int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
     int ret;
     fd_set rfds, wfds, efds, *rp = NULL, *wp = NULL, *ep = NULL;
     struct timeval tv, *tp = NULL;
@@ -73,7 +75,7 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
 /*-------------------------------------------------------------------------*\
 * Select with int timeout in ms
 \*-------------------------------------------------------------------------*/
-int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
+LUASOCKET_PRIVATE int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
         p_timeout tm) {
     struct timeval tv;
     double t = timeout_get(tm);
@@ -88,7 +90,7 @@ int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
 /*-------------------------------------------------------------------------*\
 * Close and inutilize socket
 \*-------------------------------------------------------------------------*/
-void socket_destroy(p_socket ps) {
+LUASOCKET_PRIVATE void socket_destroy(p_socket ps) {
     if (*ps != SOCKET_INVALID) {
         socket_setblocking(ps); /* close can take a long time on WIN32 */
         closesocket(*ps);
@@ -99,7 +101,7 @@ void socket_destroy(p_socket ps) {
 /*-------------------------------------------------------------------------*\
 *
 \*-------------------------------------------------------------------------*/
-void socket_shutdown(p_socket ps, int how) {
+LUASOCKET_PRIVATE void socket_shutdown(p_socket ps, int how) {
     socket_setblocking(ps);
     shutdown(*ps, how);
     socket_setnonblocking(ps);
@@ -108,7 +110,7 @@ void socket_shutdown(p_socket ps, int how) {
 /*-------------------------------------------------------------------------*\
 * Creates and sets up a socket
 \*-------------------------------------------------------------------------*/
-int socket_create(p_socket ps, int domain, int type, int protocol) {
+LUASOCKET_PRIVATE int socket_create(p_socket ps, int domain, int type, int protocol) {
     *ps = socket(domain, type, protocol);
     if (*ps != SOCKET_INVALID) return IO_DONE;
     else return WSAGetLastError();
@@ -117,7 +119,7 @@ int socket_create(p_socket ps, int domain, int type, int protocol) {
 /*-------------------------------------------------------------------------*\
 * Connects or returns error message
 \*-------------------------------------------------------------------------*/
-int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
+LUASOCKET_PRIVATE int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
     int err;
     /* don't call on closed socket */
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
@@ -146,7 +148,7 @@ int socket_connect(p_socket ps, SA *addr, socklen_t len, p_timeout tm) {
 /*-------------------------------------------------------------------------*\
 * Binds or returns error message
 \*-------------------------------------------------------------------------*/
-int socket_bind(p_socket ps, SA *addr, socklen_t len) {
+LUASOCKET_PRIVATE int socket_bind(p_socket ps, SA *addr, socklen_t len) {
     int err = IO_DONE;
     socket_setblocking(ps);
     if (bind(*ps, addr, len) < 0) err = WSAGetLastError();
@@ -157,7 +159,7 @@ int socket_bind(p_socket ps, SA *addr, socklen_t len) {
 /*-------------------------------------------------------------------------*\
 *
 \*-------------------------------------------------------------------------*/
-int socket_listen(p_socket ps, int backlog) {
+LUASOCKET_PRIVATE int socket_listen(p_socket ps, int backlog) {
     int err = IO_DONE;
     socket_setblocking(ps);
     if (listen(*ps, backlog) < 0) err = WSAGetLastError();
@@ -168,7 +170,7 @@ int socket_listen(p_socket ps, int backlog) {
 /*-------------------------------------------------------------------------*\
 * Accept with timeout
 \*-------------------------------------------------------------------------*/
-int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len,
+LUASOCKET_PRIVATE int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len,
         p_timeout tm) {
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
@@ -190,7 +192,7 @@ int socket_accept(p_socket ps, p_socket pa, SA *addr, socklen_t *len,
 * this can take an awful lot of time and we will end up blocked.
 * Therefore, whoever calls this function should not pass a huge buffer.
 \*-------------------------------------------------------------------------*/
-int socket_send(p_socket ps, const char *data, size_t count,
+LUASOCKET_PRIVATE int socket_send(p_socket ps, const char *data, size_t count,
         size_t *sent, p_timeout tm)
 {
     int err;
@@ -218,7 +220,7 @@ int socket_send(p_socket ps, const char *data, size_t count,
 /*-------------------------------------------------------------------------*\
 * Sendto with timeout
 \*-------------------------------------------------------------------------*/
-int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
+LUASOCKET_PRIVATE int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
         SA *addr, socklen_t len, p_timeout tm)
 {
     int err;
@@ -239,7 +241,7 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
 /*-------------------------------------------------------------------------*\
 * Receive with timeout
 \*-------------------------------------------------------------------------*/
-int socket_recv(p_socket ps, char *data, size_t count, size_t *got,
+LUASOCKET_PRIVATE int socket_recv(p_socket ps, char *data, size_t count, size_t *got,
         p_timeout tm)
 {
     int err, prev = IO_DONE;
@@ -268,7 +270,7 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got,
 /*-------------------------------------------------------------------------*\
 * Recvfrom with timeout
 \*-------------------------------------------------------------------------*/
-int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
+LUASOCKET_PRIVATE int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
         SA *addr, socklen_t *len, p_timeout tm)
 {
     int err, prev = IO_DONE;
@@ -297,7 +299,7 @@ int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
 /*-------------------------------------------------------------------------*\
 * Put socket into blocking mode
 \*-------------------------------------------------------------------------*/
-void socket_setblocking(p_socket ps) {
+LUASOCKET_PRIVATE void socket_setblocking(p_socket ps) {
     u_long argp = 0;
     ioctlsocket(*ps, FIONBIO, &argp);
 }
@@ -305,7 +307,7 @@ void socket_setblocking(p_socket ps) {
 /*-------------------------------------------------------------------------*\
 * Put socket into non-blocking mode
 \*-------------------------------------------------------------------------*/
-void socket_setnonblocking(p_socket ps) {
+LUASOCKET_PRIVATE void socket_setnonblocking(p_socket ps) {
     u_long argp = 1;
     ioctlsocket(*ps, FIONBIO, &argp);
 }
@@ -313,13 +315,13 @@ void socket_setnonblocking(p_socket ps) {
 /*-------------------------------------------------------------------------*\
 * DNS helpers
 \*-------------------------------------------------------------------------*/
-int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
+LUASOCKET_PRIVATE int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp) {
     *hp = gethostbyaddr(addr, len, AF_INET);
     if (*hp) return IO_DONE;
     else return WSAGetLastError();
 }
 
-int socket_gethostbyname(const char *addr, struct hostent **hp) {
+LUASOCKET_PRIVATE int socket_gethostbyname(const char *addr, struct hostent **hp) {
     *hp = gethostbyname(addr);
     if (*hp) return IO_DONE;
     else return  WSAGetLastError();
@@ -328,7 +330,7 @@ int socket_gethostbyname(const char *addr, struct hostent **hp) {
 /*-------------------------------------------------------------------------*\
 * Error translation functions
 \*-------------------------------------------------------------------------*/
-const char *socket_hoststrerror(int err) {
+LUASOCKET_PRIVATE const char *socket_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
         case WSAHOST_NOT_FOUND: return PIE_HOST_NOT_FOUND;
@@ -336,7 +338,7 @@ const char *socket_hoststrerror(int err) {
     }
 }
 
-const char *socket_strerror(int err) {
+LUASOCKET_PRIVATE const char *socket_strerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
         case WSAEADDRINUSE: return PIE_ADDRINUSE;
@@ -350,12 +352,12 @@ const char *socket_strerror(int err) {
     }
 }
 
-const char *socket_ioerror(p_socket ps, int err) {
+LUASOCKET_PRIVATE const char *socket_ioerror(p_socket ps, int err) {
     (void) ps;
     return socket_strerror(err);
 }
 
-static const char *wstrerror(int err) {
+LUASOCKET_PRIVATE static const char *wstrerror(int err) {
     switch (err) {
         case WSAEINTR: return "Interrupted function call";
         case WSAEACCES: return PIE_ACCESS; // "Permission denied";
@@ -404,7 +406,7 @@ static const char *wstrerror(int err) {
     }
 }
 
-const char *socket_gaistrerror(int err) {
+LUASOCKET_PRIVATE const char *socket_gaistrerror(int err) {
     if (err == 0) return NULL;
     switch (err) {
         case EAI_AGAIN: return PIE_AGAIN;

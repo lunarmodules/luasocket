@@ -2,17 +2,20 @@
 * TCP object
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <string.h>
+#include "luasocket.h"
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "compat.h"
 
+#include "compat.h"
 #include "auxiliar.h"
+
 #include "socket.h"
 #include "inet.h"
 #include "options.h"
 #include "tcp.h"
+
+#include <string.h>
 
 /*=========================================================================*\
 * Internal function prototypes
@@ -126,7 +129,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-int tcp_open(lua_State *L)
+LUASOCKET_PRIVATE int tcp_open(lua_State *L)
 {
     /* create classes */
     auxiliar_newclass(L, "tcp{master}", tcp_methods);
