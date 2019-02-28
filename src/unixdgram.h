@@ -15,6 +15,10 @@
 
 #include "unix.h"
 
+#pragma GCC visibility push(hidden)
+
 int unixdgram_open(lua_State *L);
+
+#pragma GCC visibility pop
 
 #endif /* UNIXDGRAM_H */

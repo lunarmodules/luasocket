@@ -4,10 +4,6 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
 #include "auxiliar.h"
 #include "socket.h"
 #include "options.h"
@@ -26,6 +22,7 @@
   ((size_t) (((struct sockaddr_un *) 0)->sun_path)  \
    + strlen ((ptr)->sun_path))
 #endif
+
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
@@ -86,7 +83,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int unixdgram_open(lua_State *L)
+int unixdgram_open(lua_State *L)
 {
     /* create classes */
     auxiliar_newclass(L, "unixdgram{connected}", unixdgram_methods);
