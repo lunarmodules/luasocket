@@ -16,6 +16,10 @@
 \*=========================================================================*/
 #include "unix.h"
 
+#pragma GCC visibility push(hidden)
+
 int unixstream_open(lua_State *L);
+
+#pragma GCC visibility pop
 
 #endif /* UNIXSTREAM_H */
