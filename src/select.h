@@ -10,6 +10,10 @@
 * true if there is data ready for reading (required for buffered input).
 \*=========================================================================*/
 
+#pragma GCC visibility push(hidden)
+
 int select_open(lua_State *L);
+
+#pragma GCC visibility pop
 
 #endif /* SELECT_H */
