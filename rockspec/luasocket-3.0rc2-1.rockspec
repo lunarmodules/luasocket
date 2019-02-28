@@ -96,6 +96,7 @@ local function make_plat(plat)
     modules["socket.serial"] = {
       sources = {
         "src/buffer.c"
+        , "src/compat.c"
         , "src/auxiliar.c"
         , "src/options.c"
         , "src/timeout.c"
