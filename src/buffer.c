@@ -3,11 +3,6 @@
 * LuaSocket toolkit
 \*=========================================================================*/
 #include "luasocket.h"
-
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
 #include "buffer.h"
 
 /*=========================================================================*\
@@ -34,7 +29,7 @@ static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent);
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int buffer_open(lua_State *L) {
+int buffer_open(lua_State *L) {
     (void) L;
     return 0;
 }
@@ -42,7 +37,7 @@ LUASOCKET_PRIVATE int buffer_open(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Initializes C structure
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
+void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
     buf->first = buf->last = 0;
     buf->io = io;
     buf->tm = tm;
@@ -53,7 +48,7 @@ LUASOCKET_PRIVATE void buffer_init(p_buffer buf, p_io io, p_timeout tm) {
 /*-------------------------------------------------------------------------*\
 * object:getstats() interface
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int buffer_meth_getstats(lua_State *L, p_buffer buf) {
+int buffer_meth_getstats(lua_State *L, p_buffer buf) {
     lua_pushnumber(L, (lua_Number) buf->received);
     lua_pushnumber(L, (lua_Number) buf->sent);
     lua_pushnumber(L, timeout_gettime() - buf->birthday);
@@ -63,7 +58,7 @@ LUASOCKET_PRIVATE int buffer_meth_getstats(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * object:setstats() interface
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int buffer_meth_setstats(lua_State *L, p_buffer buf) {
+int buffer_meth_setstats(lua_State *L, p_buffer buf) {
     buf->received = (long) luaL_optnumber(L, 2, (lua_Number) buf->received);
     buf->sent = (long) luaL_optnumber(L, 3, (lua_Number) buf->sent);
     if (lua_isnumber(L, 4)) buf->birthday = timeout_gettime() - lua_tonumber(L, 4);
@@ -74,7 +69,7 @@ LUASOCKET_PRIVATE int buffer_meth_setstats(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * object:send() interface
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int buffer_meth_send(lua_State *L, p_buffer buf) {
+int buffer_meth_send(lua_State *L, p_buffer buf) {
     int top = lua_gettop(L);
     int err = IO_DONE;
     size_t size = 0, sent = 0;
@@ -107,7 +102,7 @@ LUASOCKET_PRIVATE int buffer_meth_send(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * object:receive() interface
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int buffer_meth_receive(lua_State *L, p_buffer buf) {
+int buffer_meth_receive(lua_State *L, p_buffer buf) {
     int err = IO_DONE, top = lua_gettop(L);
     luaL_Buffer b;
     size_t size;
@@ -156,7 +151,7 @@ LUASOCKET_PRIVATE int buffer_meth_receive(lua_State *L, p_buffer buf) {
 /*-------------------------------------------------------------------------*\
 * Determines if there is any data in the read buffer
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int buffer_isempty(p_buffer buf) {
+int buffer_isempty(p_buffer buf) {
     return buf->first >= buf->last;
 }
 
