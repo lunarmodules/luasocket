@@ -4,10 +4,6 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
 #include "auxiliar.h"
 #include "socket.h"
 #include "inet.h"
@@ -124,7 +120,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int udp_open(lua_State *L) {
+int udp_open(lua_State *L) {
     /* create classes */
     auxiliar_newclass(L, "udp{connected}", udp_methods);
     auxiliar_newclass(L, "udp{unconnected}", udp_methods);
