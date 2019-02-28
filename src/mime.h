@@ -9,7 +9,6 @@
 * provide a higher level interface to this functionality. 
 \*=========================================================================*/
 #include "luasocket.h"
-#include "lua.h"
 
 /*-------------------------------------------------------------------------*\
 * Current MIME library version

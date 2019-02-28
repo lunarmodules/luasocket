@@ -2,14 +2,10 @@
 * MIME support functions
 * LuaSocket toolkit
 \*=========================================================================*/
+#include "luasocket.h"
+#include "mime.h"
 #include <string.h>
 #include <ctype.h>
-
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
-#include "mime.h"
 
 /*=========================================================================*\
 * Don't want to trust escape character constants
