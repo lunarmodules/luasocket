@@ -19,7 +19,7 @@ if(MINGW)
 	add_definitions(-DLUASOCKET_INET_PTON)
 endif()
 
-INCLUDE_DIRECTORIES(${LUAINC})
+INCLUDE_DIRECTORIES(${LUA_INCLUDE_DIR})
 
 add_definitions(-DLUASOCKET_DEBUG)
 add_definitions(-DLUA_BUILD_AS_DLL -DLUA_LIB -DLUASOCKET_EXPORTS)
@@ -28,21 +28,21 @@ add_library(socket SHARED ${socket_src})
 ADD_LIBRARY(mime SHARED ./src/mime.c ./src/compat.c)
 #set_target_properties(socket PROPERTIES PREFIX "" OUTPUT_NAME core)
 #set_target_properties(mime PROPERTIES PREFIX "" OUTPUT_NAME core)
-TARGET_LINK_LIBRARIES(socket ${LUALIB} wsock32 ws2_32)
-TARGET_LINK_LIBRARIES(mime ${LUALIB}) 
+TARGET_LINK_LIBRARIES(socket ${LUA_LIBRARY} wsock32 ws2_32)
+TARGET_LINK_LIBRARIES(mime ${LUA_LIBRARY}) 
 
 ######install
 #set default LDIR and CDIR if not given
 if( NOT CDIR)
-	set(CDIR ${CMAKE_BINARY_DIR}/install/cdir)
+	set(CDIR .)
 endif()
 if( NOT LDIR)
-	set(LDIR ${CMAKE_BINARY_DIR}/install/ldir)
+	set(LDIR ./lua)
 endif()
 
 ##cant use set_target_properties to rename because one overwrites the other so:
-INSTALL(FILES ${CMAKE_BINARY_DIR}/libsocket.${POSTN} DESTINATION ${CDIR}/socket RENAME core.${POSTN})
-INSTALL(FILES ${CMAKE_BINARY_DIR}/libmime.${POSTN} DESTINATION ${CDIR}/mime RENAME core.${POSTN})  
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/libsocket.${POSTN} DESTINATION ${CDIR}/socket RENAME core.${POSTN})
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/libmime.${POSTN} DESTINATION ${CDIR}/mime RENAME core.${POSTN})  
 #INSTALL(TARGETS socket RUNTIME DESTINATION ${CDIR}/socket)
 #INSTALL(TARGETS mime RUNTIME DESTINATION ${CDIR}/mime)
 install(DIRECTORY src/ DESTINATION ${LDIR}/socket
