@@ -14,7 +14,7 @@
 * tcp objects either connected to some address or returned by the accept
 * method of a server object.
 \*=========================================================================*/
-#include "lua.h"
+#include "luasocket.h"
 
 #include "buffer.h"
 #include "timeout.h"
@@ -30,6 +30,10 @@ typedef struct t_tcp_ {
 
 typedef t_tcp *p_tcp;
 
+#pragma GCC visibility push(hidden)
+
 int tcp_open(lua_State *L);
+
+#pragma GCC visibility pop
 
 #endif /* TCP_H */
