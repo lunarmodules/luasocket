@@ -6,9 +6,8 @@
 * Diego Nehab
 * 9/11/1999
 \*=========================================================================*/
-#include "lua.h"
 
-/*-------------------------------------------------------------------------*\
+/*-------------------------------------------------------------------------* \
 * Current socket library version
 \*-------------------------------------------------------------------------*/
 #define LUASOCKET_VERSION    "LuaSocket 3.0-rc1"
@@ -25,13 +24,9 @@
 #endif
 #endif
 
-#ifndef LUASOCKET_PRIVATE
-#ifdef _WIN32
-#define LUASOCKET_PRIVATE
-#else
-#define LUASOCKET_PRIVATE __attribute__ ((visibility ("hidden")))
-#endif
-#endif
+#include "lua.h"
+#include "lauxlib.h"
+#include "compat.h"
 
 /*-------------------------------------------------------------------------*\
 * Initializes the library.
