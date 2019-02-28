@@ -22,7 +22,9 @@
 #define LUASOCKET_INET_ATON
 #endif
 
+#ifndef _WIN32
 #pragma GCC visibility push(hidden)
+#endif
 
 int inet_open(lua_State *L);
 
@@ -47,6 +49,8 @@ const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt);
 int inet_pton(int af, const char *src, void *dst);
 #endif
 
+#ifndef _WIN32
 #pragma GCC visibility pop
+#endif
 
 #endif /* INET_H */

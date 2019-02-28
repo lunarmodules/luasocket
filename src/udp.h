@@ -26,10 +26,14 @@ typedef struct t_udp_ {
 } t_udp;
 typedef t_udp *p_udp;
 
+#ifndef _WIN32
 #pragma GCC visibility push(hidden)
+#endif
 
 int udp_open(lua_State *L);
 
+#ifndef _WIN32
 #pragma GCC visibility pop
+#endif
 
 #endif /* UDP_H */

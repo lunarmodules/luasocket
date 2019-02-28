@@ -36,7 +36,9 @@ typedef struct sockaddr SA;
 * interface to sockets
 \*=========================================================================*/
 
+#ifndef _WIN32
 #pragma GCC visibility push(hidden)
+#endif
 
 int socket_waitfd(p_socket ps, int sw, p_timeout tm);
 int socket_open(void);
@@ -64,6 +66,8 @@ const char *socket_strerror(int err);
 const char *socket_ioerror(p_socket ps, int err);
 const char *socket_gaistrerror(int err);
 
+#ifndef _WIN32
 #pragma GCC visibility pop
+#endif
 
 #endif /* SOCKET_H */

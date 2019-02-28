@@ -26,10 +26,6 @@
 #define MAX(x, y) ((x) > (y) ? x : y)
 #endif
 
-#ifndef _WIN32
-#pragma GCC visibility push(hidden)
-#endif
-
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
@@ -227,8 +223,4 @@ int timeout_lua_sleep(lua_State *L)
     }
     return 0;
 }
-#endif
-
-#ifndef _WIN32
-#pragma GCC visibility pop
 #endif

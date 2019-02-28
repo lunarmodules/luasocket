@@ -56,12 +56,15 @@ typedef struct t_io_ {
 } t_io;
 typedef t_io *p_io;
 
+#ifndef _WIN32
 #pragma GCC visibility push(hidden)
+#endif
 
 void io_init(p_io io, p_send send, p_recv recv, p_error error, void *ctx);
 const char *io_strerror(int err);
 
+#ifndef _WIN32
 #pragma GCC visibility pop
+#endif
 
 #endif /* IO_H */
-

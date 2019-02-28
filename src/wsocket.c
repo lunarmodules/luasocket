@@ -12,10 +12,6 @@
 #include "socket.h"
 #include "pierror.h"
 
-#ifndef _WIN32
-#pragma GCC visibility push(hidden)
-#endif
-
 /* WinSock doesn't have a strerror... */
 static const char *wstrerror(int err);
 
@@ -436,7 +432,3 @@ const char *socket_gaistrerror(int err) {
         default: return gai_strerror(err);
     }
 }
-
-#ifndef _WIN32
-#pragma GCC visibility pop
-#endif

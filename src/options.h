@@ -18,7 +18,9 @@ typedef struct t_opt {
 } t_opt;
 typedef t_opt *p_opt;
 
+#ifndef _WIN32
 #pragma GCC visibility push(hidden)
+#endif
 
 int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps);
 int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps);
@@ -93,6 +95,8 @@ int opt_get_ip6_v6only(lua_State *L, p_socket ps);
 
 int opt_get_error(lua_State *L, p_socket ps);
 
+#ifndef _WIN32
 #pragma GCC visibility pop
+#endif
 
 #endif
