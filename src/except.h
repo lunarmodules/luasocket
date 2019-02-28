@@ -31,8 +31,12 @@
 * exceptions on error, but that don't interrupt the user script.
 \*=========================================================================*/
 
-#include "lua.h"
+#include "luasocket.h"
+
+#pragma GCC visibility push(hidden)
 
 int except_open(lua_State *L);
+
+#pragma GCC visibility pop
 
 #endif

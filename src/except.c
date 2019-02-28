@@ -3,14 +3,8 @@
 * LuaSocket toolkit
 \*=========================================================================*/
 #include "luasocket.h"
-
-#include <stdio.h>
-
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
 #include "except.h"
+#include <stdio.h>
 
 #if LUA_VERSION_NUM < 502
 #define lua_pcallk(L, na, nr, err, ctx, cont) \
@@ -126,7 +120,7 @@ static int global_protect(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Init module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int except_open(lua_State *L) {
+int except_open(lua_State *L) {
     lua_newtable(L); /* metatable for wrapped exceptions */
     lua_pushboolean(L, 0);
     lua_setfield(L, -2, "__metatable");
