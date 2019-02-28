@@ -5,13 +5,10 @@
 #include "luasocket.h"
 #include "io.h"
 
-/*=========================================================================*\
-* Exported functions
-\*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Initializes C structure
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE void io_init(p_io io, p_send send, p_recv recv, p_error error, void *ctx) {
+void io_init(p_io io, p_send send, p_recv recv, p_error error, void *ctx) {
     io->send = send;
     io->recv = recv;
     io->error = error;
@@ -21,7 +18,7 @@ LUASOCKET_PRIVATE void io_init(p_io io, p_send send, p_recv recv, p_error error,
 /*-------------------------------------------------------------------------*\
 * I/O error strings
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE const char *io_strerror(int err) {
+const char *io_strerror(int err) {
     switch (err) {
         case IO_DONE: return NULL;
         case IO_CLOSED: return "closed";
