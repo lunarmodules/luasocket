@@ -4,9 +4,6 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "lua.h"
-#include "lauxlib.h"
-
 #include "unixstream.h"
 #include "unixdgram.h"
 
