@@ -264,10 +264,8 @@ end
 
 -- default url parts
 local default = {
-    host = "",
-    port = PORT,
-    path ="/",
-    scheme = SCHEME
+    path ="/"
+    , scheme = "http"
 }
 
 local function adjustrequest(reqt)
