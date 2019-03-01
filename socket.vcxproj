@@ -32,98 +32,6 @@
     <ClCompile Include="src\udp.c" />
     <ClCompile Include="src\wsocket.c" />
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="src\ltn12.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="src\socket.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="src\ftp.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="src\headers.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="src\http.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="src\smtp.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="src\tp.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="src\url.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -178,7 +86,7 @@
     <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(LUABIN)$(Configuration)\socket\</OutDir>
+    <OutDir>$(Configuration)\socket\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>core</TargetName>
@@ -186,17 +94,17 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>core</TargetName>
-    <OutDir>$(LUABIN)$(Platform)\$(Configuration)\socket\</OutDir>
+    <OutDir>$(Platform)\$(Configuration)\socket\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(LUABIN)$(Configuration)\socket\</OutDir>
+    <OutDir>$(Configuration)\socket\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>core</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(LUABIN)$(Platform)\$(Configuration)\socket\</OutDir>
+    <OutDir>$(Platform)\$(Configuration)\socket\</OutDir>
     <TargetName>core</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -213,9 +121,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)mime.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -240,9 +148,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)mime.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -263,9 +171,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -289,9 +197,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

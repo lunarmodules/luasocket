@@ -12,7 +12,7 @@
 #
 #   make PLAT=linux DEBUG=DEBUG LUAV=5.2 prefix=/sw
 
-# PLAT: linux macosx win32 mingw
+# PLAT: linux macosx win32 win64 mingw
 # platform to build for
 PLAT?=linux
 
@@ -83,7 +83,18 @@ PLATFORM_win32?=Release
 CDIR_win32?=bin/lua/$(LUAV)/$(PLATFORM_win32)
 LDIR_win32?=bin/lua/$(LUAV)/$(PLATFORM_win32)/lua
 LUALIB_win32?=$(LUAPREFIX_win32)/lib/lua/$(LUAV)/$(PLATFORM_win32)
-LUALIBNAME_win32?=lua$(subst .,,$(LUAV)).lib 
+LUALIBNAME_win32?=lua$(subst .,,$(LUAV)).lib
+
+# LUAINC_win64:
+# LUALIB_win64:
+# where lua headers and libraries are found for win64 builds
+LUAPREFIX_win64?=
+LUAINC_win64?=$(LUAPREFIX_win64)/include/lua/$(LUAV) $(LUAPREFIX_win64)/include/lua$(LUAV)
+PLATFORM_win64?=x64/Release
+CDIR_win64?=bin/lua/$(LUAV)/$(PLATFORM_win64)
+LDIR_win64?=bin/lua/$(LUAV)/$(PLATFORM_win64)/lua
+LUALIB_win64?=$(LUAPREFIX_win64)/lib/lua/$(LUAV)/$(PLATFORM_win64)
+LUALIBNAME_win64?=lua$(subst .,,$(LUAV)).lib
 
 
 # LUAINC_solaris:
@@ -141,7 +152,7 @@ print:
 #------
 # Supported platforms
 #
-PLATS= macosx linux win32 mingw solaris
+PLATS= macosx linux win32 win64 mingw solaris
 
 #------
 # Compiler and linker settings
@@ -152,7 +163,7 @@ CC_macosx=gcc
 DEF_macosx= -DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
 CFLAGS_macosx=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
 LDFLAGS_macosx= -bundle -undefined dynamic_lookup -o 
-LD_macosx= export MACOSX_DEPLOYMENT_TARGET="10.3"; gcc
+LD_macosx=gcc
 SOCKET_macosx=usocket.o
 
 #------
@@ -217,16 +228,38 @@ CC_win32=cl
 DEF_win32= //D "WIN32" //D "NDEBUG" //D "_WINDOWS" //D "_USRDLL" \
      //D "_CRT_SECURE_NO_WARNINGS" \
      //D "_WINDLL"  \
-     //D "LUASOCKET_$(DEBUG)" 
+     //D "LUASOCKET_$(DEBUG)"
 CFLAGS_win32=$(LUAINC:%=//I "%") $(DEF) //O2 //Ot //MD //W3 //nologo
 LDFLAGS_win32= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
     //MANIFEST //MANIFESTFILE:"intermediate.manifest" \
-    //MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
+    /MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
 	//SUBSYSTEM:WINDOWS //OPT:REF //OPT:ICF //DYNAMICBASE:NO \
-    //MACHINE:X86 /LIBPATH:"$(shell cmd //c echo $(LUALIB))" \
+    //MACHINE:X86 /LIBPATH:"$(LUALIB)" \
 	$(LUALIBNAME_win32) ws2_32.lib //OUT:
+
 LD_win32=cl
 SOCKET_win32=wsocket.obj
+
+#------
+# Compiler and linker settings
+# for Win64
+SO_win64=dll
+O_win64=obj
+CC_win64=cl
+DEF_win64= //D "WIN32" //D "NDEBUG" //D "_WINDOWS" //D "_USRDLL" \
+     //D "_CRT_SECURE_NO_WARNINGS" \
+     //D "_WINDLL"  \
+     //D "LUASOCKET_$(DEBUG)"
+CFLAGS_win64=$(LUAINC:%=//I "%") $(DEF) //O2 //Ot //MD //W3 //nologo
+LDFLAGS_win64= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
+    //MANIFEST //MANIFESTFILE:"intermediate.manifest" \
+    /MANIFESTUAC:"level='asInvoker' uiAccess='false'" \
+	//SUBSYSTEM:WINDOWS //OPT:REF //OPT:ICF //DYNAMICBASE:NO \
+    /LIBPATH:"$(LUALIB)" \
+	$(LUALIBNAME_win64) ws2_32.lib //OUT:
+
+LD_win64=cl
+SOCKET_win64=wsocket.obj
 
 .SUFFIXES: .obj
 
@@ -339,6 +372,9 @@ macosx:
 
 win32:
 	$(MAKE) all PLAT=win32
+
+win64:
+	$(MAKE) all PLAT=win64
 
 linux:
 	$(MAKE) all-unix PLAT=linux

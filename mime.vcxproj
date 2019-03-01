@@ -21,19 +21,6 @@
   <ItemGroup>
     <ClCompile Include="src\mime.c" />
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="src\mime.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(FullPath) $(LUABIN)$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(FullPath) $(LUABIN)$(Platform)\$(Configuration)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LUABIN)$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LUABIN)$(Platform)\$(Configuration)\%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{128E8BD0-174A-48F0-8771-92B1E8D18713}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -88,7 +75,7 @@
     <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(LUABIN)$(Configuration)\mime\</OutDir>
+    <OutDir>$(Configuration)\mime\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>core</TargetName>
@@ -96,17 +83,17 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>core</TargetName>
-    <OutDir>$(LUABIN)$(Platform)\$(Configuration)\mime\</OutDir>
+    <OutDir>$(Platform)\$(Configuration)\mime\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(LUABIN)$(Configuration)\mime\</OutDir>
+    <OutDir>$(Configuration)\mime\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>core</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(LUABIN)$(Platform)\$(Configuration)\mime\</OutDir>
+    <OutDir>$(Platform)\$(Configuration)\mime\</OutDir>
     <TargetName>core</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -123,9 +110,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)mime.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -150,9 +137,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)mime.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -173,9 +160,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -199,9 +186,9 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lualib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(LUALIBNAME);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(LUALIB)$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LUALIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
