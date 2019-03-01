@@ -15,7 +15,7 @@ else()
 	add_definitions("-DMIME_API=__attribute__((visibility(default)))")
 	set(POSTN so)
 endif(WIN32)
-if(MINGW)
+if(WIN32)#MINGW) and msvc
 	add_definitions(-DLUASOCKET_INET_PTON)
 endif()
 
@@ -28,7 +28,11 @@ add_library(socket SHARED ${socket_src})
 ADD_LIBRARY(mime SHARED ./src/mime.c ./src/compat.c)
 #set_target_properties(socket PROPERTIES PREFIX "" OUTPUT_NAME core)
 #set_target_properties(mime PROPERTIES PREFIX "" OUTPUT_NAME core)
-TARGET_LINK_LIBRARIES(socket ${LUA_LIBRARY} wsock32 ws2_32)
+if(MSVC)
+	set_target_properties(socket PROPERTIES PREFIX "lib")
+	set_target_properties(mime PROPERTIES PREFIX "lib")
+endif()
+TARGET_LINK_LIBRARIES(socket ${LUA_LIBRARY} wsock32 ws2_32 )
 TARGET_LINK_LIBRARIES(mime ${LUA_LIBRARY}) 
 
 ######install
