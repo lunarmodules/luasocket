@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 
 aux_source_directory(./src socket_src)
 list(REMOVE_ITEM socket_src ./src/mime.c)
+set(LUASOCKET_LINK)
 if(WIN32)
 	list(REMOVE_ITEM socket_src ./src/serial.c ./src/unix.c ./src/usocket.c ./src/unixdgram.c ./src/unixstream.c)
 	add_definitions(-D_WIN32_WINNT=0x0600) ##should be this or the next two for working on XP
@@ -11,8 +12,10 @@ if(WIN32)
 	#add_definitions(-DLUASOCKET_INET_PTON)
 	add_definitions("-DLUASOCKET_API=__declspec(dllexport)")
 	add_definitions("-DMIME_API=__declspec(dllexport)")
+	set(LUASOCKET_LINK  wsock32 ws2_32 )
 	set(POSTN dll)
 else()
+	list(REMOVE_ITEM socket_src ./src/wsocket.c) 
 	add_definitions("-DLUASOCKET_API=__attribute__((visibility(default)))")
 	add_definitions("-DMIME_API=__attribute__((visibility(default)))")
 	set(POSTN so)
@@ -32,7 +35,7 @@ if(MSVC)
 	set_target_properties(mime PROPERTIES PREFIX "lib")
 endif()
 
-TARGET_LINK_LIBRARIES(socket ${LUA_LIBRARY} wsock32 ws2_32 )
+TARGET_LINK_LIBRARIES(socket ${LUA_LIBRARY} ${LUASOCKET_LINK} )
 TARGET_LINK_LIBRARIES(mime ${LUA_LIBRARY}) 
 
 ######install
