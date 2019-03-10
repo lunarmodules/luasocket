@@ -61,7 +61,7 @@ static luaL_Reg func[] = {
 \*-------------------------------------------------------------------------*/
 enum {QP_PLAIN, QP_QUOTED, QP_CR, QP_IF_LAST};
 
-static UC qpclass[] = {
+static const UC qpclass[] = {
     QP_QUOTED, QP_QUOTED, QP_QUOTED, QP_QUOTED, QP_QUOTED, QP_QUOTED,
     QP_QUOTED, QP_QUOTED, QP_QUOTED, QP_IF_LAST, QP_QUOTED, QP_QUOTED,
     QP_QUOTED, QP_CR, QP_QUOTED, QP_QUOTED, QP_QUOTED, QP_QUOTED,
@@ -237,10 +237,10 @@ static int mime_global_wrp(lua_State *L)
     return 2;
 }
 
+#if 0
 /*-------------------------------------------------------------------------*\
 * Fill base64 decode map.
 \*-------------------------------------------------------------------------*/
-#if 0
 static void b64setup(UC *unbase)
 {
     int i;
@@ -448,11 +448,11 @@ static int mime_global_unb64(lua_State *L)
 * To encode one byte, we need to see the next two.
 * Worst case is when we see a space, and wonder if a CRLF is comming
 \*-------------------------------------------------------------------------*/
+#if 0
 /*-------------------------------------------------------------------------*\
 * Split quoted-printable characters into classes
 * Precompute reverse map for encoding
 \*-------------------------------------------------------------------------*/
-#if 0
 static void qpsetup(UC *cl, UC *unbase)
 {
 
