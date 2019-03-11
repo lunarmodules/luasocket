@@ -4,10 +4,6 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
 #include "socket.h"
 #include "timeout.h"
 #include "select.h"
@@ -33,13 +29,10 @@ static luaL_Reg func[] = {
     {NULL,     NULL}
 };
 
-/*=========================================================================*\
-* Exported functions
-\*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int select_open(lua_State *L) {
+int select_open(lua_State *L) {
     lua_pushstring(L, "_SETSIZE");
     lua_pushinteger(L, FD_SETSIZE);
     lua_rawset(L, -3);
@@ -219,4 +212,3 @@ static void make_assoc(lua_State *L, int tab) {
         i = i+1;
     }
 }
-

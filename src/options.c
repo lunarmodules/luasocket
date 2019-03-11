@@ -3,7 +3,6 @@
 * LuaSocket toolkit
 \*=========================================================================*/
 #include "luasocket.h"
-#include "lauxlib.h"
 #include "auxiliar.h"
 #include "options.h"
 #include "inet.h"
@@ -29,7 +28,7 @@ static int opt_get(lua_State *L, p_socket ps, int level, int name,
 /*-------------------------------------------------------------------------*\
 * Calls appropriate option handler
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps)
+int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps)
 {
     const char *name = luaL_checkstring(L, 2);      /* obj, name, ... */
     while (opt->name && strcmp(name, opt->name))
@@ -42,7 +41,7 @@ LUASOCKET_PRIVATE int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps)
     return opt->func(L, ps);
 }
 
-LUASOCKET_PRIVATE int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps)
+int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps)
 {
     const char *name = luaL_checkstring(L, 2);      /* obj, name, ... */
     while (opt->name && strcmp(name, opt->name))
@@ -55,166 +54,188 @@ LUASOCKET_PRIVATE int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps)
     return opt->func(L, ps);
 }
 
+// -------------------------------------------------------
 /* enables reuse of local address */
-LUASOCKET_PRIVATE int opt_set_reuseaddr(lua_State *L, p_socket ps)
+int opt_set_reuseaddr(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_REUSEADDR);
 }
 
-LUASOCKET_PRIVATE int opt_get_reuseaddr(lua_State *L, p_socket ps)
+int opt_get_reuseaddr(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, SOL_SOCKET, SO_REUSEADDR);
 }
 
+// -------------------------------------------------------
 /* enables reuse of local port */
-LUASOCKET_PRIVATE int opt_set_reuseport(lua_State *L, p_socket ps)
+int opt_set_reuseport(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_REUSEPORT);
 }
 
-LUASOCKET_PRIVATE int opt_get_reuseport(lua_State *L, p_socket ps)
+int opt_get_reuseport(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, SOL_SOCKET, SO_REUSEPORT);
 }
 
-/* disables the Naggle algorithm */
-LUASOCKET_PRIVATE int opt_set_tcp_nodelay(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+/* disables the Nagle algorithm */
+int opt_set_tcp_nodelay(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_TCP, TCP_NODELAY);
 }
 
-LUASOCKET_PRIVATE int opt_get_tcp_nodelay(lua_State *L, p_socket ps)
+int opt_get_tcp_nodelay(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_TCP, TCP_NODELAY);
 }
 
+// -------------------------------------------------------
 #ifdef TCP_KEEPIDLE
-LUASOCKET_PRIVATE int opt_get_tcp_keepidle(lua_State *L, p_socket ps)
+
+int opt_get_tcp_keepidle(lua_State *L, p_socket ps)
 {
     return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPIDLE);
 }
 
-LUASOCKET_PRIVATE int opt_set_tcp_keepidle(lua_State *L, p_socket ps)
+int opt_set_tcp_keepidle(lua_State *L, p_socket ps)
 {
     return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPIDLE);
 }
+
 #endif
 
+// -------------------------------------------------------
 #ifdef TCP_KEEPCNT
-LUASOCKET_PRIVATE int opt_get_tcp_keepcnt(lua_State *L, p_socket ps)
+
+int opt_get_tcp_keepcnt(lua_State *L, p_socket ps)
 {
     return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPCNT);
 }
 
-LUASOCKET_PRIVATE int opt_set_tcp_keepcnt(lua_State *L, p_socket ps)
+int opt_set_tcp_keepcnt(lua_State *L, p_socket ps)
 {
     return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPCNT);
 }
+
 #endif
 
+// -------------------------------------------------------
 #ifdef TCP_KEEPINTVL
-LUASOCKET_PRIVATE int opt_get_tcp_keepintvl(lua_State *L, p_socket ps)
+
+int opt_get_tcp_keepintvl(lua_State *L, p_socket ps)
 {
     return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPINTVL);
 }
 
-LUASOCKET_PRIVATE int opt_set_tcp_keepintvl(lua_State *L, p_socket ps)
+int opt_set_tcp_keepintvl(lua_State *L, p_socket ps)
 {
     return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPINTVL);
 }
+
 #endif
 
-LUASOCKET_PRIVATE int opt_set_keepalive(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_keepalive(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE);
 }
 
-LUASOCKET_PRIVATE int opt_get_keepalive(lua_State *L, p_socket ps)
+int opt_get_keepalive(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE);
 }
 
-LUASOCKET_PRIVATE int opt_set_dontroute(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_dontroute(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_DONTROUTE);
 }
 
-LUASOCKET_PRIVATE int opt_get_dontroute(lua_State *L, p_socket ps)
+int opt_get_dontroute(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, SOL_SOCKET, SO_DONTROUTE);
 }
 
-LUASOCKET_PRIVATE int opt_set_broadcast(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_broadcast(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
-LUASOCKET_PRIVATE int opt_set_recv_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_setint(L, ps, SOL_SOCKET, SO_RCVBUF);
-}
-
-LUASOCKET_PRIVATE int opt_get_recv_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_getint(L, ps, SOL_SOCKET, SO_RCVBUF);
-}
-
-LUASOCKET_PRIVATE int opt_get_send_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_getint(L, ps, SOL_SOCKET, SO_SNDBUF);
-}
-
-LUASOCKET_PRIVATE int opt_set_send_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_setint(L, ps, SOL_SOCKET, SO_SNDBUF);
-}
-
-LUASOCKET_PRIVATE int opt_get_broadcast(lua_State *L, p_socket ps)
+int opt_get_broadcast(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_recv_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_setint(L, ps, SOL_SOCKET, SO_RCVBUF);
+}
+
+int opt_get_recv_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_getint(L, ps, SOL_SOCKET, SO_RCVBUF);
+}
+
+// -------------------------------------------------------
+int opt_get_send_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_getint(L, ps, SOL_SOCKET, SO_SNDBUF);
+}
+
+int opt_set_send_buf_size(lua_State *L, p_socket ps)
+{
+	return opt_setint(L, ps, SOL_SOCKET, SO_SNDBUF);
+}
+
+// -------------------------------------------------------
+int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
 }
 
-LUASOCKET_PRIVATE int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps)
+int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
 }
 
-LUASOCKET_PRIVATE int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps)
+int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps)
 {
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip_multicast_loop(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_ip_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
 }
 
-LUASOCKET_PRIVATE int opt_get_ip_multicast_loop(lua_State *L, p_socket ps)
+int opt_get_ip_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
 }
 
-LUASOCKET_PRIVATE int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps)
+int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
 }
 
-LUASOCKET_PRIVATE int opt_set_linger(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_linger(lua_State *L, p_socket ps)
 {
     struct linger li;                      /* obj, name, table */
     if (!lua_istable(L, 3)) auxiliar_typeerror(L,3,lua_typename(L, LUA_TTABLE));
@@ -231,7 +252,7 @@ LUASOCKET_PRIVATE int opt_set_linger(lua_State *L, p_socket ps)
     return opt_set(L, ps, SOL_SOCKET, SO_LINGER, (char *) &li, sizeof(li));
 }
 
-LUASOCKET_PRIVATE int opt_get_linger(lua_State *L, p_socket ps)
+int opt_get_linger(lua_State *L, p_socket ps)
 {
     struct linger li;                      /* obj, name */
     int len = sizeof(li);
@@ -246,12 +267,14 @@ LUASOCKET_PRIVATE int opt_get_linger(lua_State *L, p_socket ps)
     return 1;
 }
 
-LUASOCKET_PRIVATE int opt_set_ip_multicast_ttl(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_ip_multicast_ttl(lua_State *L, p_socket ps)
 {
     return opt_setint(L, ps, IPPROTO_IP, IP_MULTICAST_TTL);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip_multicast_if(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_ip_multicast_if(lua_State *L, p_socket ps)
 {
     const char *address = luaL_checkstring(L, 3);    /* obj, name, ip */
     struct in_addr val;
@@ -262,7 +285,7 @@ LUASOCKET_PRIVATE int opt_set_ip_multicast_if(lua_State *L, p_socket ps)
         (char *) &val, sizeof(val));
 }
 
-LUASOCKET_PRIVATE int opt_get_ip_multicast_if(lua_State *L, p_socket ps)
+int opt_get_ip_multicast_if(lua_State *L, p_socket ps)
 {
     struct in_addr val;
     socklen_t len = sizeof(val);
@@ -275,34 +298,50 @@ LUASOCKET_PRIVATE int opt_get_ip_multicast_if(lua_State *L, p_socket ps)
     return 1;
 }
 
-LUASOCKET_PRIVATE int opt_set_ip_add_membership(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_ip_add_membership(lua_State *L, p_socket ps)
 {
     return opt_setmembership(L, ps, IPPROTO_IP, IP_ADD_MEMBERSHIP);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip_drop_membersip(lua_State *L, p_socket ps)
+int opt_set_ip_drop_membersip(lua_State *L, p_socket ps)
 {
     return opt_setmembership(L, ps, IPPROTO_IP, IP_DROP_MEMBERSHIP);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip6_add_membership(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_set_ip6_add_membership(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps)
+int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP);
 }
-
-LUASOCKET_PRIVATE int opt_get_ip6_v6only(lua_State *L, p_socket ps)
+// -------------------------------------------------------
+int opt_get_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
 }
 
-LUASOCKET_PRIVATE int opt_set_ip6_v6only(lua_State *L, p_socket ps)
+int opt_set_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
+}
+
+// -------------------------------------------------------
+int opt_get_error(lua_State *L, p_socket ps)
+{
+    int val = 0;
+    socklen_t len = sizeof(val);
+    if (getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *) &val, &len) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "getsockopt failed");
+        return 2;
+    }
+    lua_pushstring(L, socket_strerror(val));
+    return 1;
 }
 
 /*=========================================================================*\
@@ -388,19 +427,6 @@ static int opt_getboolean(lua_State *L, p_socket ps, int level, int name)
     if (err)
         return err;
     lua_pushboolean(L, val);
-    return 1;
-}
-
-LUASOCKET_PRIVATE int opt_get_error(lua_State *L, p_socket ps)
-{
-    int val = 0;
-    socklen_t len = sizeof(val);
-    if (getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *) &val, &len) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "getsockopt failed");
-        return 2;
-    }
-    lua_pushstring(L, socket_strerror(val));
     return 1;
 }
 

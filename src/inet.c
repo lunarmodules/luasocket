@@ -3,16 +3,11 @@
 * LuaSocket toolkit
 \*=========================================================================*/
 #include "luasocket.h"
+#include "inet.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
-#include "inet.h"
 
 /*=========================================================================*\
 * Internal function prototypes.
@@ -34,13 +29,10 @@ static luaL_Reg func[] = {
     { NULL, NULL}
 };
 
-/*=========================================================================*\
-* Exported functions
-\*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int inet_open(lua_State *L)
+int inet_open(lua_State *L)
 {
     lua_pushstring(L, "dns");
     lua_newtable(L);
@@ -145,7 +137,7 @@ static int inet_global_toip(lua_State *L)
     return 2;
 }
 
-LUASOCKET_PRIVATE int inet_optfamily(lua_State* L, int narg, const char* def)
+int inet_optfamily(lua_State* L, int narg, const char* def)
 {
     static const char* optname[] = { "unspec", "inet", "inet6", NULL };
     static int optvalue[] = { AF_UNSPEC, AF_INET, AF_INET6, 0 };
@@ -153,7 +145,7 @@ LUASOCKET_PRIVATE int inet_optfamily(lua_State* L, int narg, const char* def)
     return optvalue[luaL_checkoption(L, narg, def, optname)];
 }
 
-LUASOCKET_PRIVATE int inet_optsocktype(lua_State* L, int narg, const char* def)
+int inet_optsocktype(lua_State* L, int narg, const char* def)
 {
     static const char* optname[] = { "stream", "dgram", NULL };
     static int optvalue[] = { SOCK_STREAM, SOCK_DGRAM, 0 };
@@ -244,7 +236,7 @@ static int inet_global_gethostname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Retrieves socket peer name
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
+int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
 {
     int err;
     struct sockaddr_storage peer;
@@ -278,7 +270,7 @@ LUASOCKET_PRIVATE int inet_meth_getpeername(lua_State *L, p_socket ps, int famil
 /*-------------------------------------------------------------------------*\
 * Retrieves socket local name
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
+int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
 {
     int err;
     struct sockaddr_storage peer;
@@ -354,7 +346,7 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 /*-------------------------------------------------------------------------*\
 * Tries to create a new inet socket
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE const char *inet_trycreate(p_socket ps, int family, int type, int protocol) {
+const char *inet_trycreate(p_socket ps, int family, int type, int protocol) {
     const char *err = socket_strerror(socket_create(ps, family, type, protocol));
     if (err == NULL && family == AF_INET6) {
         int yes = 1;
@@ -366,7 +358,7 @@ LUASOCKET_PRIVATE const char *inet_trycreate(p_socket ps, int family, int type, 
 /*-------------------------------------------------------------------------*\
 * "Disconnects" a DGRAM socket
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
+const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
 {
     switch (family) {
         case AF_INET: {
@@ -393,7 +385,7 @@ LUASOCKET_PRIVATE const char *inet_trydisconnect(p_socket ps, int family, p_time
 /*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE const char *inet_tryconnect(p_socket ps, int *family, const char *address,
+const char *inet_tryconnect(p_socket ps, int *family, const char *address,
         const char *serv, p_timeout tm, struct addrinfo *connecthints)
 {
     struct addrinfo *iterator = NULL, *resolved = NULL;
@@ -439,7 +431,7 @@ LUASOCKET_PRIVATE const char *inet_tryconnect(p_socket ps, int *family, const ch
 /*-------------------------------------------------------------------------*\
 * Tries to accept a socket
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE const char *inet_tryaccept(p_socket server, int family, p_socket client,
+const char *inet_tryaccept(p_socket server, int family, p_socket client,
     p_timeout tm) {
 	socklen_t len;
 	t_sockaddr_storage addr;
@@ -455,7 +447,7 @@ LUASOCKET_PRIVATE const char *inet_tryaccept(p_socket server, int family, p_sock
 /*-------------------------------------------------------------------------*\
 * Tries to bind socket to (address, port)
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE const char *inet_trybind(p_socket ps, int *family, const char *address,
+const char *inet_trybind(p_socket ps, int *family, const char *address,
     const char *serv, struct addrinfo *bindhints) {
     struct addrinfo *iterator = NULL, *resolved = NULL;
     const char *err = NULL;
@@ -499,7 +491,7 @@ LUASOCKET_PRIVATE const char *inet_trybind(p_socket ps, int *family, const char 
 * Some systems do not provide these so that we provide our own.
 \*-------------------------------------------------------------------------*/
 #ifdef LUASOCKET_INET_ATON
-LUASOCKET_PRIVATE int inet_aton(const char *cp, struct in_addr *inp)
+int inet_aton(const char *cp, struct in_addr *inp)
 {
     unsigned int a = 0, b = 0, c = 0, d = 0;
     int n = 0, r;
@@ -521,7 +513,7 @@ LUASOCKET_PRIVATE int inet_aton(const char *cp, struct in_addr *inp)
 #endif
 
 #ifdef LUASOCKET_INET_PTON
-LUASOCKET_PRIVATE int inet_pton(int af, const char *src, void *dst)
+int inet_pton(int af, const char *src, void *dst)
 {
     struct addrinfo hints, *res;
     int ret = 1;

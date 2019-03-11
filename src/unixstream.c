@@ -4,10 +4,6 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
 #include "auxiliar.h"
 #include "socket.h"
 #include "options.h"
@@ -82,7 +78,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int unixstream_open(lua_State *L)
+int unixstream_open(lua_State *L)
 {
     /* create classes */
     auxiliar_newclass(L, "unixstream{master}", unixstream_methods);

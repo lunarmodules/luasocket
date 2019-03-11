@@ -336,6 +336,7 @@ UNIX_OBJS=\
 #
 SERIAL_OBJS=\
 	buffer.$(O) \
+	compat.$(O) \
 	auxiliar.$(O) \
 	options.$(O) \
 	timeout.$(O) \

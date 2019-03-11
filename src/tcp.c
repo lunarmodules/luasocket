@@ -4,12 +4,7 @@
 \*=========================================================================*/
 #include "luasocket.h"
 
-#include "lua.h"
-#include "lauxlib.h"
-
-#include "compat.h"
 #include "auxiliar.h"
-
 #include "socket.h"
 #include "inet.h"
 #include "options.h"
@@ -129,7 +124,7 @@ static luaL_Reg func[] = {
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
-LUASOCKET_PRIVATE int tcp_open(lua_State *L)
+int tcp_open(lua_State *L)
 {
     /* create classes */
     auxiliar_newclass(L, "tcp{master}", tcp_methods);
