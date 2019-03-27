@@ -58,6 +58,9 @@ static luaL_Reg unixstream_methods[] = {
     {"getsockname", meth_getsockname},
     {"settimeout",  meth_settimeout},
     {"shutdown",    meth_shutdown},
+#ifndef _WIN32
+    {"getoption", meth_getoption},
+#endif
     {NULL,          NULL}
 };
 
@@ -66,6 +69,9 @@ static t_opt optset[] = {
     {"keepalive",   opt_set_keepalive},
     {"reuseaddr",   opt_set_reuseaddr},
     {"linger",      opt_set_linger},
+#ifndef _WIN32
+    {"passcred", opt_set_passcred},
+#endif
     {NULL,          NULL}
 };
 
@@ -75,6 +81,14 @@ static luaL_Reg func[] = {
     {NULL, NULL}
 };
 
+#ifndef _WIN32
+
+static t_opt optget[] = {
+    {"passcred",    opt_get_passcred},
+    {"peercred",    opt_get_peercred},
+    {NULL,          NULL}
+};
+#endif
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
@@ -126,6 +140,11 @@ static int meth_setstats(lua_State *L) {
 static int meth_setoption(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkgroup(L, "unixstream{any}", 1);
     return opt_meth_setoption(L, optset, &un->sock);
+}
+
+static int meth_getoption(lua_State *L) {
+    p_unix un = (p_unix) auxiliar_checkgroup(L, "unixstream{any}", 1);
+    return opt_meth_getoption(L, optget, &un->sock);
 }
 
 /*-------------------------------------------------------------------------*\
