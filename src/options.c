@@ -2,11 +2,14 @@
 * Common option interface
 * LuaSocket toolkit
 \*=========================================================================*/
-#include "luasocket.h"
+#include <string.h>
+
+#include "lauxlib.h"
+
 #include "auxiliar.h"
 #include "options.h"
 #include "inet.h"
-#include <string.h>
+
 
 /*=========================================================================*\
 * Internal functions prototypes
@@ -34,7 +37,7 @@ int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps)
     while (opt->name && strcmp(name, opt->name))
         opt++;
     if (!opt->func) {
-        char msg[57];
+        char msg[45];
         sprintf(msg, "unsupported option `%.35s'", name);
         luaL_argerror(L, 2, msg);
     }
@@ -47,14 +50,13 @@ int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps)
     while (opt->name && strcmp(name, opt->name))
         opt++;
     if (!opt->func) {
-        char msg[57];
+        char msg[45];
         sprintf(msg, "unsupported option `%.35s'", name);
         luaL_argerror(L, 2, msg);
     }
     return opt->func(L, ps);
 }
 
-// -------------------------------------------------------
 /* enables reuse of local address */
 int opt_set_reuseaddr(lua_State *L, p_socket ps)
 {
@@ -66,7 +68,6 @@ int opt_get_reuseaddr(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, SOL_SOCKET, SO_REUSEADDR);
 }
 
-// -------------------------------------------------------
 /* enables reuse of local port */
 int opt_set_reuseport(lua_State *L, p_socket ps)
 {
@@ -78,8 +79,7 @@ int opt_get_reuseport(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, SOL_SOCKET, SO_REUSEPORT);
 }
 
-// -------------------------------------------------------
-/* disables the Nagle algorithm */
+/* disables the Naggle algorithm */
 int opt_set_tcp_nodelay(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_TCP, TCP_NODELAY);
@@ -90,52 +90,6 @@ int opt_get_tcp_nodelay(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, IPPROTO_TCP, TCP_NODELAY);
 }
 
-// -------------------------------------------------------
-#ifdef TCP_KEEPIDLE
-
-int opt_get_tcp_keepidle(lua_State *L, p_socket ps)
-{
-    return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPIDLE);
-}
-
-int opt_set_tcp_keepidle(lua_State *L, p_socket ps)
-{
-    return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPIDLE);
-}
-
-#endif
-
-// -------------------------------------------------------
-#ifdef TCP_KEEPCNT
-
-int opt_get_tcp_keepcnt(lua_State *L, p_socket ps)
-{
-    return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPCNT);
-}
-
-int opt_set_tcp_keepcnt(lua_State *L, p_socket ps)
-{
-    return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPCNT);
-}
-
-#endif
-
-// -------------------------------------------------------
-#ifdef TCP_KEEPINTVL
-
-int opt_get_tcp_keepintvl(lua_State *L, p_socket ps)
-{
-    return opt_getint(L, ps, IPPROTO_TCP, TCP_KEEPINTVL);
-}
-
-int opt_set_tcp_keepintvl(lua_State *L, p_socket ps)
-{
-    return opt_setint(L, ps, IPPROTO_TCP, TCP_KEEPINTVL);
-}
-
-#endif
-
-// -------------------------------------------------------
 int opt_set_keepalive(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE);
@@ -146,7 +100,6 @@ int opt_get_keepalive(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, SOL_SOCKET, SO_KEEPALIVE);
 }
 
-// -------------------------------------------------------
 int opt_set_dontroute(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_DONTROUTE);
@@ -157,7 +110,6 @@ int opt_get_dontroute(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, SOL_SOCKET, SO_DONTROUTE);
 }
 
-// -------------------------------------------------------
 int opt_set_broadcast(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
@@ -168,29 +120,6 @@ int opt_get_broadcast(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, SOL_SOCKET, SO_BROADCAST);
 }
 
-// -------------------------------------------------------
-int opt_set_recv_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_setint(L, ps, SOL_SOCKET, SO_RCVBUF);
-}
-
-int opt_get_recv_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_getint(L, ps, SOL_SOCKET, SO_RCVBUF);
-}
-
-// -------------------------------------------------------
-int opt_get_send_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_getint(L, ps, SOL_SOCKET, SO_SNDBUF);
-}
-
-int opt_set_send_buf_size(lua_State *L, p_socket ps)
-{
-	return opt_setint(L, ps, SOL_SOCKET, SO_SNDBUF);
-}
-
-// -------------------------------------------------------
 int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
@@ -201,7 +130,6 @@ int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps)
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
 }
 
-// -------------------------------------------------------
 int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
@@ -212,7 +140,6 @@ int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps)
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
 }
 
-// -------------------------------------------------------
 int opt_set_ip_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
@@ -223,7 +150,6 @@ int opt_get_ip_multicast_loop(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, IPPROTO_IP, IP_MULTICAST_LOOP);
 }
 
-// -------------------------------------------------------
 int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
@@ -234,7 +160,6 @@ int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps)
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
 }
 
-// -------------------------------------------------------
 int opt_set_linger(lua_State *L, p_socket ps)
 {
     struct linger li;                      /* obj, name, table */
@@ -267,13 +192,11 @@ int opt_get_linger(lua_State *L, p_socket ps)
     return 1;
 }
 
-// -------------------------------------------------------
 int opt_set_ip_multicast_ttl(lua_State *L, p_socket ps)
 {
     return opt_setint(L, ps, IPPROTO_IP, IP_MULTICAST_TTL);
 }
 
-// -------------------------------------------------------
 int opt_set_ip_multicast_if(lua_State *L, p_socket ps)
 {
     const char *address = luaL_checkstring(L, 3);    /* obj, name, ip */
@@ -298,7 +221,6 @@ int opt_get_ip_multicast_if(lua_State *L, p_socket ps)
     return 1;
 }
 
-// -------------------------------------------------------
 int opt_set_ip_add_membership(lua_State *L, p_socket ps)
 {
     return opt_setmembership(L, ps, IPPROTO_IP, IP_ADD_MEMBERSHIP);
@@ -309,7 +231,6 @@ int opt_set_ip_drop_membersip(lua_State *L, p_socket ps)
     return opt_setmembership(L, ps, IPPROTO_IP, IP_DROP_MEMBERSHIP);
 }
 
-// -------------------------------------------------------
 int opt_set_ip6_add_membership(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP);
@@ -319,7 +240,7 @@ int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP);
 }
-// -------------------------------------------------------
+
 int opt_get_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
@@ -329,21 +250,34 @@ int opt_set_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
 }
-
-// -------------------------------------------------------
-int opt_get_error(lua_State *L, p_socket ps)
+#ifndef _WIN32
+int opt_set_passcred(lua_State *L, p_socket ps)
 {
-    int val = 0;
-    socklen_t len = sizeof(val);
-    if (getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *) &val, &len) < 0) {
-        lua_pushnil(L);
-        lua_pushstring(L, "getsockopt failed");
-        return 2;
-    }
-    lua_pushstring(L, socket_strerror(val));
-    return 1;
+    return opt_setboolean(L, ps, SOL_SOCKET, SO_PASSCRED);
 }
 
+int opt_get_passcred(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_PASSCRED);
+}
+
+int opt_get_peercred(lua_State *L, p_socket ps)
+{
+    struct ucred cred;
+    int len = sizeof(cred);
+    int err = opt_get(L, ps, SOL_SOCKET, SO_PEERCRED, (char *) &cred, &len);
+    if (err < 0)
+        return err;
+    lua_newtable(L);
+    lua_pushinteger(L, (long) cred.pid);
+    lua_setfield(L, -2, "pid");
+    lua_pushinteger(L, (long) cred.uid);
+    lua_setfield(L, -2, "uid");
+    lua_pushinteger(L, (long) cred.gid);
+    lua_setfield(L, -2, "gid");
+    return 1;
+}
+#endif
 /*=========================================================================*\
 * Auxiliar functions
 \*=========================================================================*/
@@ -427,6 +361,19 @@ static int opt_getboolean(lua_State *L, p_socket ps, int level, int name)
     if (err)
         return err;
     lua_pushboolean(L, val);
+    return 1;
+}
+
+int opt_get_error(lua_State *L, p_socket ps)
+{
+    int val = 0;
+    socklen_t len = sizeof(val);
+    if (getsockopt(*ps, SOL_SOCKET, SO_ERROR, (char *) &val, &len) < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "getsockopt failed");
+        return 2;
+    }
+    lua_pushstring(L, socket_strerror(val));
     return 1;
 }
 
