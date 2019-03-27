@@ -93,6 +93,12 @@ int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps);
 int opt_set_ip6_v6only(lua_State *L, p_socket ps);
 int opt_get_ip6_v6only(lua_State *L, p_socket ps);
 
+#ifndef _WIN32
+int opt_set_passcred(lua_State *L, p_socket ps);
+int opt_get_passcred(lua_State *L, p_socket ps);
+int opt_get_peercred(lua_State *L, p_socket ps);
+#endif
+
 int opt_get_error(lua_State *L, p_socket ps);
 
 #ifndef _WIN32
