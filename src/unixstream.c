@@ -25,6 +25,7 @@ static int meth_receive(lua_State *L);
 static int meth_accept(lua_State *L);
 static int meth_close(lua_State *L);
 static int meth_setoption(lua_State *L);
+static int meth_getoption(lua_State *L);
 static int meth_settimeout(lua_State *L);
 static int meth_getfd(lua_State *L);
 static int meth_setfd(lua_State *L);
