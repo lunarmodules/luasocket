@@ -1,5 +1,5 @@
 package = "LuaSocket"
-version = "scm-0"
+version = "scm-2"
 source = {
   url = "git://github.com/diegonehab/luasocket.git"
   , branch="master"
