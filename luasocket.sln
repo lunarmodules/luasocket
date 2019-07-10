@@ -1,8 +1,18 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29025.244
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "socket", "socket.vcxproj", "{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0} = {3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mime", "mime.vcxproj", "{128E8BD0-174A-48F0-8771-92B1E8D18713}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0} = {3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "..\lua\lua.vcxproj", "{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,8 +38,19 @@ Global
 		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Release|Win32.Build.0 = Release|Win32
 		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Release|x64.ActiveCfg = Release|x64
 		{128E8BD0-174A-48F0-8771-92B1E8D18713}.Release|x64.Build.0 = Release|x64
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Debug|Win32.Build.0 = Debug|Win32
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Debug|x64.ActiveCfg = Debug|x64
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Debug|x64.Build.0 = Debug|x64
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Release|Win32.ActiveCfg = Release|Win32
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Release|Win32.Build.0 = Release|Win32
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Release|x64.ActiveCfg = Release|x64
+		{3029AEE6-5F8B-4CF3-9540-BC0E56E8C7A0}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E9016577-FD11-42F3-B3F3-46A73338DEC1}
 	EndGlobalSection
 EndGlobal
