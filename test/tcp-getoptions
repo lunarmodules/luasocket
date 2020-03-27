@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 
-require"socket"
+local socket = require"socket"
 
 port = 8765
 
