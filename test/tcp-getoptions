@@ -4,18 +4,32 @@ local socket = require"socket"
 
 port = 8765
 
+function pcalltest(msg, o, opt)
+  local a = { pcall(o.getoption, o, opt) }
+  if a[1] then
+    print(msg, opt, unpack(a))
+  else
+    print(msg, opt, 'fail: ' .. a[2])
+  end
+end
+
 function options(o)
     print("options for", o)
 
     for _, opt in ipairs{
     		"keepalive", "reuseaddr",
      		"tcp-nodelay", "tcp-keepidle", "tcp-keepcnt", "tcp-keepintvl"} do
-        print("getoption", opt, o:getoption(opt))
+        pcalltest("getoption", o, opt)
     end
 
-    print("getoption", "linger",
-        "on", o:getoption("linger").on,
-        "timeout", o:getoption("linger").timeout)
+    r = o:getoption'linger'
+    if r then
+      print("getoption", "linger",
+            "on", r.on,
+            "timeout", r.timeout)
+    else
+      print("getoption", "linger", "no result")
+    end
 end
 
 local m = socket.tcp()
