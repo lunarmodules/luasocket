@@ -212,7 +212,7 @@ SOCKET_solaris=usocket.o
 SO_mingw=dll
 O_mingw=o
 CC_mingw=gcc
-DEF_mingw= -DLUASOCKET_INET_PTON -DLUASOCKET_$(DEBUG) \
+DEF_mingw= -DLUASOCKET_$(DEBUG) \
 	-DWINVER=0x0501
 CFLAGS_mingw=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
 LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lws2_32 -o 
