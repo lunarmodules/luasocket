@@ -283,11 +283,11 @@ SOCKET=$(SOCKET_$(PLAT))
 #------
 # Settings selected for platform
 #
-CC=$(CC_$(PLAT))
+CC?=$(CC_$(PLAT))
 DEF=$(DEF_$(PLAT))
 CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT))
 LDFLAGS=$(MYLDFLAGS) $(LDFLAGS_$(PLAT))
-LD=$(LD_$(PLAT))
+LD?=$(LD_$(PLAT))
 LUAINC= $(LUAINC_$(PLAT))
 LUALIB= $(LUALIB_$(PLAT))
 
