@@ -235,6 +235,35 @@ int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps)
 }
 
 // -------------------------------------------------------
+#ifndef _WIN32
+int opt_set_passcred(lua_State *L, p_socket ps)
+{
+    return opt_setboolean(L, ps, SOL_SOCKET, SO_PASSCRED);
+}
+
+int opt_get_passcred(lua_State *L, p_socket ps)
+{
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_PASSCRED);
+}
+
+int opt_get_peercred(lua_State *L, p_socket ps)
+{
+    struct ucred cred;
+    int len = sizeof(cred);
+    int err = opt_get(L, ps, SOL_SOCKET, SO_PEERCRED, (char *) &cred, &len);
+    if (err < 0)
+        return err;
+    lua_newtable(L);
+    lua_pushinteger(L, (long) cred.pid);
+    lua_setfield(L, -2, "pid");
+    lua_pushinteger(L, (long) cred.uid);
+    lua_setfield(L, -2, "uid");
+    lua_pushinteger(L, (long) cred.gid);
+    lua_setfield(L, -2, "gid");
+    return 1;
+}
+#endif
+// -------------------------------------------------------
 int opt_set_linger(lua_State *L, p_socket ps)
 {
     struct linger li;                      /* obj, name, table */

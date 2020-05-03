@@ -173,7 +173,7 @@ SOCKET_macosx=usocket.o
 SO_linux=so
 O_linux=o
 CC_linux=gcc
-DEF_linux=-DLUASOCKET_$(DEBUG)
+DEF_linux=-DLUASOCKET_$(DEBUG) -D_GNU_SOURCE
 CFLAGS_linux=$(LUAINC:%=-I%) $(DEF) -Wall -Wshadow -Wextra \
 	-Wimplicit -O2 -ggdb3 -fpic
 LDFLAGS_linux=-O -shared -fpic -o 
