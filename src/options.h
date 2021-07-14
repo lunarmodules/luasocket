@@ -49,6 +49,10 @@ int opt_set_tcp_keepintvl(lua_State *L, p_socket ps);
 int opt_get_tcp_keepintvl(lua_State *L, p_socket ps);
 #endif
 
+#ifdef TCP_DEFER_ACCEPT
+int opt_set_tcp_defer_accept(lua_State *L, p_socket ps);
+#endif
+
 int opt_set_keepalive(lua_State *L, p_socket ps);
 int opt_get_keepalive(lua_State *L, p_socket ps);
 
