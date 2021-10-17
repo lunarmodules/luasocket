@@ -113,7 +113,9 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     luaL_buffinit(L, &b);
     luaL_addlstring(&b, part, size);
     /* receive new patterns */
-    if (!lua_isnumber(L, 2)) {
+    if(top < 2){
+        err = recvline(buf, &b);
+    } else if (!lua_isnumber(L, 2)) {
         const char *p= luaL_optstring(L, 2, "*l");
         if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b);
         else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b);
