@@ -10,6 +10,12 @@ include_directories(BEFORE "${PROJECT_SOURCE_DIR}/src/")
 # add header files directory
 # include_directories()
 
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /Ot /MD /W3 /nologo")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wshadow -Wextra -Wimplicit -O2 -ggdb3 -fpic")
+endif()
+
 
 if(WIN32)
   if(${HAVE_LUA})
@@ -56,6 +62,6 @@ set(
   "src/mime.lua"
 )
 
-install(TARGETS socket LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/luasocket/lib")
+install(TARGETS socket LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/luasocket/socket")
 install(FILES ${TO_SOCKET_LDIR} DESTINATION "${CMAKE_INSTALL_PREFIX}/luasocket/socket")
 install(FILES ${TO_TOP_LDIR} DESTINATION "${CMAKE_INSTALL_PREFIX}/luasocket")
