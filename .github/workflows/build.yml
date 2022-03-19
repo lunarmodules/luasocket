@@ -24,13 +24,12 @@ jobs:
           luaVersion: ${{ matrix.luaVersion }}
       - name: Setup ‘luarocks’
         uses: leafo/gh-actions-luarocks@v4
-      - name: Make and install locally
+      - name: Make and install
         run: |
           export DEBUG=DEBUG
-          luarocks --local make -- luasocket-scm-3.rockspec
+          luarocks make -- luasocket-scm-3.rockspec
       - name: Run regression tests
         run: |
-          eval $(luarocks --local path)
           cd test
           lua hello.lua
           lua testsrvr.lua > /dev/null &
