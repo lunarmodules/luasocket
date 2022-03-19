@@ -1,6 +1,10 @@
 name: Test build
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   build:
@@ -9,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty"]
-        platform: [ "ubuntu-20.04", "windows-2022", "macos-11" ]
+        platform: [ "ubuntu-20.04", "macos-11" ] # "windows-2022" not supported by gh-actions-lua
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
