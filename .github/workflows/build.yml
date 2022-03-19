@@ -1,10 +1,10 @@
-name: Check build
+name: Test build
 
 on: [ push, pull_request ]
 
 jobs:
   build:
-    name: Check build
+    name: Test build on Linux
     strategy:
       fail-fast: false
       matrix:
@@ -19,6 +19,23 @@ jobs:
           luaVersion: ${{ matrix.luaVersion }}
       - name: Setup ‘luarocks’
         uses: leafo/gh-actions-luarocks@v4
-      - name: Make with Luarocks
+      - name: Make and install locally
         run: |
-          luarocks make --pack-binary-rock -- luasocket-scm-3.rockspec
+          export DEBUG=DEBUG
+          luarocks --local make -- luasocket-scm-3.rockspec
+      - name: Run regression tests
+        run: |
+          eval $(luarocks --local path)
+          cd test
+          lua hello.lua
+          lua testsrvr.lua > /dev/null &
+          lua testclnt.lua
+          lua stufftest.lua
+          lua excepttest.lua
+          lua test_bind.lua
+          lua test_getaddrinfo.lua
+          lua ltn12test.lua
+          lua mimetest.lua
+          lua urltest.lua
+          lua test_socket_error.lua
+          kill %1
