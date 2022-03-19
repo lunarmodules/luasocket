@@ -1,8 +1,8 @@
 package = "LuaSocket"
-version = "scm-2"
+version = "scm-3"
 source = {
-  url = "git://github.com/diegonehab/luasocket.git"
-  , branch="master"
+  url = "git+https://github.com/lunarmodules/luasocket.git",
+  branch = "master"
 }
 description = {
   summary = "Network support for the Lua language",
@@ -12,7 +12,7 @@ description = {
       modules that add support for functionality commonly needed by applications
       that deal with the Internet.
    ]],
-  homepage = "http://luaforge.net/projects/luasocket/",
+  homepage = "https://github.com/lunarmodules/luasocket",
   license = "MIT"
 }
 dependencies = {
