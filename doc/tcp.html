@@ -209,7 +209,9 @@ Returns the underling socket descriptor or handle associated to the object.
 </p>
 
 <p class="return">
-The descriptor or handle. In case the object has been closed, the return will be -1.
+The descriptor or handle. In case the object has been closed, the return value
+will be -1. For an invalid socket it will be <a href="socket.html#socketinvalid">
+<tt>_SOCKETINVALID</tt></a>.
 </p>
 
 <p class="note">
@@ -611,7 +613,9 @@ server:<b>setfd(</b>fd<b>)</b>
 </p>
 
 <p class="description">
-Sets the underling socket descriptor or handle associated to the object. The current one is simply replaced, not closed, and no other change to the object state is made.
+Sets the underling socket descriptor or handle associated to the object. The current one
+is simply replaced, not closed, and no other change to the object state is made.
+To set it as invalid use <a href="socket.html#socketinvalid"><tt>_SOCKETINVALID</tt></a>.
 </p>
 
 <p class="return">

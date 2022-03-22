@@ -255,7 +255,8 @@ changed status.
 
 <p class="note">
 <b>Note:</b> <tt>select</tt> can monitor a limited number
-of sockets, as defined by the constant <tt>socket._SETSIZE</tt>. This
+of sockets, as defined by the constant <a href="#setsize">
+<tt>socket._SETSIZE</tt></a>. This
 number may be as high as 1024 or as low as 64 by default,
 depending on the system. It is usually possible to change this
 at compile time. Invoking <tt>select</tt> with a larger
@@ -410,7 +411,8 @@ socket.<b>_SOCKETINVALID</b>
 </p>
 
 <p class="description">
-The OS value for an invalid socket.
+The OS value for an invalid socket. This can be used with <a href="tcp.html#getfd">
+<tt>tcp:getfd</tt></a> and <a href="tcp.html#setfd"><tt>tcp:setfd</tt></a> methods.
 </p>
 
 <!-- try ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
