@@ -13,17 +13,17 @@
 
 <!-- header ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<div class=header>
+<div class="header">
 <hr>
 <center>
 <table summary="LuaSocket logo">
-<tr><td align=center><a href="http://www.lua.org">
-<img width=128 height=128 border=0 alt="LuaSocket" src="luasocket.png">
+<tr><td align="center"><a href="http://www.lua.org">
+<img width="128" height="128" border="0" alt="LuaSocket" src="luasocket.png">
 </a></td></tr>
-<tr><td align=center valign=top>Network support for the Lua language
+<tr><td align="center" valign="top">Network support for the Lua language
 </td></tr>
 </table>
-<p class=bar>
+<p class="bar">
 <a href="index.html">home</a> &middot;
 <a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
@@ -71,26 +71,26 @@ unconnected:<b>getoption()</b>
 
 <p class="description">
 Gets an option value from the UDP object.
-See <a href=#setoption><tt>setoption</tt></a> for
+See <a href="#setoption"><tt>setoption</tt></a> for
 description of the option names and values.
 </p>
 
 <p class="parameters"><tt>Option</tt> is a string with the option name.
 <ul>
-<li> '<tt>dontroute</tt>'
-<li> '<tt>broadcast</tt>'
-<li> '<tt>reuseaddr</tt>'
-<li> '<tt>reuseport</tt>'
-<li> '<tt>ip-multicast-loop</tt>'
-<li> '<tt>ipv6-v6only</tt>'
-<li> '<tt>ip-multicast-if</tt>'
-<li> '<tt>ip-multicast-ttl</tt>'
-<li> '<tt>ip-add-membership</tt>'
-<li> '<tt>ip-drop-membership</tt>'
+<li> '<tt>dontroute</tt>'</li>
+<li> '<tt>broadcast</tt>'</li>
+<li> '<tt>reuseaddr</tt>'</li>
+<li> '<tt>reuseport</tt>'</li>
+<li> '<tt>ip-multicast-loop</tt>'</li>
+<li> '<tt>ipv6-v6only</tt>'</li>
+<li> '<tt>ip-multicast-if</tt>'</li>
+<li> '<tt>ip-multicast-ttl</tt>'</li>
+<li> '<tt>ip-add-membership</tt>'</li>
+<li> '<tt>ip-drop-membership</tt>'</li>
 </ul>
 </p>
 
-<p class=return>
+<p class="return">
 The method returns the option <tt>value</tt> in case of
 success, or
 <b><tt>nil</tt></b> followed by an error message otherwise.
@@ -108,7 +108,7 @@ associated with a connected UDP object.
 </p>
 
 
-<p class=return>
+<p class="return">
 Returns a string with the IP address of the peer, the
 port number that peer is using for the connection,
 and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>").
@@ -131,7 +131,7 @@ Returns the local address information associated to the object.
 </p>
 
 
-<p class=return>
+<p class="return">
 The method returns a string with local IP address, a number with
 the local port,
 and a string with the family ("<tt>inet</tt>" or "<tt>inet6</tt>").
@@ -148,12 +148,12 @@ wild-card address).
 
 <!-- gettimeout +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class=name id="gettimeout">
+<p class="name" id="gettimeout">
 connected:<b>settimeout(</b>value<b>)</b><br>
 unconnected:<b>settimeout(</b>value<b>)</b>
 </p>
 
-<p class=description>
+<p class="description">
 Returns the current timeout value.
 </p>
 
@@ -180,8 +180,8 @@ the excess bytes are discarded. If there are less then
 <tt>size</tt> bytes available in the current datagram, the
 available bytes are returned.
 If <tt>size</tt> is omitted, the
-compile-time constant <a
-href=socket.html#datagramsize><tt>socket._DATAGRAMSIZE</tt></a> is used
+compile-time constant <a href="socket.html#datagramsize">
+<tt>socket._DATAGRAMSIZE</tt></a> is used
 (it defaults to 8192 bytes). Larger sizes will cause a
 temporary buffer to be allocated for the operation.
 </p>
@@ -286,45 +286,45 @@ name, and <tt>value</tt> depends on the option being set:
 <ul>
 <li> '<tt>dontroute</tt>': Indicates that outgoing
 messages should bypass the standard routing facilities.
-Receives a boolean value;
+Receives a boolean value;</li>
 <li> '<tt>broadcast</tt>': Requests permission to send
 broadcast datagrams on the socket.
-Receives a boolean value;
+Receives a boolean value;</li>
 <li> '<tt>reuseaddr</tt>': Indicates that the rules used in
 validating addresses supplied in a <tt>bind()</tt> call
 should allow reuse of local addresses.
-Receives a boolean value;
+Receives a boolean value;</li>
 <li> '<tt>reuseport</tt>': Allows completely duplicate
 bindings by multiple processes if they all set
 '<tt>reuseport</tt>' before binding the port.
-Receives a boolean value;
+Receives a boolean value;</li>
 <li> '<tt>ip-multicast-loop</tt>':
 Specifies whether or not a copy of an outgoing multicast
 datagram is delivered to the sending host as long as it is a
 member of the multicast group.
-Receives a boolean value;
+Receives a boolean value;</li>
 <li> '<tt>ipv6-v6only</tt>':
 Specifies whether to restrict <tt>inet6</tt> sockets to
 sending and receiving only IPv6 packets.
-Receive a boolean value;
+Receive a boolean value;</li>
 <li> '<tt>ip-multicast-if</tt>':
 Sets the interface over which outgoing multicast datagrams
 are sent.
-Receives an IP address;
+Receives an IP address;</li>
 <li> '<tt>ip-multicast-ttl</tt>':
 Sets the Time To Live in the IP header for outgoing
 multicast datagrams.
-Receives a number;
+Receives a number;</li>
 <li> '<tt>ip-add-membership</tt>':
 Joins the multicast group specified.
 Receives a table with fields
 <tt>multiaddr</tt> and <tt>interface</tt>, each containing an
-IP address;
+IP address;</li>
 <li> '<tt>ip-drop-membership</tt>': Leaves the multicast
 group specified.
 Receives a table with fields
 <tt>multiaddr</tt> and <tt>interface</tt>, each containing an
-IP address.
+IP address.</li>
 </ul>
 
 <p class="return">
@@ -332,7 +332,7 @@ The method returns 1 in case of success, or
 <b><tt>nil</tt></b> followed by an error message otherwise.
 </p>
 
-<p class=note>
+<p class="note">
 Note: The descriptions above come from the man pages.
 </p>
 
@@ -381,11 +381,11 @@ is recommended when the same peer is used for several transmissions
 and can result in up to 30% performance gains.
 </p>
 
-<p class=note>
+<p class="note">
 Note: Starting with LuaSocket 3.0, the host name resolution
 depends on whether the socket was created by <a
-href=#socket.udp><tt>socket.udp</tt></a> or <a
-href=#socket.udp6><tt>socket.udp6</tt></a>. Addresses from
+href="#socket.udp"><tt>socket.udp</tt></a> or <a
+href="#socket.udp6"><tt>socket.udp6</tt></a>. Addresses from
 the appropriate family are tried in succession until the
 first success or until the last failure.
 </p>
@@ -492,23 +492,23 @@ returned. In case of error, <b><tt>nil</tt></b> is returned, followed by
 an error message.
 </p>
 
-<p class=note>
+<p class="note">
 Note: The choice between IPv4 and IPv6 happens during a call to
-<a href=#sendto><tt>sendto</tt></a>, <a
-href=#setpeername><tt>setpeername</tt></a>, or <a
-href=#setsockname><tt>sockname</tt></a>, depending on the address
+<a href="#sendto"><tt>sendto</tt></a>, <a
+href="#setpeername"><tt>setpeername</tt></a>, or <a
+href="#setsockname"><tt>sockname</tt></a>, depending on the address
 family obtained from the resolver.
 </p>
 
-<p class=note>
+<p class="note">
 Note: Before the choice between IPv4 and IPv6 happens,
 the internal socket object is invalid and therefore <a
-href=#setoption><tt>setoption</tt></a> will fail.
+href="#setoption"><tt>setoption</tt></a> will fail.
 </p>
 
 <!-- socket.udp4 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<p class="name" id="socket.udp">
+<p class="name" id="socket.udp4">
 socket.<b>udp4()</b>
 </p>
 
@@ -564,7 +564,7 @@ returned. In case of error, <b><tt>nil</tt></b> is returned, followed by
 an error message.
 </p>
 
-<p class=note>
+<p class="note">
 Note: The TCP object returned will have the option
 "<tt>ipv6-v6only</tt>" set to <tt><b>true</b></tt>.
 </p>
@@ -573,10 +573,10 @@ Note: The TCP object returned will have the option
 
 <!-- footer ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<div class=footer>
+<div class="footer">
 <hr>
 <center>
-<p class=bar>
+<p class="bar">
 <a href="index.html">home</a> &middot;
 <a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
