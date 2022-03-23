@@ -127,7 +127,7 @@ build = {
     mingw32 = make_plat("mingw32")
   },
   copy_directories = {
-    "doc"
+    "docs"
     , "samples"
     , "etc"
     , "test" }
