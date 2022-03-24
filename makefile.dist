@@ -112,7 +112,7 @@ DOCS = \
 
 dist:
 	mkdir -p $(DIST)
-	cp -vf NEW $(DIST)
+	cp -vf CHANGELOG.md $(DIST)
 	cp -vf LICENSE $(DIST)
 	cp -vf README $(DIST)
 	cp -vf $(MAKE) $(DIST)
