@@ -114,7 +114,7 @@ dist:
 	mkdir -p $(DIST)
 	cp -vf CHANGELOG.md $(DIST)
 	cp -vf LICENSE $(DIST)
-	cp -vf README $(DIST)
+	cp -vf README.md $(DIST)
 	cp -vf $(MAKE) $(DIST)
 
 	mkdir -p $(DIST)/etc
