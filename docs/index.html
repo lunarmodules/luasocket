@@ -121,76 +121,6 @@ Aurich, Liam Devine, Alexey Melnichuk, and everybody else
 that has helped bring this library back to life.
 </p>
 
-<!-- whatsnew +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<h2 id="new">What's New</h2>
-
-<p>
-Main changes for LuaSocket&nbsp;3.0-rc1 are IPv6 support
-and Lua&nbsp;5.2 compatibility.
-</p>
-
-<ul>
-<li> Added: Compatible with Lua&nbsp;5.2</li>
-<ul>
-<li> Note that unless you define <tt>LUA_COMPAT_MODULE</tt>,
-package tables will <em>not</em> be exported as globals!</li>
-</ul>
-<li> Added: IPv6 support;</li>
-<ul>
-<li> <tt>Socket.connect</tt> and <tt>socket.bind</tt> support IPv6 addresses;</li>
-<li> <tt>Getpeername</tt> and <tt>getsockname</tt> support
-IPv6 addresses, and return the socket family as a third value;</li>
-<li> URL module updated to support IPv6 host names;</li>
-<li> New <tt>socket.tcp6</tt> and <tt>socket.udp6</tt> functions;</li>
-<li> New <tt>socket.dns.getaddrinfo</tt> and
-    <tt>socket.dns.getnameinfo</tt> functions;</li>
-</ul>
-<li> Added: <tt>getoption</tt> method;</li>
-<li> Fixed: <tt>url.unescape</tt> was returning additional values;</li>
-<li> Fixed: <tt>mime.qp</tt>, <tt>mime.unqp</tt>,
-    <tt>mime.b64</tt>, and <tt>mime.unb64</tt> could
-    mistaking their own stack slots for functions arguments;</li>
-<li> Fixed: Receiving zero-length datagram is now possible;</li>
-<li> Improved: Hidden all internal library symbols;</li>
-<li> Improved: Better error messages;</li>
-<li> Improved: Better documentation of socket options.</li>
-<li> Fixed: manual sample of HTTP authentication now uses correct
-     "authorization" header (Alexandre Ittner);</li>
-<li> Fixed: failure on bind() was destroying the socket (Sam Roberts);</li>
-<li> Fixed: receive() returns immediatelly if prefix can satisfy
-     bytes requested (M Joonas Pihlaja);</li>
-<li> Fixed: multicast didn't work on Windows, or anywhere
-     else for that matter (Herbert Leuwer, Adrian Sietsma);</li>
-<li> Fixed: select() now reports an error when called with more
-     sockets than FD_SETSIZE (Lorenzo Leonini);</li>
-<li> Fixed: manual links to home.html changed to index.html
-(Robert Hahn);</li>
-<li> Fixed: mime.unb64() would return an empty string on results that started
-     with a null character (Robert Raschke);</li>
-<li> Fixed: HTTP now automatically redirects on 303 and 307 (Jonathan Gray);</li>
-<li> Fixed: calling sleep() with negative numbers could
-     block forever, wasting CPU. Now it returns immediately (MPB);</li>
-<li> Improved: FTP commands are now sent in upper case to
-     help buggy servers (Anders Eurenius);</li>
-<li> Improved: known headers now sent in canonic
-     capitalization to help buggy servers (Joseph Stewart);</li>
-<li> Improved: Clarified tcp:receive() in the manual (MPB);</li>
-<li> Improved: Decent makefiles (LHF).</li>
-<li> Fixed: RFC links in documentation now point to IETF (Cosmin Apreutesei).</li>
-</ul>
-
-<!-- old ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-
-<h2 id="old">Old Versions</h2>
-
-<p>
-All  previous versions  of the  LuaSocket library  can be  downloaded <a
-href="http://www.impa.br/~diego/software/luasocket/old">
-here</a>. Although these  versions are  no longer  supported, they  are
-still available for those that have compatibility issues.
-</p>
-
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <div class="footer">
@@ -201,12 +131,6 @@ still available for those that have compatibility issues.
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
 <a href="reference.html">reference</a>
-</p>
-<p>
-<small>
-Last modified by Diego Nehab on <br>
-Tue Jun 11 18:50:23 HKT 2013
-</small>
 </p>
 </center>
 </div>
