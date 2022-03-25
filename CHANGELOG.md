@@ -1,6 +1,6 @@
 # Changelog
 
-## [v3.0.0](https://github.com/lunarmodules/luasocket/releases/v3.0.0) — unreleased
+## [v3.0.0](https://github.com/lunarmodules/luasocket/releases/v3.0.0) — 2022-03-25
 
 The last time LuaSocket had a stable release tag was 14 years ago when 2.0.2 was tagged.
 A v3 release candidate was tagged 9 years ago.
