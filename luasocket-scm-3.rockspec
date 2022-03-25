@@ -7,9 +7,9 @@ source = {
 description = {
   summary = "Network support for the Lua language",
   detailed = [[
-      LuaSocket is a Lua extension library that is composed by two parts: a C core
-      that provides support for the TCP and UDP transport layers, and a set of Lua
-      modules that add support for functionality commonly needed by applications
+      LuaSocket is a Lua extension library composed of two parts: a set of C
+      modules that provide support for the TCP and UDP transport layers, and a
+      set of Lua modules that provide functions commonly needed by applications
       that deal with the Internet.
    ]],
   homepage = "https://github.com/lunarmodules/luasocket",
