@@ -272,7 +272,7 @@ SOCKET_win64=wsocket.obj
 #
 SO=$(SO_$(PLAT))
 O=$(O_$(PLAT))
-SOCKET_V=3.0-rc1
+SOCKET_V=3.0.0
 MIME_V=1.0.3
 SOCKET_SO=socket-$(SOCKET_V).$(SO)
 MIME_SO=mime-$(MIME_V).$(SO)
