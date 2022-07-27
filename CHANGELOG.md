@@ -1,5 +1,12 @@
 # Changelog
 
+## [v3.1.0](https://github.com/lunarmodules/luasocket/releases/v3.1.0) — 2022-07-27
+
+* Add support for TCP Defer Accept – @Zash
+* Add support for TCP Fast Open – @Zash
+* Fix Windows (mingw32) builds – @goldenstein64
+* Avoid build warnings on 64-bit Windows – @rpatters1
+
 ## [v3.0.0](https://github.com/lunarmodules/luasocket/releases/v3.0.0) — 2022-03-25
 
 The last time LuaSocket had a stable release tag was 14 years ago when 2.0.2 was tagged.
