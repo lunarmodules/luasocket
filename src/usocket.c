@@ -449,6 +449,6 @@ const char *socket_gaistrerror(int err) {
         case EAI_SERVICE: return PIE_SERVICE;
         case EAI_SOCKTYPE: return PIE_SOCKTYPE;
         case EAI_SYSTEM: return strerror(errno);
-        default: return GAI_STRERROR(err);
+        default: return LUA_GAI_STRERROR(err);
     }
 }
