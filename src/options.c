@@ -207,6 +207,15 @@ int opt_set_tcp_fastopen_connect(lua_State *L, p_socket ps)
 #endif
 
 /*------------------------------------------------------*/
+
+#ifdef TCP_DEFER_ACCEPT
+int opt_set_tcp_defer_accept(lua_State *L, p_socket ps)
+{
+    return opt_setint(L, ps, IPPROTO_TCP, TCP_DEFER_ACCEPT);
+}
+#endif
+
+/*------------------------------------------------------*/
 int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
