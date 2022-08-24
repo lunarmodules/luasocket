@@ -22,20 +22,17 @@ SAMPLES = \
 	samples/lpr.lua \
 	samples/talker.lua \
 	samples/tinyirc.lua
-
-ETC = \
-	etc/README \
-	etc/b64.lua \
-	etc/check-links.lua \
-	etc/check-memory.lua \
-	etc/dict.lua \
-	etc/dispatch.lua \
-	etc/eol.lua \
-	etc/forward.lua \
-	etc/get.lua \
-	etc/lp.lua \
-	etc/qp.lua \
-	etc/tftp.lua
+	samples/b64.lua \
+	samples/check-links.lua \
+	samples/check-memory.lua \
+	samples/dict.lua \
+	samples/dispatch.lua \
+	samples/eol.lua \
+	samples/forward.lua \
+	samples/get.lua \
+	samples/lp.lua \
+	samples/qp.lua \
+	samples/tftp.lua
 
 SRC = \
 	src/makefile \
@@ -116,9 +113,6 @@ dist:
 	cp -vf LICENSE $(DIST)
 	cp -vf README.md $(DIST)
 	cp -vf $(MAKE) $(DIST)
-
-	mkdir -p $(DIST)/etc
-	cp -vf $(ETC) $(DIST)/etc
 
 	mkdir -p $(DIST)/src
 	cp -vf $(SRC) $(DIST)/src

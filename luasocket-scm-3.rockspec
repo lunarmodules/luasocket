@@ -130,6 +130,5 @@ build = {
   copy_directories = {
     "docs"
     , "samples"
-    , "etc"
     , "test" }
 }
