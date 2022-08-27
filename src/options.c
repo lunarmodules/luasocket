@@ -190,7 +190,7 @@ int opt_set_send_buf_size(lua_State *L, p_socket ps)
 	return opt_setint(L, ps, SOL_SOCKET, SO_SNDBUF);
 }
 
-// /*------------------------------------------------------*/
+/*------------------------------------------------------*/
 
 #ifdef TCP_FASTOPEN
 int opt_set_tcp_fastopen(lua_State *L, p_socket ps)
