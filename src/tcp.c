@@ -447,7 +447,7 @@ static int global_connect(lua_State *L) {
     timeout_init(&tcp->tm, -1, -1);
     buffer_init(&tcp->buf, &tcp->io, &tcp->tm);
     tcp->sock = SOCKET_INVALID;
-    tcp->family = AF_UNSPEC;
+    tcp->family = family;
     /* allow user to pick local address and port */
     memset(&bindhints, 0, sizeof(bindhints));
     bindhints.ai_socktype = SOCK_STREAM;
@@ -465,6 +465,7 @@ static int global_connect(lua_State *L) {
     /* try to connect to remote address and port */
     memset(&connecthints, 0, sizeof(connecthints));
     connecthints.ai_socktype = SOCK_STREAM;
+    connecthints.ai_protocol = IPPROTO_TCP;
     /* make sure we try to connect only to the same family */
     connecthints.ai_family = tcp->family;
     err = inet_tryconnect(&tcp->sock, &tcp->family, remoteaddr, remoteserv,
