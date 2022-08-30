@@ -403,7 +403,7 @@ const char *socket_hoststrerror(int err) {
     if (err <= 0) return io_strerror(err);
     switch (err) {
         case HOST_NOT_FOUND: return PIE_HOST_NOT_FOUND;
-        default: return strerror(err);
+        default: return hstrerror(err);
     }
 }
 
