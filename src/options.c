@@ -55,6 +55,33 @@ int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps)
 }
 
 /*------------------------------------------------------*/
+/* binds socket to network interface */
+int opt_set_bindtodevice(lua_State *L, p_socket ps)
+{
+#ifdef __APPLE__
+    return luaL_error(L, "SO_BINDTODEVICE is not supported on this operating system");
+#else
+    const char *dev = luaL_checkstring(L, 3);
+    return opt_set(L, ps, SOL_SOCKET, SO_BINDTODEVICE, (char*)dev, strlen(dev)+1);
+#endif
+}
+
+int opt_get_bindtodevice(lua_State *L, p_socket ps)
+{
+#ifdef __APPLE__
+    return luaL_error(L, "SO_BINDTODEVICE is not supported on this operating system");
+#else
+    char dev[IFNAMSIZ];
+    int len = sizeof(dev);
+    int err = opt_get(L, ps, SOL_SOCKET, SO_BINDTODEVICE, &dev, &len);
+    if (err)
+        return err;
+    lua_pushstring(L, dev);
+    return 1;
+#endif
+}
+
+/*------------------------------------------------------*/
 /* enables reuse of local address */
 int opt_set_reuseaddr(lua_State *L, p_socket ps)
 {
