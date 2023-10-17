@@ -1,8 +1,8 @@
 # LuaSocket
 
 
-[![Build](https://img.shields.io/github/workflow/status/lunarmodules/luasocket/Build?label=Build=Lua)](https://github.com/lunarmodules/luasocket/actions?workflow=Build)
-[![Luacheck](https://img.shields.io/github/workflow/status/lunarmodules/luasocket/Luacheck?label=Luacheck&logo=Lua)](https://github.com/lunarmodules/luasocket/actions?workflow=Luacheck)
+[![Build](https://img.shields.io/github/actions/workflow/status/lunarmodules/luasocket/build.yml?branch=master&label=Build&logo=Lua)](https://github.com/lunarmodules/luasocket/actions?workflow=Build)
+[![Luacheck](https://img.shields.io/github/actions/workflow/status/lunarmodules/luasocket/luacheck.yml?branch=master&label=Luacheck&logo=Lua)](https://github.com/lunarmodules/luasocket/actions?workflow=Luacheck)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/lunarmodules/luasocket?label=Tag&logo=GitHub)](https://github.com/lunarmodules/luasocket/releases)
 [![Luarocks](https://img.shields.io/luarocks/v/lunarmodules/luasocket?label=Luarocks&logo=Lua)](https://luarocks.org/modules/lunarmodules/luasocket)
 
