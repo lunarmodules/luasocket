@@ -58,7 +58,7 @@ int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps)
 /* binds socket to network interface */
 int opt_set_bindtodevice(lua_State *L, p_socket ps)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__WIN32__) || defined(_MSC_VER)
     return luaL_error(L, "SO_BINDTODEVICE is not supported on this operating system");
 #else
     const char *dev = luaL_checkstring(L, 3);
@@ -68,7 +68,7 @@ int opt_set_bindtodevice(lua_State *L, p_socket ps)
 
 int opt_get_bindtodevice(lua_State *L, p_socket ps)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__WIN32__) || defined(_MSC_VER)
     return luaL_error(L, "SO_BINDTODEVICE is not supported on this operating system");
 #else
     char dev[IFNAMSIZ];
