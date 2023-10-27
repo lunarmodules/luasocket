@@ -13,22 +13,27 @@ jobs:
       fail-fast: false
       matrix:
         luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
-        platform: [ "ubuntu-20.04", "macos-11" ] # "windows-2022" not supported by gh-actions-lua
+        platform: [ "ubuntu-20.04", "macos-11", "windows-2022" ]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Setup ’msvc’
+        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ !startsWith(matrix.luaVersion, 'luajit') }}
       - name: Setup ‘lua’
-        uses: leafo/gh-actions-lua@v9
+        uses: leso-kn/gh-actions-lua@v11-staging
         with:
           luaVersion: ${{ matrix.luaVersion }}
       - name: Setup ‘luarocks’
-        uses: leafo/gh-actions-luarocks@v4
+        uses: hishamhm/gh-actions-luarocks@master
       - name: Make and install
         run: |
-          export DEBUG=DEBUG
           luarocks make -- luasocket-scm-3.rockspec
+        env:
+          DEBUG: DEBUG
       - name: Run regression tests
+        shell: bash
         run: |
           cd test
           lua hello.lua
