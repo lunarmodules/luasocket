@@ -265,6 +265,37 @@ ignore = {
 }
 check_request(request, expect, ignore)
 
+-- Use https://httpbin.org/#/Dynamic_data/get_base64__value_ for testing
+-----------------------------------------------------
+io.write("testing absolute https redirection: ")
+request = {
+    url = "https://httpbin.org/redirect-to?url=https://httpbin.org/base64/THVhIFNvY2tldA=="
+}
+expect = {
+    code = 200,
+    body = "Lua Socket"
+}
+ignore = {
+    status = 1,
+    headers = 1
+}
+check_request(request, expect, ignore)
+
+-----------------------------------------------------
+io.write("testing relative https redirection: ")
+request = {
+    url = "https://httpbin.org/redirect-to?url=/base64/THVhIFNvY2tldA=="
+}
+expect = {
+    code = 200,
+    body = "Lua Socket"
+}
+ignore = {
+    status = 1,
+    headers = 1
+}
+check_request(request, expect, ignore)
+
 ------------------------------------------------------------------------
 --[[
 io.write("testing proxy with redirection: ")
