@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Test build on ${{ matrix.platform }}
+    name: Test ${{ matrix.luaVersion }} on ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
@@ -17,10 +17,10 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup ’msvc’
+        if: ${{ startsWith(matrix.platform, 'windows') && !startsWith(matrix.luaVersion, 'luajit') }}
         uses: ilammy/msvc-dev-cmd@v1
-        if: ${{ !startsWith(matrix.luaVersion, 'luajit') }}
       - name: Setup ‘lua’
         uses: leso-kn/gh-actions-lua@v11-staging
         with:
