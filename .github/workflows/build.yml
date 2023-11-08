@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
-        platform: [ "ubuntu-20.04", "macos-11", "windows-2022" ]
+        platform: [ "ubuntu-22.04", "macos-11", "windows-2022" ]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
