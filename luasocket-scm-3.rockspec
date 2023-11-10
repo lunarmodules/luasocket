@@ -69,6 +69,7 @@ local function make_plat(plat)
     ["socket.smtp"]    = "src/smtp.lua",
     ltn12              = "src/ltn12.lua",
     socket             = "src/socket.lua",
+    mbox               = "src/mbox.lua",
     mime               = "src/mime.lua"
   }
   if plat == "unix"
