@@ -253,7 +253,7 @@ int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
         port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
     if (err) {
         lua_pushnil(L);
-        lua_pushstring(L, gai_strerror(err));
+        lua_pushstring(L, LUA_GAI_STRERROR(err));
         return 2;
     }
     lua_pushstring(L, name);
@@ -286,11 +286,11 @@ int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
 		name, INET6_ADDRSTRLEN, port, 6, NI_NUMERICHOST | NI_NUMERICSERV);
     if (err) {
         lua_pushnil(L);
-        lua_pushstring(L, gai_strerror(err));
+        lua_pushstring(L, LUA_GAI_STRERROR(err));
         return 2;
     }
     lua_pushstring(L, name);
-    lua_pushstring(L, port);
+    lua_pushinteger(L, (int) strtol(port, (char **) NULL, 10));
     switch (family) {
         case AF_INET: lua_pushliteral(L, "inet"); break;
         case AF_INET6: lua_pushliteral(L, "inet6"); break;

@@ -71,6 +71,7 @@ static luaL_Reg tcp_methods[] = {
 
 /* socket option handlers */
 static t_opt optget[] = {
+    {"bindtodevice", opt_get_bindtodevice},
     {"keepalive",   opt_get_keepalive},
     {"reuseaddr",   opt_get_reuseaddr},
     {"reuseport",   opt_get_reuseport},
@@ -92,6 +93,7 @@ static t_opt optget[] = {
 };
 
 static t_opt optset[] = {
+    {"bindtodevice", opt_set_bindtodevice},
     {"keepalive",   opt_set_keepalive},
     {"reuseaddr",   opt_set_reuseaddr},
     {"reuseport",   opt_set_reuseport},
@@ -109,6 +111,15 @@ static t_opt optset[] = {
     {"linger",      opt_set_linger},
 	{"recv-buffer-size",     opt_set_recv_buf_size},
 	{"send-buffer-size",     opt_set_send_buf_size},
+#ifdef TCP_DEFER_ACCEPT
+    {"tcp-defer-accept", opt_set_tcp_defer_accept},
+#endif
+#ifdef TCP_FASTOPEN
+    {"tcp-fastopen", opt_set_tcp_fastopen},
+#endif
+#ifdef TCP_FASTOPEN_CONNECT
+    {"tcp-fastopen-connect", opt_set_tcp_fastopen_connect},
+#endif
     {NULL,          NULL}
 };
 
