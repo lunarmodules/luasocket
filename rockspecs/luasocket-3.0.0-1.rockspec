@@ -1,8 +1,8 @@
 package = "LuaSocket"
-version = "scm-3"
+version = "3.0.0-1"
 source = {
   url = "git+https://github.com/lunarmodules/luasocket.git",
-  branch = "master"
+  tag = "v3.0.0"
 }
 description = {
   summary = "Network support for the Lua language",
@@ -34,7 +34,7 @@ local function make_plat(plat)
     },
     mingw32 = {
       "LUASOCKET_DEBUG",
-      -- "LUASOCKET_INET_PTON",
+      "LUASOCKET_INET_PTON",
       "WINVER=0x0501"
     }
   }
@@ -113,7 +113,6 @@ local function make_plat(plat)
   then
     modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/wsocket.c"
     modules["socket.core"].libraries = { "ws2_32" }
-    modules["socket.core"].libdirs = {}
   end
   return { modules = modules }
 end
@@ -130,5 +129,6 @@ build = {
   copy_directories = {
     "docs"
     , "samples"
+    , "etc"
     , "test" }
 }

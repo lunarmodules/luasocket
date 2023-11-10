@@ -230,7 +230,7 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
     *sent = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
-        long put = (long) sendto(*ps, data, count, 0, addr, len); 
+        long put = (long) sendto(*ps, data, count, 0, addr, len);
         if (put >= 0) {
             *sent = put;
             return IO_DONE;
@@ -443,6 +443,6 @@ const char *socket_gaistrerror(int err) {
         case EAI_SERVICE: return PIE_SERVICE;
         case EAI_SOCKTYPE: return PIE_SOCKTYPE;
         case EAI_SYSTEM: return strerror(errno);
-        default: return gai_strerror(err);
+        default: return LUA_GAI_STRERROR(err);
     }
 }

@@ -1,8 +1,8 @@
 package = "LuaSocket"
-version = "scm-3"
+version = "3.1.0-1"
 source = {
   url = "git+https://github.com/lunarmodules/luasocket.git",
-  branch = "master"
+  tag = "v3.1.0"
 }
 description = {
   summary = "Network support for the Lua language",
@@ -130,5 +130,6 @@ build = {
   copy_directories = {
     "docs"
     , "samples"
+    , "etc"
     , "test" }
 }

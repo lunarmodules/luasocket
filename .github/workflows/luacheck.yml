@@ -5,15 +5,9 @@ on: [push, pull_request]
 jobs:
 
   luacheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Setup ‘lua’
-      uses: leafo/gh-actions-lua@v9
-    - name: Setup ‘luarocks’
-      uses: leafo/gh-actions-luarocks@v4
-    - name: Setup ‘luacheck’
-      run: luarocks install luacheck
-    - name: Run ‘luacheck’ linter
-      run: luacheck .
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Luacheck
+        uses: lunarmodules/luacheck@v1

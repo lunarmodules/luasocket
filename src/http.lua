@@ -283,6 +283,13 @@ local function adjustrequest(reqt)
     nreqt.uri = reqt.uri or adjusturi(nreqt)
     -- adjust headers in request
     nreqt.headers = adjustheaders(nreqt)
+    if nreqt.source
+        and not nreqt.headers["content-length"]
+        and not nreqt.headers["transfer-encoding"]
+    then
+        nreqt.headers["transfer-encoding"] = "chunked"
+    end
+
     -- ajust host and port if there is a proxy
     nreqt.host, nreqt.port = adjustproxy(nreqt)
     return nreqt
@@ -293,6 +300,8 @@ local function shouldredirect(reqt, code, headers)
     if not location then return false end
     location = string.gsub(location, "%s", "")
     if location == "" then return false end
+    -- the RFC says the redirect URL may be relative
+    location = url.absolute(reqt.url, location)
     local scheme = url.parse(location).scheme
     if scheme and (not SCHEMES[scheme]) then return false end
     -- avoid https downgrades
@@ -316,8 +325,7 @@ end
 local trequest, tredirect
 
 --[[local]] function tredirect(reqt, location)
-    -- the RFC says the redirect URL has to be absolute, but some
-    -- servers do not respect that
+    -- the RFC says the redirect URL may be relative
     local newurl = url.absolute(reqt.url, location)
     -- if switching schemes, reset port and create function
     if url.parse(newurl).scheme ~= reqt.scheme then

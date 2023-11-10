@@ -17,8 +17,10 @@
 \*=========================================================================*/
 #ifdef _WIN32
 #include "wsocket.h"
+#define LUA_GAI_STRERROR gai_strerrorA
 #else
 #include "usocket.h"
+#define LUA_GAI_STRERROR gai_strerror
 #endif
 
 /*=========================================================================*\

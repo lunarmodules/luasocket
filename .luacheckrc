@@ -15,8 +15,6 @@ include_files = {
 }
 
 exclude_files = {
-    "etc/*.lua",
-    "etc/**/*.lua",
     "test/*.lua",
     "test/**/*.lua",
     "samples/*.lua",

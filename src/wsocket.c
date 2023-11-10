@@ -425,6 +425,6 @@ const char *socket_gaistrerror(int err) {
 #ifdef EAI_SYSTEM
         case EAI_SYSTEM: return strerror(errno);
 #endif
-        default: return gai_strerror(err);
+        default: return LUA_GAI_STRERROR(err);
     }
 }
