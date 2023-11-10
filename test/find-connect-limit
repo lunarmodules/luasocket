@@ -10,7 +10,7 @@ ulimit -n
 You'll probably need to be root to do this.
 ]]
 
-require "socket"
+socket = require "socket"
 
 host = arg[1] or "google.com"
 port = arg[2] or 80

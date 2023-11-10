@@ -669,7 +669,6 @@ local udp_methods = {
     "settimeout"
 }
 
-
 ------------------------------------------------------------------------
 test_methods(socket.udp(), udp_methods)
 do local sock = socket.tcp6()

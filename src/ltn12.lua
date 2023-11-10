@@ -9,10 +9,13 @@
 -----------------------------------------------------------------------------
 local string = require("string")
 local table = require("table")
+local unpack = unpack or table.unpack
 local base = _G
+local select = select
+
 local _M = {}
 if module then -- heuristic for exporting a global package table
-    ltn12 = _M
+    ltn12 = _M  -- luacheck: ignore
 end
 local filter,source,sink,pump = {},{},{},{}
 
@@ -122,6 +125,16 @@ function source.string(s)
             else return nil end
         end
     else return source.empty() end
+end
+
+-- creates table source
+function source.table(t)
+    base.assert('table' == type(t))
+    local i = 0
+    return function()
+        i = i + 1
+        return t[i]
+    end
 end
 
 -- creates rewindable source

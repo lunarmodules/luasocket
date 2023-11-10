@@ -2,15 +2,13 @@
 * Select implementation
 * LuaSocket toolkit
 \*=========================================================================*/
-#include <string.h>
-
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
+#include "luasocket.h"
 
 #include "socket.h"
 #include "timeout.h"
 #include "select.h"
+
+#include <string.h>
 
 /*=========================================================================*\
 * Internal function prototypes.
@@ -31,15 +29,15 @@ static luaL_Reg func[] = {
     {NULL,     NULL}
 };
 
-/*=========================================================================*\
-* Exported functions
-\*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
 int select_open(lua_State *L) {
     lua_pushstring(L, "_SETSIZE");
-    lua_pushnumber(L, FD_SETSIZE);
+    lua_pushinteger(L, FD_SETSIZE);
+    lua_rawset(L, -3);
+    lua_pushstring(L, "_SOCKETINVALID");
+    lua_pushinteger(L, SOCKET_INVALID);
     lua_rawset(L, -3);
     luaL_setfuncs(L, func, 0);
     return 0;
@@ -214,4 +212,3 @@ static void make_assoc(lua_State *L, int tab) {
         i = i+1;
     }
 }
-

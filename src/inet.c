@@ -2,15 +2,12 @@
 * Internet domain functions
 * LuaSocket toolkit
 \*=========================================================================*/
+#include "luasocket.h"
+#include "inet.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "lua.h"
-#include "lauxlib.h"
-#include "compat.h"
-
-#include "inet.h"
 
 /*=========================================================================*\
 * Internal function prototypes.
@@ -32,9 +29,6 @@ static luaL_Reg func[] = {
     { NULL, NULL}
 };
 
-/*=========================================================================*\
-* Exported functions
-\*=========================================================================*/
 /*-------------------------------------------------------------------------*\
 * Initializes module
 \*-------------------------------------------------------------------------*/
@@ -259,7 +253,7 @@ int inet_meth_getpeername(lua_State *L, p_socket ps, int family)
         port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
     if (err) {
         lua_pushnil(L);
-        lua_pushstring(L, gai_strerror(err));
+        lua_pushstring(L, LUA_GAI_STRERROR(err));
         return 2;
     }
     lua_pushstring(L, name);
@@ -292,7 +286,7 @@ int inet_meth_getsockname(lua_State *L, p_socket ps, int family)
 		name, INET6_ADDRSTRLEN, port, 6, NI_NUMERICHOST | NI_NUMERICSERV);
     if (err) {
         lua_pushnil(L);
-        lua_pushstring(L, gai_strerror(err));
+        lua_pushstring(L, LUA_GAI_STRERROR(err));
         return 2;
     }
     lua_pushstring(L, name);
@@ -423,8 +417,8 @@ const char *inet_tryconnect(p_socket ps, int *family, const char *address,
         /* try connecting to remote address */
         err = socket_strerror(socket_connect(ps, (SA *) iterator->ai_addr,
             (socklen_t) iterator->ai_addrlen, tm));
-        /* if success, break out of loop */
-        if (err == NULL) {
+        /* if success or timeout is zero, break out of loop */
+        if (err == NULL || timeout_iszero(tm)) {
             *family = current_family;
             break;
         }

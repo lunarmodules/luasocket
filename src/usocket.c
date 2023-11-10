@@ -6,11 +6,13 @@
 * The penalty of calling select to avoid busy-wait is only paid when
 * the I/O call fail in the first place.
 \*=========================================================================*/
-#include <string.h>
-#include <signal.h>
+#include "luasocket.h"
 
 #include "socket.h"
 #include "pierror.h"
+
+#include <string.h>
+#include <signal.h>
 
 /*-------------------------------------------------------------------------*\
 * Wait for readable/writable/connected socket with timeout
@@ -76,7 +78,7 @@ int socket_waitfd(p_socket ps, int sw, p_timeout tm) {
 * Initializes module
 \*-------------------------------------------------------------------------*/
 int socket_open(void) {
-    /* instals a handler to ignore sigpipe or it will crash us */
+    /* installs a handler to ignore sigpipe or it will crash us */
     signal(SIGPIPE, SIG_IGN);
     return 1;
 }
@@ -234,7 +236,7 @@ int socket_sendto(p_socket ps, const char *data, size_t count, size_t *sent,
     *sent = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
     for ( ;; ) {
-        long put = (long) sendto(*ps, data, count, 0, addr, len); 
+        long put = (long) sendto(*ps, data, count, 0, addr, len);
         if (put >= 0) {
             *sent = put;
             return IO_DONE;
@@ -438,14 +440,15 @@ const char *socket_gaistrerror(int err) {
         case EAI_FAMILY: return PIE_FAMILY;
         case EAI_MEMORY: return PIE_MEMORY;
         case EAI_NONAME: return PIE_NONAME;
+#ifdef EAI_OVERFLOW
         case EAI_OVERFLOW: return PIE_OVERFLOW;
+#endif
 #ifdef EAI_PROTOCOL
         case EAI_PROTOCOL: return PIE_PROTOCOL;
 #endif
         case EAI_SERVICE: return PIE_SERVICE;
         case EAI_SOCKTYPE: return PIE_SOCKTYPE;
         case EAI_SYSTEM: return strerror(errno);
-        default: return gai_strerror(err);
+        default: return LUA_GAI_STRERROR(err);
     }
 }
-

@@ -8,16 +8,15 @@
 * (AF_INET, SOCK_DGRAM).
 *
 * Two classes are defined: connected and unconnected. UDP objects are
-* originally unconnected. They can be "connected" to a given address 
+* originally unconnected. They can be "connected" to a given address
 * with a call to the setpeername function. The same function can be used to
 * break the connection.
 \*=========================================================================*/
-#include "lua.h"
+#include "luasocket.h"
 
 #include "timeout.h"
 #include "socket.h"
 
-/* can't be larger than wsocket.c MAXCHUNK!!! */
 #define UDP_DATAGRAMSIZE 8192
 
 typedef struct t_udp_ {
@@ -27,6 +26,14 @@ typedef struct t_udp_ {
 } t_udp;
 typedef t_udp *p_udp;
 
+#ifndef _WIN32
+#pragma GCC visibility push(hidden)
+#endif
+
 int udp_open(lua_State *L);
+
+#ifndef _WIN32
+#pragma GCC visibility pop
+#endif
 
 #endif /* UDP_H */
