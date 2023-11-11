@@ -1,10 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
     "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 
 <head>
 <meta name="description" content="LuaSocket: URL manipulation">
-<meta name="keywords" content="Lua, LuaSocket, URL, Library, Link, Network, Support"> 
+<meta name="keywords" content="Lua, LuaSocket, URL, Library, Link, Network, Support">
 <title>LuaSocket: URL support</title>
 <link rel="stylesheet" href="reference.css" type="text/css">
 </head>
@@ -28,7 +28,7 @@
 <a href="index.html#download">download</a> &middot;
 <a href="installation.html">installation</a> &middot;
 <a href="introduction.html">introduction</a> &middot;
-<a href="reference.html">reference</a> 
+<a href="reference.html">reference</a>
 </p>
 </center>
 <hr>
@@ -36,21 +36,21 @@
 
 <!-- url ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
-<h2 id="url">URL</h2> 
+<h2 id="url">URL</h2>
 
 <p>
 The  <tt>url</tt>  namespace provides  functions  to  parse,  protect,
 and build URLs, as well  as functions to compose  absolute URLs
-from base and relative URLs, according to 
+from base and relative URLs, according to
 <a href="http://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>.
 </p>
 
-<p> 
+<p>
 To obtain the <tt>url</tt> namespace, run:
 </p>
 
 <pre class=example>
--- loads the URL module 
+-- loads the URL module
 local url = require("socket.url")
 </pre>
 
@@ -74,7 +74,7 @@ url.<b>absolute(</b>base, relative<b>)</b>
 </p>
 
 <p class=description>
-Builds an absolute URL from a base URL and a relative URL. 
+Builds an absolute URL from a base URL and a relative URL.
 </p>
 
 <p class=parameters>
@@ -130,14 +130,14 @@ url.<b>build(</b>parsed_url<b>)</b>
 </p>
 
 <p class=description>
-Rebuilds an URL from its parts. 
+Rebuilds an URL from its parts.
 </p>
 
 <p class=parameters>
 <tt>Parsed_url</tt> is a table with same components returned by
 <a href="#parse"><tt>parse</tt></a>.
 Lower level components, if specified,
-take  precedence over  high level  components of  the URL grammar. 
+take  precedence over  high level  components of  the URL grammar.
 </p>
 
 <p class=return>
@@ -152,10 +152,10 @@ url.<b>build_path(</b>segments, unsafe<b>)</b>
 
 <p class=description>
 Builds a <tt>&lt;path&gt;</tt> component from  a list of
-<tt>&lt;segment&gt;</tt> parts. 
+<tt>&lt;segment&gt;</tt> parts.
 Before composition, any reserved characters found in a segment are escaped into
 their protected  form, so that  the resulting path  is a valid  URL path
-component.  
+component.
 </p>
 
 <p class=parameters>
@@ -165,8 +165,8 @@ characters are left untouched.
 </p>
 
 <p class=return>
-The  function  returns   a string with the  
-built <tt>&lt;path&gt;</tt> component. 
+The  function  returns   a string with the
+built <tt>&lt;path&gt;</tt> component.
 </p>
 
 <!-- escape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -178,7 +178,7 @@ url.<b>escape(</b>content<b>)</b>
 <p class=description>
 Applies the URL escaping content coding to a string
 Each byte is encoded as a percent character followed
-by the two byte hexadecimal representation of its integer 
+by the two byte hexadecimal representation of its integer
 value.
 </p>
 
@@ -270,8 +270,8 @@ url.<b>parse_path(</b>path<b>)</b>
 </p>
 
 <p class=description>
-Breaks a <tt>&lt;path&gt;</tt> URL component into all its 
-<tt>&lt;segment&gt;</tt> parts. 
+Breaks a <tt>&lt;path&gt;</tt> URL component into all its
+<tt>&lt;segment&gt;</tt> parts.
 </p>
 
 <p class=description>
@@ -282,7 +282,7 @@ Breaks a <tt>&lt;path&gt;</tt> URL component into all its
 Since  some characters   are   reserved   in   URLs,  they must be escaped
 whenever present in a <tt>&lt;path&gt;</tt> component. Therefore, before
 returning a list with all the parsed segments, the function removes
-escaping from all of them. 
+escaping from all of them.
 </p>
 
 <!-- unescape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -300,7 +300,7 @@ Removes  the   URL   escaping    content   coding   from   a string.
 </p>
 
 <p class=return>
-The function returns the decoded string. 
+The function returns the decoded string.
 </p>
 
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
