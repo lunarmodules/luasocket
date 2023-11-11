@@ -64,7 +64,6 @@ local function make_plat(plat)
         , "src/options.c"
         , "src/timeout.c"
         , "src/io.c"
-        , "src/usocket.c"
         , "src/unix.c"
         , "src/unixdgram.c"
         , "src/unixstream.c" },
@@ -92,6 +91,7 @@ local function make_plat(plat)
     or plat == "haiku"
   then
     modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/usocket.c"
+    modules["socket.unix"].sources[#modules["socket.unix"].sources+1] = "src/usocket.c"
     if plat == "haiku" then
       modules["socket.core"].libraries = {"network"}
     end
