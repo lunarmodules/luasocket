@@ -62,7 +62,7 @@ local function receiveheaders(sock, headers)
         -- unfold any folded values
         while string.find(line, "^%s") do
             value = value .. line
-            line = sock:receive()
+            line, err = sock:receive()
             if err then return nil, err end
         end
         -- save pair in table
