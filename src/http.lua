@@ -219,9 +219,11 @@ local function adjustproxy(reqt)
     local proxy = reqt.proxy or _M.PROXY
     if proxy then
         proxy = url.parse(proxy)
-        return proxy.host, proxy.port or 3128
+        proxy.port = proxy.port or 3128
+        proxy.create = SCHEMES[proxy.scheme].create(reqt)
+        return proxy.host, proxy.port, proxy.create
     else
-        return reqt.host, reqt.port
+        return reqt.host, reqt.port, reqt.create
     end
 end
 
@@ -291,7 +293,10 @@ local function adjustrequest(reqt)
     end
 
     -- ajust host and port if there is a proxy
-    nreqt.host, nreqt.port = adjustproxy(nreqt)
+    local proxy_create
+    nreqt.host, nreqt.port, proxy_create = adjustproxy(nreqt)
+    if not reqt.create then nreqt.create = proxy_create end
+
     return nreqt
 end
 
