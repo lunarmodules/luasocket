@@ -18,6 +18,10 @@
 #include "socket.h"
 #include "timeout.h"
 
+#ifndef HAVE_GETADDRINFO
+#include "getaddrinfo.h"
+#endif
+
 #ifdef _WIN32
 #define LUASOCKET_INET_ATON
 #endif

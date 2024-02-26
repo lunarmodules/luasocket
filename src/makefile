@@ -285,7 +285,7 @@ SOCKET=$(SOCKET_$(PLAT))
 #
 CC=$(CC_$(PLAT))
 DEF=$(DEF_$(PLAT))
-CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT))
+CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT)) -DSTDC_HEADERS -DHAVE_STDLIB_H
 LDFLAGS=$(MYLDFLAGS) $(LDFLAGS_$(PLAT))
 LD=$(LD_$(PLAT))
 LUAINC= $(LUAINC_$(PLAT))
@@ -295,6 +295,7 @@ LUALIB= $(LUALIB_$(PLAT))
 # Modules belonging to socket-core
 #
 SOCKET_OBJS= \
+	getaddrinfo.$(O) \
 	luasocket.$(O) \
 	timeout.$(O) \
 	buffer.$(O) \
@@ -459,3 +460,4 @@ unix.$(O): unix.c auxiliar.h socket.h io.h timeout.h usocket.h \
 	options.h unix.h buffer.h
 usocket.$(O): usocket.c socket.h io.h timeout.h usocket.h
 wsocket.$(O): wsocket.c socket.h io.h timeout.h usocket.h
+getaddrinfo.$(O): getaddrinfo.c getaddrinfo.h
