@@ -348,10 +348,12 @@ static void inet_pushresolved(lua_State *L, struct hostent *hp)
 \*-------------------------------------------------------------------------*/
 const char *inet_trycreate(p_socket ps, int family, int type, int protocol) {
     const char *err = socket_strerror(socket_create(ps, family, type, protocol));
+#ifdef IPV6_V6ONLY
     if (err == NULL && family == AF_INET6) {
         int yes = 1;
         setsockopt(*ps, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&yes, sizeof(yes));
     }
+#endif
     return err;
 }
 
