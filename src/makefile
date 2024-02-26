@@ -105,6 +105,15 @@ LUAPREFIX_solaris?=/usr/local
 CDIR_solaris?=lib/lua/$(LUAV)
 LDIR_solaris?=share/lua/$(LUAV)
 
+# LUAINC_psp:
+# /usr/local/include/lua$(LUAV)
+# where lua headers are found for psp builds
+LUAINC_psp_base?=/usr/local/pspdev/psp/include
+LUAINC_psp?=$(LUAINC_psp_base)/lua/$(LUAV) $(LUAINC_psp_base)/lua$(LUAV)
+LUAPREFIX_psp?=/usr/local/
+CDIR_psp?=lib/lua/$(LUAV)
+LDIR_psp?=share/lua/$(LUAV)
+
 # prefix: /usr/local /usr /opt/local /sw
 # the top of the default install tree
 prefix?=$(LUAPREFIX_$(PLAT))
@@ -153,7 +162,7 @@ print:
 #------
 # Supported platforms
 #
-PLATS= macosx linux win32 win64 mingw solaris
+PLATS= macosx linux win32 win64 mingw freebsd solaris psp
 
 #------
 # Compiler and linker settings
@@ -261,6 +270,24 @@ LDFLAGS_win64= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
 
 LD_win64=cl
 SOCKET_win64=wsocket.obj
+
+#------
+# Compiler and linker settings
+# for PSP
+ifeq ($(PLAT),psp)
+PSPSDK=$(shell psp-config -p)
+endif
+
+SO_psp=a
+O_psp=o
+CC_psp=psp-gcc
+DEF_psp=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
+CFLAGS_psp=$(LUAINC:%=-I%) $(PSPSDK:%=-I%)/include $(DEF) -Wall -Wshadow -Wextra \
+	-Wimplicit -O2 -ggdb3
+LDFLAGS_psp=-O -static -o
+LD_psp=psp-gcc
+SOCKET_psp=usocket.o
+
 
 .SUFFIXES: .obj
 
@@ -387,6 +414,9 @@ mingw:
 
 solaris:
 	$(MAKE) all-unix PLAT=solaris
+
+psp:
+	$(MAKE) all-unix PLAT=psp
 
 none:
 	@echo "Please run"
