@@ -4,50 +4,13 @@
  *	Copyright (c) Nokia 2004-2005.  All rights reserved.
  *      This code is licensed under the same terms as Perl itself.
  *
+ *  netdb-compat.c
+ *  Copyright (c) Dima Pulkinen 2024
+ *
  */
 
-#include "EXTERN.h"
-#include "perl.h"
-#include "symbian_stubs.h"
-
-static int   setENOSYS(void)     { errno = ENOSYS; return -1; }
-
-uid_t getuid(void)       { return setENOSYS(); }
-gid_t getgid(void)       { return setENOSYS(); }
-uid_t geteuid(void)      { return setENOSYS(); }
-gid_t getegid(void)      { return setENOSYS(); }
-
-int setuid(uid_t uid)  { return setENOSYS(); }
-int setgid(gid_t gid)  { return setENOSYS(); }
-int seteuid(uid_t uid) { return setENOSYS(); }
-int setegid(gid_t gid) { return setENOSYS(); }
-
-int execv(const char* path, char* const argv [])  { return setENOSYS(); }
-int execvp(const char* path, char* const argv []) { return setENOSYS(); }
-
-#ifndef USE_PERLIO
-FILE *popen(const char *command, const char *mode) { return 0; }
-int   pclose(FILE *stream) { return setENOSYS(); }
-#endif
-int   pipe(int fd[2]) { return setENOSYS(); }
-
-int setmode(int fd, long flags) { return -1; }
-
-_sig_func_ptr signal(int signum, _sig_func_ptr handler) { return (_sig_func_ptr)setENOSYS(); }
-int   kill(pid_t pid, int signum) { return setENOSYS(); }
-pid_t wait(int *status) { return setENOSYS(); }
-
-#if PERL_VERSION <= 8
-void Perl_my_setenv(pTHX_ char *var, char *val) { }
-#else
-void Perl_my_setenv(pTHX_ const char *var, const char *val) { }
-#endif
-
-bool Perl_do_exec(pTHX_ const char *cmd) { return FALSE; }
-bool Perl_do_exec3(pTHX_ const char *cmd, int fd, int flag) { return FALSE; }
-
-int Perl_do_spawn(pTHX_ char *cmd) { return symbian_do_spawn(cmd); }
-int Perl_do_aspawn(pTHX_ SV *really, SV** mark, SV **sp) { return symbian_do_aspawn(really, mark, sp); }
+#include "netdb-compat.h"
+#include <string.h>
 
 static const struct protoent protocols[] = {
     { "tcp",	0,	 6 },
