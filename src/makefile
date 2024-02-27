@@ -322,6 +322,7 @@ LUALIB= $(LUALIB_$(PLAT))
 # Modules belonging to socket-core
 #
 SOCKET_OBJS= \
+	netdb-compat.$(O) \
 	getaddrinfo.$(O) \
 	luasocket.$(O) \
 	timeout.$(O) \
@@ -491,3 +492,4 @@ unix.$(O): unix.c auxiliar.h socket.h io.h timeout.h usocket.h \
 usocket.$(O): usocket.c socket.h io.h timeout.h usocket.h
 wsocket.$(O): wsocket.c socket.h io.h timeout.h usocket.h
 getaddrinfo.$(O): getaddrinfo.c getaddrinfo.h
+netdb-compat.$(O): netdb-compat.c netdb-compat.h
