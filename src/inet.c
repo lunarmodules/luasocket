@@ -371,6 +371,7 @@ const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
             return socket_strerror(socket_connect(ps, (SA *) &sin,
                 sizeof(sin), tm));
         }
+#ifndef NOIPV6
         case AF_INET6: {
             struct sockaddr_in6 sin6;
             struct in6_addr addrany = IN6ADDR_ANY_INIT;
@@ -380,6 +381,7 @@ const char *inet_trydisconnect(p_socket ps, int family, p_timeout tm)
             return socket_strerror(socket_connect(ps, (SA *) &sin6,
                 sizeof(sin6), tm));
         }
+#endif
     }
     return NULL;
 }
@@ -438,7 +440,9 @@ const char *inet_tryaccept(p_socket server, int family, p_socket client,
 	socklen_t len;
 	t_sockaddr_storage addr;
     switch (family) {
+#ifndef NOIPV6
         case AF_INET6: len = sizeof(struct sockaddr_in6); break;
+#endif
         case AF_INET: len = sizeof(struct sockaddr_in); break;
         default: len = sizeof(addr); break;
     }
@@ -526,9 +530,11 @@ int inet_pton(int af, const char *src, void *dst)
     if (af == AF_INET) {
         struct sockaddr_in *in = (struct sockaddr_in *) res->ai_addr;
         memcpy(dst, &in->sin_addr, sizeof(in->sin_addr));
+#ifndef NOIPV6
     } else if (af == AF_INET6) {
         struct sockaddr_in6 *in = (struct sockaddr_in6 *) res->ai_addr;
         memcpy(dst, &in->sin6_addr, sizeof(in->sin6_addr));
+#endif
     } else {
         ret = -1;
     }
