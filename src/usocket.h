@@ -29,10 +29,24 @@
 #include <arpa/inet.h>
 /* TCP options (nagle algorithm disable) */
 #include <netinet/tcp.h>
+#ifndef PSP
 #include <net/if.h>
-
+#else
 #ifndef HAVE_GETADDRINFO
 #include "getaddrinfo.h"
+#endif
+
+/* Replacement for sockaddr storage that we can use internally on platforms
+ * that lack it.  It is not space-efficient, but neither is sockaddr_storage.
+ */
+struct sockaddr_storage {
+	union {
+		struct sockaddr ss_sa;
+		struct sockaddr_in ss_sin;
+		struct sockaddr_in6 ss_sin6;
+		char ss_padding[128];
+	} ss_union;
+};
 #endif
 
 #ifndef SO_REUSEPORT
