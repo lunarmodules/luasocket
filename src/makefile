@@ -106,13 +106,18 @@ CDIR_solaris?=lib/lua/$(LUAV)
 LDIR_solaris?=share/lua/$(LUAV)
 
 # LUAINC_psp:
-# /usr/local/include/lua$(LUAV)
-# where lua headers are found for psp builds
-LUAINC_psp_base?=/usr/local/pspdev/psp/include
-LUAINC_psp?=$(LUAINC_psp_base)/lua/$(LUAV) $(LUAINC_psp_base)/lua$(LUAV)
+# LUALIB_psp:
+# where lua headers and libraries are found for psp builds
+ifeq ($(PLAT),psp)
+PSP_PREFIX=$(shell psp-config -P)
+endif
+LUAINC_psp_base?=$(PSP_PREFIX)/include
+LUAINC_psp?=$(LUAINC_psp_base)/lua$(LUAV)
 LUAPREFIX_psp?=/usr/local/
 CDIR_psp?=lib/lua/$(LUAV)
 LDIR_psp?=share/lua/$(LUAV)
+LUALIB_psp_base?=$(PSP_PREFIX)/lib
+LUALIB_psp=$(LUALIB_psp_base)/liblua$(LUAV).a
 
 # prefix: /usr/local /usr /opt/local /sw
 # the top of the default install tree
@@ -284,7 +289,7 @@ CC_psp=psp-gcc
 DEF_psp=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
 CFLAGS_psp=$(LUAINC:%=-I%) $(PSPSDK:%=-I%)/include $(DEF) -Wall -Wshadow -Wextra \
 	-Wimplicit -O2 -ggdb3
-LDFLAGS_psp=-O -static -o
+LDFLAGS_psp=$(LUALIB) -O -static -o
 LD_psp=psp-gcc
 SOCKET_psp=usocket.o
 
