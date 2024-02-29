@@ -9,6 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef PSP
+int	gethostname (char *__name, size_t __len) {
+    snprintf(__name, __len, "psp");
+    return 0;
+}
+#endif
+
 /*=========================================================================*\
 * Internal function prototypes.
 \*=========================================================================*/
