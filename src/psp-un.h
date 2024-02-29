@@ -29,16 +29,15 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_UN_H_
-#define _SYS_UN_H_
+/*
+ *  psp-un.h
+ *  Copyright (c) Dima Pulkinen 2024
+ */
 
-#include <sys/cdefs.h>
-#include <sys/_types.h>
+#ifndef _PSP_UN_H_
+#define _PSP_UN_H_
 
-#ifndef _SA_FAMILY_T_DECLARED
-typedef	__sa_family_t	sa_family_t;
-#define	_SA_FAMILY_T_DECLARED
-#endif
+#include <sys/socket.h>
 
 /*
  * Historically, (struct sockaddr) needed to fit inside an mbuf.
@@ -57,26 +56,4 @@ struct sockaddr_un {
 	char	sun_path[SUNPATHLEN];	/* path name (gag) */
 };
 
-#if __BSD_VISIBLE
-
-#define	SOL_LOCAL		0	/* Options for local socket */
-
-/* Socket options. */
-#define	LOCAL_PEERCRED		1	/* retrieve peer credentials */
-#define	LOCAL_CREDS		2	/* pass credentials to receiver */
-#define	LOCAL_CREDS_PERSISTENT	3	/* pass credentials to receiver */
-
-/* Start of reserved space for third-party socket options. */
-#define	LOCAL_VENDOR		SO_VENDOR
-
-#ifndef _KERNEL
-
-/* actual length of an initialized sockaddr_un */
-#define SUN_LEN(su) \
-	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
-
-#endif /* !_KERNEL */
-
-#endif /* __BSD_VISIBLE */
-
-#endif /* !_SYS_UN_H_ */
+#endif /* !_PSP_UN_H_ */
