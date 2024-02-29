@@ -289,8 +289,8 @@ CC_psp=psp-gcc
 DEF_psp=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
 CFLAGS_psp=$(LUAINC:%=-I%) $(PSPSDK:%=-I%)/include $(DEF) -Wall -Wshadow -Wextra \
 	-Wimplicit -O2 -ggdb3
-LDFLAGS_psp=$(LUALIB) -O -static -o
-LD_psp=psp-gcc
+LDFLAGS_psp=$(LUALIB) && mv templib.a 
+LD_psp=psp-ar rcs templib.a
 SOCKET_psp=usocket.o
 
 
