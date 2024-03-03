@@ -18,7 +18,7 @@
 #include "socket.h"
 #include "timeout.h"
 
-#ifndef HAVE_GETADDRINFO
+#ifdef PSP
 #include "getaddrinfo.h"
 #endif
 

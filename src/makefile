@@ -288,7 +288,7 @@ O_psp=o
 CC_psp=psp-gcc
 DEF_psp=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
 CFLAGS_psp=$(LUAINC:%=-I%) $(PSPSDK:%=-I%)/include $(DEF) -Wall -Wshadow -Wextra \
-	-Wimplicit -O2 -ggdb3
+	-Wimplicit -O2 -ggdb3 -DHAVE_CONFIG_H -DSOCKET_SELECT -DNOIPV6
 LDFLAGS_psp=$(LUALIB) && mv templib.a 
 LD_psp=psp-ar rcs templib.a
 SOCKET_psp=usocket.o
@@ -317,7 +317,7 @@ SOCKET=$(SOCKET_$(PLAT))
 #
 CC=$(CC_$(PLAT))
 DEF=$(DEF_$(PLAT))
-CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT)) -DHAVE_CONFIG_H -DSOCKET_SELECT -DNOIPV6
+CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT))
 LDFLAGS=$(MYLDFLAGS) $(LDFLAGS_$(PLAT))
 LD=$(LD_$(PLAT))
 LUAINC= $(LUAINC_$(PLAT))
