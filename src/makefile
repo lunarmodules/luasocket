@@ -324,11 +324,16 @@ LUAINC= $(LUAINC_$(PLAT))
 LUALIB= $(LUALIB_$(PLAT))
 
 #------
+# Platform-specific modules
+#
+PLATFORM_OBJS_psp= \
+	netdb-compat.$(O) \
+	getaddrinfo.$(O)
+
+#------
 # Modules belonging to socket-core
 #
 SOCKET_OBJS= \
-	netdb-compat.$(O) \
-	getaddrinfo.$(O) \
 	luasocket.$(O) \
 	timeout.$(O) \
 	buffer.$(O) \
@@ -432,7 +437,7 @@ none:
 
 all: $(SOCKET_SO) $(MIME_SO)
 
-$(SOCKET_SO): $(SOCKET_OBJS)
+$(SOCKET_SO): $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS)
 	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@
 
 $(MIME_SO): $(MIME_OBJS)
@@ -464,7 +469,7 @@ local:
 	$(MAKE) install INSTALL_TOP_CDIR=.. INSTALL_TOP_LDIR=..
 
 clean:
-	rm -f $(SOCKET_SO) $(SOCKET_OBJS) $(SERIAL_OBJS)
+	rm -f $(SOCKET_SO) $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(SERIAL_OBJS)
 	rm -f $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
 
 .PHONY: all $(PLATS) default clean echo none
