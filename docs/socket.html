@@ -164,6 +164,9 @@ Creates and returns a <em>clean</em>
 <a href="#try"><tt>try</tt></a>
 function that allows for cleanup before the exception
 is  raised.
+This implements the ideas described in
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn013.md">
+LTN012, Using finalized exceptions</a>.
 </p>
 
 <p class="parameters">
@@ -207,6 +210,9 @@ Converts a function that throws exceptions into a safe function. This
 function only catches exceptions thrown by the <a href="#try"><tt>try</tt></a>
 and <a href="#newtry"><tt>newtry</tt></a> functions. It does not catch normal
 Lua errors.
+This implements the ideas described in
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn013.md">
+LTN012, Using finalized exceptions</a>.
 </p>
 
 <p class="parameters">
@@ -425,6 +431,9 @@ socket.<b>try(</b>ret<sub>1</sub> [, ret<sub>2</sub> ... ret<sub>N</sub>]<b>)</b
 Throws an exception in case <tt>ret<sub>1</sub></tt> is falsy, using
 <tt>ret<sub>2</sub></tt> as the error message. The exception is supposed to be caught
 by a <a href="#protect"><tt>protect</tt></a>ed function only.
+This implements the ideas described in
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn013.md">
+LTN012, Using finalized exceptions</a>.
 </p>
 
 <p class="parameters">
