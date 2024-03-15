@@ -105,6 +105,20 @@ LUAPREFIX_solaris?=/usr/local
 CDIR_solaris?=lib/lua/$(LUAV)
 LDIR_solaris?=share/lua/$(LUAV)
 
+# LUAINC_psp:
+# LUALIB_psp:
+# where lua headers and libraries are found for psp builds
+ifeq ($(PLAT),psp)
+PSP_PREFIX=$(shell psp-config -P)
+endif
+LUAINC_psp_base?=$(PSP_PREFIX)/include
+LUAINC_psp?=$(LUAINC_psp_base)/lua$(LUAV)
+LUAPREFIX_psp?=/usr/local/
+CDIR_psp?=lib/lua/$(LUAV)
+LDIR_psp?=share/lua/$(LUAV)
+LUALIB_psp_base?=$(PSP_PREFIX)/lib
+LUALIB_psp=$(LUALIB_psp_base)/liblua$(LUAV).a
+
 # prefix: /usr/local /usr /opt/local /sw
 # the top of the default install tree
 prefix?=$(LUAPREFIX_$(PLAT))
@@ -153,7 +167,7 @@ print:
 #------
 # Supported platforms
 #
-PLATS= macosx linux win32 win64 mingw solaris
+PLATS= macosx linux win32 win64 mingw freebsd solaris psp
 
 #------
 # Compiler and linker settings
@@ -262,6 +276,24 @@ LDFLAGS_win64= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
 LD_win64=cl
 SOCKET_win64=wsocket.obj
 
+#------
+# Compiler and linker settings
+# for PSP
+ifeq ($(PLAT),psp)
+PSPSDK=$(shell psp-config -p)
+endif
+
+SO_psp=a
+O_psp=o
+CC_psp=psp-gcc
+DEF_psp=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
+CFLAGS_psp=$(LUAINC:%=-I%) $(PSPSDK:%=-I%)/include $(DEF) -Wall -Wshadow -Wextra \
+	-Wimplicit -O2 -ggdb3 -DHAVE_CONFIG_H -DSOCKET_SELECT -DNOIPV6
+LDFLAGS_psp=$(LUALIB) && mv templib.a 
+LD_psp=psp-ar rcs templib.a
+SOCKET_psp=usocket.o
+
+
 .SUFFIXES: .obj
 
 .c.obj:
@@ -290,6 +322,13 @@ LDFLAGS=$(MYLDFLAGS) $(LDFLAGS_$(PLAT))
 LD=$(LD_$(PLAT))
 LUAINC= $(LUAINC_$(PLAT))
 LUALIB= $(LUALIB_$(PLAT))
+
+#------
+# Platform-specific modules
+#
+PLATFORM_OBJS_psp= \
+	netdb-compat.$(O) \
+	getaddrinfo.$(O)
 
 #------
 # Modules belonging to socket-core
@@ -387,6 +426,9 @@ mingw:
 solaris:
 	$(MAKE) all-unix PLAT=solaris
 
+psp:
+	$(MAKE) all-unix PLAT=psp
+
 none:
 	@echo "Please run"
 	@echo "   make PLATFORM"
@@ -395,7 +437,7 @@ none:
 
 all: $(SOCKET_SO) $(MIME_SO)
 
-$(SOCKET_SO): $(SOCKET_OBJS)
+$(SOCKET_SO): $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS)
 	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@
 
 $(MIME_SO): $(MIME_OBJS)
@@ -427,7 +469,7 @@ local:
 	$(MAKE) install INSTALL_TOP_CDIR=.. INSTALL_TOP_LDIR=..
 
 clean:
-	rm -f $(SOCKET_SO) $(SOCKET_OBJS) $(SERIAL_OBJS)
+	rm -f $(SOCKET_SO) $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(SERIAL_OBJS)
 	rm -f $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
 
 .PHONY: all $(PLATS) default clean echo none
@@ -459,3 +501,5 @@ unix.$(O): unix.c auxiliar.h socket.h io.h timeout.h usocket.h \
 	options.h unix.h buffer.h
 usocket.$(O): usocket.c socket.h io.h timeout.h usocket.h
 wsocket.$(O): wsocket.c socket.h io.h timeout.h usocket.h
+getaddrinfo.$(O): getaddrinfo.c getaddrinfo.h
+netdb-compat.$(O): netdb-compat.c netdb-compat.h

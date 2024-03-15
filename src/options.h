@@ -1,11 +1,11 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 /*=========================================================================*\
-* Common option interface 
+* Common option interface
 * LuaSocket toolkit
 *
 * This module provides a common interface to socket options, used mainly by
-* modules UDP and TCP. 
+* modules UDP and TCP.
 \*=========================================================================*/
 
 #include "luasocket.h"
@@ -78,17 +78,23 @@ int opt_set_tcp_fastopen(lua_State *L, p_socket ps);
 int opt_set_tcp_fastopen_connect(lua_State *L, p_socket ps);
 #endif
 
+#ifdef IPV6_UNICAST_HOPS
 int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps);
 int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps);
+#endif
 
+#ifdef IPV6_MULTICAST_HOPS
 int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps);
 int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps);
+#endif
 
 int opt_set_ip_multicast_loop(lua_State *L, p_socket ps);
 int opt_get_ip_multicast_loop(lua_State *L, p_socket ps);
 
+#ifdef IPV6_MULTICAST_LOOP
 int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps);
 int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps);
+#endif
 
 int opt_set_linger(lua_State *L, p_socket ps);
 int opt_get_linger(lua_State *L, p_socket ps);
@@ -101,11 +107,17 @@ int opt_get_ip_multicast_if(lua_State *L, p_socket ps);
 int opt_set_ip_add_membership(lua_State *L, p_socket ps);
 int opt_set_ip_drop_membersip(lua_State *L, p_socket ps);
 
+#ifdef IPV6_ADD_MEMBERSHIP
 int opt_set_ip6_add_membership(lua_State *L, p_socket ps);
+#endif
+#ifdef IPV6_DROP_MEMBERSHIP
 int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps);
+#endif
 
+#ifdef IPV6_V6ONLY
 int opt_set_ip6_v6only(lua_State *L, p_socket ps);
 int opt_get_ip6_v6only(lua_State *L, p_socket ps);
+#endif
 
 int opt_get_error(lua_State *L, p_socket ps);
 

@@ -10,7 +10,11 @@
 #include "unix.h"
 
 #include <string.h>
+#ifndef PSP
 #include <sys/un.h>
+#else
+#include "psp-un.h"
+#endif
 
 /*
 Reuses userdata definition from unix.h, since it is useful for all
