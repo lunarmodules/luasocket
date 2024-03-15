@@ -52,7 +52,7 @@ implementation    conforms     to    the    HTTP/1.1     standard,
 The module exports functions that provide HTTP functionality in different
 levels of abstraction. From the simple
 string oriented requests, through generic
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> based, down to even lower-level if you bother to look through the source code.
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a> based, down to even lower-level if you bother to look through the source code.
 </p>
 
 <p>
@@ -144,7 +144,7 @@ http.<b>request{</b><br>
 The request function has two forms. The simple form downloads
 a URL using the <tt>GET</tt> or <tt>POST</tt> method and is based
 on strings. The generic form performs any HTTP method and is
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a> based.
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a> based.
 </p>
 
 <p class="parameters">
@@ -158,7 +158,7 @@ in the <tt>url</tt>. Otherwise, it performs a <tt>GET</tt> in the
 <p class="parameters">
 If the first argument is instead a table, the most important fields are
 the <tt>url</tt> and the <em>simple</em>
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a>
 <tt>sink</tt> that will receive the downloaded content.
 Any part of the <tt>url</tt> can be overridden by including
 the appropriate field in the request table.
@@ -172,13 +172,13 @@ following:
 <li><tt>method</tt>: The HTTP request method. Defaults to "GET";</li>
 <li><tt>headers</tt>: Any additional HTTP headers to send with the request;</li>
 <li><tt>source</tt>: <em>simple</em>
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a>
 source to provide the request body. If there
 is a body, you need to provide an appropriate "<tt>content-length</tt>"
 request header field, or the function will attempt to send the body as
 "<tt>chunked</tt>" (something few servers support). Defaults to the empty source;</li>
 <li><tt>step</tt>:
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a>
 pump step function used to move data.
 Defaults to the LTN12 <tt>pump.step</tt> function.</li>
 <li><tt>proxy</tt>: The URL of a proxy server to use. Defaults to no proxy;</li>

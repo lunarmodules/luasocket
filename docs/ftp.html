@@ -55,7 +55,7 @@ protocol.  For that, check the implementation.
 
 <p>
 To really benefit from this module, a good understanding of
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">
 LTN012, Filters sources and sinks</a> is necessary.
 </p>
 
@@ -122,7 +122,7 @@ expects at least the fields <tt>host</tt>, <tt>sink</tt>, and one of
 <tt>argument</tt> or <tt>path</tt> (<tt>argument</tt> takes
 precedence). <tt>Host</tt> is the server to connect to. <tt>Sink</tt> is
 the <em>simple</em>
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a>
 sink that will receive the downloaded data. <tt>Argument</tt> or
 <tt>path</tt> give the target path to the resource in the server. The
 optional arguments are the following:
@@ -136,7 +136,7 @@ authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";</li>
 <li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
 "<tt>a</tt>". Defaults to whatever is the server default;</li>
 <li><tt>step</tt>:
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a>
 pump step function used to pass data from the
 server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function;</li>
 <li><tt>create</tt>: An optional function to be used instead of
@@ -206,7 +206,7 @@ expects at least the fields <tt>host</tt>, <tt>source</tt>, and one of
 <tt>argument</tt> or <tt>path</tt> (<tt>argument</tt> takes
 precedence). <tt>Host</tt> is the server to connect to. <tt>Source</tt> is
 the <em>simple</em>
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a>
 source that will provide the contents to be uploaded.
 <tt>Argument</tt> or
 <tt>path</tt> give the target path to the resource in the server. The
@@ -221,7 +221,7 @@ authentication. Defaults to "<tt>ftp:anonymous@anonymous.org</tt>";</li>
 <li><tt>type</tt>: The transfer mode. Can take values "<tt>i</tt>" or
 "<tt>a</tt>". Defaults to whatever is the server default;</li>
 <li><tt>step</tt>:
-<a href="http://lua-users.org/wiki/FiltersSourcesAndSinks">LTN12</a>
+<a href="https://github.com/lunarmodules/luasocket/blob/master/ltn012.md">LTN12</a>
 pump step function used to pass data from the
 server to the sink. Defaults to the LTN12 <tt>pump.step</tt> function;</li>
 <li><tt>create</tt>: An optional function to be used instead of
