@@ -33,8 +33,8 @@ static int meth_getstats(lua_State *L);
 static int meth_setstats(lua_State *L);
 static int meth_getsockname(lua_State *L);
 
-static const char *unixstream_tryconnect(p_unix un, const char *path);
-static const char *unixstream_trybind(p_unix un, const char *path);
+static const char *unixstream_tryconnect(p_unix un, const char *path, size_t len);
+static const char *unixstream_trybind(p_unix un, const char *path, size_t len);
 
 /* unixstream object methods */
 static luaL_Reg unixstream_methods[] = {
@@ -181,13 +181,12 @@ static int meth_accept(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Binds an object to an address
 \*-------------------------------------------------------------------------*/
-static const char *unixstream_trybind(p_unix un, const char *path) {
+static const char *unixstream_trybind(p_unix un, const char *path, size_t len) {
     struct sockaddr_un local;
-    size_t len = strlen(path);
     int err;
     if (len >= sizeof(local.sun_path)) return "path too long";
     memset(&local, 0, sizeof(local));
-    strcpy(local.sun_path, path);
+    memcpy(local.sun_path, path, len);
     local.sun_family = AF_UNIX;
 #ifdef UNIX_HAS_SUN_LEN
     local.sun_len = sizeof(local.sun_family) + sizeof(local.sun_len)
@@ -204,8 +203,9 @@ static const char *unixstream_trybind(p_unix un, const char *path) {
 
 static int meth_bind(lua_State *L) {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixstream{master}", 1);
-    const char *path =  luaL_checkstring(L, 2);
-    const char *err = unixstream_trybind(un, path);
+    size_t len;
+    const char *path =  luaL_checklstring(L, 2, &len);
+    const char *err = unixstream_trybind(un, path, len);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -234,14 +234,13 @@ static int meth_getsockname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Turns a master unixstream object into a client object.
 \*-------------------------------------------------------------------------*/
-static const char *unixstream_tryconnect(p_unix un, const char *path)
+static const char *unixstream_tryconnect(p_unix un, const char *path, size_t len)
 {
     struct sockaddr_un remote;
     int err;
-    size_t len = strlen(path);
     if (len >= sizeof(remote.sun_path)) return "path too long";
     memset(&remote, 0, sizeof(remote));
-    strcpy(remote.sun_path, path);
+    memcpy(remote.sun_path, path, len);
     remote.sun_family = AF_UNIX;
     timeout_markstart(&un->tm);
 #ifdef UNIX_HAS_SUN_LEN
@@ -259,8 +258,9 @@ static const char *unixstream_tryconnect(p_unix un, const char *path)
 static int meth_connect(lua_State *L)
 {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixstream{master}", 1);
-    const char *path =  luaL_checkstring(L, 2);
-    const char *err = unixstream_tryconnect(un, path);
+    size_t len;
+    const char *path =  luaL_checklstring(L, 2, &len);
+    const char *err = unixstream_tryconnect(un, path, len);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);

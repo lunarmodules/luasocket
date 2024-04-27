@@ -16,13 +16,6 @@
 
 #define UNIXDGRAM_DATAGRAMSIZE 8192
 
-/* provide a SUN_LEN macro if sys/un.h doesn't (e.g. Android) */
-#ifndef SUN_LEN
-#define SUN_LEN(ptr) \
-  ((size_t) (((struct sockaddr_un *) 0)->sun_path)  \
-   + strlen ((ptr)->sun_path))
-#endif
-
 /*=========================================================================*\
 * Internal function prototypes
 \*=========================================================================*/
@@ -42,8 +35,8 @@ static int meth_receivefrom(lua_State *L);
 static int meth_sendto(lua_State *L);
 static int meth_getsockname(lua_State *L);
 
-static const char *unixdgram_tryconnect(p_unix un, const char *path);
-static const char *unixdgram_trybind(p_unix un, const char *path);
+static const char *unixdgram_tryconnect(p_unix un, const char *path, size_t len);
+static const char *unixdgram_trybind(p_unix un, const char *path, size_t len);
 
 /* unixdgram object methods */
 static luaL_Reg unixdgram_methods[] = {
@@ -133,13 +126,12 @@ static int meth_send(lua_State *L)
 static int meth_sendto(lua_State *L)
 {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixdgram{unconnected}", 1);
-    size_t count, sent = 0;
+    size_t count, sent, len = 0;
     const char *data = luaL_checklstring(L, 2, &count);
-    const char *path = luaL_checkstring(L, 3);
+    const char *path = luaL_checklstring(L, 3, &len);
     p_timeout tm = &un->tm;
     int err;
     struct sockaddr_un remote;
-    size_t len = strlen(path);
 
     if (len >= sizeof(remote.sun_path)) {
 		lua_pushnil(L);
@@ -148,7 +140,7 @@ static int meth_sendto(lua_State *L)
 	}
 
     memset(&remote, 0, sizeof(remote));
-    strcpy(remote.sun_path, path);
+    memcpy(remote.sun_path, path, len);
     remote.sun_family = AF_UNIX;
     timeout_markstart(tm);
 #ifdef UNIX_HAS_SUN_LEN
@@ -264,18 +256,22 @@ static int meth_dirty(lua_State *L) {
 /*-------------------------------------------------------------------------*\
 * Binds an object to an address
 \*-------------------------------------------------------------------------*/
-static const char *unixdgram_trybind(p_unix un, const char *path) {
+static const char *unixdgram_trybind(p_unix un, const char *path, size_t len) {
     struct sockaddr_un local;
-    size_t len = strlen(path);
+    int err;
     if (len >= sizeof(local.sun_path)) return "path too long";
     memset(&local, 0, sizeof(local));
-    strcpy(local.sun_path, path);
+    memcpy(local.sun_path, path, len);
     local.sun_family = AF_UNIX;
-    size_t addrlen = SUN_LEN(&local);
 #ifdef UNIX_HAS_SUN_LEN
-    local.sun_len = addrlen + 1;
+    local.sun_len = sizeof(local.sun_family) + sizeof(local.sun_len)
+        + len + 1;
+    err = socket_bind(&un->sock, (SA *) &local, local.sun_len);
+
+#else
+    err = socket_bind(&un->sock, (SA *) &local,
+            sizeof(local.sun_family) + len);
 #endif
-    int err = socket_bind(&un->sock, (SA *) &local, addrlen);
     if (err != IO_DONE) socket_destroy(&un->sock);
     return socket_strerror(err);
 }
@@ -283,8 +279,9 @@ static const char *unixdgram_trybind(p_unix un, const char *path) {
 static int meth_bind(lua_State *L)
 {
     p_unix un = (p_unix) auxiliar_checkclass(L, "unixdgram{unconnected}", 1);
-    const char *path =  luaL_checkstring(L, 2);
-    const char *err = unixdgram_trybind(un, path);
+    size_t len;
+    const char *path =  luaL_checklstring(L, 2, &len);
+    const char *err = unixdgram_trybind(un, path, len);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
@@ -313,20 +310,23 @@ static int meth_getsockname(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Turns a master unixdgram object into a client object.
 \*-------------------------------------------------------------------------*/
-static const char *unixdgram_tryconnect(p_unix un, const char *path)
+static const char *unixdgram_tryconnect(p_unix un, const char *path, size_t len)
 {
     struct sockaddr_un remote;
-    size_t len = strlen(path);
+    int err;
     if (len >= sizeof(remote.sun_path)) return "path too long";
     memset(&remote, 0, sizeof(remote));
-    strcpy(remote.sun_path, path);
+    memcpy(remote.sun_path, path, len);
     remote.sun_family = AF_UNIX;
     timeout_markstart(&un->tm);
-    size_t addrlen = SUN_LEN(&remote);
 #ifdef UNIX_HAS_SUN_LEN
-    remote.sun_len = addrlen + 1;
+    remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len)
+        + len + 1;
+    err = socket_connect(&un->sock, (SA *) &remote, remote.sun_len, &un->tm);
+#else
+    err = socket_connect(&un->sock, (SA *) &remote,
+            sizeof(remote.sun_family) + len, &un->tm);
 #endif
-    int err = socket_connect(&un->sock, (SA *) &remote, addrlen, &un->tm);
     if (err != IO_DONE) socket_destroy(&un->sock);
     return socket_strerror(err);
 }
@@ -334,8 +334,9 @@ static const char *unixdgram_tryconnect(p_unix un, const char *path)
 static int meth_connect(lua_State *L)
 {
     p_unix un = (p_unix) auxiliar_checkgroup(L, "unixdgram{any}", 1);
-    const char *path =  luaL_checkstring(L, 2);
-    const char *err = unixdgram_tryconnect(un, path);
+    size_t len;
+    const char *path =  luaL_checklstring(L, 2, &len);
+    const char *err = unixdgram_tryconnect(un, path, len);
     if (err) {
         lua_pushnil(L);
         lua_pushstring(L, err);
