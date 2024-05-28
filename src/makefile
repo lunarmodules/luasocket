@@ -113,9 +113,9 @@ PSP_PREFIX=$(shell psp-config -P)
 endif
 LUAINC_psp_base?=$(PSP_PREFIX)/include
 LUAINC_psp?=$(LUAINC_psp_base)/lua$(LUAV)
-LUAPREFIX_psp?=/usr/local/
-CDIR_psp?=lib/lua/$(LUAV)
-LDIR_psp?=share/lua/$(LUAV)
+LUAPREFIX_psp?=/psp
+CDIR_psp?=lib/lua$(LUAV)
+LDIR_psp?=share/lua$(LUAV)
 LUALIB_psp_base?=$(PSP_PREFIX)/lib
 LUALIB_psp=$(LUALIB_psp_base)/liblua$(LUAV).a
 
