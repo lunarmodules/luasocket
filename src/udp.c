@@ -80,12 +80,24 @@ static t_opt optset[] = {
     {"ip-multicast-loop",    opt_set_ip_multicast_loop},
     {"ip-add-membership",    opt_set_ip_add_membership},
     {"ip-drop-membership",   opt_set_ip_drop_membersip},
+#ifdef IPV6_UNICAST_HOPS
     {"ipv6-unicast-hops",    opt_set_ip6_unicast_hops},
+#endif
+#ifdef IPV6_MULTICAST_HOPS
     {"ipv6-multicast-hops",  opt_set_ip6_unicast_hops},
+#endif
+#ifdef IPV6_MULTICAST_LOOP
     {"ipv6-multicast-loop",  opt_set_ip6_multicast_loop},
+#endif
+#ifdef IPV6_ADD_MEMBERSHIP
     {"ipv6-add-membership",  opt_set_ip6_add_membership},
+#endif
+#ifdef IPV6_DROP_MEMBERSHIP
     {"ipv6-drop-membership", opt_set_ip6_drop_membersip},
+#endif
+#ifdef IPV6_V6ONLY
     {"ipv6-v6only",          opt_set_ip6_v6only},
+#endif
 	{"recv-buffer-size",     opt_set_recv_buf_size},
 	{"send-buffer-size",     opt_set_send_buf_size},
     {NULL,                   NULL}
@@ -100,10 +112,18 @@ static t_opt optget[] = {
     {"ip-multicast-if",      opt_get_ip_multicast_if},
     {"ip-multicast-loop",    opt_get_ip_multicast_loop},
     {"error",                opt_get_error},
+#ifdef IPV6_UNICAST_HOPS
     {"ipv6-unicast-hops",    opt_get_ip6_unicast_hops},
+#endif
+#ifdef IPV6_MULTICAST_HOPS
     {"ipv6-multicast-hops",  opt_get_ip6_unicast_hops},
+#endif
+#ifdef IPV6_MULTICAST_LOOP
     {"ipv6-multicast-loop",  opt_get_ip6_multicast_loop},
+#endif
+#ifdef IPV6_V6ONLY
     {"ipv6-v6only",          opt_get_ip6_v6only},
+#endif
 	{"recv-buffer-size",     opt_get_recv_buf_size},
 	{"send-buffer-size",     opt_get_send_buf_size},
     {NULL,                   NULL}

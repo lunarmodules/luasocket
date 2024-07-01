@@ -107,7 +107,9 @@ static t_opt optset[] = {
 #ifdef TCP_KEEPINTVL
     {"tcp-keepintvl", opt_set_tcp_keepintvl},
 #endif
+#ifdef IPV6_V6ONLY
     {"ipv6-v6only", opt_set_ip6_v6only},
+#endif
     {"linger",      opt_set_linger},
 	{"recv-buffer-size",     opt_set_recv_buf_size},
 	{"send-buffer-size",     opt_set_send_buf_size},
