@@ -48,3 +48,81 @@ jobs:
           lua urltest.lua
           lua test_socket_error.lua
           kill %1
+
+  build-msys2:
+    name: Test ${{ matrix.Lua.version }} via MSYS2 package mingw-w64-${{ matrix.MSYS2.env }}-${{ matrix.Lua.msys2_pkg_name }}
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        Lua:
+          # For future updates:
+          #   the fields 'msys2_pkg_name' and 'msys2_lua_exe'
+          #   in the matrix below are always 'lua'
+          #   for the current Lua version .
+          - { version: '5.4', msys2_pkg_name: 'lua', msys2_lua_exe: 'lua' }
+          - { version: '5.3', msys2_pkg_name: 'lua53', msys2_lua_exe: 'lua5.3' }
+          # At the moment, Lua 5.2 is not on MSYS2 repositories.
+          - { version: '5.1', msys2_pkg_name: 'lua51', msys2_lua_exe: 'lua5.1' }
+          - { version: '5.1', msys2_pkg_name: 'luajit', msys2_lua_exe: 'luajit' }
+        MSYS2:
+          - { sys: ucrt64,  env: ucrt-x86_64 }
+          - { sys: mingw64, env: x86_64 }
+          - { sys: mingw32, env: i686 }
+          - { sys: clang64, env: clang-x86_64 }
+          - { sys: clang32, env: clang-i686 }
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      LUA_EXE: /${{ matrix.MSYS2.sys }}/bin/${{ matrix.Lua.msys2_lua_exe }}
+    steps:
+      - uses: msys2/setup-msys2@v2
+        name: Setup MSYS2
+        with:
+          msystem: ${{ matrix.MSYS2.sys }}
+          install: |
+            base-devel
+            git
+            mingw-w64-${{ matrix.MSYS2.env }}-cc
+            mingw-w64-${{ matrix.MSYS2.env }}-${{ matrix.Lua.msys2_pkg_name }}
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        if: ${{ !contains(matrix.Lua.msys2_pkg_name, 'luajit') }}
+        run: |
+          make -C src \
+            PLAT=msys2${{ matrix.MSYS2.sys }} \
+            LUAV=${{ matrix.Lua.version }} \
+            DEBUG=DEBUG \
+            all
+      - name: Build with luajit
+        if: ${{ contains(matrix.Lua.msys2_pkg_name, 'luajit') }}
+        run: |
+          make -C src \
+            PLAT=msys2${{ matrix.MSYS2.sys }} \
+            LUAV=${{ matrix.Lua.version }} \
+            DEBUG=DEBUG \
+            "MYCFLAGS=$(pkgconf.exe --cflags lua${{ matrix.Lua.version }})" \
+            all
+      - name: Install
+        run: |
+          make -C src \
+            PLAT=msys2${{ matrix.MSYS2.sys }} \
+            LUAV=${{ matrix.Lua.version }} \
+            DEBUG=DEBUG \
+            install
+      - name: Run regression tests
+        run: |
+          cd test
+          ${{ env.LUA_EXE }} hello.lua
+          ${{ env.LUA_EXE }} testsrvr.lua > /dev/null &
+          ${{ env.LUA_EXE }} testclnt.lua
+          ${{ env.LUA_EXE }} stufftest.lua
+          ${{ env.LUA_EXE }} excepttest.lua
+          ${{ env.LUA_EXE }} test_bind.lua
+          ${{ env.LUA_EXE }} test_getaddrinfo.lua
+          ${{ env.LUA_EXE }} ltn12test.lua
+          ${{ env.LUA_EXE }} mimetest.lua
+          ${{ env.LUA_EXE }} urltest.lua
+          ${{ env.LUA_EXE }} test_socket_error.lua
+          kill %1
