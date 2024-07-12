@@ -38,19 +38,6 @@
 #define INET6_ADDRSTRLEN INET_ADDRSTRLEN
 #endif
 
-/* Replacement for sockaddr storage that we can use internally on platforms
- * that lack it.  It is not space-efficient, but neither is sockaddr_storage.
- */
-struct sockaddr_storage {
-	union {
-		struct sockaddr ss_sa;
-		struct sockaddr_in ss_sin;
-#ifndef NOIPV6
-		struct sockaddr_in6 ss_sin6;
-#endif
-		char ss_padding[128];
-	} ss_union;
-};
 #endif
 
 #ifndef SO_REUSEPORT
