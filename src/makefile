@@ -284,12 +284,14 @@ endif
 
 SO_psp=a
 O_psp=o
+A_psp=a
 CC_psp=psp-gcc
 DEF_psp=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
 CFLAGS_psp=$(LUAINC:%=-I%) $(PSPSDK:%=-I%)/include $(DEF) -Wall -Wshadow -Wextra \
 	-Wimplicit -O2 -ggdb3 -DHAVE_CONFIG_H -DSOCKET_SELECT -DNOIPV6
 LDFLAGS_psp=$(LUALIB) && mv templib.a 
 LD_psp=psp-ar rcs templib.a
+AR_psp=psp-ar rcs
 SOCKET_psp=usocket.o
 
 
@@ -310,6 +312,7 @@ MIME_SO=mime-$(MIME_V).$(SO)
 UNIX_SO=unix.$(SO)
 SERIAL_SO=serial.$(SO)
 SOCKET=$(SOCKET_$(PLAT))
+STATIC_LIB=libluasocket.$(A_$(PLAT))
 
 #------
 # Settings selected for platform
@@ -319,6 +322,7 @@ DEF=$(DEF_$(PLAT))
 CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT))
 LDFLAGS=$(MYLDFLAGS) $(LDFLAGS_$(PLAT))
 LD=$(LD_$(PLAT))
+AR=$(AR_$(PLAT))
 LUAINC= $(LUAINC_$(PLAT))
 LUALIB= $(LUALIB_$(PLAT))
 
@@ -426,7 +430,7 @@ solaris:
 	$(MAKE) all-unix PLAT=solaris
 
 psp:
-	$(MAKE) all-unix PLAT=psp
+	$(MAKE) static PLAT=psp
 
 none:
 	@echo "Please run"
@@ -435,6 +439,11 @@ none:
 	@echo "   $(PLATS)"
 
 all: $(SOCKET_SO) $(MIME_SO)
+
+static: $(STATIC_LIB)
+
+$(STATIC_LIB): $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(MIME_OBJS) $(UNIX_OBJS) $(SERIAL_OBJS)
+	$(AR) $@ $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(MIME_OBJS) $(UNIX_OBJS) $(SERIAL_OBJS)
 
 $(SOCKET_SO): $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS)
 	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@
@@ -464,12 +473,24 @@ install-unix: install
 	$(INSTALL_EXEC) $(UNIX_SO) $(INSTALL_SOCKET_CDIR)/$(UNIX_SO)
 	$(INSTALL_EXEC) $(SERIAL_SO) $(INSTALL_SOCKET_CDIR)/$(SERIAL_SO)
 
+install-static:
+	$(INSTALL_DIR) $(INSTALL_TOP_LDIR)
+	$(INSTALL_DATA) $(TO_TOP_LDIR) $(INSTALL_TOP_LDIR)
+	$(INSTALL_DIR) $(INSTALL_SOCKET_LDIR)
+	$(INSTALL_DATA) $(TO_SOCKET_LDIR) $(INSTALL_SOCKET_LDIR)
+	$(INSTALL_DIR) $(INSTALL_TOP)/lib
+	$(INSTALL_EXEC) libluasocket.a $(INSTALL_TOP)/lib
+	$(INSTALL_DIR) $(INSTALL_TOP)/include
+	$(INSTALL_DATA) luasocket.h $(INSTALL_TOP)/include
+	$(INSTALL_DATA) compat.h $(INSTALL_TOP)/include
+	$(INSTALL_DATA) mime.h $(INSTALL_TOP)/include
+
 local:
 	$(MAKE) install INSTALL_TOP_CDIR=.. INSTALL_TOP_LDIR=..
 
 clean:
 	rm -f $(SOCKET_SO) $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(SERIAL_OBJS)
-	rm -f $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
+	rm -f $(STATIC_LIB) $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
 
 .PHONY: all $(PLATS) default clean echo none
 
