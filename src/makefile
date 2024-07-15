@@ -313,6 +313,8 @@ UNIX_SO=unix.$(SO)
 SERIAL_SO=serial.$(SO)
 SOCKET=$(SOCKET_$(PLAT))
 STATIC_LIB=libluasocket.$(A_$(PLAT))
+COMBINED_H=luasocket-combined.h
+TARGET_H=luasocket.h
 
 #------
 # Settings selected for platform
@@ -440,7 +442,13 @@ none:
 
 all: $(SOCKET_SO) $(MIME_SO)
 
-static: $(STATIC_LIB)
+static: $(STATIC_LIB) $(COMBINED_H)
+
+$(COMBINED_H): luasocket.h compat.h mime.h
+	sed '29,$$d' luasocket.h > $(COMBINED_H)
+	sed -e '1,2d' -e '$$d' compat.h >> $(COMBINED_H)
+	sed -n '30,$$p' luasocket.h >> $(COMBINED_H)
+	sed '11d' mime.h >> $(COMBINED_H)
 
 $(STATIC_LIB): $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(MIME_OBJS) $(UNIX_OBJS) $(SERIAL_OBJS)
 	$(AR) $@ $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(MIME_OBJS) $(UNIX_OBJS) $(SERIAL_OBJS)
@@ -479,17 +487,15 @@ install-static:
 	$(INSTALL_DIR) $(INSTALL_SOCKET_LDIR)
 	$(INSTALL_DATA) $(TO_SOCKET_LDIR) $(INSTALL_SOCKET_LDIR)
 	$(INSTALL_DIR) $(INSTALL_TOP)/lib
-	$(INSTALL_EXEC) libluasocket.a $(INSTALL_TOP)/lib
+	$(INSTALL_EXEC) $(STATIC_LIB) $(INSTALL_TOP)/lib
 	$(INSTALL_DIR) $(INSTALL_TOP)/include
-	$(INSTALL_DATA) luasocket.h $(INSTALL_TOP)/include
-	$(INSTALL_DATA) compat.h $(INSTALL_TOP)/include
-	$(INSTALL_DATA) mime.h $(INSTALL_TOP)/include
+	$(INSTALL_DATA) $(COMBINED_H) $(INSTALL_TOP)/include/$(TARGET_H)
 
 local:
 	$(MAKE) install INSTALL_TOP_CDIR=.. INSTALL_TOP_LDIR=..
 
 clean:
-	rm -f $(SOCKET_SO) $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(SERIAL_OBJS)
+	rm -f $(SOCKET_SO) $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(SERIAL_OBJS) $(COMBINED_H)
 	rm -f $(STATIC_LIB) $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
 
 .PHONY: all $(PLATS) default clean echo none
