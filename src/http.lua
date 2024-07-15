@@ -207,7 +207,6 @@ local function adjusturi(reqt)
     if not reqt.proxy and not _M.PROXY then
         u = {
            path = socket.try(reqt.path, "invalid path 'nil'"),
-           params = reqt.params,
            query = reqt.query,
            fragment = reqt.fragment
         }

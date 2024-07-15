@@ -125,7 +125,7 @@ end
 -----------------------------------------------------------------------------
 -- Parses a url and returns a table with all its parts according to RFC 2396
 -- The following grammar describes the names given to the URL parts
--- <url> ::= <scheme>://<authority>/<path>;<params>?<query>#<fragment>
+-- <url> ::= <scheme>://<authority>/<path>?<query>#<fragment>
 -- <authority> ::= <userinfo>@<host>:<port>
 -- <userinfo> ::= <user>[:<password>]
 -- <path> :: = {<segment>/}<segment>
@@ -136,7 +136,7 @@ end
 --   table with the following fields, where RFC naming conventions have
 --   been preserved:
 --     scheme, authority, userinfo, user, password, host, port,
---     path, params, query, fragment
+--     path, query, fragment
 -- Obs:
 --   the leading '/' in {/<path>} is considered part of <path>
 -----------------------------------------------------------------------------
@@ -164,11 +164,6 @@ function _M.parse(url, default)
     -- get query string
     url = string.gsub(url, "%?(.*)", function(q)
         parsed.query = q
-        return ""
-    end)
-    -- get params
-    url = string.gsub(url, "%;(.*)", function(p)
-        parsed.params = p
         return ""
     end)
     -- path is whatever was left
@@ -203,7 +198,6 @@ function _M.build(parsed)
     --local ppath = _M.parse_path(parsed.path or "")
     --local url = _M.build_path(ppath)
     local url = parsed.path or ""
-    if parsed.params then url = url .. ";" .. parsed.params end
     if parsed.query then url = url .. "?" .. parsed.query end
     local authority = parsed.authority
     if parsed.host then
@@ -258,11 +252,8 @@ function _M.absolute(base_url, relative_url)
             relative_parsed.authority = base_parsed.authority
             if not relative_parsed.path then
                 relative_parsed.path = base_parsed.path
-                if not relative_parsed.params then
-                    relative_parsed.params = base_parsed.params
-                    if not relative_parsed.query then
-                        relative_parsed.query = base_parsed.query
-                    end
+                if not relative_parsed.query then
+                    relative_parsed.query = base_parsed.query
                 end
             else
                 relative_parsed.path = absolute_path(base_parsed.path or "",
