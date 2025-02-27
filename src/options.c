@@ -94,6 +94,26 @@ int opt_get_reuseaddr(lua_State *L, p_socket ps)
 }
 
 /*------------------------------------------------------*/
+/* enables reuse of local address */
+int opt_set_exclusiveaddruse(lua_State* L, p_socket ps)
+{
+#ifndef SO_EXCLUSIVEADDRUSE
+    return luaL_error(L, "SO_EXCLUSIVEADDRUSE is not supported on this operating system");
+#else
+    return opt_setboolean(L, ps, SOL_SOCKET, SO_EXCLUSIVEADDRUSE);
+#endif
+}
+
+int opt_get_exclusiveaddruse(lua_State* L, p_socket ps)
+{
+#ifndef SO_EXCLUSIVEADDRUSE
+    return luaL_error(L, "SO_EXCLUSIVEADDRUSE is not supported on this operating system");
+#else
+    return opt_getboolean(L, ps, SOL_SOCKET, SO_EXCLUSIVEADDRUSE);
+#endif
+}
+
+/*------------------------------------------------------*/
 /* enables reuse of local port */
 int opt_set_reuseport(lua_State *L, p_socket ps)
 {
