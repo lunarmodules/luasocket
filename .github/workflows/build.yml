@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
-        platform: [ "ubuntu-22.04", "macos-11", "windows-2022" ]
+        platform: [ "ubuntu-22.04", "macos-14", "windows-2022" ]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
@@ -22,11 +22,11 @@ jobs:
         if: ${{ startsWith(matrix.platform, 'windows') && !startsWith(matrix.luaVersion, 'luajit') }}
         uses: ilammy/msvc-dev-cmd@v1
       - name: Setup ‘lua’
-        uses: leso-kn/gh-actions-lua@v11-staging
+        uses: luarocks/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.luaVersion }}
       - name: Setup ‘luarocks’
-        uses: hishamhm/gh-actions-luarocks@master
+        uses: luarocks/gh-actions-luarocks@v5
       - name: Make and install
         run: |
           luarocks make -- luasocket-scm-3.rockspec
