@@ -22,11 +22,11 @@ jobs:
         if: ${{ startsWith(matrix.platform, 'windows') && !startsWith(matrix.luaVersion, 'luajit') }}
         uses: ilammy/msvc-dev-cmd@v1
       - name: Setup ‘lua’
-        uses: leso-kn/gh-actions-lua@v11-staging
+        uses: luarocks/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.luaVersion }}
       - name: Setup ‘luarocks’
-        uses: hishamhm/gh-actions-luarocks@master
+        uses: luarocks/gh-actions-luarocks@v5
       - name: Make and install
         run: |
           luarocks make -- luasocket-scm-3.rockspec
