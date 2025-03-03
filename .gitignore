@@ -1,6 +1,7 @@
 *.o
 *.so
 *.so.*
+*.a
 *.obj
 *.lib
 *.dll*

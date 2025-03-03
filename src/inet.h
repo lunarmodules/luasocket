@@ -18,6 +18,10 @@
 #include "socket.h"
 #include "timeout.h"
 
+#ifdef PSP
+#include "getaddrinfo.h"
+#endif
+
 #ifdef _WIN32
 #define LUASOCKET_INET_ATON
 #endif

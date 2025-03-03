@@ -12,7 +12,9 @@
 * Internal functions prototypes
 \*=========================================================================*/
 static int opt_setmembership(lua_State *L, p_socket ps, int level, int name);
+#if defined(IPV6_ADD_MEMBERSHIP) || defined(IPV6_DROP_MEMBERSHIP)
 static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name);
+#endif
 static int opt_setboolean(lua_State *L, p_socket ps, int level, int name);
 static int opt_getboolean(lua_State *L, p_socket ps, int level, int name);
 static int opt_setint(lua_State *L, p_socket ps, int level, int name);
@@ -243,6 +245,7 @@ int opt_set_tcp_defer_accept(lua_State *L, p_socket ps)
 #endif
 
 /*------------------------------------------------------*/
+#ifdef IPV6_UNICAST_HOPS
 int opt_set_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
@@ -252,8 +255,10 @@ int opt_get_ip6_unicast_hops(lua_State *L, p_socket ps)
 {
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_UNICAST_HOPS);
 }
+#endif
 
 /*------------------------------------------------------*/
+#ifdef IPV6_MULTICAST_HOPS
 int opt_set_ip6_multicast_hops(lua_State *L, p_socket ps)
 {
   return opt_setint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
@@ -263,6 +268,7 @@ int opt_get_ip6_multicast_hops(lua_State *L, p_socket ps)
 {
   return opt_getint(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_HOPS);
 }
+#endif
 
 /*------------------------------------------------------*/
 int opt_set_ip_multicast_loop(lua_State *L, p_socket ps)
@@ -276,6 +282,7 @@ int opt_get_ip_multicast_loop(lua_State *L, p_socket ps)
 }
 
 /*------------------------------------------------------*/
+#ifdef IPV6_MULTICAST_LOOP
 int opt_set_ip6_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
@@ -285,6 +292,7 @@ int opt_get_ip6_multicast_loop(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_MULTICAST_LOOP);
 }
+#endif
 
 /*------------------------------------------------------*/
 int opt_set_linger(lua_State *L, p_socket ps)
@@ -362,17 +370,22 @@ int opt_set_ip_drop_membersip(lua_State *L, p_socket ps)
 }
 
 /*------------------------------------------------------*/
+#ifdef IPV6_ADD_MEMBERSHIP
 int opt_set_ip6_add_membership(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP);
 }
+#endif
 
+#ifdef IPV6_DROP_MEMBERSHIP
 int opt_set_ip6_drop_membersip(lua_State *L, p_socket ps)
 {
     return opt_ip6_setmembership(L, ps, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP);
 }
+#endif
 
 /*------------------------------------------------------*/
+#ifdef IPV6_V6ONLY
 int opt_get_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_getboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
@@ -382,6 +395,7 @@ int opt_set_ip6_v6only(lua_State *L, p_socket ps)
 {
     return opt_setboolean(L, ps, IPPROTO_IPV6, IPV6_V6ONLY);
 }
+#endif
 
 /*------------------------------------------------------*/
 int opt_get_error(lua_State *L, p_socket ps)
@@ -421,6 +435,7 @@ static int opt_setmembership(lua_State *L, p_socket ps, int level, int name)
     return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
 }
 
+#if defined(IPV6_ADD_MEMBERSHIP) || defined(IPV6_DROP_MEMBERSHIP)
 static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
 {
     struct ipv6_mreq val;                   /* obj, opt-name, table */
@@ -446,6 +461,7 @@ static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
     }
     return opt_set(L, ps, level, name, (char *) &val, sizeof(val));
 }
+#endif
 
 static
 int opt_get(lua_State *L, p_socket ps, int level, int name, void *val, int* len)
