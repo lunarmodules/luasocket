@@ -27,6 +27,9 @@ jobs:
           luaVersion: ${{ matrix.luaVersion }}
       - name: Setup ‘luarocks’
         uses: luarocks/gh-actions-luarocks@v5
+      - name: Fix ’MSVCRT’ for luajit and luajit-openresty on Windows
+        if: ${{ startsWith(matrix.platform, 'windows') && startsWith(matrix.luaVersion, 'luajit') }}
+        run: luarocks config variables.MSVCRT UCRTBASE
       - name: Make and install
         run: |
           luarocks make -- luasocket-scm-3.rockspec
