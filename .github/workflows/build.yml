@@ -25,6 +25,7 @@ jobs:
         uses: luarocks/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.luaVersion }}
+          buildCache: false
       - name: Setup ‘luarocks’
         uses: luau-project/gh-actions-luarocks@fix-mingw-MSVCRT
       - name: Make and install
