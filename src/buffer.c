@@ -230,23 +230,35 @@ static int recvall(p_buffer buf, luaL_Buffer *b) {
 }
 
 /*-------------------------------------------------------------------------*\
-* Reads a line terminated by a CR LF pair or just by a LF. The CR and LF
-* are not returned by the function and are discarded from the buffer
+* Reads a line terminated by a CR LF pair or just by a LF. If chop, then
+* the line ending is discarded.
 \*-------------------------------------------------------------------------*/
 static int recvline(p_buffer buf, luaL_Buffer *b, int chop) {
     int err = IO_DONE;
+    char hasprevch = 0;
+    char prevch;
     while (err == IO_DONE) {
         size_t count, pos; const char *data;
         err = buffer_get(buf, &data, &count);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
-            /* we ignore all \r's */
-            if (data[pos] != '\r') luaL_addchar(b, data[pos]);
+            /* we delay all the characters an iteration so that \r can be skipped */
+            if (hasprevch)
+                luaL_addchar(b, prevch);
+            prevch = data[pos];
+            hasprevch = 1;
             pos++;
         }
+        if (hasprevch && prevch != '\r') {
+            hasprevch = 0;
+            luaL_addchar(b, prevch);
+        }
         if (pos < count) { /* found '\n' */
-            if (!chop)
+            if (!chop) {
+                if (hasprevch) /* prevch == '\r' */
+                    luaL_addchar(b, prevch);
                 luaL_addchar(b, '\n');
+            }
             buffer_skip(buf, pos+1); /* skip '\n' too */
             break; /* we are done */
         } else /* reached the end of the buffer */
