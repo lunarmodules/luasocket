@@ -25,8 +25,9 @@ jobs:
         uses: luarocks/gh-actions-lua@v10
         with:
           luaVersion: ${{ matrix.luaVersion }}
+          buildCache: false
       - name: Setup ‘luarocks’
-        uses: luarocks/gh-actions-luarocks@v5
+        uses: luau-project/gh-actions-luarocks@fix-mingw-MSVCRT
       - name: Make and install
         run: |
           luarocks make -- luasocket-scm-3.rockspec
