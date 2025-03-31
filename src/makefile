@@ -105,6 +105,19 @@ LUAPREFIX_solaris?=/usr/local
 CDIR_solaris?=lib/lua/$(LUAV)
 LDIR_solaris?=share/lua/$(LUAV)
 
+# LUAINC_psp:
+# LUALIB_psp:
+# where lua headers and libraries are found for psp builds
+ifeq ($(PLAT),psp)
+PSP_PREFIX=$(shell psp-config -P)
+endif
+LUAINC_psp?=$(PSP_PREFIX)/include
+LUAPREFIX_psp?=/psp
+CDIR_psp?=lib/lua/$(LUAV)
+LDIR_psp?=share/lua/$(LUAV)
+LUALIB_psp_base?=$(PSP_PREFIX)/lib
+LUALIB_psp=$(LUALIB_psp_base)/liblua.a
+
 # prefix: /usr/local /usr /opt/local /sw
 # the top of the default install tree
 prefix?=$(LUAPREFIX_$(PLAT))
@@ -153,7 +166,7 @@ print:
 #------
 # Supported platforms
 #
-PLATS= macosx linux win32 win64 mingw solaris
+PLATS= macosx linux win32 win64 mingw freebsd solaris psp
 
 #------
 # Compiler and linker settings
@@ -262,6 +275,26 @@ LDFLAGS_win64= //nologo //link //NOLOGO //DLL //INCREMENTAL:NO \
 LD_win64=cl
 SOCKET_win64=wsocket.obj
 
+#------
+# Compiler and linker settings
+# for PSP
+ifeq ($(PLAT),psp)
+PSPSDK=$(shell psp-config -p)
+endif
+
+SO_psp=a
+O_psp=o
+A_psp=a
+CC_psp=psp-gcc
+DEF_psp=-DLUASOCKET_$(DEBUG) -DUNIX_HAS_SUN_LEN
+CFLAGS_psp=$(LUAINC:%=-I%) $(PSPSDK:%=-I%)/include $(DEF) -Wall -Wshadow -Wextra \
+	-Wimplicit -O2 -ggdb3 -DHAVE_CONFIG_H -DSOCKET_SELECT -DNOIPV6
+LDFLAGS_psp=$(LUALIB) && mv templib.a 
+LD_psp=psp-ar rcs templib.a
+AR_psp=psp-ar rcs
+SOCKET_psp=usocket.o
+
+
 .SUFFIXES: .obj
 
 .c.obj:
@@ -279,6 +312,9 @@ MIME_SO=mime-$(MIME_V).$(SO)
 UNIX_SO=unix.$(SO)
 SERIAL_SO=serial.$(SO)
 SOCKET=$(SOCKET_$(PLAT))
+STATIC_LIB=libluasocket.$(A_$(PLAT))
+COMBINED_H=luasocket-combined.h
+TARGET_H=luasocket.h
 
 #------
 # Settings selected for platform
@@ -288,8 +324,16 @@ DEF=$(DEF_$(PLAT))
 CFLAGS=$(MYCFLAGS) $(CFLAGS_$(PLAT))
 LDFLAGS=$(MYLDFLAGS) $(LDFLAGS_$(PLAT))
 LD=$(LD_$(PLAT))
+AR=$(AR_$(PLAT))
 LUAINC= $(LUAINC_$(PLAT))
 LUALIB= $(LUALIB_$(PLAT))
+
+#------
+# Platform-specific modules
+#
+PLATFORM_OBJS_psp= \
+	netdb-compat.$(O) \
+	getaddrinfo.$(O)
 
 #------
 # Modules belonging to socket-core
@@ -387,6 +431,9 @@ mingw:
 solaris:
 	$(MAKE) all-unix PLAT=solaris
 
+psp:
+	$(MAKE) static PLAT=psp
+
 none:
 	@echo "Please run"
 	@echo "   make PLATFORM"
@@ -395,7 +442,18 @@ none:
 
 all: $(SOCKET_SO) $(MIME_SO)
 
-$(SOCKET_SO): $(SOCKET_OBJS)
+static: $(STATIC_LIB) $(COMBINED_H)
+
+$(COMBINED_H): luasocket.h compat.h mime.h
+	sed '29,$$d' luasocket.h > $(COMBINED_H)
+	sed -e '1,2d' -e '$$d' compat.h >> $(COMBINED_H)
+	sed -n '30,$$p' luasocket.h >> $(COMBINED_H)
+	sed '11d' mime.h >> $(COMBINED_H)
+
+$(STATIC_LIB): $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(MIME_OBJS) $(UNIX_OBJS) $(SERIAL_OBJS)
+	$(AR) $@ $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(MIME_OBJS) $(UNIX_OBJS) $(SERIAL_OBJS)
+
+$(SOCKET_SO): $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS)
 	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@
 
 $(MIME_SO): $(MIME_OBJS)
@@ -423,12 +481,22 @@ install-unix: install
 	$(INSTALL_EXEC) $(UNIX_SO) $(INSTALL_SOCKET_CDIR)/$(UNIX_SO)
 	$(INSTALL_EXEC) $(SERIAL_SO) $(INSTALL_SOCKET_CDIR)/$(SERIAL_SO)
 
+install-static:
+	$(INSTALL_DIR) $(INSTALL_TOP_LDIR)
+	$(INSTALL_DATA) $(TO_TOP_LDIR) $(INSTALL_TOP_LDIR)
+	$(INSTALL_DIR) $(INSTALL_SOCKET_LDIR)
+	$(INSTALL_DATA) $(TO_SOCKET_LDIR) $(INSTALL_SOCKET_LDIR)
+	$(INSTALL_DIR) $(INSTALL_TOP)/lib
+	$(INSTALL_EXEC) $(STATIC_LIB) $(INSTALL_TOP)/lib
+	$(INSTALL_DIR) $(INSTALL_TOP)/include
+	$(INSTALL_DATA) $(COMBINED_H) $(INSTALL_TOP)/include/$(TARGET_H)
+
 local:
 	$(MAKE) install INSTALL_TOP_CDIR=.. INSTALL_TOP_LDIR=..
 
 clean:
-	rm -f $(SOCKET_SO) $(SOCKET_OBJS) $(SERIAL_OBJS)
-	rm -f $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
+	rm -f $(SOCKET_SO) $(PLATFORM_OBJS_$(PLAT)) $(SOCKET_OBJS) $(SERIAL_OBJS) $(COMBINED_H)
+	rm -f $(STATIC_LIB) $(MIME_SO) $(UNIX_SO) $(SERIAL_SO) $(MIME_OBJS) $(UNIX_OBJS)
 
 .PHONY: all $(PLATS) default clean echo none
 
@@ -459,3 +527,5 @@ unix.$(O): unix.c auxiliar.h socket.h io.h timeout.h usocket.h \
 	options.h unix.h buffer.h
 usocket.$(O): usocket.c socket.h io.h timeout.h usocket.h
 wsocket.$(O): wsocket.c socket.h io.h timeout.h usocket.h
+getaddrinfo.$(O): getaddrinfo.c getaddrinfo.h
+netdb-compat.$(O): netdb-compat.c netdb-compat.h

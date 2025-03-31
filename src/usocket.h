@@ -29,7 +29,16 @@
 #include <arpa/inet.h>
 /* TCP options (nagle algorithm disable) */
 #include <netinet/tcp.h>
+#ifndef PSP
 #include <net/if.h>
+#else
+#include "getaddrinfo.h"
+
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN INET_ADDRSTRLEN
+#endif
+
+#endif
 
 #ifndef SO_REUSEPORT
 #define SO_REUSEPORT SO_REUSEADDR

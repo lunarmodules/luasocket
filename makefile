@@ -10,11 +10,11 @@
 #   print	           print the build settings
 
 PLAT?= linux
-PLATS= macosx linux win32 win64 mingw freebsd solaris
+PLATS= macosx linux win32 win64 mingw freebsd solaris psp
 
 all: $(PLAT)
 
-$(PLATS) none install install-unix local clean:
+$(PLATS) none install install-unix install-static local clean:
 	$(MAKE) -C src $@
 
 print:
