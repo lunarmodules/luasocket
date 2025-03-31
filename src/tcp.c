@@ -74,6 +74,9 @@ static t_opt optget[] = {
     {"bindtodevice", opt_get_bindtodevice},
     {"keepalive",   opt_get_keepalive},
     {"reuseaddr",   opt_get_reuseaddr},
+#ifdef SO_EXCLUSIVEADDRUSE
+    {"exclusiveaddruse", opt_get_exclusiveaddruse},
+#endif
     {"reuseport",   opt_get_reuseport},
     {"tcp-nodelay", opt_get_tcp_nodelay},
 #ifdef TCP_KEEPIDLE
@@ -96,6 +99,9 @@ static t_opt optset[] = {
     {"bindtodevice", opt_set_bindtodevice},
     {"keepalive",   opt_set_keepalive},
     {"reuseaddr",   opt_set_reuseaddr},
+#ifdef SO_EXCLUSIVEADDRUSE
+    {"exclusiveaddruse", opt_set_exclusiveaddruse},
+#endif
     {"reuseport",   opt_set_reuseport},
     {"tcp-nodelay", opt_set_tcp_nodelay},
 #ifdef TCP_KEEPIDLE

@@ -74,6 +74,9 @@ static t_opt optset[] = {
     {"dontroute",            opt_set_dontroute},
     {"broadcast",            opt_set_broadcast},
     {"reuseaddr",            opt_set_reuseaddr},
+#ifdef SO_EXCLUSIVEADDRUSE
+    {"exclusiveaddruse", opt_set_exclusiveaddruse},
+#endif
     {"reuseport",            opt_set_reuseport},
     {"ip-multicast-if",      opt_set_ip_multicast_if},
     {"ip-multicast-ttl",     opt_set_ip_multicast_ttl},
@@ -96,6 +99,9 @@ static t_opt optget[] = {
     {"dontroute",            opt_get_dontroute},
     {"broadcast",            opt_get_broadcast},
     {"reuseaddr",            opt_get_reuseaddr},
+#ifdef SO_EXCLUSIVEADDRUSE
+    {"exclusiveaddruse", opt_get_exclusiveaddruse},
+#endif
     {"reuseport",            opt_get_reuseport},
     {"ip-multicast-if",      opt_get_ip_multicast_if},
     {"ip-multicast-loop",    opt_get_ip_multicast_loop},
