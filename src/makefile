@@ -12,7 +12,7 @@
 #
 #   make PLAT=linux DEBUG=DEBUG LUAV=5.2 prefix=/sw
 
-# PLAT: linux macosx win32 win64 mingw
+# PLAT: linux macosx win32 win64 mingw msys2ucrt64 msys2mingw64 msys2mingw32 msys2clang64 msys2clang32 msys2clangarm64
 # platform to build for
 PLAT?=linux
 
@@ -74,6 +74,77 @@ LUAPREFIX_mingw?=/usr
 CDIR_mingw?=lua/$(LUAV)
 LDIR_mingw?=lua/$(LUAV)/lua
 
+# where lua headers are found for msys2ucrt64 builds
+# LUAINC_msys2ucrt64:
+# /ucrt64/include
+# /ucrt64/include/lua$(LUAV)
+LUAINC_msys2ucrt64_base?=/ucrt64/include
+LUAINC_msys2ucrt64?=$(LUAINC_msys2ucrt64_base)/lua$(LUAV)
+LUALIB_msys2ucrt64_base?=/ucrt64/bin
+LUALIB_msys2ucrt64?=$(LUALIB_msys2ucrt64_base)/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_msys2ucrt64?=/ucrt64
+CDIR_msys2ucrt64?=lib/lua/$(LUAV)
+LDIR_msys2ucrt64?=share/lua/$(LUAV)
+
+# where lua headers are found for msys2mingw64 builds
+# LUAINC_msys2mingw64:
+# /mingw64/include
+# /mingw64/include/lua$(LUAV)
+LUAINC_msys2mingw64_base?=/mingw64/include
+LUAINC_msys2mingw64?=$(LUAINC_msys2mingw64_base)/lua$(LUAV)
+LUALIB_msys2mingw64_base?=/mingw64/bin
+LUALIB_msys2mingw64?=$(LUALIB_msys2mingw64_base)/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_msys2mingw64?=/mingw64
+CDIR_msys2mingw64?=lib/lua/$(LUAV)
+LDIR_msys2mingw64?=share/lua/$(LUAV)
+
+# where lua headers are found for msys2mingw32 builds
+# LUAINC_msys2mingw32:
+# /mingw32/include
+# /mingw32/include/lua$(LUAV)
+LUAINC_msys2mingw32_base?=/mingw32/include
+LUAINC_msys2mingw32?=$(LUAINC_msys2mingw32_base)/lua$(LUAV)
+LUALIB_msys2mingw32_base?=/mingw32/bin
+LUALIB_msys2mingw32?=$(LUALIB_msys2mingw32_base)/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_msys2mingw32?=/mingw32
+CDIR_msys2mingw32?=lib/lua/$(LUAV)
+LDIR_msys2mingw32?=share/lua/$(LUAV)
+
+# where lua headers are found for msys2clang64 builds
+# LUAINC_msys2clang64:
+# /clang64/include
+# /clang64/include/lua$(LUAV)
+LUAINC_msys2clang64_base?=/clang64/include
+LUAINC_msys2clang64?=$(LUAINC_msys2clang64_base)/lua$(LUAV)
+LUALIB_msys2clang64_base?=/clang64/bin
+LUALIB_msys2clang64?=$(LUALIB_msys2clang64_base)/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_msys2clang64?=/clang64
+CDIR_msys2clang64?=lib/lua/$(LUAV)
+LDIR_msys2clang64?=share/lua/$(LUAV)
+
+# where lua headers are found for msys2clang32 builds
+# LUAINC_msys2clang32:
+# /clang32/include
+# /clang32/include/lua$(LUAV)
+LUAINC_msys2clang32_base?=/clang32/include
+LUAINC_msys2clang32?=$(LUAINC_msys2clang32_base)/lua$(LUAV)
+LUALIB_msys2clang32_base?=/clang32/bin
+LUALIB_msys2clang32?=$(LUALIB_msys2clang32_base)/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_msys2clang32?=/clang32
+CDIR_msys2clang32?=lib/lua/$(LUAV)
+LDIR_msys2clang32?=share/lua/$(LUAV)
+
+# where lua headers are found for msys2clangarm64 builds
+# LUAINC_msys2clangarm64:
+# /clangarm64/include
+# /clangarm64/include/lua$(LUAV)
+LUAINC_msys2clangarm64_base?=/clangarm64/include
+LUAINC_msys2clangarm64?=$(LUAINC_msys2clangarm64_base)/lua$(LUAV)
+LUALIB_msys2clangarm64_base?=/clangarm64/bin
+LUALIB_msys2clangarm64?=$(LUALIB_msys2clangarm64_base)/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_msys2clangarm64?=/clangarm64
+CDIR_msys2clangarm64?=lib/lua/$(LUAV)
+LDIR_msys2clangarm64?=share/lua/$(LUAV)
 
 # LUAINC_win32:
 # LUALIB_win32:
@@ -153,7 +224,7 @@ print:
 #------
 # Supported platforms
 #
-PLATS= macosx linux win32 win64 mingw solaris
+PLATS= macosx linux win32 win64 mingw msys2ucrt64 msys2mingw64 msys2mingw32 msys2clang64 msys2clang32 msys2clangarm64 solaris
 
 #------
 # Compiler and linker settings
@@ -219,6 +290,77 @@ LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lws2_32 -o
 LD_mingw=gcc
 SOCKET_mingw=wsocket.o
 
+#------
+# Compiler and linker settings
+# for MSYS2 ucrt64
+SO_msys2ucrt64=dll
+O_msys2ucrt64=o
+CC_msys2ucrt64=/ucrt64/bin/cc
+DEF_msys2ucrt64= -DLUASOCKET_$(DEBUG)
+CFLAGS_msys2ucrt64=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
+LDFLAGS_msys2ucrt64= $(LUALIB) -shared -Wl,-s -lws2_32 -o
+LD_msys2ucrt64=/ucrt64/bin/cc
+SOCKET_msys2ucrt64=wsocket.o
+
+#------
+# Compiler and linker settings
+# for MSYS2 mingw64
+SO_msys2mingw64=dll
+O_msys2mingw64=o
+CC_msys2mingw64=/mingw64/bin/cc
+DEF_msys2mingw64= -DLUASOCKET_$(DEBUG)
+CFLAGS_msys2mingw64=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
+LDFLAGS_msys2mingw64= $(LUALIB) -shared -Wl,-s -lws2_32 -o
+LD_msys2mingw64=/mingw64/bin/cc
+SOCKET_msys2mingw64=wsocket.o
+
+#------
+# Compiler and linker settings
+# for MSYS2 mingw32
+SO_msys2mingw32=dll
+O_msys2mingw32=o
+CC_msys2mingw32=/mingw32/bin/cc
+DEF_msys2mingw32= -DLUASOCKET_$(DEBUG)
+CFLAGS_msys2mingw32=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
+LDFLAGS_msys2mingw32= $(LUALIB) -shared -Wl,-s -lws2_32 -o
+LD_msys2mingw32=/mingw32/bin/cc
+SOCKET_msys2mingw32=wsocket.o
+
+#------
+# Compiler and linker settings
+# for MSYS2 clang64
+SO_msys2clang64=dll
+O_msys2clang64=o
+CC_msys2clang64=/clang64/bin/cc
+DEF_msys2clang64= -DLUASOCKET_$(DEBUG)
+CFLAGS_msys2clang64=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
+LDFLAGS_msys2clang64= $(LUALIB) -shared -Wl,-s -lws2_32 -o
+LD_msys2clang64=/clang64/bin/cc
+SOCKET_msys2clang64=wsocket.o
+
+#------
+# Compiler and linker settings
+# for MSYS2 clang32
+SO_msys2clang32=dll
+O_msys2clang32=o
+CC_msys2clang32=/clang32/bin/cc
+DEF_msys2clang32= -DLUASOCKET_$(DEBUG)
+CFLAGS_msys2clang32=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
+LDFLAGS_msys2clang32= $(LUALIB) -shared -Wl,-s -lws2_32 -o
+LD_msys2clang32=/clang32/bin/cc
+SOCKET_msys2clang32=wsocket.o
+
+#------
+# Compiler and linker settings
+# for MSYS2 clangarm64
+SO_msys2clangarm64=dll
+O_msys2clangarm64=o
+CC_msys2clangarm64=/clangarm64/bin/cc
+DEF_msys2clangarm64= -DLUASOCKET_$(DEBUG)
+CFLAGS_msys2clangarm64=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
+LDFLAGS_msys2clangarm64= $(LUALIB) -shared -Wl,-s -lws2_32 -o
+LD_msys2clangarm64=/clangarm64/bin/cc
+SOCKET_msys2clangarm64=wsocket.o
 
 #------
 # Compiler and linker settings
@@ -383,6 +525,24 @@ linux:
 
 mingw:
 	$(MAKE) all PLAT=mingw
+
+msys2ucrt64:
+	$(MAKE) all PLAT=msys2ucrt64
+
+msys2mingw64:
+	$(MAKE) all PLAT=msys2mingw64
+
+msys2mingw32:
+	$(MAKE) all PLAT=msys2mingw32
+
+msys2clang64:
+	$(MAKE) all PLAT=msys2clang64
+
+msys2clang32:
+	$(MAKE) all PLAT=msys2clang32
+
+msys2clangarm64:
+	$(MAKE) all PLAT=msys2clangarm64
 
 solaris:
 	$(MAKE) all-unix PLAT=solaris
