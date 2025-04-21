@@ -17,7 +17,9 @@
 #include "timeout.h"
 #include "socket.h"
 
+#ifndef UDP_DATAGRAMSIZE
 #define UDP_DATAGRAMSIZE 8192
+#endif
 
 typedef struct t_udp_ {
     t_socket sock;
