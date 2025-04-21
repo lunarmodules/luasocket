@@ -294,7 +294,15 @@ function empty_connect()
         pass("ok")
         data = socket.connect(host, port)
     else
-        pass("gethostbyname returns localhost on empty string...")
+        local peer = data:getpeername()
+        if peer == '127.0.0.1' or peer == '::1' then
+            pass("gethostbyname returns localhost on empty string...")
+        else
+            -- it bound to the address of the computer on the local network
+            -- which won't necessarily be able to communicate depending on firewall
+            pass("gethostbyname returns local computer on empty string...")
+            data = socket.connect(host, port)
+        end
     end
 end
 

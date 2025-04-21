@@ -9,7 +9,7 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b);
-static int recvline(p_buffer buf, luaL_Buffer *b);
+static int recvline(p_buffer buf, luaL_Buffer *b, int chop);
 static int recvall(p_buffer buf, luaL_Buffer *b);
 static int buffer_get(p_buffer buf, const char **data, size_t *count);
 static void buffer_skip(p_buffer buf, size_t count);
@@ -117,10 +117,21 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     luaL_addlstring(&b, part, size);
     /* receive new patterns */
     if (!lua_isnumber(L, 2)) {
-        const char *p= luaL_optstring(L, 2, "*l");
-        if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b);
-        else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b);
-        else luaL_argcheck(L, 0, 2, "invalid receive pattern");
+        const char *p = luaL_optstring(L, 2, "l");
+        if (*p == '*') p++;  /* skip optional '*' (for compatibility) */
+        switch (*p) {
+            case 'l':  /* line */
+                err = recvline(buf, &b, 1);
+                break;
+            case 'L':  /* line with \n */
+                err = recvline(buf, &b, 0);
+                break;
+            case 'a':  /* all */
+                err = recvall(buf, &b);
+                break;
+            default:
+                luaL_argcheck(L, 0, 2, "invalid receive pattern");
+        }
     /* get a fixed number of bytes (minus what was already partially
      * received) */
     } else {
@@ -219,21 +230,35 @@ static int recvall(p_buffer buf, luaL_Buffer *b) {
 }
 
 /*-------------------------------------------------------------------------*\
-* Reads a line terminated by a CR LF pair or just by a LF. The CR and LF
-* are not returned by the function and are discarded from the buffer
+* Reads a line terminated by a CR LF pair or just by a LF. If chop, then
+* the line ending is discarded.
 \*-------------------------------------------------------------------------*/
-static int recvline(p_buffer buf, luaL_Buffer *b) {
+static int recvline(p_buffer buf, luaL_Buffer *b, int chop) {
     int err = IO_DONE;
+    char hasprevch = 0;
+    char prevch;
     while (err == IO_DONE) {
         size_t count, pos; const char *data;
         err = buffer_get(buf, &data, &count);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
-            /* we ignore all \r's */
-            if (data[pos] != '\r') luaL_addchar(b, data[pos]);
+            /* we delay all the characters an iteration so that \r can be skipped */
+            if (hasprevch)
+                luaL_addchar(b, prevch);
+            prevch = data[pos];
+            hasprevch = 1;
             pos++;
         }
+        if (hasprevch && prevch != '\r') {
+            hasprevch = 0;
+            luaL_addchar(b, prevch);
+        }
         if (pos < count) { /* found '\n' */
+            if (!chop) {
+                if (hasprevch) /* prevch == '\r' */
+                    luaL_addchar(b, prevch);
+                luaL_addchar(b, '\n');
+            }
             buffer_skip(buf, pos+1); /* skip '\n' too */
             break; /* we are done */
         } else /* reached the end of the buffer */
