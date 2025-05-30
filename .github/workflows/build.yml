@@ -27,7 +27,8 @@ jobs:
           luaVersion: ${{ matrix.luaVersion }}
           buildCache: false
       - name: Setup ‘luarocks’
-        uses: luau-project/gh-actions-luarocks@fix-mingw-MSVCRT
+        # master branch until tagged release has luajit & msvcrt fixes
+        uses: luarocks/gh-actions-luarocks@master
       - name: Make and install
         run: |
           luarocks make -- luasocket-scm-3.rockspec
