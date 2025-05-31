@@ -115,6 +115,7 @@ local function make_plat(plat)
     modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/wsocket.c"
     modules["socket.core"].libraries = { "ws2_32" }
     modules["socket.core"].libdirs = {}
+    modules["mime.core"].libdirs = {}
   end
   return { modules = modules }
 end
