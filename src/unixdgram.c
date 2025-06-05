@@ -8,11 +8,10 @@
 #include "socket.h"
 #include "options.h"
 #include "unix.h"
+#include "unixdef.h"
 
 #include <string.h>
 #include <stdlib.h>
-
-#include <sys/un.h>
 
 #define UNIXDGRAM_DATAGRAMSIZE 8192
 

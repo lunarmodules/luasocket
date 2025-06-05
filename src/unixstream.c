@@ -7,10 +7,10 @@
 #include "auxiliar.h"
 #include "socket.h"
 #include "options.h"
+#include "unixdef.h"
 #include "unixstream.h"
 
 #include <string.h>
-#include <sys/un.h>
 
 /*=========================================================================*\
 * Internal function prototypes

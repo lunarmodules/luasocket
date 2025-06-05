@@ -346,8 +346,9 @@ UNIX_OBJS=\
 	auxiliar.$(O) \
 	options.$(O) \
 	timeout.$(O) \
+	inet.$(O) \
 	io.$(O) \
-	usocket.$(O) \
+	$(SOCKET) \
 	unixstream.$(O) \
 	unixdgram.$(O) \
 	compat.$(O) \
@@ -418,7 +419,7 @@ none:
 	@echo "where PLATFORM is one of these:"
 	@echo "   $(PLATS)"
 
-all: $(SOCKET_SO) $(MIME_SO)
+all: $(SOCKET_SO) $(MIME_SO) $(UNIX_SO)
 
 $(SOCKET_SO): $(SOCKET_OBJS)
 	$(LD) $(SOCKET_OBJS) $(LDFLAGS)$@
@@ -426,10 +427,10 @@ $(SOCKET_SO): $(SOCKET_OBJS)
 $(MIME_SO): $(MIME_OBJS)
 	$(LD) $(MIME_OBJS) $(LDFLAGS)$@
 
-all-unix: all $(UNIX_SO) $(SERIAL_SO)
-
 $(UNIX_SO): $(UNIX_OBJS)
 	$(LD) $(UNIX_OBJS) $(LDFLAGS)$@
+
+all-unix: all $(SERIAL_SO)
 
 $(SERIAL_SO): $(SERIAL_OBJS)
 	$(LD) $(SERIAL_OBJS) $(LDFLAGS)$@

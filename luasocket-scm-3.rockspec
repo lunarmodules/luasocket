@@ -56,6 +56,20 @@ local function make_plat(plat)
       defines = defines[plat],
       incdir = "/src"
     },
+    ["socket.unix"] = {
+      sources = {
+        "src/buffer.c"
+        , "src/compat.c"
+        , "src/auxiliar.c"
+        , "src/options.c"
+        , "src/timeout.c"
+        , "src/io.c"
+        , "src/unix.c"
+        , "src/unixdgram.c"
+        , "src/unixstream.c" },
+      defines = defines[plat],
+      incdir = "/src"
+    },
     ["mime.core"] = {
       sources = { "src/mime.c", "src/compat.c" },
       defines = defines[plat],
@@ -77,24 +91,10 @@ local function make_plat(plat)
     or plat == "haiku"
   then
     modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/usocket.c"
+    modules["socket.unix"].sources[#modules["socket.unix"].sources+1] = "src/usocket.c"
     if plat == "haiku" then
       modules["socket.core"].libraries = {"network"}
     end
-    modules["socket.unix"] = {
-      sources = {
-        "src/buffer.c"
-        , "src/compat.c"
-        , "src/auxiliar.c"
-        , "src/options.c"
-        , "src/timeout.c"
-        , "src/io.c"
-        , "src/usocket.c"
-        , "src/unix.c"
-        , "src/unixdgram.c"
-        , "src/unixstream.c" },
-      defines = defines[plat],
-      incdir = "/src"
-    }
     modules["socket.serial"] = {
       sources = {
         "src/buffer.c"
@@ -115,6 +115,10 @@ local function make_plat(plat)
     modules["socket.core"].sources[#modules["socket.core"].sources+1] = "src/wsocket.c"
     modules["socket.core"].libraries = { "ws2_32" }
     modules["socket.core"].libdirs = {}
+    modules["socket.unix"].sources[#modules["socket.unix"].sources+1] = "src/wsocket.c"
+    modules["socket.unix"].sources[#modules["socket.unix"].sources+1] = "src/inet.c"
+    modules["socket.unix"].libraries = { "ws2_32" }
+    modules["socket.unix"].libdirs = {}
   end
   return { modules = modules }
 end
