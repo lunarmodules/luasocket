@@ -230,6 +230,10 @@ end
 local function adjustheaders(reqt)
     -- default headers
     local host = reqt.host
+    --ipv6 host address must be in []
+    if host:find(":", 1, true) then
+      host = "["..host.."]"
+    end
     local port = tostring(reqt.port)
     if port ~= tostring(SCHEMES[reqt.scheme].port) then
         host = host .. ':' .. port end
