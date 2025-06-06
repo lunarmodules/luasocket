@@ -60,7 +60,7 @@ An URL is defined by the following grammar:
 
 <blockquote>
 <tt>
-&lt;url&gt; ::= [&lt;scheme&gt;:][//&lt;authority&gt;][/&lt;path&gt;][;&lt;params&gt;][?&lt;query&gt;][#&lt;fragment&gt;]<br>
+&lt;url&gt; ::= [&lt;scheme&gt;:][//&lt;authority&gt;][/&lt;path&gt;][?&lt;query&gt;][#&lt;fragment&gt;]<br>
 &lt;authority&gt; ::= [&lt;userinfo&gt;@]&lt;host&gt;[:&lt;port&gt;]<br>
 &lt;userinfo&gt; ::= &lt;user&gt;[:&lt;password&gt;]<br>
 &lt;path&gt; ::= {&lt;segment&gt;/}&lt;segment&gt;<br>
@@ -225,7 +225,6 @@ parsed_url = {<br>
 &nbsp;&nbsp;scheme = <i>string</i>,<br>
 &nbsp;&nbsp;authority = <i>string</i>,<br>
 &nbsp;&nbsp;path = <i>string</i>,<br>
-&nbsp;&nbsp;params = <i>string</i>,<br>
 &nbsp;&nbsp;query = <i>string</i>,<br>
 &nbsp;&nbsp;fragment = <i>string</i>,<br>
 &nbsp;&nbsp;userinfo = <i>string</i>,<br>
@@ -255,7 +254,6 @@ parsed_url = url.parse("ftp://root:passwd@unsafe.org/pub/virus.exe;type=i")
 --   scheme = "ftp",
 --   authority = "root:passwd@unsafe.org",
 --   path = "/pub/virus.exe",
---   params = "type=i",
 --   userinfo = "root:passwd",
 --   host = "unsafe.org",
 --   user = "root",
