@@ -74,6 +74,13 @@ LUAPREFIX_mingw?=/usr
 CDIR_mingw?=lua/$(LUAV)
 LDIR_mingw?=lua/$(LUAV)/lua
 
+# where lua headers are found for ucrt64 builds
+# LUAINC_ucrt64:
+LUAINC_ucrt64?=/ucrt64/include
+LUALIB_ucrt64?=/ucrt64/bin/lua$(subst .,,$(LUAV)).dll
+LUAPREFIX_ucrt64?=/ucrt64
+CDIR_ucrt64?=lib/lua/$(LUAV)
+LDIR_ucrt64?=share/lua/$(LUAV)
 
 # LUAINC_win32:
 # LUALIB_win32:
@@ -153,7 +160,7 @@ print:
 #------
 # Supported platforms
 #
-PLATS= macosx linux win32 win64 mingw solaris
+PLATS= macosx linux win32 win64 mingw solaris ucrt64
 
 #------
 # Compiler and linker settings
@@ -218,6 +225,21 @@ CFLAGS_mingw=$(LUAINC:%=-I%) $(DEF) -Wall -O2 -fno-common
 LDFLAGS_mingw= $(LUALIB) -shared -Wl,-s -lws2_32 -o
 LD_mingw=gcc
 SOCKET_mingw=wsocket.o
+
+#------
+# Compiler and linker settings
+# for ucrt64
+SO_ucrt64=dll
+O_ucrt64=o
+CC_ucrt64=gcc
+DEF_ucrt64= -DLUASOCKET_$(DEBUG) \
+	-DWINVER=0x0501
+CFLAGS_ucrt64= -I$(LUAINC) $(DEF) -Wall -O2 -fno-common 
+# \
+	-fvisibility=hidden
+LDFLAGS_ucrt64= $(LUALIB) -shared -Wl,-s -lws2_32 -o
+LD_ucrt64=gcc
+SOCKET_ucrt64=wsocket.o
 
 
 #------
@@ -383,6 +405,9 @@ linux:
 
 mingw:
 	$(MAKE) all PLAT=mingw
+
+ucrt64:
+	$(MAKE) all PLAT=ucrt64
 
 solaris:
 	$(MAKE) all-unix PLAT=solaris
