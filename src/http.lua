@@ -312,7 +312,7 @@ local function shouldredirect(reqt, code, headers)
     -- avoid https downgrades
     if ('https' == reqt.scheme) and ('https' ~= scheme) then return false end
     return (reqt.redirect ~= false) and
-           (code == 301 or code == 302 or code == 303 or code == 307) and
+           (code == 301 or code == 302 or code == 303 or code == 307 or code == 308) and
            (not reqt.method or reqt.method == "GET" or reqt.method == "HEAD")
         and ((false == reqt.maxredirects)
                 or ((reqt.nredirects or 0)
