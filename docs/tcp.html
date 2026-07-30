@@ -351,7 +351,7 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 <!-- receive ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="receive">
-client:<b>receive(</b>[pattern [, prefix]]<b>)</b>
+client:<b>receive(</b>[pattern [, prefix [, maxsize]]]<b>)</b>
 </p>
 
 <p class="description">
@@ -380,14 +380,23 @@ of bytes from the socket.</li>
 of any received data before return.
 </p>
 
+<p class="parameters">
+<tt>Maxsize</tt> is an optional positive integer bounding the number of
+payload bytes the call may accumulate, <em>including</em> <tt>prefix</tt>.
+Omitted or <tt><b>nil</b></tt> means unlimited.
+</p>
+
 <p class="return">
 If successful, the method returns the received pattern. In case of error,
 the method returns <tt><b>nil</b></tt> followed by an error
 message, followed by a (possibly empty) string containing
 the partial that was received. The error message can be
 the string '<tt>closed</tt>'  in   case  the  connection  was
-closed  before  the transmission  was completed  or  the string
-'<tt>timeout</tt>' in  case there was a timeout during  the operation.
+closed  before  the transmission  was completed, the string
+'<tt>timeout</tt>' in  case there was a timeout during  the operation, or,
+when <tt>maxsize</tt> was given, the string '<tt>oversized</tt>' in case
+the pattern did not complete within <tt>maxsize</tt> bytes -- in which case
+the third return value holds exactly <tt>maxsize</tt> bytes.
 </p>
 
 <p class="note">
@@ -397,6 +406,49 @@ now it doesn't anymore.  Partial results used to be returned in the same
 way as successful results. This last feature violated the idea that all
 functions should return <tt><b>nil</b></tt> on error.  Thus it was changed
 too.
+</p>
+
+<p class="note">
+<b>Note on <tt>maxsize</tt></b>: passing a <tt>maxsize</tt> that is smaller
+than 1, a <tt>prefix</tt> whose length is greater than or equal to
+<tt>maxsize</tt>, or, for a numeric <tt>pattern</tt>, a byte count greater
+than <tt>maxsize</tt>, all raise a Lua error rather than returning
+<tt><b>nil</b></tt> plus a message -- these are caller logic errors, and
+they are detected before any byte is read from the socket. To drain and
+discard an oversized line while keeping memory bounded and the stream
+aligned:
+</p>
+
+<pre class="example">
+local data, err, part
+repeat
+    data, err, part = client:receive("*l", "", 4096)
+until err ~= "oversized"
+</pre>
+
+<p class="note">
+To instead retry and eventually get the whole thing, carry the partial
+forward as <tt>prefix</tt> and grow <tt>maxsize</tt>:
+</p>
+
+<pre class="example">
+local data, err, part = client:receive("*l", nil, 4096)
+if err == "oversized" then
+    data, err, part = client:receive("*l", part, 65536)   -- larger cap, or this raises
+end
+</pre>
+
+<p class="note">
+Retrying with <tt>prefix</tt> set to the previous partial result and an
+<em>unchanged</em> <tt>maxsize</tt> raises the length-check error above by
+design -- otherwise it would be a zero-progress spin: no I/O, no timeout,
+no error, just CPU. A <tt>timeout</tt> partial is always strictly shorter
+than <tt>maxsize</tt>, so it is always safe to feed straight back as
+<tt>prefix</tt> with the same <tt>maxsize</tt>. Finally, note that
+<tt>maxsize</tt> bounds the payload <em>returned</em>, not necessarily the
+bytes taken off the wire: for the <tt>*l</tt> pattern the discarded CR
+characters and the line terminator mean more bytes may have been consumed
+than the returned length suggests.
 </p>
 
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

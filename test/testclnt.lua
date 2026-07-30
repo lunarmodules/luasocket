@@ -619,6 +619,177 @@ remote([[
 end
 
 ------------------------------------------------------------------------
+function test_maxsize()
+    -- Group A: argument errors, raised before any I/O
+    reconnect()
+    printf("argument errors: ")
+    -- bounds pre-implementation calls (where arg 4 is silently dropped and
+    -- these become real, otherwise-unbounded blocking reads on an idle
+    -- socket) so a meaningful failure doesn't hang the suite
+    data:settimeout(0.2)
+    local ok
+    ok = pcall(data.receive, data, "*l", nil, 0)
+    assert(not ok, "A1 failed: maxsize=0 should raise")
+    ok = pcall(data.receive, data, "*l", nil, -1)
+    assert(not ok, "A2 failed: maxsize=-1 should raise")
+    ok = pcall(data.receive, data, "*l", nil, "abc")
+    assert(not ok, "A3 failed: non-number maxsize should raise")
+    ok = pcall(data.receive, data, "*l", string.rep("x", 10), 10)
+    assert(not ok, "A4 failed: #prefix == maxsize should raise")
+    ok = pcall(data.receive, data, "*l", string.rep("x", 11), 10)
+    assert(not ok, "A5 failed: #prefix > maxsize should raise")
+    ok = pcall(data.receive, data, 100, nil, 50)
+    assert(not ok, "A6 failed: wanted > maxsize should raise")
+    data:settimeout(0.1)
+    ok = pcall(data.receive, data, 50, nil, 100)
+    assert(ok, "A7 failed: wanted <= maxsize should not raise")
+    data:settimeout(-1)
+    remote [[ data:send('intact\n') ]]
+    local line, err = data:receive("*l", nil, 100)
+    assert(line == "intact",
+        "A8 failed: socket touched by a failed argcheck (err=" ..
+        tostring(err) .. ")")
+    pass("ok")
+
+    -- Group B: *l boundary
+    reconnect()
+    printf("*l boundary: ")
+    remote [[ data:send('hello\n') ]]
+    local d, e, p = data:receive("*l", nil, 100)
+    assert(d == "hello" and e == nil, "B1 failed")
+
+    remote(string.format([[data:send(string.rep('a',%d) .. '\n')]], 100))
+    d, e = data:receive("*l", nil, 100)
+    assert(d == string.rep("a", 100) and e == nil,
+        "B2 failed: exact-budget line should succeed")
+
+    remote(string.format([[data:send(string.rep('a',%d) .. '\n')]], 101))
+    d, e, p = data:receive("*l", nil, 100)
+    assert(d == nil and e == "oversized" and p == string.rep("a", 100),
+        "B3 failed: one-over-budget should be oversized")
+    d, e = data:receive("*l", nil, 100)
+    assert(d == "a" and e == nil,
+        "B3 failed: leftover byte and terminator should still be there")
+
+    remote(string.format([[data:send(string.rep('\r',%d) .. string.rep('a',%d) .. '\n')]], 50, 100))
+    d, e = data:receive("*l", nil, 100)
+    assert(d == string.rep("a", 100) and e == nil, "B4 failed: CRs must not count")
+
+    remote(string.format([[data:send(string.rep('a',%d) .. '\r\n')]], 100))
+    d, e = data:receive("*l", nil, 100)
+    assert(d == string.rep("a", 100) and e == nil, "B5 failed: CRLF at boundary")
+    pass("ok")
+
+    -- Group C: *l and I1 (timeout/close at the cap)
+    reconnect()
+    printf("I1 (timeout/closed at the cap): ")
+    remote(string.format([[data:send(string.rep('a',%d))]], 50))
+    data:settimeout(0.5)
+    d, e, p = data:receive("*l", nil, 100)
+    assert(d == nil and e == "timeout", "C1 failed: expected timeout below cap")
+    assert(#p < 100, "C1 failed: timeout partial must be strictly < maxsize")
+    ok = pcall(data.receive, data, "*l", p, 100)
+    assert(ok, "C1 failed: retry with prefix=partial, same maxsize must not raise")
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d))]], 100))
+    data:settimeout(0.5)
+    d, e, p = data:receive("*l", nil, 100)
+    assert(e == "oversized" and #p == 100,
+        "C2 failed: exactly-at-cap timeout must be oversized, got " .. tostring(e))
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d)) data:close() data = nil]], 100))
+    d, e, p = data:receive("*l", nil, 100)
+    assert(e == "oversized" and #p == 100,
+        "C3 failed: exactly-at-cap close must be oversized, got " .. tostring(e))
+    pass("ok")
+
+    -- Group D: drain idiom
+    -- 5030 (not a multiple of the 100 cap) so the boundary of the 50th
+    -- oversized chunk doesn't land exactly on the '\n': when it does, the
+    -- terminator check wins over the cap check (by design -- see B2/I1) and
+    -- the would-be 50th oversized chunk instead succeeds outright.
+    reconnect()
+    printf("drain idiom: ")
+    remote(string.format([[data:send(string.rep('x',%d) .. '\n' .. 'next\n')]], 5030))
+    local iterations = 0
+    repeat
+        d, e, p = data:receive("*l", "", 100)
+        if e == "oversized" then
+            assert(#p == 100, "D1 failed: oversized partial length " .. #p)
+            iterations = iterations + 1
+        end
+    until e ~= "oversized"
+    assert(iterations == 50,
+        "D1 failed: expected 50 oversized iterations, got " .. iterations)
+    assert(d == string.rep("x", 30) and e == nil, "D1 failed: final call should succeed")
+    local nextline = data:receive("*l")
+    assert(nextline == "next", "D1 failed: stream misaligned, got " .. tostring(nextline))
+    pass("ok")
+
+    -- Group E: *a
+    reconnect()
+    printf("*a boundary: ")
+    remote [[ data:send('abc') data:close() data = nil ]]
+    d, e = data:receive("*a", nil, 100)
+    assert(d == "abc" and e == nil, "E1 failed")
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d)) data:close() data = nil]], 100))
+    d, e = data:receive("*a", nil, 100)
+    assert(d == string.rep("a", 100) and e == nil,
+        "E2 failed: completion should beat the cap")
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d)) data:close() data = nil]], 250))
+    d, e, p = data:receive("*a", "", 100)
+    assert(e == "oversized" and #p == 100, "E3 failed: first chunk")
+    d, e, p = data:receive("*a", "", 100)
+    assert(e == "oversized" and #p == 100, "E3 failed: second chunk")
+    d, e = data:receive("*a", "", 100)
+    assert(d == string.rep("a", 50) and e == nil, "E3 failed: final chunk")
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d))]], 100))
+    data:settimeout(0.3)
+    d, e, p = data:receive("*a", nil, 100)
+    assert(e == "oversized" and #p == 100,
+        "E4 failed: expected oversized not timeout, got " .. tostring(e))
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d))]], 50))
+    data:settimeout(0.3)
+    d, e, p = data:receive("*a", nil, 100)
+    assert(e == "timeout" and #p < 100, "E5 failed")
+    pass("ok")
+
+    -- Group F: numeric pattern (recvraw untouched)
+    reconnect()
+    printf("numeric pattern (recvraw unchanged): ")
+    remote(string.format([[data:send(string.rep('a',%d))]], 50))
+    d, e = data:receive(50, nil, 100)
+    assert(d == string.rep("a", 50) and e == nil, "F1 failed")
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d))]], 25))
+    d, e = data:receive(50, string.rep("p", 25), 100)
+    assert(e == nil and #d == 50, "F2 failed")
+    pass("ok")
+
+    -- Group G: no-maxsize regression snapshot
+    reconnect()
+    printf("no-maxsize regression: ")
+    remote(string.format([[data:send(string.rep('a',%d) .. '\n')]], 5000))
+    d, e = data:receive("*l")
+    assert(d == string.rep("a", 5000) and e == nil, "G2 failed: plain *l")
+    remote(string.format([[data:send(string.rep('a',%d) .. '\n')]], 5000))
+    d, e = data:receive("*l", "")
+    assert(d == string.rep("a", 5000) and e == nil, "G2 failed: *l with prefix")
+    pass("ok")
+end
+
+------------------------------------------------------------------------
 test("method registration")
 
 local tcp_methods = {
@@ -795,6 +966,9 @@ test_blockingtimeoutreceive(800091, 1, 3)
 test_blockingtimeoutreceive(800091, 2, 3)
 test_blockingtimeoutreceive(800091, 3, 2)
 test_blockingtimeoutreceive(800091, 3, 1)
+
+test("receive maxsize")
+test_maxsize()
 
 test("shutting server down")
 reconnect()

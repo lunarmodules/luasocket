@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Add `maxsize` argument to `receive` to bound the memory a single call may accumulate, returning `"oversized"` instead of growing without limit – @Tieske
+
 ## [v3.1.0](https://github.com/lunarmodules/luasocket/releases/v3.1.0) — 2022-07-27
 
 * Add support for TCP Defer Accept – @Zash
