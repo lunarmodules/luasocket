@@ -17,12 +17,12 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup ’msvc’
         if: ${{ startsWith(matrix.platform, 'windows') && !startsWith(matrix.luaVersion, 'luajit') }}
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
       - name: Setup ‘lua’
-        uses: luarocks/gh-actions-lua@c1e8c4a5fa64ac5f6467ea35d8b59fb5a167232e # v10
+        uses: luarocks/gh-actions-lua@fc6f8de246f8c01f6e1a56a1b851143e23370ff3 # v12
         with:
           luaVersion: ${{ matrix.luaVersion }}
           buildCache: false
