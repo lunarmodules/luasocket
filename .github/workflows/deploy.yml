@@ -5,12 +5,12 @@ on: [ push, workflow_dispatch ]
 jobs:
 
   affected:
-    uses: lunarmodules/.github/.github/workflows/list_affected_rockspecs.yml@main
+    uses: lunarmodules/.github/.github/workflows/list_affected_rockspecs.yml@5e21af2b298be5ad6677a4737114db239510d3ce # main
 
   build:
     needs: affected
     if: ${{ needs.affected.outputs.rockspecs }}
-    uses: lunarmodules/.github/.github/workflows/test_build_rock.yml@main
+    uses: lunarmodules/.github/.github/workflows/test_build_rock.yml@5e21af2b298be5ad6677a4737114db239510d3ce # main
     with:
       rockspecs: ${{ needs.affected.outputs.rockspecs }}
 
@@ -27,7 +27,7 @@ jobs:
         ( github.ref_name == 'master' || startsWith(github.ref, 'refs/tags/') ) &&
         needs.affected.outputs.rockspecs
       }}
-    uses: lunarmodules/.github/.github/workflows/upload_to_luarocks.yml@main
+    uses: lunarmodules/.github/.github/workflows/upload_to_luarocks.yml@5e21af2b298be5ad6677a4737114db239510d3ce # main
     with:
       rockspecs: ${{ needs.affected.outputs.rockspecs }}
     secrets:
