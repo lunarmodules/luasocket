@@ -360,6 +360,7 @@ local trequest, tredirect
         headers = reqt.headers,
         proxy = reqt.proxy,
         maxredirects = reqt.maxredirects,
+        response_headers = reqt.response_headers,
         nredirects = (reqt.nredirects or 0) + 1,
         create = reqt.create
     }
@@ -403,6 +404,17 @@ end
         return tredirect(reqt, headers.location)
     end
     -- here we are finally done
+    -- provide an opportunity to abort or replace the sink based on the response headers
+    if nreqt.response_headers then
+        local abort, sink = nreqt.response_headers(code, headers, status)
+        if abort then
+            h:close()
+            return 1, code, headers, status
+        end
+        if sink then
+            nreqt.sink = sink
+        end
+    end
     if shouldreceivebody(nreqt, code) then
         h:receivebody(headers, nreqt.sink, nreqt.step)
     end
