@@ -25,6 +25,11 @@ local _M = socket.http
 _M.TIMEOUT = 60
 -- user agent field sent in request
 _M.USERAGENT = socket._VERSION
+-- maximum size of a single header line (also used for the status line and
+-- the chunk-size line, which carry the same shape of risk)
+_M.MAXHEADERLINE = 8192
+-- maximum total size of all header lines in a single header block
+_M.MAXHEADERSIZE = 65536
 
 -- supported schemes and their particulars
 local SCHEMES = {
@@ -47,8 +52,18 @@ local SCHEMES = {
 local function receiveheaders(sock, headers)
     local line, name, value, err
     headers = headers or {}
+    -- bounds total bytes read across all header lines, on top of the
+    -- per-line MAXHEADERLINE cap, so a peer can't exhaust memory by sending
+    -- many lines that each individually fit under MAXHEADERLINE
+    local budget = _M.MAXHEADERSIZE
+    local function recvline()
+        if budget <= 0 then return nil, "oversized" end
+        local line, err = sock:receive("*l", nil, math.min(budget, _M.MAXHEADERLINE))
+        if line then budget = budget - #line end
+        return line, err
+    end
     -- get first line
-    line, err = sock:receive("*l")
+    line, err = recvline()
     if err then return nil, err end
     -- headers go until a blank line is found
     while line ~= "" do
@@ -57,12 +72,12 @@ local function receiveheaders(sock, headers)
         if not (name and value) then return nil, "malformed response headers" end
         name = string.lower(name)
         -- get next line (value might be folded)
-        line, err  = sock:receive("*l")
+        line, err  = recvline()
         if err then return nil, err end
         -- unfold any folded values
         while string.find(line, "^%s") do
             value = value .. line
-            line, err = sock:receive("*l")
+            line, err = recvline()
             if err then return nil, err end
         end
         -- save pair in table
@@ -82,7 +97,7 @@ socket.sourcet["http-chunked"] = function(sock, headers)
     }, {
         __call = function()
             -- get chunk size, skip extension
-            local line, err = sock:receive("*l")
+            local line, err = sock:receive("*l", nil, _M.MAXHEADERLINE)
             if err then return nil, err end
             local size = base.tonumber(string.gsub(line, ";.*", ""), 16)
             if not size then return nil, "invalid chunk size" end
@@ -90,7 +105,7 @@ socket.sourcet["http-chunked"] = function(sock, headers)
             if size > 0 then
                 -- if not, get chunk and skip terminating CRLF
                 local chunk, err, _ = sock:receive(size)
-                if chunk then sock:receive("*l") end
+                if chunk then sock:receive("*l", nil, _M.MAXHEADERLINE) end
                 return chunk, err
             else
                 -- if it was, read trailers into headers table
@@ -167,7 +182,7 @@ function metat.__index:receivestatusline()
         return nil, status
     end
     -- otherwise proceed reading a status line
-    status = self.try(self.c:receive("*l", status))
+    status = self.try(self.c:receive("*l", status, _M.MAXHEADERLINE))
     local code = socket.skip(2, string.find(status, "HTTP/%d*%.%d* (%d%d%d)"))
     return self.try(base.tonumber(code), status)
 end

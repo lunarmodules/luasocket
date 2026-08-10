@@ -19,6 +19,10 @@ local _M = socket.tp
 -- Program constants
 -----------------------------------------------------------------------------
 _M.TIMEOUT = 60
+-- maximum size of a single reply line
+_M.MAXLINE = 8192
+-- maximum total size of a (possibly multiline) reply
+_M.MAXREPLY = 65536
 
 -----------------------------------------------------------------------------
 -- Implementation
@@ -26,14 +30,24 @@ _M.TIMEOUT = 60
 -- gets server reply (works for SMTP and FTP)
 local function get_reply(c)
     local code, current, sep
-    local line, err = c:receive("*l")
+    -- bounds total bytes read across a multiline reply, on top of the
+    -- per-line MAXLINE cap, so a peer can't exhaust memory by sending many
+    -- lines that each individually fit under MAXLINE
+    local budget = _M.MAXREPLY
+    local function recvline()
+        if budget <= 0 then return nil, "oversized" end
+        local line, err = c:receive("*l", nil, math.min(budget, _M.MAXLINE))
+        if line then budget = budget - #line end
+        return line, err
+    end
+    local line, err = recvline()
     local reply = line
     if err then return nil, err end
     code, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
     if not code then return nil, "invalid server reply" end
     if sep == "-" then -- reply is multiline
         repeat
-            line, err = c:receive("*l")
+            line, err = recvline()
             if err then return nil, err end
             current, sep = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"))
             reply = reply .. "\n" .. line
