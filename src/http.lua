@@ -48,7 +48,7 @@ local function receiveheaders(sock, headers)
     local line, name, value, err
     headers = headers or {}
     -- get first line
-    line, err = sock:receive()
+    line, err = sock:receive("*l")
     if err then return nil, err end
     -- headers go until a blank line is found
     while line ~= "" do
@@ -57,12 +57,12 @@ local function receiveheaders(sock, headers)
         if not (name and value) then return nil, "malformed response headers" end
         name = string.lower(name)
         -- get next line (value might be folded)
-        line, err  = sock:receive()
+        line, err  = sock:receive("*l")
         if err then return nil, err end
         -- unfold any folded values
         while string.find(line, "^%s") do
             value = value .. line
-            line, err = sock:receive()
+            line, err = sock:receive("*l")
             if err then return nil, err end
         end
         -- save pair in table
@@ -82,7 +82,7 @@ socket.sourcet["http-chunked"] = function(sock, headers)
     }, {
         __call = function()
             -- get chunk size, skip extension
-            local line, err = sock:receive()
+            local line, err = sock:receive("*l")
             if err then return nil, err end
             local size = base.tonumber(string.gsub(line, ";.*", ""), 16)
             if not size then return nil, "invalid chunk size" end
@@ -90,7 +90,7 @@ socket.sourcet["http-chunked"] = function(sock, headers)
             if size > 0 then
                 -- if not, get chunk and skip terminating CRLF
                 local chunk, err, _ = sock:receive(size)
-                if chunk then sock:receive() end
+                if chunk then sock:receive("*l") end
                 return chunk, err
             else
                 -- if it was, read trailers into headers table
