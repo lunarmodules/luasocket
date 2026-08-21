@@ -12,7 +12,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef _WIN32
+#include <afunix.h>
+#else
 #include <sys/un.h>
+#endif
 
 #define UNIXDGRAM_DATAGRAMSIZE 8192
 
@@ -147,6 +151,11 @@ static int meth_sendto(lua_State *L)
     remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len)
         + len + 1;
     err = socket_sendto(&un->sock, data, count, &sent, (SA *) &remote, remote.sun_len, tm);
+#elif defined(_WIN32)
+    /* Windows takes the whole address structure and reads the path as the null
+     * terminated string inside it, rather than as all the length covers. */
+    err = socket_sendto(&un->sock, data, count, &sent, (SA *) &remote,
+            sizeof(remote), tm);
 #else
     err = socket_sendto(&un->sock, data, count, &sent, (SA *) &remote,
 		   	sizeof(remote.sun_family) + len, tm);
@@ -268,6 +277,8 @@ static const char *unixdgram_trybind(p_unix un, const char *path, size_t len) {
         + len + 1;
     err = socket_bind(&un->sock, (SA *) &local, local.sun_len);
 
+#elif defined(_WIN32)
+    err = socket_bind(&un->sock, (SA *) &local, sizeof(local));
 #else
     err = socket_bind(&un->sock, (SA *) &local,
             sizeof(local.sun_family) + len);
@@ -323,6 +334,8 @@ static const char *unixdgram_tryconnect(p_unix un, const char *path, size_t len)
     remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len)
         + len + 1;
     err = socket_connect(&un->sock, (SA *) &remote, remote.sun_len, &un->tm);
+#elif defined(_WIN32)
+    err = socket_connect(&un->sock, (SA *) &remote, sizeof(remote), &un->tm);
 #else
     err = socket_connect(&un->sock, (SA *) &remote,
             sizeof(remote.sun_family) + len, &un->tm);
