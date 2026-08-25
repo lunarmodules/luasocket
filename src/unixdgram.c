@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
+#if HAVE_WINDOWS_AFUNIX
 #include <afunix.h>
 #else
 #include <sys/un.h>
@@ -151,7 +151,7 @@ static int meth_sendto(lua_State *L)
     remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len)
         + len + 1;
     err = socket_sendto(&un->sock, data, count, &sent, (SA *) &remote, remote.sun_len, tm);
-#elif defined(_WIN32)
+#elif HAVE_WINDOWS_AFUNIX
     /* Windows takes the whole address structure and reads the path as the null
      * terminated string inside it, rather than as all the length covers. */
     err = socket_sendto(&un->sock, data, count, &sent, (SA *) &remote,
@@ -277,7 +277,7 @@ static const char *unixdgram_trybind(p_unix un, const char *path, size_t len) {
         + len + 1;
     err = socket_bind(&un->sock, (SA *) &local, local.sun_len);
 
-#elif defined(_WIN32)
+#elif HAVE_WINDOWS_AFUNIX
     err = socket_bind(&un->sock, (SA *) &local, sizeof(local));
 #else
     err = socket_bind(&un->sock, (SA *) &local,
@@ -334,7 +334,7 @@ static const char *unixdgram_tryconnect(p_unix un, const char *path, size_t len)
     remote.sun_len = sizeof(remote.sun_family) + sizeof(remote.sun_len)
         + len + 1;
     err = socket_connect(&un->sock, (SA *) &remote, remote.sun_len, &un->tm);
-#elif defined(_WIN32)
+#elif HAVE_WINDOWS_AFUNIX
     err = socket_connect(&un->sock, (SA *) &remote, sizeof(remote), &un->tm);
 #else
     err = socket_connect(&un->sock, (SA *) &remote,
