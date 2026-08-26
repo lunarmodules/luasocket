@@ -130,6 +130,7 @@ local function make_plat(plat)
         , "src/unixstream.c" },
       defines = defines[plat],
       libraries = { "ws2_32" },
+      libdirs = {},
       incdir = "/src"
     }
   end
