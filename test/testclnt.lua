@@ -642,14 +642,16 @@ function test_maxsize()
     assert(not ok, "A6 failed: wanted > maxsize should raise")
     ok = pcall(data.receive, data, "*l", nil, math.huge)
     assert(not ok, "A7 failed: maxsize=math.huge should raise (size_t overflow)")
+    ok = pcall(data.receive, data, math.huge)
+    assert(not ok, "A8 failed: wanted=math.huge should raise (size_t overflow)")
     data:settimeout(0.1)
     ok = pcall(data.receive, data, 50, nil, 100)
-    assert(ok, "A8 failed: wanted <= maxsize should not raise")
+    assert(ok, "A9 failed: wanted <= maxsize should not raise")
     data:settimeout(-1)
     remote [[ data:send('intact\n') ]]
     local line, err = data:receive("*l", nil, 100)
     assert(line == "intact",
-        "A9 failed: socket touched by a failed argcheck (err=" ..
+        "A10 failed: socket touched by a failed argcheck (err=" ..
         tostring(err) .. ")")
     pass("ok")
 

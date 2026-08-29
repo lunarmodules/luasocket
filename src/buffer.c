@@ -125,7 +125,8 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     /* ---- validation: must precede timeout_markstart() and any I/O ---- */
     if (numeric) {
         double n = lua_tonumber(L, 2);
-        luaL_argcheck(L, n >= 0, 2, "invalid receive pattern");
+        luaL_argcheck(L, n >= 0 && n < (lua_Number) ((size_t) -1), 2,
+            "invalid receive pattern");
         wanted = (size_t) n;
     } else {
         const char *p = luaL_optstring(L, 2, "*l");
