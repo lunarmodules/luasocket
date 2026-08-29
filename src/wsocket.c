@@ -247,6 +247,7 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got,
     int err, prev = IO_DONE;
     *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    if (count == 0) return IO_DONE;
     for ( ;; ) {
         int taken = recv(*ps, data, (int) count, 0);
         if (taken > 0) {

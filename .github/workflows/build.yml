@@ -49,4 +49,5 @@ jobs:
           lua mimetest.lua
           lua urltest.lua
           lua test_socket_error.lua
+          lua test_receive_zero.lua
           kill %1

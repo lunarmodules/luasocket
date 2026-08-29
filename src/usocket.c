@@ -258,6 +258,7 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
     int err;
     *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    if (count == 0) return IO_DONE;
     for ( ;; ) {
         long taken = (long) recv(*ps, data, count, 0);
         if (taken > 0) {
@@ -343,6 +344,7 @@ int socket_read(p_socket ps, char *data, size_t count, size_t *got, p_timeout tm
     int err;
     *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    if (count == 0) return IO_DONE;
     for ( ;; ) {
         long taken = (long) read(*ps, data, count);
         if (taken > 0) {

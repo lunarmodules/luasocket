@@ -11,7 +11,7 @@
 static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b);
 static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget);
 static int recvall(p_buffer buf, luaL_Buffer *b, size_t budget);
-static int buffer_get(p_buffer buf, const char **data, size_t *count);
+static int buffer_get(p_buffer buf, const char **data, size_t *count, size_t wanted);
 static void buffer_skip(p_buffer buf, size_t count);
 static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent);
 
@@ -230,15 +230,14 @@ static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent) {
 static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b) {
     int err = IO_DONE;
     size_t total = 0;
-    while (err == IO_DONE) {
+    do {
         size_t count; const char *data;
-        err = buffer_get(buf, &data, &count);
+        err = buffer_get(buf, &data, &count, wanted - total);
         count = MIN(count, wanted - total);
         luaL_addlstring(b, data, count);
         buffer_skip(buf, count);
         total += count;
-        if (total >= wanted) break;
-    }
+    } while (total < wanted && err == IO_DONE);
     return err;
 }
 
@@ -253,7 +252,7 @@ static int recvall(p_buffer buf, luaL_Buffer *b, size_t budget) {
     size_t total = 0;
     while (err == IO_DONE) {
         const char *data; size_t count;
-        err = buffer_get(buf, &data, &count);
+        err = buffer_get(buf, &data, &count, BUF_SIZE);
         if (budget && count > budget - total) {   /* strictly more than fits */
             count = budget - total;
             luaL_addlstring(b, data, count);
@@ -286,7 +285,7 @@ static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget) {
     size_t total = 0;
     while (err == IO_DONE) {
         size_t count, pos; const char *data;
-        err = buffer_get(buf, &data, &count);
+        err = buffer_get(buf, &data, &count, BUF_SIZE);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
             /* we ignore all \r's -- they are consumed but never counted */
@@ -325,15 +324,19 @@ static void buffer_skip(p_buffer buf, size_t count) {
 
 /*-------------------------------------------------------------------------*\
 * Return any data available in buffer, or get more data from transport layer
-* if buffer is empty
+* if buffer is empty. 'wanted' is how many more bytes the caller is still
+* after; when it is zero, the transport layer is still consulted (so an
+* already-closed connection is still reported), but no more than zero bytes
+* are requested from it, so a healthy connection with no data pending can
+* never block.
 \*-------------------------------------------------------------------------*/
-static int buffer_get(p_buffer buf, const char **data, size_t *count) {
+static int buffer_get(p_buffer buf, const char **data, size_t *count, size_t wanted) {
     int err = IO_DONE;
     p_io io = buf->io;
     p_timeout tm = buf->tm;
     if (buffer_isempty(buf)) {
         size_t got;
-        err = io->recv(io->ctx, buf->data, BUF_SIZE, &got, tm);
+        err = io->recv(io->ctx, buf->data, wanted == 0 ? 0 : BUF_SIZE, &got, tm);
         buf->first = 0;
         buf->last = got;
     }
