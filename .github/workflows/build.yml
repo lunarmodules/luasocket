@@ -48,5 +48,6 @@ jobs:
           lua ltn12test.lua
           lua mimetest.lua
           lua urltest.lua
+          lua headerstest.lua
           lua test_socket_error.lua
           kill %1

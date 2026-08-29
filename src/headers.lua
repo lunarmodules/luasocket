@@ -7,98 +7,55 @@ local socket = require("socket")
 socket.headers = {}
 local _M = socket.headers
 
-_M.canonic = {
-    ["accept"] = "Accept",
-    ["accept-charset"] = "Accept-Charset",
-    ["accept-encoding"] = "Accept-Encoding",
-    ["accept-language"] = "Accept-Language",
-    ["accept-ranges"] = "Accept-Ranges",
-    ["action"] = "Action",
-    ["alternate-recipient"] = "Alternate-Recipient",
-    ["age"] = "Age",
-    ["allow"] = "Allow",
-    ["arrival-date"] = "Arrival-Date",
-    ["authorization"] = "Authorization",
-    ["bcc"] = "Bcc",
-    ["cache-control"] = "Cache-Control",
-    ["cc"] = "Cc",
-    ["comments"] = "Comments",
-    ["connection"] = "Connection",
-    ["content-description"] = "Content-Description",
-    ["content-disposition"] = "Content-Disposition",
-    ["content-encoding"] = "Content-Encoding",
-    ["content-id"] = "Content-ID",
-    ["content-language"] = "Content-Language",
-    ["content-length"] = "Content-Length",
-    ["content-location"] = "Content-Location",
-    ["content-md5"] = "Content-MD5",
-    ["content-range"] = "Content-Range",
-    ["content-transfer-encoding"] = "Content-Transfer-Encoding",
-    ["content-type"] = "Content-Type",
-    ["cookie"] = "Cookie",
-    ["date"] = "Date",
-    ["diagnostic-code"] = "Diagnostic-Code",
-    ["dsn-gateway"] = "DSN-Gateway",
-    ["etag"] = "ETag",
-    ["expect"] = "Expect",
-    ["expires"] = "Expires",
-    ["final-log-id"] = "Final-Log-ID",
-    ["final-recipient"] = "Final-Recipient",
-    ["from"] = "From",
-    ["host"] = "Host",
-    ["if-match"] = "If-Match",
-    ["if-modified-since"] = "If-Modified-Since",
-    ["if-none-match"] = "If-None-Match",
-    ["if-range"] = "If-Range",
-    ["if-unmodified-since"] = "If-Unmodified-Since",
-    ["in-reply-to"] = "In-Reply-To",
-    ["keywords"] = "Keywords",
-    ["last-attempt-date"] = "Last-Attempt-Date",
-    ["last-modified"] = "Last-Modified",
-    ["location"] = "Location",
-    ["max-forwards"] = "Max-Forwards",
-    ["message-id"] = "Message-ID",
-    ["mime-version"] = "MIME-Version",
-    ["original-envelope-id"] = "Original-Envelope-ID",
-    ["original-recipient"] = "Original-Recipient",
-    ["pragma"] = "Pragma",
-    ["proxy-authenticate"] = "Proxy-Authenticate",
-    ["proxy-authorization"] = "Proxy-Authorization",
-    ["range"] = "Range",
-    ["received"] = "Received",
-    ["received-from-mta"] = "Received-From-MTA",
-    ["references"] = "References",
-    ["referer"] = "Referer",
-    ["remote-mta"] = "Remote-MTA",
-    ["reply-to"] = "Reply-To",
-    ["reporting-mta"] = "Reporting-MTA",
-    ["resent-bcc"] = "Resent-Bcc",
-    ["resent-cc"] = "Resent-Cc",
-    ["resent-date"] = "Resent-Date",
-    ["resent-from"] = "Resent-From",
-    ["resent-message-id"] = "Resent-Message-ID",
-    ["resent-reply-to"] = "Resent-Reply-To",
-    ["resent-sender"] = "Resent-Sender",
-    ["resent-to"] = "Resent-To",
-    ["retry-after"] = "Retry-After",
-    ["return-path"] = "Return-Path",
-    ["sender"] = "Sender",
-    ["server"] = "Server",
-    ["smtp-remote-recipient"] = "SMTP-Remote-Recipient",
-    ["status"] = "Status",
-    ["subject"] = "Subject",
-    ["te"] = "TE",
-    ["to"] = "To",
-    ["trailer"] = "Trailer",
-    ["transfer-encoding"] = "Transfer-Encoding",
-    ["upgrade"] = "Upgrade",
-    ["user-agent"] = "User-Agent",
-    ["vary"] = "Vary",
-    ["via"] = "Via",
-    ["warning"] = "Warning",
-    ["will-retry-until"] = "Will-Retry-Until",
-    ["www-authenticate"] = "WWW-Authenticate",
-    ["x-mailer"] = "X-Mailer",
-}
+-- capitalizes the first letter of each hyphen-separated word, lowercases
+-- the rest (e.g. "x-request-id" -> "X-Request-Id")
+local function titlecase(header)
+    return (header:gsub("(%a)([%w]*)", function(a, b) return a:upper()..b:lower() end))
+end
+
+_M.canonic = {}
+
+setmetatable(_M.canonic, {
+    __index = function(t, key)
+        if type(key) ~= "string" then
+            return nil
+        end
+
+        local lower = key:lower()
+        local v = rawget(t, lower)
+        if v then
+            return v
+        end
+
+        v = titlecase(lower)
+        rawset(t, lower, v)
+        return v
+    end
+})
+
+-- adds a header with a given canonical capitalization, e.g. for headers
+-- whose capitalization titlecase(header) would not reproduce correctly
+function _M.setcanonic(header)
+    _M.canonic[header:lower()] = header
+end
+
+-- headers whose canonical capitalization titlecase() does not reproduce
+-- (acronyms and other irregular capitalization). Anything not listed here
+-- is generated and cached on first lookup by the __index above.
+_M.setcanonic("Content-ID")
+_M.setcanonic("Content-MD5")
+_M.setcanonic("DSN-Gateway")
+_M.setcanonic("ETag")
+_M.setcanonic("Final-Log-ID")
+_M.setcanonic("Message-ID")
+_M.setcanonic("MIME-Version")
+_M.setcanonic("Original-Envelope-ID")
+_M.setcanonic("Received-From-MTA")
+_M.setcanonic("Remote-MTA")
+_M.setcanonic("Reporting-MTA")
+_M.setcanonic("Resent-Message-ID")
+_M.setcanonic("SMTP-Remote-Recipient")
+_M.setcanonic("TE")
+_M.setcanonic("WWW-Authenticate")
 
 return _M

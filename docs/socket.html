@@ -65,13 +65,33 @@ whenever the field name is sent out.
 </p>
 
 <p>
-You can obtain the <tt>headers</tt> namespace if case run-time
-modifications are required by running:
+If a lowercase field name is not present as a key,
+<tt>socket.headers.canonic</tt> automatically derives a
+capitalization by uppercasing the first letter of each
+hyphen-separated word (e.g. <tt>x-request-id</tt> becomes
+<tt>X-Request-Id</tt>), and caches the result for later lookups.
+A small set of headers whose canonic capitalization is
+irregular (such as <tt>ETag</tt>, <tt>Content-MD5</tt>,
+<tt>MIME-Version</tt> and <tt>WWW-Authenticate</tt>) are kept as
+explicit entries in the table and are not affected by this rule.
+Because of this, <tt>pairs(socket.headers.canonic)</tt> only
+shows the irregular entries plus any field name already looked
+up or added &mdash; it is not an exhaustive list of every header
+name the library knows how to capitalize.
+</p>
+
+<p>
+You can register a custom canonic capitalization &mdash; for a
+header the automatic rule would not reproduce, such as a custom
+all-caps acronym &mdash; with <tt>socket.headers.setcanonic</tt>:
 </p>
 
 <pre class="example">
 -- loads the headers module
-local headers = require("headers")
+local headers = require("socket.headers")
+
+-- register a custom capitalization
+headers.setcanonic("X-Request-ID")
 </pre>
 
 
