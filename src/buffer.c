@@ -134,7 +134,8 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     }
     if (!lua_isnoneornil(L, 4)) {
         double m = luaL_checknumber(L, 4);
-        luaL_argcheck(L, m >= 1, 4, "maxsize must be a positive number");
+        luaL_argcheck(L, m >= 1 && m < (lua_Number) ((size_t) -1), 4,
+            "maxsize must be a positive number");
         maxsize = (size_t) m;
         luaL_argcheck(L, size < maxsize, 4,
             "prefix length >= maxsize (drain with prefix=\"\" or raise maxsize)");
