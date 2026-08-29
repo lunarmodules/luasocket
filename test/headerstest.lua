@@ -103,7 +103,7 @@ local check_canonic = function(lower, expected)
     if got ~= expected then
         print("canonic[" .. lower .. "] = " .. tostring(got) ..
             ", expected " .. expected)
-        os.exit()
+        os.exit(1)
     end
 end
 

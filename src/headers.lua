@@ -36,6 +36,9 @@ setmetatable(_M.canonic, {
 -- adds a header with a given canonical capitalization, e.g. for headers
 -- whose capitalization titlecase(header) would not reproduce correctly
 function _M.setcanonic(header)
+    if type(header) ~= "string" then
+        error("header must be a string", 2)
+    end
     _M.canonic[header:lower()] = header
 end
 
