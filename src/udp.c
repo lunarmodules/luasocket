@@ -277,6 +277,7 @@ static int meth_receivefrom(lua_State *L) {
         lua_pushliteral(L, "out of memory");
         return 2;
     }
+    memset(&addr, 0, sizeof(addr));
     err = socket_recvfrom(&udp->sock, dgram, wanted, &got, (SA *) &addr,
             &addr_len, tm);
     /* Unlike TCP, recv() of zero is not closed, but a zero-length packet. */
@@ -285,6 +286,17 @@ static int meth_receivefrom(lua_State *L) {
         lua_pushstring(L, udp_strerror(err));
         if (wanted > sizeof(buf)) free(dgram);
         return 2;
+    }
+    /* a zero-length request may be satisfied by some kernels (notably
+     * Darwin/BSD) without ever touching the sender's address -- only
+     * resolve it when the OS actually reported one, instead of feeding
+     * getnameinfo() a garbage/zeroed sockaddr. */
+    if (addr.ss_family != AF_INET && addr.ss_family != AF_INET6) {
+        lua_pushlstring(L, dgram, got);
+        lua_pushnil(L);
+        lua_pushnil(L);
+        if (wanted > sizeof(buf)) free(dgram);
+        return 3;
     }
     err = getnameinfo((struct sockaddr *)&addr, addr_len, addrstr,
         INET6_ADDRSTRLEN, portstr, 6, NI_NUMERICHOST | NI_NUMERICSERV);
