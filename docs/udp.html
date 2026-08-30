@@ -80,13 +80,18 @@ description of the option names and values.
 <li> '<tt>dontroute</tt>'</li>
 <li> '<tt>broadcast</tt>'</li>
 <li> '<tt>reuseaddr</tt>'</li>
+<li> '<tt>exclusiveaddruse</tt>'</li>
 <li> '<tt>reuseport</tt>'</li>
 <li> '<tt>ip-multicast-loop</tt>'</li>
 <li> '<tt>ipv6-v6only</tt>'</li>
+<li> '<tt>ipv6-unicast-hops</tt>'</li>
+<li> '<tt>ipv6-multicast-hops</tt>'</li>
+<li> '<tt>ipv6-multicast-loop</tt>'</li>
 <li> '<tt>ip-multicast-if</tt>'</li>
-<li> '<tt>ip-multicast-ttl</tt>'</li>
-<li> '<tt>ip-add-membership</tt>'</li>
-<li> '<tt>ip-drop-membership</tt>'</li>
+<li> '<tt>error</tt>': Returns the socket's pending error status, if
+any, and clears it. Get-only.</li>
+<li> '<tt>recv-buffer-size</tt>'</li>
+<li> '<tt>send-buffer-size</tt>'</li>
 </ul>
 </p>
 
@@ -294,6 +299,10 @@ Receives a boolean value;</li>
 validating addresses supplied in a <tt>bind()</tt> call
 should allow reuse of local addresses.
 Receives a boolean value;</li>
+<li> '<tt>exclusiveaddruse</tt>': Setting this option to <tt>true</tt>
+prevents other sockets from binding to the same address and port, even
+if those sockets set '<tt>reuseaddr</tt>'.
+Receives a boolean value. Windows only!!</li>
 <li> '<tt>reuseport</tt>': Allows completely duplicate
 bindings by multiple processes if they all set
 '<tt>reuseport</tt>' before binding the port.
@@ -307,6 +316,28 @@ Receives a boolean value;</li>
 Specifies whether to restrict <tt>inet6</tt> sockets to
 sending and receiving only IPv6 packets.
 Receive a boolean value;</li>
+<li> '<tt>ipv6-unicast-hops</tt>':
+Sets the unicast hop limit (the IPv6 equivalent of the IPv4 TTL)
+for outgoing packets.
+Receives a number;</li>
+<li> '<tt>ipv6-multicast-hops</tt>':
+Sets the hop limit for outgoing IPv6 multicast datagrams.
+Receives a number;</li>
+<li> '<tt>ipv6-multicast-loop</tt>':
+Specifies whether or not a copy of an outgoing IPv6 multicast
+datagram is delivered to the sending host as long as it is a
+member of the multicast group.
+Receives a boolean value;</li>
+<li> '<tt>ipv6-add-membership</tt>':
+Joins the IPv6 multicast group specified.
+Receives a table with field
+<tt>multiaddr</tt>, an IPv6 address, and optionally
+<tt>interface</tt>, a network interface index number;</li>
+<li> '<tt>ipv6-drop-membership</tt>': Leaves the IPv6 multicast
+group specified.
+Receives a table with field
+<tt>multiaddr</tt>, an IPv6 address, and optionally
+<tt>interface</tt>, a network interface index number;</li>
 <li> '<tt>ip-multicast-if</tt>':
 Sets the interface over which outgoing multicast datagrams
 are sent.
@@ -324,7 +355,13 @@ IP address;</li>
 group specified.
 Receives a table with fields
 <tt>multiaddr</tt> and <tt>interface</tt>, each containing an
-IP address.</li>
+IP address;</li>
+<li> '<tt>recv-buffer-size</tt>': Sets the size, in bytes, of the
+socket's receive buffer (<tt>SO_RCVBUF</tt>).
+Receives a number;</li>
+<li> '<tt>send-buffer-size</tt>': Sets the size, in bytes, of the
+socket's send buffer (<tt>SO_SNDBUF</tt>).
+Receives a number.</li>
 </ul>
 
 <p class="return">
