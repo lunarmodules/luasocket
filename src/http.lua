@@ -229,7 +229,8 @@ end
 
 local function adjustheaders(reqt)
     -- default headers
-    local host = reqt.host
+    local hosttype, host = url.classify_host(reqt.host)
+    if hosttype == "ipv6" then host = "[" .. host .. "]" end
     local port = tostring(reqt.port)
     if port ~= tostring(SCHEMES[reqt.scheme].port) then
         host = host .. ':' .. port end
