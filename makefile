@@ -5,7 +5,7 @@
 # Targets:
 #   install            install system independent support
 #   install-unix           also install unix-only support
-#   install-both       install for lua51 lua52 lua53
+#   install-both       install for lua51 lua52 lua53 lua54 lua55
 #   install-both-unix      also install unix-only
 #   print	           print the build settings
 
@@ -36,6 +36,9 @@ install-both:
 	$(MAKE) clean
 	@cd src; $(MAKE) $(PLAT) LUAV=5.4
 	@cd src; $(MAKE) install LUAV=5.4
+	$(MAKE) clean
+	@cd src; $(MAKE) $(PLAT) LUAV=5.5
+	@cd src; $(MAKE) install LUAV=5.5
 
 install-both-unix:
 	$(MAKE) clean
@@ -50,6 +53,9 @@ install-both-unix:
 	$(MAKE) clean
 	@cd src; $(MAKE) $(PLAT) LUAV=5.4
 	@cd src; $(MAKE) install-unix LUAV=5.4
+	$(MAKE) clean
+	@cd src; $(MAKE) $(PLAT) LUAV=5.5
+	@cd src; $(MAKE) install-unix LUAV=5.5
 
 .PHONY: test
 
