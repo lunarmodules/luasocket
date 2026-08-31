@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
+        luaVersion: [ "5.5", "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
         platform: [ "ubuntu-22.04", "macos-14", "windows-2022" ]
     runs-on: ${{ matrix.platform }}
     steps:
