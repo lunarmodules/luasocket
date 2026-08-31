@@ -45,6 +45,7 @@ jobs:
           lua excepttest.lua
           lua test_bind.lua
           lua test_getaddrinfo.lua
+          lua test_unix.lua
           lua ltn12test.lua
           lua mimetest.lua
           lua urltest.lua
