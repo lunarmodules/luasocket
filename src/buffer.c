@@ -121,6 +121,7 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     size_t budget = 0;  /* 0 == unlimited */
     int numeric = lua_isnumber(L, 2);
     const char *part = luaL_optlstring(L, 3, "", &size);
+    char recvpat;
 
     /* ---- validation: must precede timeout_markstart() and any I/O ---- */
     if (numeric) {
@@ -129,8 +130,10 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
             "invalid receive pattern");
         wanted = (size_t) n;
     } else {
-        const char *p = luaL_optstring(L, 2, "*l");
-        luaL_argcheck(L, p[0] == '*' && (p[1] == 'l' || p[1] == 'a'),
+        const char *p = luaL_optstring(L, 2, "l");
+        if (p[0] == '*') p++;
+        recvpat = p[0];
+        luaL_argcheck(L, recvpat == 'l' || recvpat == 'a',
                       2, "invalid receive pattern");
     }
     if (!lua_isnoneornil(L, 4)) {
@@ -156,8 +159,7 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     luaL_addlstring(&b, part, size);
     /* receive new patterns */
     if (!numeric) {
-        const char *p= luaL_optstring(L, 2, "*l");
-        if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b, budget);
+        if (recvpat == 'l') err = recvline(buf, &b, budget);
         else err = recvall(buf, &b, budget);
     /* get a fixed number of bytes (minus what was already partially
      * received) */
