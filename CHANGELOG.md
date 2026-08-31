@@ -21,6 +21,7 @@
 * Pass correct path length for abstract Unix sockets – @Zash
 * Return immediately, not block, when asked to receive 0 – @Tieske
 * Properly format IPv6 addresses with brackets in host header – @Tieske
+* Document support for Lua 5.5 (no code changes) – @alerque
 
 ## [v3.1.0](https://github.com/lunarmodules/luasocket/releases/v3.1.0) — 2022-07-27
 
