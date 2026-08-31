@@ -104,6 +104,15 @@ Unix machines.  It uses the lp.lua implementation, in the
 samples directory.  Just run 'lua lpr.lua <filename>
 queue=<printername>' and the file will print!
 
+    sse.lua                 -- Server-Sent Events (SSE) client
+
+This little program uses socket.sse to connect to a text/event-stream
+URL and print each event received, stopping after a fixed number of
+them (5 by default). With no arguments it connects to a public live
+test feed, so you can try it with no setup at all. Just run
+
+	lua sse.lua [<url>] [<event-count>]
+
     cddb.lua                -- CDDB client
 
 This is the first try on a simple CDDB client. Not really

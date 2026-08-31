@@ -43,6 +43,8 @@ jobs:
           lua testclnt.lua
           lua testsrvr.lua > /dev/null &
           lua httpfixturetest.lua
+          lua testsrvr.lua > /dev/null &
+          lua ssehttptest.lua
           lua stufftest.lua
           lua excepttest.lua
           lua test_bind.lua
@@ -51,6 +53,7 @@ jobs:
           lua mimetest.lua
           lua urltest.lua
           lua headerstest.lua
+          lua ssetest.lua
           lua test_socket_error.lua
           lua test_tcp_receive_zero.lua
           lua test_udp_receive_zero.lua

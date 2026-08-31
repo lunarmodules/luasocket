@@ -49,18 +49,12 @@ local function quote(s)
     return "\"" .. s .. "\""
 end
 
--- Scripts the server to accept one connection (into the shared `data`
--- global, mirroring test/testclnt.lua's reconnect()), write a sequence of
--- raw byte chunks to it, then close it. `chunks` is an array of either
--- plain strings, or {body, delay = seconds} tables -- the delay (via
--- socket.sleep) is applied before sending that chunk, so callers can prove
--- incremental/partial delivery instead of one atomic send.
-function M.accept_and_send(remote, chunks)
-    local parts = {
-        "if data then data:close() data = nil end",
-        "data = server:accept()",
-        "data:setoption(\"tcp-nodelay\", true)",
-    }
+-- Appends the script parts for one accept-send-close cycle (see
+-- accept_and_send_sequence) onto `parts`.
+local function append_connection(parts, chunks)
+    parts[#parts + 1] = "if data then data:close() data = nil end"
+    parts[#parts + 1] = "data = server:accept()"
+    parts[#parts + 1] = "data:setoption(\"tcp-nodelay\", true)"
     for _, chunk in ipairs(chunks) do
         local body, delay
         if type(chunk) == "table" then
@@ -74,6 +68,35 @@ function M.accept_and_send(remote, chunks)
         parts[#parts + 1] = "data:send(" .. quote(body) .. ")"
     end
     parts[#parts + 1] = "data:close() data = nil"
+end
+
+-- Scripts the server to accept one connection (into the shared `data`
+-- global, mirroring test/testclnt.lua's reconnect()), write a sequence of
+-- raw byte chunks to it, then close it. `chunks` is an array of either
+-- plain strings, or {body, delay = seconds} tables -- the delay (via
+-- socket.sleep) is applied before sending that chunk, so callers can prove
+-- incremental/partial delivery instead of one atomic send.
+function M.accept_and_send(remote, chunks)
+    local parts = {}
+    append_connection(parts, chunks)
+    remote(table.concat(parts, "\n"))
+end
+
+-- Like accept_and_send, but scripts several accept-send-close cycles as one
+-- server-side script sent over a single remote() round trip. Needed for a
+-- client call that opens more than one connection in sequence within a
+-- single call of its own (e.g. socket.http.request following a redirect):
+-- queuing a second accept_and_send for that connection ahead of time would
+-- deadlock, since its remote() call can't get an ack until the server
+-- finishes the first accept_and_send's blocking accept() -- which itself
+-- can't complete until the client makes the very call that's stuck waiting
+-- on that ack. `connections` is an array of `chunks` arrays, one per
+-- connection, handled in order.
+function M.accept_and_send_sequence(remote, connections)
+    local parts = {}
+    for _, chunks in ipairs(connections) do
+        append_connection(parts, chunks)
+    end
     remote(table.concat(parts, "\n"))
 end
 
