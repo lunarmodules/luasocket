@@ -279,26 +279,41 @@ static int recvall(p_buffer buf, luaL_Buffer *b, size_t budget) {
 * budget payload bytes succeeds while budget+1 reports oversized. A timeout
 * or close with the payload exactly at the cap and no terminator yet also
 * resolves to oversized, never to timeout/closed.
+* Internal CRs are retained.
 \*-------------------------------------------------------------------------*/
 static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget) {
     int err = IO_DONE;
     size_t total = 0;
+    char hasprevch = 0;
+    char prevch;
     while (err == IO_DONE) {
         size_t count, pos; const char *data;
         err = buffer_get(buf, &data, &count, BUF_SIZE);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
-            /* we ignore all \r's -- they are consumed but never counted */
-            if (data[pos] != '\r') {
+            /* we delay all the characters an iteration so that \r can be skipped */
+            if (hasprevch) {
                 if (budget && total == budget) {
                     /* leave the offending byte in the buffer for the next call */
-                    buffer_skip(buf, pos);
+                    buffer_skip(buf, pos - 1);
                     return BUF_OVERSIZED;
                 }
-                luaL_addchar(b, data[pos]);
+                luaL_addchar(b, prevch);
                 total++;
             }
+            prevch = data[pos];
+            hasprevch = 1;
             pos++;
+        }
+        if (hasprevch && prevch != '\r') {
+            hasprevch = 0;
+            if (budget && total == budget) {
+                /* leave the offending byte in the buffer for the next call */
+                buffer_skip(buf, pos - 1);
+                return BUF_OVERSIZED;
+            }
+            luaL_addchar(b, prevch);
+            total++;
         }
         if (pos < count) { /* found '\n' */
             buffer_skip(buf, pos+1); /* skip '\n' too */
