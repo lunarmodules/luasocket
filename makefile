@@ -36,6 +36,9 @@ install-both:
 	$(MAKE) clean
 	@cd src; $(MAKE) $(PLAT) LUAV=5.4
 	@cd src; $(MAKE) install LUAV=5.4
+	$(MAKE) clean
+	@cd src; $(MAKE) $(PLAT) LUAV=5.5
+	@cd src; $(MAKE) install LUAV=5.5
 
 install-both-unix:
 	$(MAKE) clean
@@ -50,6 +53,9 @@ install-both-unix:
 	$(MAKE) clean
 	@cd src; $(MAKE) $(PLAT) LUAV=5.4
 	@cd src; $(MAKE) install-unix LUAV=5.4
+	$(MAKE) clean
+	@cd src; $(MAKE) $(PLAT) LUAV=5.5
+	@cd src; $(MAKE) install-unix LUAV=5.5
 
 .PHONY: test
 

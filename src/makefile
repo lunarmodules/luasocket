@@ -16,7 +16,7 @@
 # platform to build for
 PLAT?=linux
 
-# LUAV: 5.1 5.2 5.3 5.4
+# LUAV: 5.1 5.2 5.3 5.4 5.5
 # lua version to build against
 LUAV?=5.1
 
@@ -234,7 +234,7 @@ O_ucrt64=o
 CC_ucrt64=gcc
 DEF_ucrt64= -DLUASOCKET_$(DEBUG) \
 	-DWINVER=0x0501
-CFLAGS_ucrt64= -I$(LUAINC) $(DEF) -Wall -O2 -fno-common 
+CFLAGS_ucrt64= -I$(LUAINC) $(DEF) -Wall -O2 -fno-common
 # \
 	-fvisibility=hidden
 LDFLAGS_ucrt64= $(LUALIB) -shared -Wl,-s -lws2_32 -o
