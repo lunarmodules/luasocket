@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add `maxsize` argument to `receive` to bound the memory a single call may accumulate, returning `"oversized"` instead of growing without limit – @Tieske
+* Use the `maxsize` argument on `receive` internally so `socket.tp` (FTP/SMTP control replies) and `socket.http` (status line, headers, chunk-size lines) can no longer be made to buffer an unbounded amount of memory on a single line/reply/header block – @Tieske
 
 ## [v3.1.0](https://github.com/lunarmodules/luasocket/releases/v3.1.0) — 2022-07-27
 
