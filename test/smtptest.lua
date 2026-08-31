@@ -35,7 +35,7 @@ end
 local fail = function(s)
     s = s or "failed!"
     print(s)
-    os.exit()
+    os.exit(1)
 end
 
 local readfile = function(name)
