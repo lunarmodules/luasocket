@@ -5,7 +5,7 @@
 # Targets:
 #   install            install system independent support
 #   install-unix           also install unix-only support
-#   install-both       install for lua51 lua52 lua53
+#   install-both       install for lua51 lua52 lua53 lua54 lua55
 #   install-both-unix      also install unix-only
 #   print	           print the build settings
 
