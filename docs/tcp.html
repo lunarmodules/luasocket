@@ -236,10 +236,20 @@ option names and values.
 <p class="parameters">
 <tt>Option</tt> is a string with the option name.</p>
 <ul>
+<li> '<tt>bindtodevice</tt>'</li>
 <li> '<tt>keepalive</tt>'</li>
-<li> '<tt>linger</tt>'</li>
 <li> '<tt>reuseaddr</tt>'</li>
+<li> '<tt>exclusiveaddruse</tt>'</li>
+<li> '<tt>reuseport</tt>'</li>
 <li> '<tt>tcp-nodelay</tt>'</li>
+<li> '<tt>tcp-keepidle</tt>'</li>
+<li> '<tt>tcp-keepcnt</tt>'</li>
+<li> '<tt>tcp-keepintvl</tt>'</li>
+<li> '<tt>linger</tt>'</li>
+<li> '<tt>error</tt>': Returns the socket's pending error status, if
+any, and clears it. Get-only.</li>
+<li> '<tt>recv-buffer-size</tt>'</li>
+<li> '<tt>send-buffer-size</tt>'</li>
 </ul>
 
 <p class="return">
@@ -456,6 +466,11 @@ depends on the option being set:</p>
 
 <ul>
 
+<li> '<tt>bindtodevice</tt>': Binds the socket to a specific network
+interface, given its name (e.g. <tt>"eth0"</tt>), so that only packets
+received on that interface are processed. Receives a string. Linux
+only!!</li>
+
 <li> '<tt>keepalive</tt>':  Setting this option to <tt>true</tt> enables
 the periodic transmission of messages on a connected socket. Should the
 connected party fail to respond to these messages, the connection is
@@ -476,6 +491,14 @@ zero;</li>
 used in validating addresses supplied in a call to
 <a href="#bind"><tt>bind</tt></a> should allow reuse of local addresses;</li>
 
+<li> '<tt>exclusiveaddruse</tt>': Setting this option to <tt>true</tt>
+prevents other sockets from binding to the same address and port, even if
+those sockets set '<tt>reuseaddr</tt>'. Windows only!!</li>
+
+<li> '<tt>reuseport</tt>': Allows completely duplicate bindings by
+multiple processes if they all set '<tt>reuseport</tt>' before binding
+the port.</li>
+
 <li> '<tt>tcp-nodelay</tt>': Setting this option to <tt>true</tt>
 disables the Nagle's algorithm for the connection;</li>
 
@@ -494,6 +517,12 @@ disables the Nagle's algorithm for the connection;</li>
 <li> '<tt>ipv6-v6only</tt>':
 Setting this option to <tt>true</tt> restricts an <tt>inet6</tt> socket to
 sending and receiving only IPv6 packets.</li>
+
+<li> '<tt>recv-buffer-size</tt>': Sets the size, in bytes, of the
+socket's receive buffer (<tt>SO_RCVBUF</tt>). Receives a number.</li>
+
+<li> '<tt>send-buffer-size</tt>': Sets the size, in bytes, of the
+socket's send buffer (<tt>SO_SNDBUF</tt>). Receives a number.</li>
 </ul>
 
 <p class="return">

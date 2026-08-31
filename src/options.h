@@ -28,6 +28,11 @@ int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps);
 int opt_set_reuseaddr(lua_State *L, p_socket ps);
 int opt_get_reuseaddr(lua_State *L, p_socket ps);
 
+#ifdef SO_EXCLUSIVEADDRUSE
+int opt_set_exclusiveaddruse(lua_State* L, p_socket ps);
+int opt_get_exclusiveaddruse(lua_State* L, p_socket ps);
+#endif
+
 int opt_set_reuseport(lua_State *L, p_socket ps);
 int opt_get_reuseport(lua_State *L, p_socket ps);
 
