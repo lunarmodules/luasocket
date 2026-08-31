@@ -99,8 +99,7 @@ check_parse_url{
     userinfo = "user:pass$%?#wd",
     password = "pass$%?#wd",
     user = "user",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -113,8 +112,7 @@ check_parse_url{
     userinfo = "user:pass?#wd",
     password = "pass?#wd",
     user = "user",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -127,8 +125,7 @@ check_parse_url{
     userinfo = "user:pass-wd",
     password = "pass-wd",
     user = "user",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -141,8 +138,7 @@ check_parse_url{
     userinfo = "user:pass#wd",
     password = "pass#wd",
     user = "user",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -155,8 +151,7 @@ check_parse_url{
     userinfo = "user:pass#wd",
     password = "pass#wd",
     user = "user",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
 }
 check_parse_url{
@@ -167,8 +162,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -182,8 +176,7 @@ check_parse_url{
     userinfo = "user:password",
     user = "user",
     password = "password",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment",
 }
@@ -196,8 +189,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = ""
 }
@@ -210,8 +202,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "",
     fragment = "fragment"
 }
@@ -224,8 +215,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     fragment = "fragment"
 }
 
@@ -237,8 +227,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/path",
-    params = "",
+    path = "/path;",
     query = "query",
     fragment = "fragment"
 }
@@ -264,8 +253,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/",
-    params = "params",
+    path = "/;params",
     query = "query",
     fragment = "fragment"
 }
@@ -287,8 +275,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -438,8 +425,7 @@ check_parse_url{
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -453,8 +439,7 @@ check_parse_url{
     userinfo = "user:password",
     user = "user",
     password = "password",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -467,8 +452,7 @@ check_build_url {
     port = "port",
     user = "user",
     password = "password",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -478,8 +462,7 @@ check_build_url{
     host = "::FFFF:129.144.52.38",
     port = "port",
     user = "userinfo",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -491,8 +474,7 @@ check_build_url{
     port = "port",
     user = "user",
     password = "password",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -503,8 +485,7 @@ check_build_url {
     host = "host",
     user = "user",
     password = "password",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -514,8 +495,7 @@ check_build_url {
     scheme = "scheme",
     host = "host",
     user = "user",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -524,8 +504,7 @@ check_build_url {
     url = "scheme://host/path;params?query#fragment",
     scheme = "scheme",
     host = "host",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -534,8 +513,7 @@ check_build_url {
     url = "scheme://host/path;params#fragment",
     scheme = "scheme",
     host = "host",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     fragment = "fragment"
 }
 
@@ -573,9 +551,7 @@ check_build_url {
     user = "user",
     userinfo = "not used",
     password = "password",
-    path = "/path",
-    params = "params",
-    query = "query",
+    path = "/path;params",
     fragment = "fragment"
 }
 
@@ -588,8 +564,7 @@ check_build_url {
     userinfo = "not used",
     authority = "not used",
     password = "password",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -601,8 +576,7 @@ check_build_url {
     port = "port",
     userinfo = "user:password",
     authority = "not used",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
@@ -611,8 +585,7 @@ check_build_url {
     url = "scheme://user:password@host:port/path;params?query#fragment",
     scheme = "scheme",
     authority = "user:password@host:port",
-    path = "/path",
-    params = "params",
+    path = "/path;params",
     query = "query",
     fragment = "fragment"
 }
