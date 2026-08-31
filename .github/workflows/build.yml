@@ -41,6 +41,8 @@ jobs:
           lua hello.lua
           lua testsrvr.lua > /dev/null &
           lua testclnt.lua
+          lua testsrvr.lua > /dev/null &
+          lua httpfixturetest.lua
           lua stufftest.lua
           lua excepttest.lua
           lua test_bind.lua
