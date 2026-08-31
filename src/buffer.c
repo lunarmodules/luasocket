@@ -9,7 +9,7 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b);
-static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget);
+static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget, int chop);
 static int recvall(p_buffer buf, luaL_Buffer *b, size_t budget);
 static int buffer_get(p_buffer buf, const char **data, size_t *count, size_t wanted);
 static void buffer_skip(p_buffer buf, size_t count);
@@ -133,7 +133,7 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
         const char *p = luaL_optstring(L, 2, "l");
         if (p[0] == '*') p++;
         recvpat = p[0];
-        luaL_argcheck(L, recvpat == 'l' || recvpat == 'a',
+        luaL_argcheck(L, recvpat == 'l' || recvpat == 'a' || recvpat == 'L',
                       2, "invalid receive pattern");
     }
     if (!lua_isnoneornil(L, 4)) {
@@ -159,7 +159,8 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     luaL_addlstring(&b, part, size);
     /* receive new patterns */
     if (!numeric) {
-        if (recvpat == 'l') err = recvline(buf, &b, budget);
+        if (recvpat == 'l') err = recvline(buf, &b, budget, 1);
+        else if (recvpat == 'L') err = recvline(buf, &b, budget, 0);
         else err = recvall(buf, &b, budget);
     /* get a fixed number of bytes (minus what was already partially
      * received) */
@@ -283,7 +284,7 @@ static int recvall(p_buffer buf, luaL_Buffer *b, size_t budget) {
 * resolves to oversized, never to timeout/closed.
 * Internal CRs are retained.
 \*-------------------------------------------------------------------------*/
-static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget) {
+static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget, int chop) {
     int err = IO_DONE;
     size_t total = 0;
     char hasprevch = 0;
@@ -307,7 +308,7 @@ static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget) {
             hasprevch = 1;
             pos++;
         }
-        if (hasprevch && prevch != '\r') {
+        if (hasprevch && (prevch != '\r' || !chop)) {
             hasprevch = 0;
             if (budget && total == budget) {
                 /* leave the offending byte in the buffer for the next call */
@@ -318,6 +319,14 @@ static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget) {
             total++;
         }
         if (pos < count) { /* found '\n' */
+            if (!chop) {
+                if (budget && total == budget) {
+                    /* leave the offending byte in the buffer for the next call */
+                    buffer_skip(buf, pos);
+                    return BUF_OVERSIZED;
+                }
+                luaL_addchar(b, '\n');
+            }
             buffer_skip(buf, pos+1); /* skip '\n' too */
             break; /* we are done */
         } else /* reached the end of the buffer */
