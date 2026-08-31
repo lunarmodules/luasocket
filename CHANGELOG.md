@@ -4,6 +4,23 @@
 
 * Add `maxsize` argument to `receive` to bound the memory a single call may accumulate, returning `"oversized"` instead of growing without limit – @Tieske
 * Use the `maxsize` argument on `receive` internally so `socket.tp` (FTP/SMTP control replies) and `socket.http` (status line, headers, chunk-size lines) can no longer be made to buffer an unbounded amount of memory on a single line/reply/header block – @Tieske
+* Add option 'bindtodevice' for TCP connections – leso-kn
+* Ship mbox parser with LuaRocks – @alerque
+* Enable building in Windows with MSYS2/ucrt64 – @Raffaello
+* Allow changing UDP_DATAGRAMSIZE at compile time – @sonoro1234
+* Add option for Windows SO_EXCLUSIVEADDRUSE – @Wires77
+* Dynamically create canonicalized headers – @Tieske
+* Classify hosts as name, ipv4, or ipv6 – @Tieske
+* Handle response code 308 permanent redirect – @amandasystems
+* Allow relative redirect on https – @nheir
+* Return port as number in getsockname – @georgeto
+* Properly report CONNRESET – @pkulchenko
+* Avoid query string and fragment segments being part of authority, allows parsing URLs with empty paths – @alerque
+* Correct receiveheaders() handling of folded values – @AMD-NICK
+* Use the right protocol for proxies – @Max1Truc
+* Pass correct path length for abstract Unix sockets – @Zash
+* Return immediately, not block, when asked to receive 0 – @Tieske
+* Properly format IPv6 addresses with brackets in host header – @Tieske
 
 ## [v3.1.0](https://github.com/lunarmodules/luasocket/releases/v3.1.0) — 2022-07-27
 
