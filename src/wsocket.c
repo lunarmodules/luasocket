@@ -247,6 +247,7 @@ int socket_recv(p_socket ps, char *data, size_t count, size_t *got,
     int err, prev = IO_DONE;
     *got = 0;
     if (*ps == SOCKET_INVALID) return IO_CLOSED;
+    if (count == 0) return IO_DONE;
     for ( ;; ) {
         int taken = recv(*ps, data, (int) count, 0);
         if (taken > 0) {
@@ -285,6 +286,14 @@ int socket_recvfrom(p_socket ps, char *data, size_t count, size_t *got,
         }
         if (taken == 0) return IO_CLOSED;
         err = WSAGetLastError();
+        /* a zero-length request is trivially "too small" for any
+         * non-empty datagram; unlike POSIX, which truncates and succeeds
+         * silently, Windows reports this as WSAEMSGSIZE even though the
+         * datagram -- and its sender's address, already written to addr/
+         * len above -- was still consumed. Normalize it to match POSIX's
+         * silent-truncation instead of surfacing a platform-specific
+         * error for what is otherwise a successful, if empty, receive. */
+        if (count == 0 && err == WSAEMSGSIZE) return IO_DONE;
         /* On UDP, a connreset simply means the previous send failed.
          * So we try again.
          * On TCP, it means our socket is now useless, so the error passes.

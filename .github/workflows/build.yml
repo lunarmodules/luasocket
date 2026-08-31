@@ -49,4 +49,7 @@ jobs:
           lua mimetest.lua
           lua urltest.lua
           lua test_socket_error.lua
+          lua test_tcp_receive_zero.lua
+          lua test_udp_receive_zero.lua
+          [ "$RUNNER_OS" = "Windows" ] || lua test_unixdgram_receive_zero.lua
           kill %1
