@@ -123,6 +123,25 @@ local function absolute_path(base_path, relative_path)
 end
 
 -----------------------------------------------------------------------------
+-- Classifies a raw host string into "name", "ipv4" or "ipv6"
+-- Input
+--   raw: host part of the authority, as found in the URL (with its
+--     enclosing [...] brackets, if any)
+-- Returns
+--   hosttype: "name", "ipv4" or "ipv6"
+--   host: raw, with any enclosing [...] brackets stripped
+-----------------------------------------------------------------------------
+function _M.classify_host(raw)
+    if string.find(raw, ":", 1, true) then
+        return "ipv6", string.match(raw, "^%[?(.-)%]?$")
+    end
+    if string.match(raw, "^%d+%.%d+%.%d+%.%d+$") then
+        return "ipv4", raw
+    end
+    return "name", raw
+end
+
+-----------------------------------------------------------------------------
 -- Parses a url and returns a table with all its parts according to RFC 2396
 -- The following grammar describes the names given to the URL parts
 -- <url> ::= <scheme>://<authority>/<path>;<params>?<query>#<fragment>
@@ -137,6 +156,10 @@ end
 --   been preserved:
 --     scheme, authority, userinfo, user, password, host, port,
 --     path, params, query, fragment
+--   plus, when a host is present:
+--     hosttype: "name", "ipv4" or "ipv6", describing the syntax of host
+--     hostname, ipv4 or ipv6: same value as host, keyed by hosttype
+--       (only one of these three is ever set)
 -- Obs:
 --   the leading '/' in {/<path>} is considered part of <path>
 -----------------------------------------------------------------------------
@@ -180,8 +203,10 @@ function _M.parse(url, default)
     authority = string.gsub(authority, ":([^:%]]*)$",
         function(p) parsed.port = p; return "" end)
     if authority ~= "" then
-        -- IPv6?
-        parsed.host = string.match(authority, "^%[(.+)%]$") or authority
+        parsed.hosttype, parsed.host = _M.classify_host(authority)
+        if parsed.hosttype == "name" then parsed.hostname = parsed.host
+        elseif parsed.hosttype == "ipv4" then parsed.ipv4 = parsed.host
+        else parsed.ipv6 = parsed.host end
     end
     local userinfo = parsed.userinfo
     if not userinfo then return parsed end
@@ -195,7 +220,11 @@ end
 -- Rebuilds a parsed URL from its components.
 -- Components are protected if any reserved or unallowed characters are found
 -- Input
---   parsed: parsed URL, as returned by parse
+--   parsed: parsed URL, as returned by parse. If parsed.host is absent,
+--     the host is taken from whichever single one of hostname/ipv4/ipv6
+--     is set (parsed.hosttype is ignored for building). It is an error
+--     (raised with error()) for more than one of hostname/ipv4/ipv6 to
+--     be set when parsed.host is absent.
 -- Returns
 --   a stringing with the corresponding URL
 -----------------------------------------------------------------------------
@@ -206,9 +235,21 @@ function _M.build(parsed)
     if parsed.params then url = url .. ";" .. parsed.params end
     if parsed.query then url = url .. "?" .. parsed.query end
     local authority = parsed.authority
-    if parsed.host then
-        authority = parsed.host
-        if string.find(authority, ":") then -- IPv6?
+    local host = parsed.host
+    if not host then
+        local set = 0
+        if parsed.hostname then host, set = parsed.hostname, set+1 end
+        if parsed.ipv4 then host, set = parsed.ipv4, set+1 end
+        if parsed.ipv6 then host, set = parsed.ipv6, set+1 end
+        if set > 1 then
+            base.error("url.build: ambiguous host, more than one of " ..
+                "hostname/ipv4/ipv6 is set")
+        end
+    end
+    if host then
+        local hosttype
+        hosttype, authority = _M.classify_host(host)
+        if hosttype == "ipv6" then
             authority = "[" .. authority .. "]"
         end
         if parsed.port then authority = authority .. ":" .. base.tostring(parsed.port) end

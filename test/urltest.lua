@@ -95,6 +95,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "user:pass$%?#wd@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "user:pass$%?#wd",
     password = "pass$%?#wd",
@@ -109,6 +111,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "user:pass?#wd@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "user:pass?#wd",
     password = "pass?#wd",
@@ -123,6 +127,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "user:pass-wd@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "user:pass-wd",
     password = "pass-wd",
@@ -137,6 +143,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "user:pass#wd@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "user:pass#wd",
     password = "pass#wd",
@@ -151,6 +159,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "user:pass#wd@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "user:pass#wd",
     password = "pass#wd",
@@ -164,6 +174,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -178,6 +190,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "user:password@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "user:password",
     user = "user",
@@ -193,6 +207,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -207,6 +223,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -221,6 +239,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -234,6 +254,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -248,6 +270,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -261,6 +285,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -275,6 +301,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -284,6 +312,8 @@ check_parse_url{
     url = "//userinfo@host:port/path;params?query#fragment",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -297,6 +327,8 @@ check_parse_url{
     url = "//userinfo@host:port/path",
     authority = "userinfo@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -307,6 +339,8 @@ check_parse_url{
     url = "//userinfo@host/path",
     authority = "userinfo@host",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     userinfo = "userinfo",
     user = "userinfo",
     path = "/path",
@@ -316,6 +350,8 @@ check_parse_url{
     url = "//user:password@host/path",
     authority = "user:password@host",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     userinfo = "user:password",
     password = "password",
     user = "user",
@@ -326,6 +362,8 @@ check_parse_url{
     url = "//user:@host/path",
     authority = "user:@host",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     userinfo = "user:",
     password = "",
     user = "user",
@@ -336,6 +374,8 @@ check_parse_url{
     url = "//user@host:port/path",
     authority = "user@host:port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     userinfo = "user",
     user = "user",
     port = "port",
@@ -347,6 +387,8 @@ check_parse_url{
     authority = "host:port",
     port = "port",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     path = "/path",
 }
 
@@ -354,6 +396,8 @@ check_parse_url{
     url = "//host/path",
     authority = "host",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
     path = "/path",
 }
 
@@ -361,6 +405,8 @@ check_parse_url{
     url = "//host",
     authority = "host",
     host = "host",
+    hosttype = "name",
+    hostname = "host",
 }
 
 check_parse_url{
@@ -379,6 +425,8 @@ check_parse_url{
     url = "http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80/index.html",
     scheme = "http",
     host = "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210",
+    hosttype = "ipv6",
+    ipv6 = "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210",
     authority = "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80",
     port = "80",
     path = "/index.html"
@@ -388,6 +436,8 @@ check_parse_url{
     url = "http://[1080:0:0:0:8:800:200C:417A]/index.html",
     scheme = "http",
     host = "1080:0:0:0:8:800:200C:417A",
+    hosttype = "ipv6",
+    ipv6 = "1080:0:0:0:8:800:200C:417A",
     authority = "[1080:0:0:0:8:800:200C:417A]",
     path = "/index.html"
 }
@@ -396,6 +446,8 @@ check_parse_url{
     url = "http://[3ffe:2a00:100:7031::1]",
     scheme = "http",
     host = "3ffe:2a00:100:7031::1",
+    hosttype = "ipv6",
+    ipv6 = "3ffe:2a00:100:7031::1",
     authority = "[3ffe:2a00:100:7031::1]",
 }
 
@@ -403,6 +455,8 @@ check_parse_url{
     url = "http://[1080::8:800:200C:417A]/foo",
     scheme = "http",
     host = "1080::8:800:200C:417A",
+    hosttype = "ipv6",
+    ipv6 = "1080::8:800:200C:417A",
     authority = "[1080::8:800:200C:417A]",
     path = "/foo"
 }
@@ -411,6 +465,8 @@ check_parse_url{
     url = "http://[::192.9.5.5]/ipng",
     scheme = "http",
     host = "::192.9.5.5",
+    hosttype = "ipv6",
+    ipv6 = "::192.9.5.5",
     authority = "[::192.9.5.5]",
     path = "/ipng"
 }
@@ -419,6 +475,8 @@ check_parse_url{
     url = "http://[::FFFF:129.144.52.38]:80/index.html",
     scheme = "http",
     host = "::FFFF:129.144.52.38",
+    hosttype = "ipv6",
+    ipv6 = "::FFFF:129.144.52.38",
     port = "80",
     authority = "[::FFFF:129.144.52.38]:80",
     path = "/index.html"
@@ -428,6 +486,8 @@ check_parse_url{
     url = "http://[2010:836B:4179::836B:4179]",
     scheme = "http",
     host = "2010:836B:4179::836B:4179",
+    hosttype = "ipv6",
+    ipv6 = "2010:836B:4179::836B:4179",
     authority = "[2010:836B:4179::836B:4179]",
 }
 
@@ -435,6 +495,8 @@ check_parse_url{
     url = "//userinfo@[::FFFF:129.144.52.38]:port/path;params?query#fragment",
     authority = "userinfo@[::FFFF:129.144.52.38]:port",
     host = "::FFFF:129.144.52.38",
+    hosttype = "ipv6",
+    ipv6 = "::FFFF:129.144.52.38",
     port = "port",
     userinfo = "userinfo",
     user = "userinfo",
@@ -449,6 +511,8 @@ check_parse_url{
     scheme = "scheme",
     authority = "user:password@[::192.9.5.5]:port",
     host = "::192.9.5.5",
+    hosttype = "ipv6",
+    ipv6 = "::192.9.5.5",
     port = "port",
     userinfo = "user:password",
     user = "user",
@@ -458,6 +522,138 @@ check_parse_url{
     query = "query",
     fragment = "fragment"
 }
+
+print("testing host classification (hosttype/hostname/ipv4/ipv6)")
+check_parse_url{
+    url = "http://example.com/path",
+    scheme = "http",
+    authority = "example.com",
+    host = "example.com",
+    hosttype = "name",
+    hostname = "example.com",
+    path = "/path",
+}
+
+check_parse_url{
+    url = "http://192.168.1.1:8080/path",
+    scheme = "http",
+    authority = "192.168.1.1:8080",
+    host = "192.168.1.1",
+    hosttype = "ipv4",
+    ipv4 = "192.168.1.1",
+    port = "8080",
+    path = "/path",
+}
+
+-- octet ranges aren't validated: any dotted-quad shape is classified ipv4,
+-- even with an out-of-range octet like this one
+check_parse_url{
+    url = "http://999.1.1.1/path",
+    scheme = "http",
+    authority = "999.1.1.1",
+    host = "999.1.1.1",
+    hosttype = "ipv4",
+    ipv4 = "999.1.1.1",
+    path = "/path",
+}
+
+check_parse_url{
+    url = "http://[::1]:8080/path",
+    scheme = "http",
+    authority = "[::1]:8080",
+    host = "::1",
+    hosttype = "ipv6",
+    ipv6 = "::1",
+    port = "8080",
+    path = "/path",
+}
+
+check_parse_url{
+    url = "http://[2010:836B:4179::836B:4179]/",
+    scheme = "http",
+    authority = "[2010:836B:4179::836B:4179]",
+    host = "2010:836B:4179::836B:4179",
+    hosttype = "ipv6",
+    ipv6 = "2010:836B:4179::836B:4179",
+    path = "/",
+}
+
+-- no authority at all: no host, no hosttype
+check_parse_url{
+    url = "relative/path",
+    path = "relative/path",
+}
+
+check_build_url{
+    url = "http://example.com/path",
+    scheme = "http",
+    hostname = "example.com",
+    path = "/path",
+}
+
+check_build_url{
+    url = "http://1.2.3.4/path",
+    scheme = "http",
+    ipv4 = "1.2.3.4",
+    path = "/path",
+}
+
+check_build_url{
+    url = "http://[::1]/path",
+    scheme = "http",
+    ipv6 = "::1",
+    path = "/path",
+}
+
+-- an already-bracketed ipv6/host value must not be bracketed again
+check_build_url{
+    url = "http://[::1]/path",
+    scheme = "http",
+    ipv6 = "[::1]",
+    path = "/path",
+}
+
+check_build_url{
+    url = "http://[::1]/path",
+    scheme = "http",
+    host = "[::1]",
+    path = "/path",
+}
+
+local check_classify_host = function(raw, expect_hosttype, expect_host)
+    local hosttype, host = socket.url.classify_host(raw)
+    if hosttype ~= expect_hosttype or host ~= expect_host then
+        io.write("classify_host: for '", raw, "' expected ", expect_hosttype,
+            " '", expect_host, "' but got ", tostring(hosttype), " '",
+            tostring(host), "'\n")
+        os.exit()
+    end
+end
+
+check_classify_host("example.com", "name", "example.com")
+check_classify_host("999.1.1.1", "ipv4", "999.1.1.1")
+check_classify_host("192.168.1.1", "ipv4", "192.168.1.1")
+check_classify_host("[::1]", "ipv6", "::1")
+check_classify_host("2010:836B:4179::836B:4179", "ipv6", "2010:836B:4179::836B:4179")
+
+-- legacy 'host' field takes precedence over hostname/ipv4/ipv6 if both given
+check_build_url{
+    url = "http://legacy.example/path",
+    scheme = "http",
+    host = "legacy.example",
+    hostname = "ignored.example",
+    path = "/path",
+}
+
+-- ambiguous: more than one of hostname/ipv4/ipv6 set, no 'host' to disambiguate
+do
+    local ok = pcall(socket.url.build,
+        {scheme = "http", ipv4 = "1.2.3.4", hostname = "example.com", path = "/path"})
+    if ok then
+        print("build: expected error for ambiguous host, got none")
+        os.exit()
+    end
+end
 
 print("testing URL building")
 check_build_url {

@@ -140,6 +140,14 @@ Lower level components, if specified,
 take  precedence over  high level  components of  the URL grammar.
 </p>
 
+<p class=parameters>
+If <tt>host</tt> is not set, the host is taken from whichever single
+one of <tt>hostname</tt>, <tt>ipv4</tt> or <tt>ipv6</tt> is set
+(<tt>hosttype</tt> is ignored when building). It is an error to set more
+than one of <tt>hostname</tt>, <tt>ipv4</tt> or <tt>ipv6</tt> while
+<tt>host</tt> is absent.
+</p>
+
 <p class=return>
 The function returns a string with the built URL.
 </p>
@@ -168,6 +176,62 @@ characters are left untouched.
 The  function  returns   a string with the
 built <tt>&lt;path&gt;</tt> component.
 </p>
+
+<!-- classify_host ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class=name id="classify_host">
+url.<b>classify_host(</b>host<b>)</b>
+</p>
+
+<p class=description>
+Classifies a raw <tt>&lt;host&gt;</tt> string into <tt>"name"</tt>,
+<tt>"ipv4"</tt> or <tt>"ipv6"</tt>. This is the same classification
+<a href="#parse"><tt>parse</tt></a> uses to fill in <tt>hosttype</tt>,
+exposed for callers that have a host string to classify without a full
+URL to parse.
+</p>
+
+<p class=parameters>
+<tt>Host</tt> is a host string as found in a URL's authority. Any
+<tt>:</tt> in <tt>host</tt> is taken as a sign of an IPv6 literal, so
+the enclosing <tt>[...]</tt> brackets URLs normally require for one are
+optional here: they are stripped when present, but classification does
+not depend on them.
+</p>
+
+<p class=return>
+The function returns two values: <tt>hosttype</tt>, one of
+<tt>"name"</tt>, <tt>"ipv4"</tt> or <tt>"ipv6"</tt>; and <tt>host</tt>,
+the input with any enclosing <tt>[...]</tt> brackets stripped, if
+present.
+</p>
+
+<p class=note>
+Note: classification is done by exclusion of shape, not by validating
+the address. A host is <tt>"ipv4"</tt> if it merely has the shape of
+four dot-separated digit groups &mdash; octet ranges are not checked,
+so <tt>"999.1.1.1"</tt> classifies as <tt>"ipv4"</tt> &mdash; and
+<tt>"ipv6"</tt> if it merely contains a <tt>:</tt>, whether or not that
+is a well-formed IPv6 address. Anything left over is <tt>"name"</tt>,
+whether or not it is actually a valid hostname.
+</p>
+
+<pre class=example>
+-- load url module
+url = require("socket.url")
+
+print(url.classify_host("example.com"))
+-- name    example.com
+
+print(url.classify_host("192.168.1.1"))
+-- ipv4    192.168.1.1
+
+print(url.classify_host("[::1]"))
+-- ipv6    ::1
+
+print(url.classify_host("::1"))
+-- ipv6    ::1
+</pre>
 
 <!-- escape +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
@@ -230,11 +294,27 @@ parsed_url = {<br>
 &nbsp;&nbsp;fragment = <i>string</i>,<br>
 &nbsp;&nbsp;userinfo = <i>string</i>,<br>
 &nbsp;&nbsp;host = <i>string</i>,<br>
+&nbsp;&nbsp;hosttype = <i>string</i>,<br>
+&nbsp;&nbsp;hostname = <i>string</i>,<br>
+&nbsp;&nbsp;ipv4 = <i>string</i>,<br>
+&nbsp;&nbsp;ipv6 = <i>string</i>,<br>
 &nbsp;&nbsp;port = <i>string</i>,<br>
 &nbsp;&nbsp;user = <i>string</i>,<br>
 &nbsp;&nbsp;password = <i>string</i><br>
 }
 </tt></blockquote>
+
+<p class=parameters>
+When a host is present, <tt>hosttype</tt> is set to one of
+<tt>"name"</tt>, <tt>"ipv4"</tt> or <tt>"ipv6"</tt>, describing the
+syntax of <tt>host</tt>. Exactly one of <tt>hostname</tt>, <tt>ipv4</tt>
+or <tt>ipv6</tt> is then also set to the same value as <tt>host</tt>,
+matching <tt>hosttype</tt> &mdash; the other two are left <b><tt>nil</tt></b>.
+In case of an ipv6 address the brackets are stripped, both in <tt>host</tt> and <tt>ipv6</tt>.
+This classification is done by
+<a href="#classify_host"><tt>classify_host</tt></a>, by exclusion of
+shape rather than by validating the address (see its notes).
+</p>
 
 <pre class=example>
 -- load url module
@@ -248,6 +328,8 @@ parsed_url = url.parse("http://www.example.com/cgilua/index.lua?a=2#there")
 --   query = "a=2",
 --   fragment = "there",
 --   host = "www.puc-rio.br",
+--   hosttype = "name",
+--   hostname = "www.puc-rio.br",
 -- }
 
 parsed_url = url.parse("ftp://root:passwd@unsafe.org/pub/virus.exe;type=i")
