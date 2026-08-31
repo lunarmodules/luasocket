@@ -9,11 +9,23 @@
 * Internal function prototypes
 \*=========================================================================*/
 static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b);
-static int recvline(p_buffer buf, luaL_Buffer *b);
-static int recvall(p_buffer buf, luaL_Buffer *b);
+static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget);
+static int recvall(p_buffer buf, luaL_Buffer *b, size_t budget);
 static int buffer_get(p_buffer buf, const char **data, size_t *count);
 static void buffer_skip(p_buffer buf, size_t count);
 static int sendraw(p_buffer buf, const char *data, size_t count, size_t *sent);
+
+/* Internal completion code for buffer_meth_receive. err is not confined to
+ * the IO_* enum: socket_recv/socket_send (usocket.c/wsocket.c) propagate raw
+ * platform errors (POSIX errno, Windows WSA codes) straight through, and
+ * those are always positive, so a positive sentinel here could collide with
+ * a genuine transport error (e.g. errno 1 == EPERM) and get misreported as
+ * "oversized". Chosen negative and outside {IO_DONE, IO_TIMEOUT, IO_CLOSED,
+ * IO_UNKNOWN} (0, -1, -2, -3) so it can never collide with anything err
+ * legitimately takes.
+ * MUST be handled before buf->io->error() is called -- it is not a transport
+ * error. */
+#define BUF_OVERSIZED (-1000)
 
 /* min and max macros */
 #ifndef MIN
@@ -105,8 +117,35 @@ int buffer_meth_send(lua_State *L, p_buffer buf) {
 int buffer_meth_receive(lua_State *L, p_buffer buf) {
     int err = IO_DONE, top;
     luaL_Buffer b;
-    size_t size;
+    size_t size, wanted = 0, maxsize = 0;
+    size_t budget = 0;  /* 0 == unlimited */
+    int numeric = lua_isnumber(L, 2);
     const char *part = luaL_optlstring(L, 3, "", &size);
+
+    /* ---- validation: must precede timeout_markstart() and any I/O ---- */
+    if (numeric) {
+        double n = lua_tonumber(L, 2);
+        luaL_argcheck(L, n >= 0 && n < (lua_Number) ((size_t) -1), 2,
+            "invalid receive pattern");
+        wanted = (size_t) n;
+    } else {
+        const char *p = luaL_optstring(L, 2, "*l");
+        luaL_argcheck(L, p[0] == '*' && (p[1] == 'l' || p[1] == 'a'),
+                      2, "invalid receive pattern");
+    }
+    if (!lua_isnoneornil(L, 4)) {
+        double m = luaL_checknumber(L, 4);
+        luaL_argcheck(L, m >= 1 && m < (lua_Number) ((size_t) -1), 4,
+            "maxsize must be a positive number");
+        maxsize = (size_t) m;
+        luaL_argcheck(L, size < maxsize, 4,
+            "prefix length >= maxsize (drain with prefix=\"\" or raise maxsize)");
+        if (numeric)
+            luaL_argcheck(L, wanted <= maxsize, 4,
+                "maxsize smaller than requested byte count");
+        budget = maxsize - size;
+    }
+
     timeout_markstart(buf->tm);
     /* make sure we don't confuse buffer stuff with arguments */
     lua_settop(L, 3);
@@ -116,24 +155,28 @@ int buffer_meth_receive(lua_State *L, p_buffer buf) {
     luaL_buffinit(L, &b);
     luaL_addlstring(&b, part, size);
     /* receive new patterns */
-    if (!lua_isnumber(L, 2)) {
+    if (!numeric) {
         const char *p= luaL_optstring(L, 2, "*l");
-        if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b);
-        else if (p[0] == '*' && p[1] == 'a') err = recvall(buf, &b);
-        else luaL_argcheck(L, 0, 2, "invalid receive pattern");
+        if (p[0] == '*' && p[1] == 'l') err = recvline(buf, &b, budget);
+        else err = recvall(buf, &b, budget);
     /* get a fixed number of bytes (minus what was already partially
      * received) */
     } else {
-        double n = lua_tonumber(L, 2);
-        size_t wanted = (size_t) n;
-        luaL_argcheck(L, n >= 0, 2, "invalid receive pattern");
         if (size == 0 || wanted > size)
             err = recvraw(buf, wanted-size, &b);
     }
     /* check if there was an error */
-    if (err != IO_DONE) {
-        /* we can't push anyting in the stack before pushing the
-         * contents of the buffer. this is the reason for the complication */
+    /* luaL_pushresult(&b) must come first (its accumulator lives on the
+     * stack), but the partial it produces belongs in slot 3, not 1 -- so
+     * both error branches push buffer/error/buffer-copy/nil, then
+     * lua_replace the nil into slot 1. */
+    if (err == BUF_OVERSIZED) {
+        luaL_pushresult(&b);
+        lua_pushliteral(L, "oversized");
+        lua_pushvalue(L, -2);
+        lua_pushnil(L);
+        lua_replace(L, -4);
+    } else if (err != IO_DONE) {
         luaL_pushresult(&b);
         lua_pushstring(L, buf->io->error(buf->io->ctx, err));
         lua_pushvalue(L, -2);
@@ -201,36 +244,61 @@ static int recvraw(p_buffer buf, size_t wanted, luaL_Buffer *b) {
 
 /*-------------------------------------------------------------------------*\
 * Reads everything until the connection is closed (buffered)
+* budget == 0 means unlimited; otherwise the number of payload bytes still
+* allowed. Completion (connection closed) beats the cap: filling the cap
+* exactly and then seeing EOF means the whole stream was received.
 \*-------------------------------------------------------------------------*/
-static int recvall(p_buffer buf, luaL_Buffer *b) {
+static int recvall(p_buffer buf, luaL_Buffer *b, size_t budget) {
     int err = IO_DONE;
     size_t total = 0;
     while (err == IO_DONE) {
         const char *data; size_t count;
         err = buffer_get(buf, &data, &count);
+        if (budget && count > budget - total) {   /* strictly more than fits */
+            count = budget - total;
+            luaL_addlstring(b, data, count);
+            buffer_skip(buf, count);
+            return BUF_OVERSIZED;
+        }
         total += count;
         luaL_addlstring(b, data, count);
         buffer_skip(buf, count);
     }
-    if (err == IO_CLOSED) {
+    if (err == IO_CLOSED) {                        /* completion beats the cap */
         if (total > 0) return IO_DONE;
         else return IO_CLOSED;
-    } else return err;
+    }
+    if (budget && total == budget) return BUF_OVERSIZED;
+    return err;
 }
 
 /*-------------------------------------------------------------------------*\
 * Reads a line terminated by a CR LF pair or just by a LF. The CR and LF
 * are not returned by the function and are discarded from the buffer
+* budget == 0 means unlimited; otherwise the number of payload bytes still
+* allowed. The cap test sits before consuming a byte, so a line of exactly
+* budget payload bytes succeeds while budget+1 reports oversized. A timeout
+* or close with the payload exactly at the cap and no terminator yet also
+* resolves to oversized, never to timeout/closed.
 \*-------------------------------------------------------------------------*/
-static int recvline(p_buffer buf, luaL_Buffer *b) {
+static int recvline(p_buffer buf, luaL_Buffer *b, size_t budget) {
     int err = IO_DONE;
+    size_t total = 0;
     while (err == IO_DONE) {
         size_t count, pos; const char *data;
         err = buffer_get(buf, &data, &count);
         pos = 0;
         while (pos < count && data[pos] != '\n') {
-            /* we ignore all \r's */
-            if (data[pos] != '\r') luaL_addchar(b, data[pos]);
+            /* we ignore all \r's -- they are consumed but never counted */
+            if (data[pos] != '\r') {
+                if (budget && total == budget) {
+                    /* leave the offending byte in the buffer for the next call */
+                    buffer_skip(buf, pos);
+                    return BUF_OVERSIZED;
+                }
+                luaL_addchar(b, data[pos]);
+                total++;
+            }
             pos++;
         }
         if (pos < count) { /* found '\n' */
@@ -239,7 +307,9 @@ static int recvline(p_buffer buf, luaL_Buffer *b) {
         } else /* reached the end of the buffer */
             buffer_skip(buf, pos);
     }
-    return err;
+    if (err == IO_DONE) return IO_DONE;                   /* '\n' found: success, regardless of total */
+    if (budget && total == budget) return BUF_OVERSIZED;  /* stalled/closed exactly at the cap: I1 */
+    return err;                                           /* real timeout/closed, below the cap */
 }
 
 /*-------------------------------------------------------------------------*\

@@ -361,7 +361,7 @@ method returns <b><tt>nil</tt></b> followed by an error message.
 <!-- receive ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="receive">
-client:<b>receive(</b>[pattern [, prefix]]<b>)</b>
+client:<b>receive(</b>[pattern [, prefix [, maxsize]]]<b>)</b>
 </p>
 
 <p class="description">
@@ -390,23 +390,35 @@ of bytes from the socket.</li>
 of any received data before return.
 </p>
 
+<p class="parameters">
+<tt>Maxsize</tt> is an optional positive integer bounding the number of
+payload bytes the call may accumulate, <em>including</em> <tt>prefix</tt>.
+Omitted or <tt><b>nil</b></tt> means unlimited.
+</p>
+
 <p class="return">
 If successful, the method returns the received pattern. In case of error,
 the method returns <tt><b>nil</b></tt> followed by an error
 message, followed by a (possibly empty) string containing
 the partial that was received. The error message can be
-the string '<tt>closed</tt>'  in   case  the  connection  was
-closed  before  the transmission  was completed  or  the string
-'<tt>timeout</tt>' in  case there was a timeout during  the operation.
+the string '<tt>closed</tt>' in case the connection was
+closed before the transmission was completed. 
+'<tt>timeout</tt>' indicates there was a timeout during the operation. And
+when <tt>maxsize</tt> was given, the string '<tt>oversized</tt>' in case
+the pattern did not complete within <tt>maxsize</tt> bytes (in which case
+the third return value holds exactly <tt>maxsize</tt> bytes).
 </p>
 
 <p class="note">
-<b>Important note</b>: This function was changed <em>severely</em>. It used
-to support multiple patterns (but I have never seen this feature used) and
-now it doesn't anymore.  Partial results used to be returned in the same
-way as successful results. This last feature violated the idea that all
-functions should return <tt><b>nil</b></tt> on error.  Thus it was changed
-too.
+Retrying with <tt>prefix</tt> set to the previous partial result and an
+<em>unchanged</em> <tt>maxsize</tt> raises the length-check error above by
+design. A <tt>timeout</tt> partial is always strictly shorter
+than <tt>maxsize</tt>, so it is always safe to feed straight back as
+<tt>prefix</tt> with the same <tt>maxsize</tt>. Finally, note that
+<tt>maxsize</tt> bounds the payload <em>returned</em>, not necessarily the
+bytes taken off the wire: for the <tt>*l</tt> pattern the discarded CR
+characters and the line terminator mean more bytes may have been consumed
+than the returned length suggests.
 </p>
 
 <!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

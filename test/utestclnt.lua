@@ -511,6 +511,48 @@ remote(string.format([[
 end
 
 ------------------------------------------------------------------------
+function test_maxsize()
+    -- A4: #prefix == maxsize raises (mirrors testclnt.lua group A)
+    reconnect()
+    pass("argument errors")
+    -- bounds the pre-implementation call (arg 4 silently dropped, so this
+    -- becomes a real blocking read on an idle socket) so a meaningful
+    -- failure doesn't hang the suite
+    data:settimeout(0.2)
+    local ok = pcall(data.receive, data, "*l", string.rep("x", 10), 10)
+    assert(not ok, "A4 failed: #prefix == maxsize should raise")
+    data:settimeout(-1)
+
+    -- B2/B3: *l boundary (mirrors testclnt.lua group B)
+    pass("*l boundary")
+    remote(string.format([[data:send(string.rep('a',%d) .. '\n')]], 100))
+    local d, e, p = data:receive("*l", nil, 100)
+    assert(d == string.rep("a", 100) and e == nil, "B2 failed")
+
+    remote(string.format([[data:send(string.rep('a',%d) .. '\n')]], 101))
+    d, e, p = data:receive("*l", nil, 100)
+    assert(d == nil and e == "oversized" and p == string.rep("a", 100), "B3 failed")
+    d, e = data:receive("*l", nil, 100)
+    assert(d == "a" and e == nil, "B3 failed: leftover byte")
+
+    -- C2: timeout exactly at the cap is oversized, not timeout (I1)
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d))]], 100))
+    data:settimeout(0.5)
+    d, e, p = data:receive("*l", nil, 100)
+    assert(e == "oversized" and #p == 100,
+        "C2 failed: expected oversized, got " .. tostring(e))
+
+    -- E2: completion beats the cap (I2)
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d)) data:close() data = nil]], 100))
+    d, e = data:receive("*a", nil, 100)
+    assert(d == string.rep("a", 100) and e == nil,
+        "E2 failed: completion should beat the cap")
+    pass("ok")
+end
+
+------------------------------------------------------------------------
 
 test("method registration")
 test_methods(socket.unix(), {
@@ -640,5 +682,8 @@ test_blockingtimeoutreceive(800091, 1, 3)
 test_blockingtimeoutreceive(800091, 2, 3)
 test_blockingtimeoutreceive(800091, 3, 2)
 test_blockingtimeoutreceive(800091, 3, 1)
+
+test("receive maxsize")
+test_maxsize()
 
 test(string.format("done in %.2fs", socket.gettime() - start))
