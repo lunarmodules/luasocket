@@ -684,6 +684,14 @@ function test_maxsize()
     assert(d == string.rep("a", 100) and e == nil, "B5 failed: CRLF at boundary")
     pass("ok")
 
+    remote(string.format([[data:send(string.rep('a',%d) .. '\n')]], 101))
+    d, e, p = data:receive("*l", nil, 100)
+    assert(d == nil and e == "oversized" and p == string.rep("a", 100),
+        "B6 failed: one-over-budget should be oversized")
+    d, e = data:receive("*l", p, 150) -- increase limit, try again with prefix
+    assert(d == string.rep("a", 101) and e == nil,
+        "B6 failed: leftover byte and terminator should still be there")
+
     -- Group C: *l and I1 (timeout/close at the cap)
     reconnect()
     printf("I1 (timeout/closed at the cap): ")
@@ -748,11 +756,20 @@ function test_maxsize()
     reconnect()
     remote(string.format([[data:send(string.rep('a',%d)) data:close() data = nil]], 250))
     d, e, p = data:receive("*a", "", 100)
-    assert(e == "oversized" and #p == 100, "E3 failed: first chunk")
+    assert(e == "oversized" and #p == 100, "E3a failed: first chunk")
     d, e, p = data:receive("*a", "", 100)
-    assert(e == "oversized" and #p == 100, "E3 failed: second chunk")
+    assert(e == "oversized" and #p == 100, "E3a failed: second chunk")
     d, e = data:receive("*a", "", 100)
-    assert(d == string.rep("a", 50) and e == nil, "E3 failed: final chunk")
+    assert(d == string.rep("a", 50) and e == nil, "E3a failed: final chunk")
+
+    reconnect()
+    remote(string.format([[data:send(string.rep('a',%d)) data:close() data = nil]], 250))
+    d, e, p = data:receive("*a", "", 100)
+    assert(e == "oversized" and #p == 100, "E3b failed: first chunk")
+    d, e, p = data:receive("*a", p, 200) -- increase maxsize, try again with prefix
+    assert(e == "oversized" and #p == 200, "E3b failed: second chunk")
+    d, e = data:receive("*a", p, 300) -- increase maxsize, try again with prefix
+    assert(d == string.rep("a", 250) and e == nil, "E3b failed: final chunk")
 
     reconnect()
     remote(string.format([[data:send(string.rep('a',%d))]], 100))
