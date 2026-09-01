@@ -375,7 +375,8 @@ TO_SOCKET_LDIR= \
 	tp.lua \
 	ftp.lua \
 	headers.lua \
-	smtp.lua
+	smtp.lua \
+	sse.lua
 
 TO_TOP_LDIR= \
 	ltn12.lua \
