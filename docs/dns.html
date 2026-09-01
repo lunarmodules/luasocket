@@ -106,6 +106,32 @@ the  resolver.  In  case of error, the function returns <b><tt>nil</tt></b>
 followed by an error message.
 </p>
 
+<!-- getnameinfo ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="getnameinfo">
+socket.dns.<b>getnameinfo(</b>[host] [, service]<b>)</b>
+</p>
+
+<p class="description">
+Resolves a host and/or a service name through the system resolver and
+returns their canonical name form. At least one of <tt>host</tt> or
+<tt>service</tt> must be given.
+</p>
+
+<p class="parameters">
+<tt>Host</tt> is an optional string with a host name or IP address.
+<tt>Service</tt> is an optional string with a service name or port number.
+</p>
+
+<p class="return">
+If <tt>host</tt> was given, returns a numerically-indexed table with the
+canonical host name found for each address the resolver returns for
+<tt>host</tt>. If <tt>service</tt> was also given, the canonical service
+name is returned as an additional value; if only <tt>service</tt> was
+given, its canonical name is returned by itself. In case of error, the
+function returns <b><tt>nil</tt></b> followed by an error message.
+</p>
+
 <!-- gethostname ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="gethostname">

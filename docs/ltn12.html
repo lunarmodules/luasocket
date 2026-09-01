@@ -55,6 +55,20 @@ To obtain the <tt>ltn12</tt> namespace, run:
 local ltn12 = require("ltn12")
 </pre>
 
+<!-- BLOCKSIZE +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="BLOCKSIZE">
+ltn12.<b>BLOCKSIZE</b>
+</p>
+
+<p class="description">
+The default chunk size, in bytes, used internally by the built-in sources
+and sinks (e.g. <a href="#source.string"><tt>source.string</tt></a>,
+<a href="#source.file"><tt>source.file</tt></a>) when they have no more
+natural chunk size of their own. Defaults to 2048. Changing it affects
+only sources/sinks created after the change.
+</p>
+
 <!-- filters ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <h3 id="filter">Filters</h3>
@@ -413,6 +427,30 @@ ltn12.source.<b>table(</b>table<b>)</b>
 
 <p class="description">
 Creates and returns a source that produces the numerically-indexed values of a <tt>table</tt> successively beginning at 1.  The source returns nil (end-of-stream) whenever a nil value is produced by the current index, which proceeds forward regardless.
+</p>
+
+<!-- rewind +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="source.rewind">
+ltn12.source.<b>rewind(</b>source<b>)</b>
+</p>
+
+<p class="description">
+Wraps a <em>fancy</em> <tt>source</tt> to add chunk pushback, so previously
+produced chunks can be fed back in for a later read to consume again.
+</p>
+
+<p class="parameters">
+<tt>Source</tt> is the fancy source being wrapped.
+</p>
+
+<p class="return">
+The function returns a new fancy source. Calling it with no arguments reads
+the next chunk as usual: any chunks previously pushed back are returned
+first (most recently pushed back, first), and once none remain it falls
+through to <tt>source</tt>. Calling it <em>with</em> a chunk argument does
+not read anything: it pushes that chunk back onto the internal stack for a
+future no-argument call to return.
 </p>
 
 <!-- footer +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->

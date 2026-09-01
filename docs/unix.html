@@ -1,0 +1,795 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+<meta name="description" content="LuaSocket: Unix domain socket support">
+<meta name="keywords" content="Lua, LuaSocket, Socket, Unix, Domain, IPC, Library, Support">
+<title>LuaSocket: Unix domain socket support</title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class="header">
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align="center"><a href="http://www.lua.org">
+<img width="128" height="128" border="0" alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align="center" valign="top">Network support for the Lua language
+</td></tr>
+</table>
+<p class="bar">
+<a href="index.html">home</a> &middot;
+<a href="index.html#download">download</a> &middot;
+<a href="installation.html">installation</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+</center>
+<hr>
+</div>
+
+<!-- unix ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id="unix">Unix domain sockets</h2>
+
+<p>
+Unix domain sockets provide inter-process communication between processes
+on the same host, addressed by a path in the file system rather than by an
+IP address and port. LuaSocket supports both the stream (connection
+oriented, like TCP) and datagram (connectionless, like UDP) flavors.
+</p>
+
+<p class="note">
+Note: This module is only built on Unix-like platforms (Linux, macOS,
+BSD, Haiku). It is not available on Windows.
+</p>
+
+<p>
+Unlike the core <tt>socket</tt> namespace, Unix domain socket support is a
+separate module that must be required explicitly:
+</p>
+
+<pre class="example">
+-- loads the socket.unix module
+local unix = require("socket.unix")
+</pre>
+
+<p>
+The module table returned by <tt>require("socket.unix")</tt> exposes two
+constructors, <a href="#socket.unix.stream"><tt>unix.stream()</tt></a> and
+<a href="#socket.unix.dgram"><tt>unix.dgram()</tt></a>. For backwards
+compatibility, <tt>unix.tcp</tt> and <tt>unix.udp</tt> are aliases for
+<tt>stream</tt> and <tt>dgram</tt> respectively, and the module table
+itself can be called directly as a shortcut for <tt>unix.stream()</tt>
+(i.e. <tt>unix()</tt> is the same as <tt>unix.stream()</tt>).
+</p>
+
+<p class="note">
+Note: Paths passed to <a href="#stream.bind"><tt>bind</tt></a>,
+<a href="#stream.connect"><tt>connect</tt></a> and their datagram
+equivalents are limited by the platform's <tt>sun_path</tt> buffer size
+(commonly around 100&ndash;108 bytes). A path that does not fit returns
+<b><tt>nil</tt></b> followed by the error message '<tt>path too
+long</tt>'.
+</p>
+
+<!-- stream ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h3 id="stream">Stream (<tt>socket.unix.stream</tt>)</h3>
+
+<p>
+Stream Unix domain sockets behave like TCP sockets (see
+<a href="tcp.html">TCP</a>): a freshly created object is a <em>master</em>
+object, which becomes a <em>client</em> object after a successful
+<a href="#stream.connect"><tt>connect</tt></a>, or a <em>server</em>
+object after a successful <a href="#stream.listen"><tt>listen</tt></a>
+(itself normally preceded by <a href="#stream.bind"><tt>bind</tt></a>).
+Server objects produce client objects via
+<a href="#stream.accept"><tt>accept</tt></a>. Most methods below work the
+same way as their TCP counterparts, just addressed by path instead of
+IP/port.
+</p>
+
+<!-- stream.accept ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.accept">
+server:<b>accept()</b>
+</p>
+
+<p class="description">
+Waits for a remote connection on the server object and returns a client
+object representing that connection. Works exactly like
+<a href="tcp.html#accept"><tt>tcp:accept</tt></a>.
+</p>
+
+<p class="return">
+If a connection is successfully accepted, a client object is returned. If a
+timeout condition is met, the method returns <b><tt>nil</tt></b> followed
+by the error string '<tt>timeout</tt>'. Other errors are reported by
+<b><tt>nil</tt></b> followed by a message describing the error.
+</p>
+
+<!-- stream.bind ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.bind">
+master:<b>bind(</b>path<b>)</b><br>
+master:<b>setsockname(</b>path<b>)</b>
+</p>
+
+<p class="description">
+Binds a master object to a file system <tt>path</tt>. <tt>setsockname</tt>
+is an alias for <tt>bind</tt>.
+</p>
+
+<p class="parameters">
+<tt>Path</tt> is a string with the file system path to bind to. The path
+must not already exist as a socket file &mdash; remove any stale socket
+file left over from a previous run before binding.
+</p>
+
+<p class="return">
+In case of success, the method returns 1. In case of error, the method
+returns <b><tt>nil</tt></b> followed by an error message.
+</p>
+
+<!-- stream.close +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.close">
+master:<b>close()</b><br>
+client:<b>close()</b><br>
+server:<b>close()</b>
+</p>
+
+<p class="description">
+Closes a stream Unix domain object. The internal socket used by the object
+is closed. No further operations (except further calls to
+<tt>close</tt>) are allowed on a closed socket.
+</p>
+
+<p class="note">
+Note: Closing a socket does not remove the bound path from the file
+system. Delete the socket file yourself (e.g. <tt>os.remove(path)</tt>)
+once the server is done with it.
+</p>
+
+<p class="note">
+Note: Garbage-collected objects are automatically closed before
+destruction.
+</p>
+
+<!-- stream.connect +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.connect">
+master:<b>connect(</b>path<b>)</b><br>
+master:<b>setpeername(</b>path<b>)</b>
+</p>
+
+<p class="description">
+Attempts to connect a master object to <tt>path</tt>, transforming it
+into a client object. <tt>setpeername</tt> is an alias for
+<tt>connect</tt>. Client objects support
+<a href="#stream.send"><tt>send</tt></a>,
+<a href="#stream.receive"><tt>receive</tt></a>,
+<a href="#stream.getsockname"><tt>getsockname</tt></a>,
+<a href="#stream.settimeout"><tt>settimeout</tt></a>,
+<a href="#stream.shutdown"><tt>shutdown</tt></a>, and
+<a href="#stream.close"><tt>close</tt></a>.
+</p>
+
+<p class="parameters">
+<tt>Path</tt> is a string with the file system path of a listening server
+object.
+</p>
+
+<p class="return">
+In case of error, the method returns <b><tt>nil</tt></b> followed by a
+string describing the error. In case of success, the method returns 1.
+</p>
+
+<!-- stream.dirty +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.dirty">
+master:<b>dirty()</b><br>
+client:<b>dirty()</b><br>
+server:<b>dirty()</b>
+</p>
+
+<p class="description">
+Check the read buffer status.
+</p>
+
+<p class="return">
+Returns <tt>true</tt> if there is any data in the read buffer,
+<tt>false</tt> otherwise.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method, use at your own risk.</b>
+</p>
+
+<!-- stream.getfd ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.getfd">
+master:<b>getfd()</b><br>
+client:<b>getfd()</b><br>
+server:<b>getfd()</b>
+</p>
+
+<p class="description">
+Returns the underlying socket descriptor or handle associated to the
+object.
+</p>
+
+<p class="return">
+The descriptor or handle.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be portable. Use at your
+own risk.</b>
+</p>
+
+<!-- stream.getsockname +++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.getsockname">
+master:<b>getsockname()</b><br>
+client:<b>getsockname()</b><br>
+server:<b>getsockname()</b>
+</p>
+
+<p class="description">
+Returns the local path the object is bound to.
+</p>
+
+<p class="return">
+The method returns a string with the local path. In case of error, the
+method returns <b><tt>nil</tt></b>.
+</p>
+
+<!-- stream.getstats +++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.getstats">
+master:<b>getstats()</b><br>
+client:<b>getstats()</b><br>
+server:<b>getstats()</b>
+</p>
+
+<p class="description">
+Returns accounting information on the socket, useful for throttling of
+bandwidth. Works exactly like <a href="tcp.html#getstats"><tt>tcp:getstats</tt></a>.
+</p>
+
+<p class="return">
+The method returns the number of bytes received, the number of bytes
+sent, and the age of the socket object in seconds.
+</p>
+
+<!-- stream.listen ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.listen">
+master:<b>listen(</b>[backlog]<b>)</b>
+</p>
+
+<p class="description">
+Specifies the socket is willing to receive connections, transforming the
+object into a server object. Server objects support
+<a href="#stream.accept"><tt>accept</tt></a>,
+<a href="#stream.getsockname"><tt>getsockname</tt></a>,
+<a href="#stream.setoption"><tt>setoption</tt></a>,
+<a href="#stream.settimeout"><tt>settimeout</tt></a>, and
+<a href="#stream.close"><tt>close</tt></a>.
+</p>
+
+<p class="parameters">
+The optional <tt>backlog</tt> parameter specifies the number of client
+connections that can be queued waiting for service. Defaults to 32.
+</p>
+
+<p class="return">
+In case of success, the method returns 1. In case of error, the method
+returns <b><tt>nil</tt></b> followed by an error message.
+</p>
+
+<!-- stream.receive +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.receive">
+client:<b>receive(</b>[pattern [, prefix [, maxsize]]]<b>)</b>
+</p>
+
+<p class="description">
+Reads data from a client object. Works exactly like
+<a href="tcp.html#receive"><tt>tcp:receive</tt></a>, including the
+<tt>*a</tt>/<tt>*l</tt>/<tt>number</tt> patterns and the
+<tt>prefix</tt>/<tt>maxsize</tt> parameters.
+</p>
+
+<!-- stream.send +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.send">
+client:<b>send(</b>data [, i [, j]]<b>)</b>
+</p>
+
+<p class="description">
+Sends <tt>data</tt> through a client object. Works exactly like
+<a href="tcp.html#send"><tt>tcp:send</tt></a>, including the optional
+<tt>i</tt>/<tt>j</tt> substring selection.
+</p>
+
+<!-- stream.setfd ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.setfd">
+master:<b>setfd(</b>fd<b>)</b><br>
+client:<b>setfd(</b>fd<b>)</b><br>
+server:<b>setfd(</b>fd<b>)</b>
+</p>
+
+<p class="description">
+Sets the underlying socket descriptor or handle associated to the object.
+The current one is simply replaced, not closed, and no other change to
+the object state is made.
+</p>
+
+<p class="return">
+No return value.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be portable. Use at your
+own risk.</b>
+</p>
+
+<!-- stream.setoption +++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.setoption">
+client:<b>setoption(</b>option [, value]<b>)</b><br>
+server:<b>setoption(</b>option [, value]<b>)</b>
+</p>
+
+<p class="description">
+Sets options for the stream object. Options are only needed by low-level
+or time-critical applications. You should only modify an option if you
+are sure you need it.
+</p>
+
+<p class="parameters">
+<tt>Option</tt> is a string with the option name, and <tt>value</tt>
+depends on the option being set:
+</p>
+
+<ul>
+<li> '<tt>keepalive</tt>': Setting this option to <tt>true</tt> enables
+the periodic transmission of messages on a connected socket. See
+<a href="tcp.html#setoption"><tt>tcp:setoption</tt></a> for details;</li>
+<li> '<tt>reuseaddr</tt>': Setting this option indicates that the rules
+used in validating addresses supplied in a call to
+<a href="#stream.bind"><tt>bind</tt></a> should allow reuse of local
+addresses;</li>
+<li> '<tt>linger</tt>': Controls the action taken when unsent data are
+queued on a socket and a close is performed. See
+<a href="tcp.html#setoption"><tt>tcp:setoption</tt></a> for the full
+description of the <tt>on</tt>/<tt>timeout</tt> value table.</li>
+</ul>
+
+<p class="return">
+The method returns 1 in case of success, or <b><tt>nil</tt></b> followed
+by an error message otherwise.
+</p>
+
+<!-- stream.setstats +++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.setstats">
+master:<b>setstats(</b>received, sent, age<b>)</b><br>
+client:<b>setstats(</b>received, sent, age<b>)</b><br>
+server:<b>setstats(</b>received, sent, age<b>)</b>
+</p>
+
+<p class="description">
+Resets accounting information on the socket, useful for throttling of
+bandwidth. Works exactly like
+<a href="tcp.html#setstats"><tt>tcp:setstats</tt></a>.
+</p>
+
+<p class="return">
+The method returns 1 in case of success and <tt><b>nil</b></tt> otherwise.
+</p>
+
+<!-- stream.settimeout +++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.settimeout">
+master:<b>settimeout(</b>value [, mode]<b>)</b><br>
+client:<b>settimeout(</b>value [, mode]<b>)</b><br>
+server:<b>settimeout(</b>value [, mode]<b>)</b>
+</p>
+
+<p class="description">
+Changes the timeout values for the object. Works exactly like
+<a href="tcp.html#settimeout"><tt>tcp:settimeout</tt></a>, including the
+'<tt>b</tt>' (block) and '<tt>t</tt>' (total) modes.
+</p>
+
+<!-- stream.shutdown ++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="stream.shutdown">
+client:<b>shutdown(</b>[mode]<b>)</b>
+</p>
+
+<p class="description">
+Shuts down part of a full-duplex connection. Works exactly like
+<a href="tcp.html#shutdown"><tt>tcp:shutdown</tt></a>.
+</p>
+
+<p class="parameters">
+<tt>Mode</tt> can be "<tt>both</tt>" (default), "<tt>send</tt>" or
+"<tt>receive</tt>".
+</p>
+
+<p class="return">
+This function returns 1.
+</p>
+
+<!-- socket.unix.stream +++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="socket.unix.stream">
+unix.<b>stream()</b>
+</p>
+
+<p class="description">
+Creates and returns a stream Unix domain master object. A master object
+can be transformed into a server object with
+<a href="#stream.listen"><tt>listen</tt></a> (after a call to
+<a href="#stream.bind"><tt>bind</tt></a>) or into a client object with
+<a href="#stream.connect"><tt>connect</tt></a>. The only other method
+supported by a master object is <a href="#stream.close"><tt>close</tt></a>.
+</p>
+
+<p class="return">
+In case of success, a new master object is returned. In case of error,
+<b><tt>nil</tt></b> is returned, followed by an error message.
+</p>
+
+<!-- dgram +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h3 id="dgram">Datagram (<tt>socket.unix.dgram</tt>)</h3>
+
+<p>
+Datagram Unix domain sockets behave like UDP sockets (see
+<a href="udp.html">UDP</a>): a socket starts out unconnected, and can
+optionally be turned into a connected socket with
+<a href="#dgram.connect"><tt>connect</tt></a> for repeated exchanges with
+a single peer.
+</p>
+
+<!-- dgram.bind +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.bind">
+unconnected:<b>bind(</b>path<b>)</b><br>
+unconnected:<b>setsockname(</b>path<b>)</b>
+</p>
+
+<p class="description">
+Binds the datagram object to a local file system <tt>path</tt>.
+<tt>setsockname</tt> is an alias for <tt>bind</tt>. Binding is only
+required if you want other processes to be able to
+<a href="#dgram.sendto"><tt>sendto</tt></a> this object; it is not
+required to <a href="#dgram.sendto"><tt>sendto</tt></a> or
+<a href="#dgram.connect"><tt>connect</tt></a> from it.
+</p>
+
+<p class="return">
+In case of success, the method returns 1. In case of error, the method
+returns <b><tt>nil</tt></b> followed by an error message.
+</p>
+
+<!-- dgram.close ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.close">
+connected:<b>close()</b><br>
+unconnected:<b>close()</b>
+</p>
+
+<p class="description">
+Closes a datagram Unix domain object.
+</p>
+
+<p class="note">
+Note: Closing a socket does not remove the bound path from the file
+system. Delete the socket file yourself (e.g. <tt>os.remove(path)</tt>)
+once you are done with it.
+</p>
+
+<p class="note">
+Note: Garbage-collected objects are automatically closed before
+destruction.
+</p>
+
+<!-- dgram.connect ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.connect">
+connected:<b>connect(</b>path<b>)</b><br>
+unconnected:<b>connect(</b>path<b>)</b><br>
+connected:<b>setpeername(</b>path<b>)</b><br>
+unconnected:<b>setpeername(</b>path<b>)</b>
+</p>
+
+<p class="description">
+Sets (or changes) the peer of a datagram object, turning an unconnected
+object into a connected one. <tt>setpeername</tt> is an alias for
+<tt>connect</tt>.
+</p>
+
+<p class="parameters">
+<tt>Path</tt> is a string with the file system path of the peer.
+</p>
+
+<p class="return">
+In case of error, the method returns <b><tt>nil</tt></b> followed by an
+error message. In case of success, the method returns 1.
+</p>
+
+<p class="note">
+Note: Unlike <a href="udp.html#setpeername"><tt>udp:setpeername</tt></a>,
+there is no '<tt>*</tt>' path to dissolve the peer association back to an
+unconnected socket.
+</p>
+
+<!-- dgram.dirty ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.dirty">
+connected:<b>dirty()</b><br>
+unconnected:<b>dirty()</b>
+</p>
+
+<p class="description">
+Check the read buffer status.
+</p>
+
+<p class="return">
+Always returns <tt>false</tt>. Datagram objects do not keep a read
+buffer.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method, use at your own risk.</b>
+</p>
+
+<!-- dgram.getfd ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.getfd">
+connected:<b>getfd()</b><br>
+unconnected:<b>getfd()</b>
+</p>
+
+<p class="description">
+Returns the underlying socket descriptor or handle associated to the
+object.
+</p>
+
+<p class="return">
+The descriptor or handle.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be portable. Use at your
+own risk.</b>
+</p>
+
+<!-- dgram.getsockname +++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.getsockname">
+connected:<b>getsockname()</b><br>
+unconnected:<b>getsockname()</b>
+</p>
+
+<p class="description">
+Returns the local path the object is bound to.
+</p>
+
+<p class="return">
+The method returns a string with the local path. In case of error, the
+method returns <b><tt>nil</tt></b>.
+</p>
+
+<!-- dgram.gettimeout +++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.gettimeout">
+connected:<b>gettimeout()</b><br>
+unconnected:<b>gettimeout()</b>
+</p>
+
+<p class="description">
+Returns the current timeout value.
+</p>
+
+<!-- dgram.receive +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.receive">
+connected:<b>receive(</b>[size]<b>)</b><br>
+unconnected:<b>receive(</b>[size]<b>)</b>
+</p>
+
+<p class="description">
+Receives a datagram from the object. If the object is connected, only
+datagrams coming from the peer are accepted.
+</p>
+
+<p class="parameters">
+The optional <tt>size</tt> parameter specifies the maximum size of the
+datagram to be retrieved (defaults to 8192 bytes).
+</p>
+
+<p class="return">
+In case of success, the method returns the received datagram, which may
+be the empty string (a valid zero-length datagram, not end-of-stream). In
+case of timeout, the method returns <b><tt>nil</tt></b> followed by the
+string '<tt>timeout</tt>'.
+</p>
+
+<!-- dgram.receivefrom +++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.receivefrom">
+unconnected:<b>receivefrom(</b>[size]<b>)</b>
+</p>
+
+<p class="description">
+Works exactly as <a href="#dgram.receive"><tt>receive</tt></a>, except it
+also returns the sender's path as a second return value.
+</p>
+
+<p class="return">
+In case of success, the method returns the received datagram followed by
+the sender's path (the empty string if the sender's socket was not
+bound). In case of timeout, the method returns <b><tt>nil</tt></b>
+followed by the string '<tt>timeout</tt>'.
+</p>
+
+<!-- dgram.send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.send">
+connected:<b>send(</b>datagram<b>)</b>
+</p>
+
+<p class="description">
+Sends a datagram to the peer of a connected object.
+</p>
+
+<p class="return">
+If successful, the method returns the number of bytes sent. In case of
+error, the method returns <b><tt>nil</tt></b> followed by an error
+message (the string '<tt>refused</tt>' if the peer's socket is not
+accepting datagrams).
+</p>
+
+<!-- dgram.sendto +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.sendto">
+unconnected:<b>sendto(</b>datagram, path<b>)</b>
+</p>
+
+<p class="description">
+Sends a datagram to the object bound to <tt>path</tt>.
+</p>
+
+<p class="parameters">
+<tt>Datagram</tt> is a string with the datagram contents. <tt>Path</tt>
+is the file system path of the recipient.
+</p>
+
+<p class="return">
+If successful, the method returns the number of bytes sent. In case of
+error, the method returns <b><tt>nil</tt></b> followed by an error
+message (the string '<tt>refused</tt>' if the recipient's socket is not
+accepting datagrams).
+</p>
+
+<!-- dgram.setfd ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.setfd">
+connected:<b>setfd(</b>fd<b>)</b><br>
+unconnected:<b>setfd(</b>fd<b>)</b>
+</p>
+
+<p class="description">
+Sets the underlying socket descriptor or handle associated to the object.
+</p>
+
+<p class="return">
+No return value.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be portable. Use at your
+own risk.</b>
+</p>
+
+<!-- dgram.setoption +++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.setoption">
+connected:<b>setoption(</b>option [, value]<b>)</b><br>
+unconnected:<b>setoption(</b>option [, value]<b>)</b>
+</p>
+
+<p class="description">
+Sets options for the datagram object.
+</p>
+
+<p class="parameters">
+<tt>Option</tt> is a string with the option name:
+</p>
+
+<ul>
+<li> '<tt>reuseaddr</tt>': Indicates that the rules used in validating
+addresses supplied in a <a href="#dgram.bind"><tt>bind</tt></a> call
+should allow reuse of local addresses. Receives a boolean value.</li>
+</ul>
+
+<p class="return">
+The method returns 1 in case of success, or <b><tt>nil</tt></b> followed
+by an error message otherwise.
+</p>
+
+<!-- dgram.settimeout +++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dgram.settimeout">
+connected:<b>settimeout(</b>value<b>)</b><br>
+unconnected:<b>settimeout(</b>value<b>)</b>
+</p>
+
+<p class="description">
+Changes the timeout value for the object. Works like
+<a href="udp.html#settimeout"><tt>udp:settimeout</tt></a>: since
+<a href="#dgram.send"><tt>send</tt></a> and
+<a href="#dgram.sendto"><tt>sendto</tt></a> never block, this only
+affects <a href="#dgram.receive"><tt>receive</tt></a> and
+<a href="#dgram.receivefrom"><tt>receivefrom</tt></a>.
+</p>
+
+<!-- socket.unix.dgram +++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="socket.unix.dgram">
+unix.<b>dgram()</b>
+</p>
+
+<p class="description">
+Creates and returns an unconnected datagram Unix domain object.
+Unconnected objects support
+<a href="#dgram.sendto"><tt>sendto</tt></a>,
+<a href="#dgram.receive"><tt>receive</tt></a>,
+<a href="#dgram.receivefrom"><tt>receivefrom</tt></a>,
+<a href="#dgram.getsockname"><tt>getsockname</tt></a>,
+<a href="#dgram.setoption"><tt>setoption</tt></a>,
+<a href="#dgram.settimeout"><tt>settimeout</tt></a>,
+<a href="#dgram.connect"><tt>connect</tt></a>, and
+<a href="#dgram.close"><tt>close</tt></a>. Use
+<a href="#dgram.connect"><tt>connect</tt></a> to turn the object into a
+connected object.
+</p>
+
+<p class="return">
+In case of success, a new unconnected datagram object is returned. In
+case of error, <b><tt>nil</tt></b> is returned, followed by an error
+message.
+</p>
+
+<!-- footer ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class="footer">
+<hr>
+<center>
+<p class="bar">
+<a href="index.html">home</a> &middot;
+<a href="index.html#download">download</a> &middot;
+<a href="installation.html">installation</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+</center>
+</div>
+
+</body>
+</html>

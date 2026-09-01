@@ -1,0 +1,308 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+<meta name="description" content="LuaSocket: Serial port support">
+<meta name="keywords" content="Lua, LuaSocket, Serial, Port, TTY, Library, Support">
+<title>LuaSocket: Serial port support</title>
+<link rel="stylesheet" href="reference.css" type="text/css">
+</head>
+
+<body>
+
+<!-- header ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class="header">
+<hr>
+<center>
+<table summary="LuaSocket logo">
+<tr><td align="center"><a href="http://www.lua.org">
+<img width="128" height="128" border="0" alt="LuaSocket" src="luasocket.png">
+</a></td></tr>
+<tr><td align="center" valign="top">Network support for the Lua language
+</td></tr>
+</table>
+<p class="bar">
+<a href="index.html">home</a> &middot;
+<a href="index.html#download">download</a> &middot;
+<a href="installation.html">installation</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+</center>
+<hr>
+</div>
+
+<!-- serial +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<h2 id="serial">Serial port support</h2>
+
+<p>
+The <tt>socket.serial</tt> module opens a serial device (e.g.
+<tt>/dev/ttyUSB0</tt>) and exposes it through the same buffered,
+timeout-aware <tt>send</tt>/<tt>receive</tt> interface used by
+<a href="tcp.html">TCP</a> and <a href="unix.html">Unix domain</a>
+stream objects.
+</p>
+
+<p class="note">
+Note: This module is only built on Unix-like platforms (Linux, macOS,
+BSD, Haiku). It is not available on Windows.
+</p>
+
+<p>
+Serial port support is a separate module that must be required
+explicitly. Unlike most other LuaSocket modules, it returns a
+<em>function</em> directly &mdash; the constructor &mdash; rather than a
+table of functions:
+</p>
+
+<pre class="example">
+-- loads the socket.serial module; note this is the constructor itself
+local serial_open = require("socket.serial")
+
+-- open the device
+local port = assert(serial_open("/dev/ttyUSB0"))
+port:settimeout(1)
+assert(port:send("AT\r\n"))
+print(port:receive())
+port:close()
+</pre>
+
+<p class="note">
+Note: <b>There is currently no API to configure the serial line itself
+&mdash; baud rate, parity, data/stop bits or flow control.</b> The device
+is opened non-blocking with whatever settings the OS driver or a prior
+external configuration (e.g. <tt>stty</tt>) left it in. This is a known
+current limitation of the module, not a deliberate protection against
+misuse; a future version may add a <tt>setoption</tt>-style API for these
+settings the way <a href="tcp.html#setoption"><tt>tcp:setoption</tt></a>
+does for TCP.
+</p>
+
+<p>
+Until such an API exists, the workaround is to configure the line with
+the platform's own <tt>stty</tt> utility (via <tt>os.execute</tt>)
+<em>before</em> opening the device with <tt>socket.serial</tt>:
+</p>
+
+<pre class="example">
+local serial_open = require("socket.serial")
+
+local dev = "/dev/ttyUSB0"
+
+-- Linux: stty -F &lt;device&gt; ...
+local ok = os.execute(string.format(
+    "stty -F %s 115200 cs8 -cstopb -parenb raw -echo", dev))
+
+-- macOS/BSD use -f instead of -F:
+-- os.execute(string.format("stty -f %s 115200 cs8 -cstopb -parenb raw -echo", dev))
+
+assert(ok, "failed to configure serial line with stty")
+
+local port = assert(serial_open(dev))
+port:settimeout(1)
+assert(port:send("AT\r\n"))
+print(port:receive())
+port:close()
+</pre>
+
+<p class="note">
+Note: <tt>raw -echo</tt> puts the line in raw mode, which matters for
+LuaSocket's framing: without it, the TTY driver applies its own line
+editing/echo, which can interfere with <a href="#receive"><tt>receive</tt></a>
+patterns and <a href="#send"><tt>send</tt></a> content. Adjust the
+<tt>stty</tt> flags (baud rate, parity, stop bits, flow control) to match
+your device; consult <tt>man stty</tt> for the full option set on your
+platform, since flag names and defaults vary between Linux, macOS and the
+BSDs.
+</p>
+
+<!-- close ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="close">
+port:<b>close()</b>
+</p>
+
+<p class="description">
+Closes a serial object. No further operations (except further calls to
+<tt>close</tt>) are allowed on a closed object.
+</p>
+
+<p class="note">
+Note: Garbage-collected objects are automatically closed before
+destruction.
+</p>
+
+<!-- dirty +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dirty">
+port:<b>dirty()</b>
+</p>
+
+<p class="description">
+Check the read buffer status.
+</p>
+
+<p class="return">
+Returns <tt>true</tt> if there is any data in the read buffer,
+<tt>false</tt> otherwise.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method, use at your own risk.</b>
+</p>
+
+<!-- getfd ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="getfd">
+port:<b>getfd()</b>
+</p>
+
+<p class="description">
+Returns the underlying file descriptor associated to the object.
+</p>
+
+<p class="return">
+The descriptor.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be portable. Use at your
+own risk.</b>
+</p>
+
+<!-- getstats ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="getstats">
+port:<b>getstats()</b>
+</p>
+
+<p class="description">
+Returns accounting information on the port, useful for throttling of
+bandwidth. Works exactly like
+<a href="tcp.html#getstats"><tt>tcp:getstats</tt></a>.
+</p>
+
+<p class="return">
+The method returns the number of bytes received, the number of bytes
+sent, and the age of the object in seconds.
+</p>
+
+<!-- receive +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="receive">
+port:<b>receive(</b>[pattern [, prefix [, maxsize]]]<b>)</b>
+</p>
+
+<p class="description">
+Reads data from the serial port, according to the specified <em>read
+pattern</em>. Works exactly like
+<a href="tcp.html#receive"><tt>tcp:receive</tt></a>, including the
+<tt>*a</tt>/<tt>*l</tt>/<tt>number</tt> patterns and the
+<tt>prefix</tt>/<tt>maxsize</tt> parameters.
+</p>
+
+<!-- send +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="send">
+port:<b>send(</b>data [, i [, j]]<b>)</b>
+</p>
+
+<p class="description">
+Sends <tt>data</tt> through the serial port. Works exactly like
+<a href="tcp.html#send"><tt>tcp:send</tt></a>, including the optional
+<tt>i</tt>/<tt>j</tt> substring selection.
+</p>
+
+<!-- setfd ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="setfd">
+port:<b>setfd(</b>fd<b>)</b>
+</p>
+
+<p class="description">
+Sets the underlying file descriptor associated to the object. The current
+one is simply replaced, not closed, and no other change to the object
+state is made.
+</p>
+
+<p class="return">
+No return value.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be portable. Use at your
+own risk.</b>
+</p>
+
+<!-- setstats ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="setstats">
+port:<b>setstats(</b>received, sent, age<b>)</b>
+</p>
+
+<p class="description">
+Resets accounting information on the port, useful for throttling of
+bandwidth. Works exactly like
+<a href="tcp.html#setstats"><tt>tcp:setstats</tt></a>.
+</p>
+
+<p class="return">
+The method returns 1 in case of success and <tt><b>nil</b></tt> otherwise.
+</p>
+
+<!-- settimeout ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="settimeout">
+port:<b>settimeout(</b>value [, mode]<b>)</b>
+</p>
+
+<p class="description">
+Changes the timeout values for the object. Works exactly like
+<a href="tcp.html#settimeout"><tt>tcp:settimeout</tt></a>, including the
+'<tt>b</tt>' (block) and '<tt>t</tt>' (total) modes.
+</p>
+
+<!-- socket.serial +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="socket.serial">
+serial_open(<b>path</b>)
+</p>
+
+<p class="description">
+Opens the serial device at <tt>path</tt> and returns a serial object.
+This is the value returned directly by <tt>require("socket.serial")</tt>
+&mdash; there is no separate module table to index into, unlike
+<tt>socket.unix.stream()</tt> or <tt>socket.tcp()</tt>.
+</p>
+
+<p class="parameters">
+<tt>Path</tt> is a string with the device path (e.g.
+<tt>"/dev/ttyUSB0"</tt> or <tt>"/dev/ttyS0"</tt>).
+</p>
+
+<p class="return">
+In case of success, a new serial object is returned. In case of error,
+the function returns <b><tt>nil</tt></b>, followed by an error message,
+followed by the numeric <tt>errno</tt> value.
+</p>
+
+<!-- footer ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<div class="footer">
+<hr>
+<center>
+<p class="bar">
+<a href="index.html">home</a> &middot;
+<a href="index.html#download">download</a> &middot;
+<a href="installation.html">installation</a> &middot;
+<a href="introduction.html">introduction</a> &middot;
+<a href="reference.html">reference</a>
+</p>
+</center>
+</div>
+
+</body>
+</html>

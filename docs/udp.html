@@ -62,6 +62,66 @@ Garbage-collected objects are automatically closed before
 destruction, though.
 </p>
 
+<!-- dirty +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="dirty">
+connected:<b>dirty()</b><br>
+unconnected:<b>dirty()</b>
+</p>
+
+<p class="description">
+Check the read buffer status.
+</p>
+
+<p class="return">
+Returns <tt>false</tt>. UDP objects do not keep a read buffer, so this
+always reports no buffered data.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method, use at your own risk.</b>
+</p>
+
+<!-- getfamily +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="getfamily">
+connected:<b>getfamily()</b><br>
+unconnected:<b>getfamily()</b>
+</p>
+
+<p class="description">
+Returns the family of the underlying socket, as chosen when the object was
+created by <a href="#socket.udp"><tt>socket.udp</tt></a>,
+<a href="#socket.udp4"><tt>socket.udp4</tt></a> or
+<a href="#socket.udp6"><tt>socket.udp6</tt></a>.
+</p>
+
+<p class="return">
+The string "<tt>inet4</tt>" or "<tt>inet6</tt>".
+</p>
+
+<!-- getfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="getfd">
+connected:<b>getfd()</b><br>
+unconnected:<b>getfd()</b>
+</p>
+
+<p class="description">
+Returns the underling socket descriptor or handle associated to the object.
+</p>
+
+<p class="return">
+The descriptor or handle. In case the object has been closed, the return value
+will be -1. For an invalid socket it will be <a href="socket.html#socketinvalid">
+<tt>_SOCKETINVALID</tt></a>.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be
+portable. Use at your own risk. </b>
+</p>
+
 <!-- getoption +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="getoption">
@@ -321,8 +381,10 @@ Sets the unicast hop limit (the IPv6 equivalent of the IPv4 TTL)
 for outgoing packets.
 Receives a number;</li>
 <li> '<tt>ipv6-multicast-hops</tt>':
-Sets the hop limit for outgoing IPv6 multicast datagrams.
-Receives a number;</li>
+<b>Known limitation:</b> this option is currently wired to the same
+underlying setting as <tt>ipv6-unicast-hops</tt> instead of a separate
+multicast hop limit, so getting or setting one also gets or sets the
+other. Receives a number;</li>
 <li> '<tt>ipv6-multicast-loop</tt>':
 Specifies whether or not a copy of an outgoing IPv6 multicast
 datagram is delivered to the sending host as long as it is a
@@ -373,6 +435,28 @@ The method returns 1 in case of success, or
 Note: The descriptions above come from the man pages.
 </p>
 
+
+<!-- setfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="setfd">
+connected:<b>setfd(</b>fd<b>)</b><br>
+unconnected:<b>setfd(</b>fd<b>)</b>
+</p>
+
+<p class="description">
+Sets the underling socket descriptor or handle associated to the object. The current one
+is simply replaced, not closed, and no other change to the object state is made.
+To set it as invalid use <a href="socket.html#socketinvalid"><tt>_SOCKETINVALID</tt></a>.
+</p>
+
+<p class="return">
+No return value.
+</p>
+
+<p class="note">
+Note: <b>This is an internal method. Unlikely to be
+portable. Use at your own risk. </b>
+</p>
 
 <!-- setpeername +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 

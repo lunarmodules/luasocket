@@ -43,6 +43,7 @@ Support, Manual">
 <a href="dns.html">DNS (in socket)</a>
 <blockquote>
 <a href="dns.html#getaddrinfo">getaddrinfo</a>,
+<a href="dns.html#getnameinfo">getnameinfo</a>,
 <a href="dns.html#gethostname">gethostname</a>,
 <a href="dns.html#tohostname">tohostname</a>,
 <a href="dns.html#toip">toip</a>.
@@ -73,6 +74,9 @@ Support, Manual">
 <blockquote>
 <a href="ltn12.html">LTN12</a>
 <blockquote>
+<a href="ltn12.html#BLOCKSIZE">BLOCKSIZE</a>.
+</blockquote>
+<blockquote>
 <a href="ltn12.html#filter">filter</a>:
 <a href="ltn12.html#filter.chain">chain</a>,
 <a href="ltn12.html#filter.cycle">cycle</a>.
@@ -98,6 +102,7 @@ Support, Manual">
 <a href="ltn12.html#source.empty">empty</a>,
 <a href="ltn12.html#source.error">error</a>,
 <a href="ltn12.html#source.file">file</a>,
+<a href="ltn12.html#source.rewind">rewind</a>,
 <a href="ltn12.html#source.simplify">simplify</a>,
 <a href="ltn12.html#source.string">string</a>,
 <a href="ltn12.html#source.table">table</a>.
@@ -129,6 +134,23 @@ Support, Manual">
 </blockquote>
 </blockquote>
 
+<!-- serial +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<blockquote>
+<a href="serial.html">Serial</a>
+<blockquote>
+<a href="serial.html#close">close</a>,
+<a href="serial.html#getfd">getfd</a>,
+<a href="serial.html#getstats">getstats</a>,
+<a href="serial.html#receive">receive</a>,
+<a href="serial.html#send">send</a>,
+<a href="serial.html#setfd">setfd</a>,
+<a href="serial.html#setstats">setstats</a>,
+<a href="serial.html#settimeout">settimeout</a>,
+<a href="serial.html#socket.serial">socket.serial</a>.
+</blockquote>
+</blockquote>
+
 <!-- smtp +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <blockquote>
@@ -153,6 +175,7 @@ Support, Manual">
 <a href="dns.html#dns">dns</a>,
 <a href="socket.html#gettime">gettime</a>,
 <a href="socket.html#headers.canonic">headers.canonic</a>,
+<a href="socket.html#headers.setcanonic">headers.setcanonic</a>,
 <a href="socket.html#newtry">newtry</a>,
 <a href="socket.html#protect">protect</a>,
 <a href="socket.html#select">select</a>,
@@ -183,6 +206,7 @@ Support, Manual">
 <a href="tcp.html#close">close</a>,
 <a href="tcp.html#connect">connect</a>,
 <a href="tcp.html#dirty">dirty</a>,
+<a href="tcp.html#getfamily">getfamily</a>,
 <a href="tcp.html#getfd">getfd</a>,
 <a href="tcp.html#getoption">getoption</a>,
 <a href="tcp.html#getpeername">getpeername</a>,
@@ -194,6 +218,8 @@ Support, Manual">
 <a href="tcp.html#send">send</a>,
 <a href="tcp.html#setfd">setfd</a>,
 <a href="tcp.html#setoption">setoption</a>,
+<a href="tcp.html#setpeername">setpeername</a>,
+<a href="tcp.html#setsockname">setsockname</a>,
 <a href="tcp.html#setstats">setstats</a>,
 <a href="tcp.html#settimeout">settimeout</a>,
 <a href="tcp.html#shutdown">shutdown</a>.
@@ -206,6 +232,9 @@ Support, Manual">
 <a href="udp.html">UDP (in socket)</a>
 <blockquote>
 <a href="udp.html#close">close</a>,
+<a href="udp.html#dirty">dirty</a>,
+<a href="udp.html#getfamily">getfamily</a>,
+<a href="udp.html#getfd">getfd</a>,
 <a href="udp.html#getoption">getoption</a>,
 <a href="udp.html#getpeername">getpeername</a>,
 <a href="udp.html#getsockname">getsockname</a>,
@@ -214,10 +243,53 @@ Support, Manual">
 <a href="udp.html#receivefrom">receivefrom</a>,
 <a href="udp.html#send">send</a>,
 <a href="udp.html#sendto">sendto</a>,
+<a href="udp.html#setfd">setfd</a>,
 <a href="udp.html#setpeername">setpeername</a>,
 <a href="udp.html#setsockname">setsockname</a>,
 <a href="udp.html#setoption">setoption</a>,
 <a href="udp.html#settimeout">settimeout</a>.
+</blockquote>
+</blockquote>
+
+<!-- unix +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<blockquote>
+<a href="unix.html">Unix</a>
+<blockquote>
+<a href="unix.html#socket.unix.stream">socket.unix.stream</a>:
+<a href="unix.html#stream.accept">accept</a>,
+<a href="unix.html#stream.bind">bind</a>,
+<a href="unix.html#stream.close">close</a>,
+<a href="unix.html#stream.connect">connect</a>,
+<a href="unix.html#stream.dirty">dirty</a>,
+<a href="unix.html#stream.getfd">getfd</a>,
+<a href="unix.html#stream.getsockname">getsockname</a>,
+<a href="unix.html#stream.getstats">getstats</a>,
+<a href="unix.html#stream.listen">listen</a>,
+<a href="unix.html#stream.receive">receive</a>,
+<a href="unix.html#stream.send">send</a>,
+<a href="unix.html#stream.setfd">setfd</a>,
+<a href="unix.html#stream.setoption">setoption</a>,
+<a href="unix.html#stream.setstats">setstats</a>,
+<a href="unix.html#stream.settimeout">settimeout</a>,
+<a href="unix.html#stream.shutdown">shutdown</a>.
+</blockquote>
+<blockquote>
+<a href="unix.html#socket.unix.dgram">socket.unix.dgram</a>:
+<a href="unix.html#dgram.bind">bind</a>,
+<a href="unix.html#dgram.close">close</a>,
+<a href="unix.html#dgram.connect">connect</a>,
+<a href="unix.html#dgram.dirty">dirty</a>,
+<a href="unix.html#dgram.getfd">getfd</a>,
+<a href="unix.html#dgram.getsockname">getsockname</a>,
+<a href="unix.html#dgram.gettimeout">gettimeout</a>,
+<a href="unix.html#dgram.receive">receive</a>,
+<a href="unix.html#dgram.receivefrom">receivefrom</a>,
+<a href="unix.html#dgram.send">send</a>,
+<a href="unix.html#dgram.sendto">sendto</a>,
+<a href="unix.html#dgram.setfd">setfd</a>,
+<a href="unix.html#dgram.setoption">setoption</a>,
+<a href="unix.html#dgram.settimeout">settimeout</a>.
 </blockquote>
 </blockquote>
 

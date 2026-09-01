@@ -114,7 +114,11 @@ the HTTP module:
 <ul>
 <li> <tt>PROXY</tt>: default proxy used for connections;</li>
 <li> <tt>TIMEOUT</tt>: sets the timeout for all I/O operations;</li>
-<li> <tt>USERAGENT</tt>: default user agent reported to server.</li>
+<li> <tt>USERAGENT</tt>: default user agent reported to server;</li>
+<li> <tt>MAXHEADERLINE</tt>: maximum length, in bytes, of a single response
+header line. Defaults to 8192;</li>
+<li> <tt>MAXHEADERSIZE</tt>: maximum total size, in bytes, of all response
+header lines combined. Defaults to 65536.</li>
 </ul>
 
 <p class="note">
@@ -183,7 +187,8 @@ pump step function used to move data.
 Defaults to the LTN12 <tt>pump.step</tt> function.</li>
 <li><tt>proxy</tt>: The URL of a proxy server to use. Defaults to no proxy;</li>
 <li><tt>redirect</tt>: Set to <tt><b>false</b></tt> to prevent the
-function from  automatically following 301 or 302 server redirect messages;</li>
+function from automatically following 301, 302, 303, 307 or 308 server
+redirect messages;</li>
 <li><tt>create</tt>: An optional function to be used instead of
 <a href="tcp.html#socket.tcp"><tt>socket.tcp</tt></a> when the communications socket is created.</li>
 <li><tt>maxredirects</tt>: An optional number specifying the maximum number of
