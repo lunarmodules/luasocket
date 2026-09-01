@@ -136,7 +136,8 @@ http.<b>request{</b><br>
 &nbsp;&nbsp;[proxy = <i>string</i>,]<br>
 &nbsp;&nbsp;[redirect = <i>boolean</i>,]<br>
 &nbsp;&nbsp;[create = <i>function</i>,]<br>
-&nbsp;&nbsp;[maxredirects = <i>number</i>]<br>
+&nbsp;&nbsp;[maxredirects = <i>number</i>,]<br>
+&nbsp;&nbsp;[headers_callback = <i>function</i>]<br>
 <b>}</b>
 </p>
 
@@ -189,6 +190,39 @@ function from  automatically following 301 or 302 server redirect messages;</li>
 <li><tt>maxredirects</tt>: An optional number specifying the maximum number of
     redirects to follow.  Defaults to <tt>5</tt> if not specified. A boolean
     <tt>false</tt> value means no maximum (unlimited).</li>
+<li><tt>headers_callback</tt>: An optional function, called once per request
+    right after the headers have been received (this
+    is after any redirect has already been followed, so it only fires for the
+    final response) and before the response body would be read. It is called
+    as: <tt>ok, new_sink = headers_callback(code, headers, status, sock)</tt>, where
+    <tt>sock</tt> is the raw socket used for the request (the
+    <a href="tcp.html#socket.tcp"><tt>socket.tcp</tt></a>-like object returned
+    by <tt>create</tt>, or the default one). It is not called for an HTTP/0.9
+    reply (no headers at all), for a <tt>408</tt> response, or for a response
+    that is going to be redirected.
+    <br>
+    The callback should return two values, <tt>ok</tt> and a second value whose
+    meaning depends on <tt>ok</tt>:
+    <ul>
+    <li>If <tt>ok</tt> is falsy, the second value is used as an error
+    message: the connection is closed and <tt>request</tt> returns
+    <tt><b>nil</b></tt> followed by that message, just like any other request
+    failure.</li>
+    <li>If <tt>ok</tt> is truthy, the request continues normally. If the
+    second value is also provided, it replaces <tt>sink</tt> for reading the
+    response body; otherwise the original sink is used.</li>
+    </ul>
+    Note that a swapped-in sink is only ever read from when the response
+    actually has a body to receive: for a <tt>HEAD</tt> request or a
+    <tt>204</tt>/<tt>304</tt> response there is nothing to read regardless of
+    which sink is set.
+    <br>
+    This makes it possible to inspect headers before committing to read a
+    body -- for example to reject a response early based on
+    <tt>content-type</tt> or <tt>content-length</tt>, to pick a different
+    sink depending on the headers, or -- combined with the raw
+    <tt>sock</tt> -- to hand the socket off for a protocol upgrade
+    such as WebSockets (<tt>101 Switching Protocols</tt>).</li>
 </ul>
 
 <p class="return">
