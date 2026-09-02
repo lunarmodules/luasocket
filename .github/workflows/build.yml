@@ -22,7 +22,7 @@ jobs:
         if: ${{ startsWith(matrix.platform, 'windows') && !startsWith(matrix.luaVersion, 'luajit') }}
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
       - name: Setup ‘lua’
-        uses: luarocks/gh-actions-lua@85e2287697275df96334743ac654241a8fd34ab3 # v13
+        uses: luarocks/gh-actions-lua@56eba09993704b908cc3c7c2753e630d18cb9696 # v14
         with:
           luaVersion: ${{ matrix.luaVersion }}
           buildCache: false
