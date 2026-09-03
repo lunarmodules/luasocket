@@ -47,6 +47,28 @@ function metat.__index:greet(domain)
     return socket.skip(1, self.try(self.tp:check("2..")))
 end
 
+function metat.__index:starttls(server, domain)
+    self.try(self.tp:command("STARTTLS"))
+    self.try(self.tp:check("2.."))
+    self:wraptls(server)
+    self.try(self.tp:command("EHLO", domain or _M.DOMAIN))
+    return socket.skip(1, self.try(self.tp:check("2..")))
+end
+
+function metat.__index:wraptls(server)
+    -- we now wrap the connection
+    local worked, ssl = pcall(require, "ssl")
+    if not worked then
+        error('LuaSocket: LuaSec not found: ' .. ssl)
+    end
+    local wrap = assert(ssl.wrap,
+        'LuaSocket: Function wrap() not available from LuaSec')
+    self.tp.c = wrap(self.tp.c, { mode='client', protocol='any' })
+    self.tp.c:sni(server)
+    self.try(self.tp.c:settimeout(_M.TIMEOUT))
+    self.try(self.tp.c:dohandshake())
+end
+
 function metat.__index:mail(from)
     self.try(self.tp:command("MAIL", "FROM:" .. from))
     return self.try(self.tp:check("2.."))
@@ -241,12 +263,32 @@ function _M.message(mesgt)
     end
 end
 
+local valid_tlsmodes = { none = 1, auto = 1, tls = 1, starttls = 1 }
+
 ---------------------------------------------------------------------------
 -- High level SMTP API
 -----------------------------------------------------------------------------
 _M.send = socket.protect(function(mailt)
+    local tlsmode = mailt.tlsmode or "auto"
+    if not valid_tlsmodes[tlsmode] then
+        error("Invalid tlsmode '"..tostring(tlsmode).."', expected one of 'none', 'auto', 'starttls' or 'tls'")
+    end
     local s = _M.open(mailt.server, mailt.port, mailt.create)
-    local ext = s:greet(mailt.domain)
+    local ext
+    if tlsmode == "tls" then
+        s:wraptls(mailt.server, mailt.domain)
+        ext = s:greet(mailt.domain)
+    else
+        ext = s:greet(mailt.domain)
+        if tlsmode ~= "none" then
+            if ext:find("STARTTLS") then -- modes 'auto' and 'starttls' both try this
+                -- the greeting can change after security changes
+                ext = s:starttls(mailt.server, mailt.domain)
+            elseif tlsmode == "starttls" then -- 'starttls' mode required but failed
+                s.try(nil, "server doesn't support STARTTLS")
+            end
+        end
+    end
     s:auth(mailt.user, mailt.password, ext)
     s:send(mailt)
     s:quit()
