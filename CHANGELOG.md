@@ -12,6 +12,7 @@
 * Dynamically create canonicalized headers – @Tieske
 * Classify hosts as name, ipv4, or ipv6 – @Tieske
 * Handle response code 308 permanent redirect – @amandasystems
+* Add TLS support to SMTP send() function – @mbartlett21
 * Allow relative redirect on https – @nheir
 * Return port as number in getsockname – @georgeto
 * Properly report CONNRESET – @pkulchenko

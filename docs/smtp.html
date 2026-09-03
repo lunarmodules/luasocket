@@ -245,7 +245,8 @@ smtp.<b>send{</b><br>
 &nbsp;&nbsp;[port = <i>number</i>,]<br>
 &nbsp;&nbsp;[domain = <i>string</i>,]<br>
 &nbsp;&nbsp;[step = <i>LTN12 pump step</i>,]<br>
-&nbsp;&nbsp;[create = <i>function</i>]<br>
+&nbsp;&nbsp;[create = <i>function</i>,]<br>
+&nbsp;&nbsp;[tlsmode = <i>"none"</i> or <i>"auto"</i> or <i>"starttls"</i> or <i>"tls"</i>]<br>
 <b>}</b>
 </p>
 
@@ -280,7 +281,12 @@ local machine host name;</li>
 pump step function used to pass data from the
 source to the server. Defaults to the LTN12 <tt>pump.step</tt> function;</li>
 <li><tt>create</tt>: An optional function to be used instead of
-<a href="tcp.html#socket.tcp"><tt>socket.tcp</tt></a> when the communications socket is created.</li>
+<a href="tcp.html#socket.tcp"><tt>socket.tcp</tt></a> when the communications socket is created;</li>
+<li><tt>tlsmode</tt>: What TLS mode to use. Defaults to "auto".
+<br>"none" will perform the full connection in plaintext.
+<br>"auto" will use STARTTLS if the server advertises it, falling back to plaintext if not.
+<br>"starttls" will error if the server doesn't advertise it.
+<br>"tls" will start the connection with implicit TLS.</li>
 </ul>
 
 <p class="return">
