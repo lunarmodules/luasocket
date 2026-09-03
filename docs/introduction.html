@@ -304,7 +304,10 @@ io.write(assert(udp:receive()))
 <p> Although not covered in the introduction, LuaSocket offers
 much more than TCP and UDP functionality. As the library
 evolved, support for <a href=http.html>HTTP</a>, <a href=ftp.html>FTP</a>,
-and <a href=smtp.html>SMTP</a> were built on top of these. These modules
+and <a href=smtp.html>SMTP</a> were built on top of these. On Unix-like
+platforms, the library also ships separate <a href=unix.html>Unix domain
+socket</a> and <a href=serial.html>serial port</a> modules, requirable as
+<tt>socket.unix</tt> and <tt>socket.serial</tt>. These modules
 and many others are covered by the <a href=reference.html>reference manual</a>.
 </p>
 

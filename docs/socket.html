@@ -51,6 +51,14 @@ To obtain the <tt>socket</tt> namespace, run:
 local socket = require("socket")
 </pre>
 
+<p>
+Two related transports are shipped as separate modules, loaded on demand
+with their own <tt>require</tt> call: <a href="unix.html">Unix domain
+sockets</a> (<tt>require("socket.unix")</tt>) and
+<a href="serial.html">serial ports</a> (<tt>require("socket.serial")</tt>).
+Both are only built on Unix-like platforms.
+</p>
+
 <!-- headers.canonic ++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="headers.canonic">
@@ -94,6 +102,27 @@ local headers = require("socket.headers")
 headers.setcanonic("X-Request-ID")
 </pre>
 
+<!-- headers.setcanonic +++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="headers.setcanonic">
+socket.headers.<b>setcanonic(</b>name<b>)</b>
+</p>
+
+<p class="description">
+Registers a custom canonic capitalization for a header field name in
+<a href="#headers.canonic"><tt>socket.headers.canonic</tt></a>, for use
+when the automatic capitalize-first-letter-of-each-word rule would not
+reproduce it (e.g. an all-caps acronym).
+</p>
+
+<p class="parameters">
+<tt>Name</tt> is a string with the header field name in its desired
+canonic capitalization (e.g. <tt>"X-Request-ID"</tt>).
+</p>
+
+<p class="return">
+No return value.
+</p>
 
 <!-- bind ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 

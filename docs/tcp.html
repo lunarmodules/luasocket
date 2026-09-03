@@ -196,6 +196,25 @@ Note: <b>This is an internal method, use at your own risk.</b>
 </p>
 
 
+<!-- getfamily +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="getfamily">
+master:<b>getfamily()</b><br>
+client:<b>getfamily()</b><br>
+server:<b>getfamily()</b>
+</p>
+
+<p class="description">
+Returns the family of the underlying socket, as chosen when the object was
+created by <a href="socket.html#connect"><tt>socket.tcp</tt></a>,
+<a href="#socket.tcp4"><tt>socket.tcp4</tt></a> or
+<a href="#socket.tcp6"><tt>socket.tcp6</tt></a>.
+</p>
+
+<p class="return">
+The string "<tt>inet4</tt>" or "<tt>inet6</tt>".
+</p>
+
 <!-- getfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <p class="name" id="getfd">
@@ -649,6 +668,30 @@ This is the default mode;</li>
 
 <p class="return">
 This function returns 1.
+</p>
+
+<!-- setpeername +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="setpeername">
+master:<b>setpeername(</b>address, port<b>)</b>
+</p>
+
+<p class="description">
+Alias for <a href="#connect"><tt>connect</tt></a>, kept for naming symmetry
+with <a href="udp.html#setpeername"><tt>udp:setpeername</tt></a> and with
+<a href="#getpeername"><tt>getpeername</tt></a>.
+</p>
+
+<!-- setsockname +++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+<p class="name" id="setsockname">
+master:<b>setsockname(</b>address, port<b>)</b>
+</p>
+
+<p class="description">
+Alias for <a href="#bind"><tt>bind</tt></a>, kept for naming symmetry
+with <a href="udp.html#setsockname"><tt>udp:setsockname</tt></a> and with
+<a href="#getsockname"><tt>getsockname</tt></a>.
 </p>
 
 <!-- setfd +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
