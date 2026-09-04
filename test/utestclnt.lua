@@ -12,7 +12,7 @@ function fail(...)
     local s = string.format(...)
     io.stderr:write("ERROR: ", s, "!\n")
 socket.sleep(3)
-    os.exit()
+    os.exit(1)
 end
 
 function warn(...)

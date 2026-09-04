@@ -16,7 +16,7 @@ function fail(...)
     io.stderr:write("ERROR: ")
     printf(...)
     io.stderr:write("!\n")
-    os.exit()
+    os.exit(1)
 end
 
 function warn(...)
